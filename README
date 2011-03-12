@@ -1,0 +1,24 @@
+
+PS Move API
+===========
+
+http://thp.io/2010/psmove/
+
+This is a low-level PS Move library that allows you to control the RGB LEDs and
+the rumble function of the controller, as well as read the status of the sensors
+(accelerometer, gyroscope and magnetometeR) and buttons.
+
+The library is based on Alan Ott's hidapi, and has been tested under Mac OS X.
+It works in USB-only mode on Linux (the Linux kernel is missing some patches for
+it to work in Bluetooth mode as well).
+
+The PS Move protocol information is based on the linmctool and Move On PC
+projects.
+
+See psmove-example.c for an example of how to use the library.
+
+
+--
+Thomas Perl <thp.io/about>
+2011-03-12
+
