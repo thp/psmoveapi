@@ -17,8 +17,9 @@ projects.
 
 See psmove-example.c for an example of how to use the library.
 
+If you want to build the Python bindings, see psmove_test.py for an example.
 
 --
 Thomas Perl <thp.io/about>
-2011-03-12
+2011-03-13
 

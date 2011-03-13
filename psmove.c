@@ -4,6 +4,7 @@
  * All Rights Reserved
  **/
 
+#include "psmove_private.h"
 #include "psmove.h"
 
 #include <stdio.h>
@@ -15,7 +16,7 @@
 
 
 PSMove *
-PSMove_connect()
+psmove_connect()
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
 
@@ -36,7 +37,7 @@ PSMove_connect()
 }
 
 int
-PSMove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
+psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 {
     unsigned char cal[PSMOVE_CALIBRATION_SIZE];
     unsigned char btg[PSMOVE_BTADDR_GET_SIZE];
@@ -79,7 +80,7 @@ PSMove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 }
 
 int
-PSMove_set_btaddr(PSMove *move, const PSMove_Data_BTAddr *addr)
+psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 {
     unsigned char bts[PSMOVE_BTADDR_SET_SIZE];
     int res;
@@ -100,7 +101,7 @@ PSMove_set_btaddr(PSMove *move, const PSMove_Data_BTAddr *addr)
 }
 
 enum PSMove_Connection_Type
-PSMove_connection_type(PSMove *move)
+psmove_connection_type(PSMove *move)
 {
     assert(move != NULL);
     wchar_t wstr[255];
@@ -117,16 +118,16 @@ PSMove_connection_type(PSMove *move)
      * is a Bluetooth connection.
      **/
     if (res == 0) {
-        return PSMove_USB;
+        return Conn_USB;
     } else if (res > 0) {
-        return PSMove_Bluetooth;
+        return Conn_Bluetooth;
     }
 
-    return PSMove_Unknown;
+    return Conn_Unknown;
 }
 
 void
-PSMove_set_leds(PSMove *move, unsigned char r, unsigned char g,
+psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
         unsigned char b)
 {
     assert(move != NULL);
@@ -136,7 +137,7 @@ PSMove_set_leds(PSMove *move, unsigned char r, unsigned char g,
 }
 
 void
-PSMove_set_rumble(PSMove *move, unsigned char rumble)
+psmove_set_rumble(PSMove *move, unsigned char rumble)
 {
     assert(move != NULL);
     move->leds.rumble2 = 0x00;
@@ -144,7 +145,7 @@ PSMove_set_rumble(PSMove *move, unsigned char rumble)
 }
 
 int
-PSMove_update_leds(PSMove *move)
+psmove_update_leds(PSMove *move)
 {
     int res;
     assert(move != NULL);
@@ -155,7 +156,7 @@ PSMove_update_leds(PSMove *move)
 }
 
 int
-PSMove_poll(PSMove *move)
+psmove_poll(PSMove *move)
 {
     int res;
     assert(move != NULL);
@@ -191,7 +192,7 @@ PSMove_poll(PSMove *move)
 }
 
 unsigned int
-PSMove_get_buttons(PSMove *move)
+psmove_get_buttons(PSMove *move)
 {
     assert(move != NULL);
 
@@ -202,7 +203,7 @@ PSMove_get_buttons(PSMove *move)
 }
 
 unsigned char
-PSMove_get_trigger(PSMove *move)
+psmove_get_trigger(PSMove *move)
 {
     assert(move != NULL);
 
@@ -210,7 +211,7 @@ PSMove_get_trigger(PSMove *move)
 }
 
 void
-PSMove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
+psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 {
     assert(move != NULL);
 
@@ -231,7 +232,7 @@ PSMove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 }
 
 void
-PSMove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
+psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 {
     assert(move != NULL);
 
@@ -252,7 +253,7 @@ PSMove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 }
 
 void
-PSMove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
+psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 {
     assert(move != NULL);
 
@@ -270,7 +271,7 @@ PSMove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 }
 
 void
-PSMove_disconnect(PSMove *move)
+psmove_disconnect(PSMove *move)
 {
     assert(move != NULL);
     free(move);

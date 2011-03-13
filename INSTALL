@@ -1,0 +1,18 @@
+
+You need CMake, SWIG and Python's headers to build this.
+
+Building:
+
+    mkdir build
+    cd build
+    cmake ..
+    make
+
+Running the C example:
+
+    ./psmove-example
+
+Running the Python example:
+
+    python ../psmove_test.py
+

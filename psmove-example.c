@@ -5,6 +5,7 @@
  **/
 
 #include <unistd.h>
+#include <stdio.h>
 
 #include "psmove.h"
 
@@ -13,25 +14,25 @@ int main(int argc, char* argv[])
     PSMove *move;
     enum PSMove_Connection_Type ctype;
 
-    move = PSMove_connect();
+    move = psmove_connect();
 
-    ctype = PSMove_connection_type(move);
+    ctype = psmove_connection_type(move);
     switch (ctype) {
-        case PSMove_USB:
+        case Conn_USB:
             printf("Connected via USB.\n");
             break;
-        case PSMove_Bluetooth:
+        case Conn_Bluetooth:
             printf("Connected via Bluetooth.\n");
             break;
-        case PSMove_Unknown:
+        case Conn_Unknown:
             printf("Unknown connection type.\n");
             break;
     }
 
 
-    if (ctype == PSMove_USB) {
+    if (ctype == Conn_USB) {
         PSMove_Data_BTAddr addr;
-        PSMove_get_btaddr(move, &addr);
+        psmove_get_btaddr(move, &addr);
         printf("Current BT Host: ");
         for (int i=0; i<6; i++) {
             printf("%02x ", addr[i]);
@@ -43,55 +44,55 @@ int main(int argc, char* argv[])
         const PSMove_Data_BTAddr newhost = {
             0xab, 0x89, 0x67, 0x45, 0x23, 0x01
         };
-        if (!PSMove_set_btaddr(move, &newhost)) {
+        if (!psmove_set_btaddr(move, &newhost)) {
             printf("Could not set BT address!\n");
         }
 #endif
     }
 
     for (int i=0; i<10; i++) {
-        PSMove_set_leds(move, 0, 255*(i%3==0), 0);
-        PSMove_set_rumble(move, 255*(i%2));
-        PSMove_update_leds(move);
+        psmove_set_leds(move, 0, 255*(i%3==0), 0);
+        psmove_set_rumble(move, 255*(i%2));
+        psmove_update_leds(move);
         usleep(10000*(i%10));
     }
 
     for (int i=250; i>=0; i-=5) {
-        PSMove_set_leds(move, i, i, 0);
-        PSMove_set_rumble(move, 0);
-        PSMove_update_leds(move);
+        psmove_set_leds(move, i, i, 0);
+        psmove_set_rumble(move, 0);
+        psmove_update_leds(move);
     }
 
-    PSMove_set_leds(move, 0, 0, 0);
-    PSMove_set_rumble(move, 0);
-    PSMove_update_leds(move);
+    psmove_set_leds(move, 0, 0, 0);
+    psmove_set_rumble(move, 0);
+    psmove_update_leds(move);
 
-    while (!(PSMove_get_buttons(move) & PSMove_PS)) {
-        int res = PSMove_poll(move);
+    while (!(psmove_get_buttons(move) & Btn_PS)) {
+        int res = psmove_poll(move);
         if (res) {
-            if (PSMove_get_buttons(move) & PSMove_TRIANGLE) {
+            if (psmove_get_buttons(move) & Btn_TRIANGLE) {
                 printf("Triangle pressed, with trigger value: %d\n",
-                        PSMove_get_trigger(move));
-                PSMove_set_rumble(move, PSMove_get_trigger(move));
+                        psmove_get_trigger(move));
+                psmove_set_rumble(move, psmove_get_trigger(move));
             } else {
-                PSMove_set_rumble(move, 0x00);
+                psmove_set_rumble(move, 0x00);
             }
 
-            PSMove_set_leds(move, 0, 0, PSMove_get_trigger(move));
+            psmove_set_leds(move, 0, 0, psmove_get_trigger(move));
 
             int x, y, z;
-            PSMove_get_accelerometer(move, &x, &y, &z);
+            psmove_get_accelerometer(move, &x, &y, &z);
             printf("accel: %5d %5d %5d\n", x, y, z);
-            PSMove_get_gyroscope(move, &x, &y, &z);
+            psmove_get_gyroscope(move, &x, &y, &z);
             printf("gyro: %5d %5d %5d\n", x, y, z);
-            PSMove_get_magnetometer(move, &x, &y, &z);
+            psmove_get_magnetometer(move, &x, &y, &z);
             printf("magnetometer: %5d %5d %5d\n", x, y, z);
 
-            PSMove_update_leds(move);
+            psmove_update_leds(move);
         }
     }
 
-    PSMove_disconnect(move);
+    psmove_disconnect(move);
 
     return 0;
 }
