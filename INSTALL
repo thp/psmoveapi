@@ -11,6 +11,7 @@ On a Debian-based system, you can install it like this:
 
 The hidapi library is imported as Git submodule:
 
+  git submodule init
   git submodule update
 
 Building:
