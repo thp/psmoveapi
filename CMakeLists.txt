@@ -9,8 +9,8 @@ add_definitions(-std=c99 -g -Wall)
 find_library(IOKIT IOKit)
 find_library(COREFOUNDATION CoreFoundation)
 
-add_executable(psmove-example hidapi/hid.c psmove.c psmove-example.c)
-target_link_libraries(psmove-example ${IOKIT} ${COREFOUNDATION})
+add_executable(example hidapi/hid.c psmove.c c/example.c)
+target_link_libraries(example ${IOKIT} ${COREFOUNDATION})
 
 
 find_package(SWIG REQUIRED)
