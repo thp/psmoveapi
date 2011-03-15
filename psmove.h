@@ -7,6 +7,10 @@
 #ifndef __PSMOVE_H
 #define __PSMOVE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum PSMove_Connection_Type {
     Conn_Bluetooth,
     Conn_USB,
@@ -154,6 +158,10 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
  **/
 void
 psmove_disconnect(PSMove *move);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

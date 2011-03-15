@@ -1,0 +1,16 @@
+
+PSMoveAPI Qt bindings / QML Example
+-----------------------------------
+
+These are the Qt bindings for the PS Move API, which provides a QObject-based
+library for accessing and controlling the PS Move Motion controller, with
+properties, signals and slots, so you can use the controller inside QML.
+
+An example QML application exists that shows you how you can access the PSMove
+from within QML (setting LEDs/rumble and reading trigger values, etc..).
+
+Be aware that you have to set "enabled" to True in order to get sensor readings
+from the motion controller. Also, this only works if the controller is
+connected via Bluetooth. If the controller is connected via USB, you can't yet
+get any sensor readings, but you can set the LED and Rumble values.
+
