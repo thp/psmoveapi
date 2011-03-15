@@ -1,5 +1,17 @@
 
-You need CMake, SWIG and Python's headers to build this.
+You need CMake, SWIG, Qt >= 4.7 and Python's headers to build this.
+
+On Linux, you also need libusb-1.0 and libudev.
+On Mac OS X, you need IOKit and CoreFoundation.
+
+On a Debian-based system, you can install it like this:
+
+  apt-get install cmake swig python-dev libqt4-dev \
+                  libudev-dev libusb-1.0-0-dev
+
+The hidapi library is imported as Git submodule:
+
+  git submodule update
 
 Building:
 
@@ -7,12 +19,4 @@ Building:
     cd build
     cmake ..
     make
-
-Running the C example:
-
-    ./psmove-example
-
-Running the Python example:
-
-    python ../psmove_test.py
 

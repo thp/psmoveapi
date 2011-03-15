@@ -15,10 +15,6 @@ it to work in Bluetooth mode as well).
 The PS Move protocol information is based on the linmctool and Move On PC
 projects.
 
-See psmove-example.c for an example of how to use the library.
-
-If you want to build the Python bindings, see psmove_test.py for an example.
-
 --
 Thomas Perl <thp.io/about>
 2011-03-13

@@ -1,7 +1,0 @@
-
-Place the relevant files from Alan Ott's hidapi here.
-You need hidapi/hidapi.h and the system-specific hid.c
-implementation (either for Linux or Mac OS X).
-
-hidapi can be found at http://www.signal11.us/oss/hidapi/
-

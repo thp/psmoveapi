@@ -13,6 +13,7 @@ int main(int argc, char* argv[])
 {
     PSMove *move;
     enum PSMove_Connection_Type ctype;
+    int i;
 
     move = psmove_connect();
 
@@ -34,7 +35,7 @@ int main(int argc, char* argv[])
         PSMove_Data_BTAddr addr;
         psmove_get_btaddr(move, &addr);
         printf("Current BT Host: ");
-        for (int i=0; i<6; i++) {
+        for (i=0; i<6; i++) {
             printf("%02x ", addr[i]);
         }
         printf("\n");
@@ -50,14 +51,14 @@ int main(int argc, char* argv[])
 #endif
     }
 
-    for (int i=0; i<10; i++) {
+    for (i=0; i<10; i++) {
         psmove_set_leds(move, 0, 255*(i%3==0), 0);
         psmove_set_rumble(move, 255*(i%2));
         psmove_update_leds(move);
         usleep(10000*(i%10));
     }
 
-    for (int i=250; i>=0; i-=5) {
+    for (i=250; i>=0; i-=5) {
         psmove_set_leds(move, i, i, 0);
         psmove_set_rumble(move, 0);
         psmove_update_leds(move);
