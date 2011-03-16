@@ -14,6 +14,8 @@ PSMoveQt::PSMoveQt()
 {
     _move = psmove_connect();
     _timer.setInterval(10);
+    /* FIXME: initialize fields */
+    _buttons = 0;
 
     /**
      * Re-sending the LED color value every 4 secs should be enough.
@@ -121,12 +123,35 @@ PSMoveQt::setRumble(int rumble)
     }
 }
 
-
 void
 PSMoveQt::onTimeout()
 {
+    int gx, gy, gz, buttons;
+
     while (psmove_poll(_move)) {
         setTrigger(psmove_get_trigger(_move));
+        psmove_get_gyroscope(_move, &gx, &gy, &gz);
+        if (gx != _gx || gy != _gy || gz != _gz) {
+            _gx = gx;
+            _gy = gy;
+            _gz = gz;
+            emit gyroChanged();
+        }
+        buttons = psmove_get_buttons(_move);
+        if (buttons != _buttons) {
+            /* FIXME: Make more generic + for all buttons */
+            if (buttons & Btn_MOVE && !(_buttons & Btn_MOVE)) {
+                emit buttonPressed(PSMoveQt::Move);
+            } else if (!(buttons & Btn_MOVE) && _buttons & Btn_MOVE) {
+                emit buttonReleased(PSMoveQt::Move);
+            }
+            if (buttons & Btn_PS && !(_buttons & Btn_PS)) {
+                emit buttonPressed(PSMoveQt::PS);
+            } else if (!(buttons & Btn_PS) && _buttons & Btn_PS) {
+                emit buttonReleased(PSMoveQt::PS);
+            }
+            _buttons = buttons;
+        }
     }
 }
 

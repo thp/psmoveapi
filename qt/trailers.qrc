@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>trailers.qml</file>
+    <file>click.wav</file>
+    <file>select.wav</file>
+</qresource>
+</RCC>

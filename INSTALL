@@ -4,6 +4,9 @@ You need CMake, SWIG, Qt >= 4.7 and Python's headers to build this.
 On Linux, you also need libusb-1.0 and libudev.
 On Mac OS X, you need IOKit and CoreFoundation.
 
+The Qt Trailers example also needs Qt Mobility >= 1.1 with its
+Declarative Components installed (for Video and Audio playback).
+
 On a Debian-based system, you can install it like this:
 
   apt-get install cmake swig python-dev libqt4-dev \
