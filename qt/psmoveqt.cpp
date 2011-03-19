@@ -10,19 +10,30 @@
 #include <QtDeclarative>
 #include <QtDebug>
 
+/* Update interval for sensor readings and LED setting */
+#define INTERVAL_SENSORS 10
+#define INTERVAL_RGBLEDS 4000
+
 PSMoveQt::PSMoveQt()
+    : _move(psmove_connect()),
+      _timer(),
+      _colorTimer(),
+      _trigger(0),
+      _color(Qt::black),
+      _rumble(0),
+      _gx(0),
+      _gy(0),
+      _gz(0),
+      _buttons(0)
 {
-    _move = psmove_connect();
-    _timer.setInterval(10);
-    /* FIXME: initialize fields */
-    _buttons = 0;
+    _timer.setInterval(INTERVAL_SENSORS);
 
     /**
      * Re-sending the LED color value every 4 secs should be enough.
      * For this we need a timer, and when color and/or rumble are
      * set to a non-zero value, we need to activate it.
      **/
-    _colorTimer.setInterval(4000);
+    _colorTimer.setInterval(INTERVAL_RGBLEDS);
     connect(this, SIGNAL(enabledChanged()),
             this, SLOT(checkColorTimer()));
     connect(this, SIGNAL(colorChanged()),
@@ -38,11 +49,13 @@ PSMoveQt::PSMoveQt()
 
 PSMoveQt::~PSMoveQt()
 {
-    /* Switch off LEDs + rumble on exit */
-    setColor(Qt::black);
-    setRumble(0);
+    if (_move != NULL) {
+        /* Switch off LEDs + rumble on exit */
+        setColor(Qt::black);
+        setRumble(0);
 
-    psmove_disconnect(_move);
+        psmove_disconnect(_move);
+    }
 }
 
 void
