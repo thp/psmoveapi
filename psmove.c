@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include <assert.h>
 #include <unistd.h>
 
 
@@ -109,6 +108,16 @@ struct _PSMove {
     PSMove_Data_Input input;
 };
 
+/* Macro: Print a critical message if an assertion fails */
+#define psmove_CRITICAL(x) \
+        {fprintf(stderr, "[PSMOVE] Assertion fail in %s: %s\n", __func__, x);}
+
+/* Macros: Return immediately if an assertion fails + log */
+#define psmove_return_if_fail(expr) \
+        {if(!(expr)){psmove_CRITICAL(#expr);return;}}
+#define psmove_return_val_if_fail(expr, val) \
+        {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
+
 /* End private definitions */
 
 
@@ -141,7 +150,7 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     unsigned char btg[PSMOVE_BTADDR_GET_SIZE];
     int res;
 
-    assert(move != NULL);
+    psmove_return_val_if_fail(move != NULL, 0);
 
     /* Get calibration data */
     memset(cal, 0, sizeof(cal));
@@ -183,8 +192,8 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     unsigned char bts[PSMOVE_BTADDR_SET_SIZE];
     int res;
 
-    assert(move != NULL);
-    assert(addr != NULL);
+    psmove_return_val_if_fail(move != NULL, 0);
+    psmove_return_val_if_fail(addr != NULL, 0);
 
     /* Get calibration data */
     memset(bts, 0, sizeof(bts));
@@ -201,9 +210,10 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 enum PSMove_Connection_Type
 psmove_connection_type(PSMove *move)
 {
-    assert(move != NULL);
     wchar_t wstr[255];
     int res;
+
+    psmove_return_val_if_fail(move != NULL, Conn_Unknown);
 
     wstr[0] = 0x0000;
     res = hid_get_serial_number_string(move->handle,
@@ -228,7 +238,7 @@ void
 psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
         unsigned char b)
 {
-    assert(move != NULL);
+    psmove_return_if_fail(move != NULL);
     move->leds.r = r;
     move->leds.g = g;
     move->leds.b = b;
@@ -237,7 +247,7 @@ psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
 void
 psmove_set_rumble(PSMove *move, unsigned char rumble)
 {
-    assert(move != NULL);
+    psmove_return_if_fail(move != NULL);
     move->leds.rumble2 = 0x00;
     move->leds.rumble = rumble;
 }
@@ -246,7 +256,8 @@ int
 psmove_update_leds(PSMove *move)
 {
     int res;
-    assert(move != NULL);
+
+    psmove_return_val_if_fail(move != NULL, 0);
 
     res = hid_write(move->handle, (unsigned char*)(&(move->leds)),
             sizeof(move->leds));
@@ -257,7 +268,8 @@ int
 psmove_poll(PSMove *move)
 {
     int res;
-    assert(move != NULL);
+
+    psmove_return_val_if_fail(move != NULL, 0);
 
 #ifdef PSMOVE_DEBUG
     /* store old sequence number before reading */
@@ -269,7 +281,7 @@ psmove_poll(PSMove *move)
 
     if (res == sizeof(move->input)) {
         /* Sanity check: The first byte should be PSMove_Req_GetInput */
-        assert(move->input.type == PSMove_Req_GetInput);
+        psmove_return_val_if_fail(move->input.type == PSMove_Req_GetInput, 0);
 
         /**
          * buttons4's 4 least significant bits contain the sequence number,
@@ -292,7 +304,7 @@ psmove_poll(PSMove *move)
 unsigned int
 psmove_get_buttons(PSMove *move)
 {
-    assert(move != NULL);
+    psmove_return_val_if_fail(move != NULL, 0);
 
     return ((move->input.buttons2) |
             (move->input.buttons1 << 8) |
@@ -303,7 +315,7 @@ psmove_get_buttons(PSMove *move)
 unsigned char
 psmove_get_trigger(PSMove *move)
 {
-    assert(move != NULL);
+    psmove_return_val_if_fail(move != NULL, 0);
 
     return move->input.trigger;
 }
@@ -311,7 +323,7 @@ psmove_get_trigger(PSMove *move)
 void
 psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 {
-    assert(move != NULL);
+    psmove_return_if_fail(move != NULL);
 
     if (ax != NULL) {
         *ax = ((move->input.aXlow + move->input.aXlow2) +
@@ -332,7 +344,7 @@ psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 void
 psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 {
-    assert(move != NULL);
+    psmove_return_if_fail(move != NULL);
 
     if (gx != NULL) {
         *gx = ((move->input.gXlow + move->input.gXlow2) +
@@ -353,7 +365,7 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 void
 psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 {
-    assert(move != NULL);
+    psmove_return_if_fail(move != NULL);
 
     if (mx != NULL) {
         *mx = move->input.mag38 << 0x0C | move->input.mag39 << 0x04;
@@ -371,7 +383,7 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 void
 psmove_disconnect(PSMove *move)
 {
-    assert(move != NULL);
+    psmove_return_if_fail(move != NULL);
     free(move);
 }
 

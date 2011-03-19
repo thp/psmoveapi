@@ -17,6 +17,12 @@ int main(int argc, char* argv[])
 
     move = psmove_connect();
 
+    if (move == NULL) {
+        printf("Move controller not found.\n"
+               "Please connect one via USB or Bluetooth.\n");
+        exit(1);
+    }
+
     ctype = psmove_connection_type(move);
     switch (ctype) {
         case Conn_USB:
