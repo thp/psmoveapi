@@ -5,7 +5,7 @@
  * All Rights Reserved
  **/
 
-#include "psmove.hpp"
+#include "psmoveqt.hpp"
 
 #include <QtDeclarative>
 #include <QtDebug>

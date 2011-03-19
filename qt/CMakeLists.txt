@@ -5,11 +5,11 @@ include_directories(${PSMOVEAPI_SOURCE_DIR} ${QT_QTDECLARATIVE_INCLUDE_DIR})
 
 set(qtexample_SRCS
     example.cpp
-    psmove.cpp
+    psmoveqt.cpp
 )
 
 set(qtexample_MOC_HDRS
-    psmove.hpp
+    psmoveqt.hpp
 )
 
 set(qtexample_RCCS
@@ -26,11 +26,11 @@ target_link_libraries(qtexample ${QT_LIBRARIES} ${PSMOVE_REQUIRED_LIBS} ${QT_QTD
 
 set(qttrailers_SRCS
     trailers.cpp
-    psmove.cpp
+    psmoveqt.cpp
 )
 
 set(qttrailers_MOC_HDRS
-    psmove.hpp
+    psmoveqt.hpp
 )
 
 set(qttrailers_RCCS

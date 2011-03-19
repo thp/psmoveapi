@@ -9,7 +9,7 @@
 #include <QtGui>
 #include <QtDeclarative>
 
-#include "psmove.hpp"
+#include "psmoveqt.hpp"
 
 int
 main(int argc, char *argv[])

@@ -6,8 +6,8 @@
  **/
 
 
-#ifndef __PSMOVE_HPP
-#define __PSMOVE_HPP
+#ifndef __PSMOVEQT_HPP
+#define __PSMOVEQT_HPP
 
 #include <QtCore>
 #include <QtGui>
