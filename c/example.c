@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
             printf("gyro: %5d %5d %5d\n", x, y, z);
             psmove_get_magnetometer(move, &x, &y, &z);
             printf("magnetometer: %5d %5d %5d\n", x, y, z);
+            printf("buttons: %x\n", psmove_get_buttons(move));
 
             psmove_update_leds(move);
         }
