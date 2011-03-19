@@ -3,6 +3,8 @@ include(${QT_USE_FILE})
 
 include_directories(${PSMOVEAPI_SOURCE_DIR} ${QT_QTDECLARATIVE_INCLUDE_DIR})
 
+add_definitions(-DQT_DECLARATIVE_LIB)
+
 set(qtexample_SRCS
     example.cpp
     psmoveqt.cpp
