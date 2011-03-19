@@ -12,7 +12,7 @@ import com.thpinfo.psmove 1.0
 
 Rectangle {
     id: root
-    color: Qt.darker(bg.color, 1.5)
+    color: state=='a'?Qt.darker(bg.color, 1.5):'black'
     width: 500
     height: width
     property bool first: true
@@ -31,7 +31,6 @@ Rectangle {
             PropertyChanges {
                 target: card
                 scale: .001
-                rotation: -90
                 opacity: 0
             }
         },
@@ -48,7 +47,6 @@ Rectangle {
             PropertyChanges {
                 target: card
                 scale: 1
-                rotation: 0
                 opacity: 1
             }
         }
@@ -78,8 +76,8 @@ Rectangle {
         height: parent.height - 100 // width
         anchors.centerIn: parent
 
-        Behavior on scale { PropertyAnimation { duration: 200; easing.type: Easing.OutElastic } }
-        Behavior on opacity { PropertyAnimation { duration: 200; easing.type: Easing.OutExpo } }
+        Behavior on scale { PropertyAnimation { duration: 900; easing.type: Easing.OutElastic } }
+        Behavior on opacity { PropertyAnimation { duration: 900; easing.type: Easing.OutExpo } }
 
         //rotation: move.trigger / 255 * 90
         color: move.color
@@ -88,24 +86,17 @@ Rectangle {
             id: list
             anchors.fill: parent
             model: XmlListModel {
-                source: 'http://www.apple.com/trailers/home/xml/current_720p.xml'
+                source: 'http://www.apple.com/trailers/home/xml/current.xml'
                 query: '/records/movieinfo'
                 XmlRole { name: 'name'; query: 'info/title/string()' }
                 XmlRole { name: 'poster'; query: 'poster/location/string()' }
                 XmlRole { name: 'video'; query: 'preview/large/string()' }
             }
-            /*ListModel {
-                ListElement {
-                    name: 'Test'
-                }
-                ListElement {
-                    name: 'Blubb'
-                }
-            }*/
             delegate: Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 height: 100
+                opacity: (list.currentIndex == index)?1:.6
 
                 Image {
                     id: img
@@ -126,10 +117,10 @@ Rectangle {
                 }
             }
             clip: true
+            highlightMoveDuration: 100
             highlight: Rectangle {
                 color: Qt.lighter(root.color, 2)
                 width: parent.width
-                Behavior on y { PropertyAnimation { } }
             }
         }
 
@@ -166,15 +157,19 @@ Rectangle {
 
             property int initValue: 0
 
-            onGxChanged: {
+            onGyroChanged: {
                 if (root.state == 'a' && move.trigger > 100) {
                     var dx = move.gx / 1000
                     var dz = move.gz / 1000
 
-                    if (click.position > 20 || root.first) {
+                    if (click.position > 10 || root.first) {
 
                         if (Math.abs(dx) > 1 && Math.abs(dx) > Math.abs(dz)) {
-                            var diff = ((Math.abs(dx) > 3) ? 3 : 1)
+                            var diff = parseInt(Math.abs(dx))
+                            if (diff < 3) {
+                                diff = 1
+                            }
+
                             var newValue = list.currentIndex + ((dx>0)?(-diff):(diff))
                             if (newValue >= 0 && newValue < list.model.count) {
                                 root.first = false
@@ -185,7 +180,7 @@ Rectangle {
                             }
                         }
 
-                        if (Math.abs(dz) > 1 && Math.abs(dz) > Math.abs(dx)) {
+                        if (Math.abs(dz) > 3 && Math.abs(dz) > Math.abs(dx)) {
                             root.first = false
                             click.stop()
                             click.play()
@@ -198,30 +193,6 @@ Rectangle {
                 }
             }
         }
-
-        SequentialAnimation {
-            loops: Animation.Infinite
-            running: false
-
-            ColorAnimation {
-                target: move
-                property: 'color'
-                to: 'red'
-                duration: 2000
-            }
-            ColorAnimation {
-                target: move
-                property: 'color'
-                to: 'blue'
-                duration: 2000
-            }
-            ColorAnimation {
-                target: move
-                property: 'color'
-                to: 'green'
-                duration: 2000
-            }
-        }
     }
 
     Video {
@@ -231,9 +202,9 @@ Rectangle {
         source: (root.state=='b')?(list.model.get(list.currentIndex).video):('')
         playing: (root.state == 'b')
 
-        Behavior on scale { PropertyAnimation { duration: 500; easing.type: Easing.OutBounce } }
-        Behavior on opacity { PropertyAnimation { duration: 700; easing.type: Easing.OutExpo } }
-        Behavior on rotation { PropertyAnimation { duration: 400; easing.type: Easing.InExpo } }
+        Behavior on scale { PropertyAnimation { duration: 500; easing.type: Easing.OutExpo } }
+        Behavior on opacity { PropertyAnimation { duration: 500; easing.type: Easing.OutExpo } }
+        Behavior on rotation { PropertyAnimation { duration: 700; easing.type: Easing.InExpo } }
 
     }
 }

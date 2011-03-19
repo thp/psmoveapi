@@ -23,12 +23,10 @@ main(int argc, char *argv[])
     view.setWindowTitle("PS Move API - Move Trailers QML Example");
     view.setResizeMode(QDeclarativeView::SizeRootObjectToView);
     view.setSource(QUrl("qrc:/trailers.qml"));
-    view.showFullScreen();
+    view.showMaximized();
 
     QObject::connect(view.engine(), SIGNAL(quit()),
                      &app, SLOT(quit()));
-
-    view.raise();
 
     return app.exec();
 }
