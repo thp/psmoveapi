@@ -47,7 +47,9 @@ public:
         T = Btn_T,
     };
 
+#ifdef QT_DECLARATIVE_LIB
     static void registerQML();
+#endif
 
     bool enabled();
     void setEnabled(bool enabled);

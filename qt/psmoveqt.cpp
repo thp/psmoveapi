@@ -7,7 +7,10 @@
 
 #include "psmoveqt.hpp"
 
-#include <QtDeclarative>
+#ifdef QT_DECLARATIVE_LIB
+#  include <QtDeclarative>
+#endif
+
 #include <QtDebug>
 
 /* Update interval for sensor readings and LED setting */
@@ -58,11 +61,13 @@ PSMoveQt::~PSMoveQt()
     }
 }
 
+#ifdef QT_DECLARATIVE_LIB
 void
 PSMoveQt::registerQML()
 {
     qmlRegisterType<PSMoveQt>("com.thpinfo.psmove", 1, 0, "PSMove");
 }
+#endif
 
 bool
 PSMoveQt::enabled()
