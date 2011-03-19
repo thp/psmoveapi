@@ -35,7 +35,17 @@ public:
     PSMoveQt();
     ~PSMoveQt();
 
-    enum ButtonType { Move, PS /* FIXME: Add all buttons */};
+    enum ButtonType {
+        Triangle = Btn_TRIANGLE,
+        Circle = Btn_CIRCLE,
+        Cross = Btn_CROSS,
+        Square = Btn_SQUARE,
+        Select = Btn_SELECT,
+        Start = Btn_START,
+        PS = Btn_PS,
+        Move = Btn_MOVE,
+        T = Btn_T,
+    };
 
     static void registerQML();
 

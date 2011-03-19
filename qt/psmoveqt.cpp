@@ -152,17 +152,17 @@ PSMoveQt::onTimeout()
         }
         buttons = psmove_get_buttons(_move);
         if (buttons != _buttons) {
-            /* FIXME: Make more generic + for all buttons */
-            if (buttons & Btn_MOVE && !(_buttons & Btn_MOVE)) {
-                emit buttonPressed(PSMoveQt::Move);
-            } else if (!(buttons & Btn_MOVE) && _buttons & Btn_MOVE) {
-                emit buttonReleased(PSMoveQt::Move);
+            int pressed = (buttons & ~_buttons);
+            int released = (_buttons & ~buttons);
+
+            for (int i=1; i<=PSMoveQt::T; i <<= 1) {
+                if (pressed & i) {
+                    emit buttonPressed(i);
+                } else if (released & i) {
+                    emit buttonReleased(i);
+                }
             }
-            if (buttons & Btn_PS && !(_buttons & Btn_PS)) {
-                emit buttonPressed(PSMoveQt::PS);
-            } else if (!(buttons & Btn_PS) && _buttons & Btn_PS) {
-                emit buttonReleased(PSMoveQt::PS);
-            }
+
             _buttons = buttons;
         }
     }
