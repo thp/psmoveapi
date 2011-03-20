@@ -11,9 +11,11 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        psmovetestgui.cpp
+        psmovetestgui.cpp \
+    psmovesensorscene.cpp
 
-HEADERS  += psmovetestgui.h
+HEADERS  += psmovetestgui.h \
+    psmovesensorscene.h
 
 FORMS    += psmovetestgui.ui
 
@@ -36,4 +38,3 @@ macx {
     LIBS += -framework IOKit -framework CoreFoundation
     ICON = psmove.icns
 }
-

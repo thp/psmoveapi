@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "psmoveqt.hpp"
+
 namespace Ui {
     class PSMoveTestGUI;
 }
@@ -11,12 +13,31 @@ class PSMoveTestGUI : public QMainWindow
 {
     Q_OBJECT
 
+    PSMoveQt *psm;
+    QColor colorLEDs;
+
 public:
     explicit PSMoveTestGUI(QWidget *parent = 0);
     ~PSMoveTestGUI();
 
+public slots:
+    void setTrigger();
+    void onButtonPressed(int button);
+    void onButtonReleased(int button);
+
 private slots:
-    void on_actionQuit_activated();
+    void setColor(QColor color);
+    void setButton(int button, bool pressed);
+
+    void on_checkboxEnable_toggled(bool checked);
+    void on_buttonLEDs_clicked();
+    void on_buttonQuit_clicked();
+
+    void on_sliderRumble_sliderMoved(int position);
+
+    void on_buttonBluetoothGet_clicked();
+
+    void on_buttonBluetoothSet_clicked();
 
 private:
     Ui::PSMoveTestGUI *ui;
