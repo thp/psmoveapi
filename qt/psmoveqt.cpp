@@ -11,16 +11,15 @@
 #  include <QtDeclarative>
 #endif
 
-#include <QtDebug>
-
 /* Update interval for sensor readings and LED setting */
 #define INTERVAL_SENSORS 10
 #define INTERVAL_RGBLEDS 4000
 
-PSMoveQt::PSMoveQt()
-    : _move(psmove_connect()),
+PSMoveQt::PSMoveQt(int index)
+    : _move(psmove_connect_by_id(index)),
       _timer(),
       _colorTimer(),
+      _index(index),
       _trigger(0),
       _color(Qt::black),
       _rumble(0),
@@ -62,6 +61,12 @@ PSMoveQt::~PSMoveQt()
 
         psmove_disconnect(_move);
     }
+}
+
+int
+PSMoveQt::count()
+{
+    return psmove_count_connected();
 }
 
 #ifdef QT_DECLARATIVE_LIB
@@ -107,6 +112,17 @@ PSMoveQt::setTrigger(int trigger)
     }
 }
 
+void
+PSMoveQt::setIndex(int index)
+{
+    if (_index != index) {
+        _index = index;
+        PSMove *old = _move;
+        _move = psmove_connect_by_id(_index);
+        psmove_disconnect(old);
+        emit indexChanged();
+    }
+}
 
 QColor
 PSMoveQt::color()

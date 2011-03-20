@@ -23,6 +23,7 @@ class PSMoveQt : public QObject
     QTimer _timer;
     QTimer _colorTimer;
 
+    int _index;
     int _trigger;
     QColor _color;
     int _rumble;
@@ -35,8 +36,10 @@ class PSMoveQt : public QObject
     int _buttons;
 
 public:
-    PSMoveQt();
+    PSMoveQt(int index=0);
     ~PSMoveQt();
+
+    static int count();
 
     enum ButtonType {
         Triangle = Btn_TRIANGLE,
@@ -70,7 +73,11 @@ public:
     int gy() { return _gy; }
     int gz() { return _gz; }
 
+    int index() { return _index; }
+    void setIndex(int index);
+
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
+    Q_PROPERTY(int index READ index WRITE setIndex NOTIFY indexChanged)
     Q_PROPERTY(int trigger READ trigger WRITE setTrigger NOTIFY triggerChanged)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(int rumble READ rumble WRITE setRumble NOTIFY rumbleChanged)
@@ -88,6 +95,7 @@ private slots:
 
 signals:
     void enabledChanged();
+    void indexChanged();
     void triggerChanged();
     void colorChanged();
     void rumbleChanged();
