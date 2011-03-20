@@ -16,10 +16,13 @@ int main(int argc, char* argv[])
     enum PSMove_Connection_Type ctype;
     int i;
 
+    i = psmove_count_connected();
+    printf("Connected controllers: %d\n", i);
+
     move = psmove_connect();
 
     if (move == NULL) {
-        printf("Move controller not found.\n"
+        printf("Could not connect to default Move controller.\n"
                "Please connect one via USB or Bluetooth.\n");
         exit(1);
     }

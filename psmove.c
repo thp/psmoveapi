@@ -103,6 +103,9 @@ struct _PSMove {
     /* The handle to the HIDAPI device */
     hid_device *handle;
 
+    /* Index (at connection time) - not exposed yet */
+    int id;
+
     /* Various buffers for PS Move-related data */
     PSMove_Data_LEDs leds;
     PSMove_Data_Input input;
@@ -120,14 +123,29 @@ struct _PSMove {
 
 /* End private definitions */
 
+int
+psmove_count_connected()
+{
+    struct hid_device_info *devs, *cur_dev;
+    int count = 0;
 
+    devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+    cur_dev = devs;
+    while (cur_dev) {
+        count++;
+        cur_dev = cur_dev->next;
+    }
+    hid_free_enumeration(devs);
+
+    return count;
+}
 
 PSMove *
-psmove_connect()
+psmove_connect_by_serial(wchar_t *serial, int id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
 
-    move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, NULL);
+    move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
 
     if (!move->handle) {
         free(move);
@@ -140,7 +158,39 @@ psmove_connect()
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
 
+    /* Remember the ID/index */
+    move->id = id;
+
     return move;
+}
+
+PSMove *
+psmove_connect_by_id(int id)
+{
+    struct hid_device_info *devs, *cur_dev;
+    int count = 0;
+    PSMove *move = NULL;
+
+    devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+    cur_dev = devs;
+    while (cur_dev) {
+        if (count == id) {
+            move = psmove_connect_by_serial(cur_dev->serial_number, id);
+            break;
+        }
+        count++;
+        cur_dev = cur_dev->next;
+    }
+    hid_free_enumeration(devs);
+
+    return move;
+}
+
+
+PSMove *
+psmove_connect()
+{
+    return psmove_connect_by_serial(NULL, 0);
 }
 
 int

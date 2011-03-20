@@ -9,6 +9,8 @@
 
 typedef struct {} PSMove;
 
+int count_connected();
+
 %extend PSMove {
     /* Connection type */
     const int connection_type;
@@ -30,8 +32,8 @@ typedef struct {} PSMove;
 
     /* FIXME: set/get btaddr */
 
-    PSMove() {
-        return psmove_connect();
+    PSMove(int id=0) {
+        return psmove_connect_by_id(id);
     }
 
     void set_leds(int r, int g, int b) {
@@ -134,6 +136,11 @@ PSMove_mz_get(PSMove *move) {
     int result;
     psmove_get_magnetometer(move, NULL, NULL, &result);
     return result;
+}
+
+int count_connected()
+{
+    return psmove_count_connected();
 }
 
 %}

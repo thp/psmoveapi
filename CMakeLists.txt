@@ -36,6 +36,9 @@ set(PSMOVE_SRC ${HIDAPI_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
 add_executable(example c/example.c ${PSMOVE_SRC})
 target_link_libraries(example ${PSMOVE_REQUIRED_LIBS})
 
+add_executable(multiple c/multiple.c ${PSMOVE_SRC})
+target_link_libraries(multiple ${PSMOVE_REQUIRED_LIBS})
+
 # Python bindings
 
 find_package(SWIG REQUIRED)

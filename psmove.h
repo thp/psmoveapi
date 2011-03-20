@@ -48,7 +48,20 @@ struct _PSMove;
 typedef struct _PSMove PSMove;
 
 /**
- * Connect to a PS Move controller
+ * Get the number of currently-connected PS Move controllers
+ **/
+int
+psmove_count_connected();
+
+/**
+ * Connect to the PS Move controller id (zero-based index)
+ * Returns: A newly-allocated PSMove structure or NULL on error
+ **/
+PSMove *
+psmove_connect_by_id(int id);
+
+/**
+ * Connect to the default PS Move controller
  * Returns: A newly-allocated PSMove structure or NULL on error
  **/
 PSMove *
