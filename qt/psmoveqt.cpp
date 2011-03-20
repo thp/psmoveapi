@@ -24,6 +24,9 @@ PSMoveQt::PSMoveQt()
       _trigger(0),
       _color(Qt::black),
       _rumble(0),
+      _ax(0),
+      _ay(0),
+      _az(0),
       _gx(0),
       _gy(0),
       _gz(0),
@@ -144,7 +147,7 @@ PSMoveQt::setRumble(int rumble)
 void
 PSMoveQt::onTimeout()
 {
-    int gx, gy, gz, buttons;
+    int ax, ay, az, gx, gy, gz, buttons;
 
     while (psmove_poll(_move)) {
         setTrigger(psmove_get_trigger(_move));
@@ -154,6 +157,13 @@ PSMoveQt::onTimeout()
             _gy = gy;
             _gz = gz;
             emit gyroChanged();
+        }
+        psmove_get_accelerometer(_move, &ax, &ay, &az);
+        if (ax != _ax || ay != _ay || az != _az) {
+            _ax = ax;
+            _ay = ay;
+            _az = az;
+            emit accelerometerChanged();
         }
         buttons = psmove_get_buttons(_move);
         if (buttons != _buttons) {
