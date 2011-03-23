@@ -12,12 +12,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         psmovetestgui.cpp \
-    psmovesensorscene.cpp
+    psmovesensorscene.cpp \
+    devicechooserdialog.cpp
 
 HEADERS  += psmovetestgui.h \
-    psmovesensorscene.h
+    psmovesensorscene.h \
+    devicechooserdialog.h
 
-FORMS    += psmovetestgui.ui
+FORMS    += psmovetestgui.ui \
+    devicechooserdialog.ui
 
 RESOURCES +=
 
@@ -35,6 +38,6 @@ INCLUDEPATH += ../hidapi/hidapi
 
 macx {
     SOURCES += ../hidapi/mac/hid.c
-    LIBS += -framework IOKit -framework CoreFoundation
+    LIBS += -framework IOKit -framework CoreFoundation -framework IOBluetooth
     ICON = psmove.icns
 }

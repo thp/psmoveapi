@@ -16,9 +16,15 @@ class PSMoveTestGUI : public QMainWindow
     PSMoveQt *psm;
     QColor colorLEDs;
 
+    int _chosenIndex;
+    PSMoveQt *_red;
+    PSMoveQt *_green;
+
 public:
     explicit PSMoveTestGUI(QWidget *parent = 0);
     ~PSMoveTestGUI();
+
+    void reconnectByIndex(int index);
 
 public slots:
     void setTrigger();
@@ -34,8 +40,6 @@ private slots:
     void on_buttonQuit_clicked();
 
     void on_sliderRumble_sliderMoved(int position);
-
-    void on_buttonBluetoothGet_clicked();
 
     void on_buttonBluetoothSet_clicked();
 

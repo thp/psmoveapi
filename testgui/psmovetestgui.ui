@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>535</width>
-    <height>387</height>
+    <width>591</width>
+    <height>455</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,7 +15,7 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+    <item row="0" column="0" rowspan="2">
      <widget class="QGroupBox" name="groupSensors">
       <property name="title">
        <string>Motion Sensors</string>
@@ -109,44 +109,6 @@
       </layout>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QGroupBox" name="groupTrigger">
-      <property name="title">
-       <string>Trigger</string>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_4">
-       <item row="0" column="0">
-        <widget class="QProgressBar" name="progressbarTrigger">
-         <property name="maximum">
-          <number>255</number>
-         </property>
-         <property name="value">
-          <number>0</number>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QGroupBox" name="groupRumble">
-      <property name="title">
-       <string>Rumble</string>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_2">
-       <item>
-        <widget class="QSlider" name="sliderRumble">
-         <property name="maximum">
-          <number>255</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
     <item row="2" column="1">
      <widget class="QGroupBox" name="groupLEDs">
       <property name="title">
@@ -198,26 +160,54 @@ p, li { white-space: pre-wrap; }
       </property>
      </widget>
     </item>
-    <item row="3" column="0" colspan="2">
+    <item row="3" column="1">
      <widget class="QGroupBox" name="groupBluetooth">
       <property name="title">
        <string>Bluetooth Host Address</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QLineEdit" name="lineeditBluetooth"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="buttonBluetoothGet">
+        <widget class="QPushButton" name="buttonBluetoothSet">
          <property name="text">
-          <string>Get</string>
+          <string>Pair with this computer</string>
          </property>
         </widget>
        </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QGroupBox" name="groupRumble">
+      <property name="title">
+       <string>Rumble</string>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
-        <widget class="QPushButton" name="buttonBluetoothSet">
-         <property name="text">
-          <string>Set</string>
+        <widget class="QSlider" name="sliderRumble">
+         <property name="maximum">
+          <number>255</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QGroupBox" name="groupTrigger">
+      <property name="title">
+       <string>Trigger</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <widget class="QProgressBar" name="progressbarTrigger">
+         <property name="maximum">
+          <number>255</number>
+         </property>
+         <property name="value">
+          <number>0</number>
          </property>
         </widget>
        </item>

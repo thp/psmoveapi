@@ -3,27 +3,21 @@
 
 #include "psmovesensorscene.h"
 
+#include "devicechooserdialog.h"
+
 PSMoveTestGUI::PSMoveTestGUI(QWidget *parent) :
     QMainWindow(parent),
     psm(NULL),
     colorLEDs(Qt::black),
+    _chosenIndex(-1),
+    _red(NULL),
+    _green(NULL),
     ui(new Ui::PSMoveTestGUI)
 {
     ui->setupUi(this);
-    psm = new PSMoveQt();
 
-    ui->viewSensors->setScene(new PSMoveSensorScene(this, psm));
     on_checkboxEnable_toggled(false);
     setColor(Qt::red);
-
-    connect(psm, SIGNAL(triggerChanged()),
-            this, SLOT(setTrigger()));
-
-    connect(psm, SIGNAL(buttonPressed(int)),
-            this, SLOT(onButtonPressed(int)));
-
-    connect(psm, SIGNAL(buttonReleased(int)),
-            this, SLOT(onButtonReleased(int)));
 }
 
 PSMoveTestGUI::~PSMoveTestGUI()
@@ -41,14 +35,73 @@ void PSMoveTestGUI::on_checkboxEnable_toggled(bool checked)
     ui->groupBluetooth->setEnabled(checked);
 
     if (checked) {
+        int index = 0;
+
+        switch (PSMoveQt::count()) {
+            case 0:
+                QMessageBox::warning(this, "Cannot connect",
+                    "No PS Move controller found. "
+                    "Please connect one via USB or Bluetooth.");
+                ui->checkboxEnable->toggle();
+                return;
+                break;
+            case 1:
+                index = 0;
+                break;
+            default:
+                if (_chosenIndex >= 0) {
+                    index = _chosenIndex;
+                    _chosenIndex = -1;
+                } else {
+                    ui->checkboxEnable->toggle();
+                    _red = new PSMoveQt(0);
+                    _red->setColor(Qt::red);
+                    _green = new PSMoveQt(1);
+                    _green->setColor(Qt::green);
+                    _chosenIndex = -1;
+                    (new DeviceChooserDialog(this))->show();
+                    return;
+                }
+                break;
+        }
+
+        psm = new PSMoveQt(index);
+
+        switch (psm->connectionType()) {
+            case PSMoveQt::Bluetooth:
+                ui->checkboxEnable->setText("Enable PS Move controller (connected via Bluetooth)");
+                break;
+            case PSMoveQt::USB:
+                ui->checkboxEnable->setText("Enable PS Move controller (connected via USB)");
+                break;
+            default:
+                break;
+        }
+
+        connect(psm, SIGNAL(triggerChanged()),
+                this, SLOT(setTrigger()));
+
+        connect(psm, SIGNAL(buttonPressed(int)),
+                this, SLOT(onButtonPressed(int)));
+
+        connect(psm, SIGNAL(buttonReleased(int)),
+                this, SLOT(onButtonReleased(int)));
+
+        //ui->viewSensors->setScene(new PSMoveSensorScene(this, psm));
+
         psm->setRumble(ui->sliderRumble->value());
         psm->setColor(colorLEDs);
+        psm->setEnabled(true);
     } else {
-        psm->setRumble(0);
-        psm->setColor(Qt::black);
+        if (psm != NULL) {
+            psm->setRumble(0);
+            psm->setColor(Qt::black);
+            psm->setEnabled(false);
+            delete psm;
+        }
+        psm = NULL;
+        ui->checkboxEnable->setText("Enable PS Move controller");
     }
-
-    psm->setEnabled(checked);
 }
 
 void PSMoveTestGUI::setColor(QColor color)
@@ -57,7 +110,7 @@ void PSMoveTestGUI::setColor(QColor color)
     ui->labelLEDs->setText("<div style='background-color: "+colorLEDs.name()+
                            "; color: "+colorLEDs.name()+";'>LEDs</div>");
 
-    if (psm->enabled()) {
+    if (psm != NULL && psm->enabled()) {
         psm->setColor(color);
     }
 }
@@ -78,12 +131,14 @@ void PSMoveTestGUI::on_buttonQuit_clicked()
 
 void PSMoveTestGUI::setTrigger()
 {
-    ui->progressbarTrigger->setValue(psm->trigger());
+    if (psm != NULL) {
+        ui->progressbarTrigger->setValue(psm->trigger());
+    }
 }
 
 void PSMoveTestGUI::on_sliderRumble_sliderMoved(int position)
 {
-    if (psm->enabled()) {
+    if (psm != NULL && psm->enabled()) {
         psm->setRumble(position);
     }
 }
@@ -133,12 +188,40 @@ void PSMoveTestGUI::setButton(int button, bool pressed)
     }
 }
 
-void PSMoveTestGUI::on_buttonBluetoothGet_clicked()
-{
-    ui->lineeditBluetooth->setText("FIXME");
-}
-
 void PSMoveTestGUI::on_buttonBluetoothSet_clicked()
 {
-    QMessageBox::information(this, "FIXME", "FIXME");
+    if (psm != NULL && psm->connectionType() == PSMoveQt::Bluetooth) {
+        QMessageBox::information(this, "Already paired",
+            "The controller is already connected. No need for pairing.");
+    } else if (psm != NULL && psm->connectionType() != PSMoveQt::USB) {
+        QMessageBox::warning(this, "Could not pair",
+            "Please connect your controller via USB.");
+    } else if (psm != NULL && psm->pair()) {
+        QMessageBox::information(this, "Pairing successful",
+            "Disconnect the USB cable, "
+            "then press the PS button to connect via Bluetooth.");
+        ui->checkboxEnable->toggle();
+    } else {
+        QMessageBox::warning(this, "Could not pair",
+            "Please make sure your PS Move is connected via USB.");
+    }
+}
+
+void PSMoveTestGUI::reconnectByIndex(int index)
+{
+    _chosenIndex = index;
+
+    if (_red != NULL) {
+        delete _red;
+        _red = NULL;
+    }
+
+    if (_green != NULL) {
+        delete _green;
+        _green = NULL;
+    }
+
+    if (index != -1) {
+        ui->checkboxEnable->toggle();
+    }
 }
