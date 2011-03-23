@@ -17,7 +17,7 @@
 class PSMoveQt : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ButtonType)
+    Q_ENUMS(ButtonType ConnectionType)
 
     PSMove *_move;
     QTimer _timer;
@@ -55,6 +55,14 @@ public:
         T = Btn_T,
     };
 
+    enum ConnectionType {
+        USB = Conn_USB,
+        Bluetooth = Conn_Bluetooth,
+        Unknown = Conn_Unknown,
+    };
+
+    int connectionType();
+
 #ifdef QT_DECLARATIVE_LIB
     static void registerQML();
 #endif
@@ -89,6 +97,7 @@ public:
     Q_PROPERTY(int gx READ gx NOTIFY gyroChanged)
     Q_PROPERTY(int gy READ gy NOTIFY gyroChanged)
     Q_PROPERTY(int gz READ gz NOTIFY gyroChanged)
+    Q_PROPERTY(int connectionType READ connectionType NOTIFY indexChanged)
 
 private slots:
     void onTimeout();

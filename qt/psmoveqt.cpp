@@ -79,6 +79,19 @@ PSMoveQt::pair()
     }
 }
 
+int
+PSMoveQt::connectionType()
+{
+    switch (psmove_connection_type(_move)) {
+        case Conn_USB:
+            return PSMoveQt::USB;
+        case Conn_Bluetooth:
+            return PSMoveQt::Bluetooth;
+        default:
+            return PSMoveQt::Unknown;
+    }
+}
+
 #ifdef QT_DECLARATIVE_LIB
 void
 PSMoveQt::registerQML()
