@@ -30,8 +30,6 @@ int count_connected();
     const int my;
     const int mz;
 
-    /* FIXME: set/get btaddr */
-
     PSMove(int id=0) {
         return psmove_connect_by_id(id);
     }
@@ -46,6 +44,10 @@ int count_connected();
 
     int update_leds() {
         return psmove_update_leds($self);
+    }
+
+    int pair() {
+        return psmove_pair($self);
     }
 
     int poll() {

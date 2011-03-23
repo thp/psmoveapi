@@ -69,6 +69,16 @@ PSMoveQt::count()
     return psmove_count_connected();
 }
 
+bool
+PSMoveQt::pair()
+{
+    if (psmove_pair(_move)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 #ifdef QT_DECLARATIVE_LIB
 void
 PSMoveQt::registerQML()

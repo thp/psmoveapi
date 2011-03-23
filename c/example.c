@@ -51,9 +51,18 @@ int main(int argc, char* argv[])
         printf("\n");
 
 #if 0
+        /* This is the easy method (pair to this host): */
+        if (psmove_pair(move)) {
+            printf("Paired. Press the PS Button now :)\n");
+        } else {
+            printf("psmove_pair() failed :/\n");
+        }
+
+        /* This is the advanced method: */
+
         /* Example BT Address: 01:23:45:67:89:ab */
         const PSMove_Data_BTAddr newhost = {
-            0xab, 0x89, 0x67, 0x45, 0x23, 0x01
+            0x01, 0x23, 0x45, 0x67, 0x89, 0xab,
         };
         if (!psmove_set_btaddr(move, &newhost)) {
             printf("Could not set BT address!\n");

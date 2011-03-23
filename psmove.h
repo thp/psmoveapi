@@ -40,7 +40,7 @@ enum PSMove_Button {
     Btn_T = 1 << 0x14,
 };
 
-/* A Bluetooth address. Most significant byte first. */
+/* A Bluetooth address. */
 typedef unsigned char PSMove_Data_BTAddr[6];
 
 /* Opaque data type for the PS Move internal data */
@@ -92,6 +92,17 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
  **/
 int
 psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+
+/**
+ * Set the Host Bluetooth address of the PS Move to this
+ * computer's Bluetooth address. Only works via USB.
+ *
+ * Only implemented for OS X for now.
+ *
+ * Will return nonzero on success, zero on error.
+ **/
+int
+psmove_pair(PSMove *move);
 
 /**
  * Set the LEDs of the PS Move controller. You need to

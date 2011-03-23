@@ -4,15 +4,18 @@ cmake_minimum_required(VERSION 2.6)
 project(PSMOVEAPI)
 
 include_directories(${PSMOVEAPI_SOURCE_DIR}/hidapi/hidapi)
-add_definitions(-g -Wall)
+#add_definitions(-g -Wall)
+add_definitions(-O2)
 
 set(PSMOVE_REQUIRED_LIBS)
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(IOKIT IOKit)
     find_library(COREFOUNDATION CoreFoundation)
+    find_library(IOBLUETOOTH IOBluetooth)
     list(APPEND PSMOVE_REQUIRED_LIBS ${IOKIT})
     list(APPEND PSMOVE_REQUIRED_LIBS ${COREFOUNDATION})
+    list(APPEND PSMOVE_REQUIRED_LIBS ${IOBLUETOOTH})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/mac/hid.c)
 ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -35,6 +38,9 @@ set(PSMOVE_SRC ${HIDAPI_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
 
 add_executable(example c/example.c ${PSMOVE_SRC})
 target_link_libraries(example ${PSMOVE_REQUIRED_LIBS})
+
+add_executable(pair c/pair.c ${PSMOVE_SRC})
+target_link_libraries(pair ${PSMOVE_REQUIRED_LIBS})
 
 add_executable(multiple c/multiple.c ${PSMOVE_SRC})
 target_link_libraries(multiple ${PSMOVE_REQUIRED_LIBS})

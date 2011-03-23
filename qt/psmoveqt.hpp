@@ -41,6 +41,8 @@ public:
 
     static int count();
 
+    bool pair();
+
     enum ButtonType {
         Triangle = Btn_TRIANGLE,
         Circle = Btn_CIRCLE,

@@ -14,6 +14,10 @@
 #include <wchar.h>
 #include <unistd.h>
 
+/* OS-specific includes, for getting the Bluetooth address */
+#ifdef __APPLE__
+#  include <IOBluetooth/Bluetooth.h>
+#endif
 
 
 /* Begin private definitions */
@@ -199,6 +203,7 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     unsigned char cal[PSMOVE_CALIBRATION_SIZE];
     unsigned char btg[PSMOVE_BTADDR_GET_SIZE];
     int res;
+    int i;
 
     psmove_return_val_if_fail(move != NULL, 0);
 
@@ -218,14 +223,17 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     if (res == sizeof(btg)) {
 #ifdef PSMOVE_DEBUG
         fprintf(stderr, "[PSMOVE] current bt mac addr: ");
-        for (int i=15; i>=10; i--) {
+        for (i=15; i>=10; i--) {
             if (i != 15) putc(':', stderr);
             fprintf(stderr, "%02x", btg[i]);
         }
         fprintf(stderr, "\n");
 #endif
         if (addr != NULL) {
-            /* Copy 6 bytes (btg[10]..btg[15]) into addr */
+            /* Copy 6 bytes (btg[10]..btg[15]) into addr, reversed */
+            for (i=0; i<6; i++) {
+                (*addr)[i] = btg[15-i];
+            }
             memcpy(addr, btg+10, 6);
         }
 
@@ -241,6 +249,7 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 {
     unsigned char bts[PSMOVE_BTADDR_SET_SIZE];
     int res;
+    int i;
 
     psmove_return_val_if_fail(move != NULL, 0);
     psmove_return_val_if_fail(addr != NULL, 0);
@@ -249,12 +258,50 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     memset(bts, 0, sizeof(bts));
     bts[0] = PSMove_Req_SetBTAddr;
 
-    /* Copy 6 bytes from addr into bts[1]..bts[6] */
-    memcpy(bts+1, addr, 6);
+    /* Copy 6 bytes from addr into bts[1]..bts[6], reversed */
+    for (i=0; i<6; i++) {
+        bts[1+5-i] = (*addr)[i];
+    }
 
     res = hid_send_feature_report(move->handle, bts, sizeof(bts));
 
     return (res == sizeof(bts));
+}
+
+int
+psmove_pair(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+
+#ifdef __APPLE__
+    PSMove_Data_BTAddr btaddr;
+    BluetoothDeviceAddress address;
+    IOReturn result;
+    int i;
+
+    result = IOBluetoothLocalDeviceReadAddress(&address, NULL, NULL, NULL);
+
+    if (result != kIOReturnSuccess) {
+        return 0;
+    }
+
+    if (!psmove_get_btaddr(move, &btaddr)) {
+        return 0;
+    }
+
+    for (i=0; i<6; i++) {
+        btaddr[i] = address.data[i];
+    }
+
+    if (!psmove_set_btaddr(move, &btaddr)) {
+        return 0;
+    }
+
+    return 1;
+#else
+    /* FIXME: Implement for Linux, using Bluez */
+    return 0;
+#endif
 }
 
 enum PSMove_Connection_Type
