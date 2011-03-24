@@ -12,7 +12,7 @@ import com.thpinfo.psmove 1.0
 
 Rectangle {
     id: root
-    color: state=='a'?Qt.darker(bg.color, 1.5):'black'
+    color: state=='a'?Qt.darker(bg.color, 2):'black'
     width: 500
     height: width
     property bool first: true
@@ -82,6 +82,42 @@ Rectangle {
         //rotation: move.trigger / 255 * 90
         color: move.color
 
+        Image {
+            id: backdrop
+            property real opa: 0
+
+            source: list.model.get(list.currentIndex).cover
+            anchors.centerIn: parent
+            opacity: (status == Image.Ready)?opa:0
+            asynchronous: true
+
+            state: 'behind'
+
+            states: [
+                State {
+                    name: 'behind'
+                    PropertyChanges {
+                        target: backdrop
+                        opa: .5
+                        z: 0
+                        scale: .7
+                    }
+                },
+                State {
+                    name: 'front'
+                    PropertyChanges {
+                        target: backdrop
+                        opa: 1
+                        z: 100
+                        scale: 1
+                    }
+                }
+            ]
+
+            Behavior on opacity { PropertyAnimation { duration: 500; easing.type: Easing.OutExpo } }
+            Behavior on scale { PropertyAnimation { duration: 500; easing.type: Easing.OutExpo } }
+        }
+
         ListView {
             id: list
             anchors.fill: parent
@@ -90,6 +126,7 @@ Rectangle {
                 query: '/records/movieinfo'
                 XmlRole { name: 'name'; query: 'info/title/string()' }
                 XmlRole { name: 'poster'; query: 'poster/location/string()' }
+                XmlRole { name: 'cover'; query: 'poster/xlarge/string()' }
                 XmlRole { name: 'video'; query: 'preview/large/string()' }
             }
             delegate: Item {
@@ -112,6 +149,8 @@ Rectangle {
                     id: txt
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: img.right
+                    anchors.leftMargin: 50
+                    color: '#167'
                     text: name
                     font.pixelSize: 40
                 }
@@ -119,7 +158,7 @@ Rectangle {
             clip: true
             highlightMoveDuration: 100
             highlight: Rectangle {
-                color: Qt.lighter(root.color, 2)
+                color: '#30000000'
                 width: parent.width
             }
         }
@@ -136,7 +175,7 @@ Rectangle {
         PSMove {
             id: move
             enabled: true
-            color: '#992'
+            color: '#012'
             //rumble: trigger / 2
 
             Behavior on color { ColorAnimation { duration: 1000 } }
@@ -148,6 +187,8 @@ Rectangle {
                     root.state = (root.state == 'a')?'b':'a'
                 } else if (button == PSMove.PS) {
                     Qt.quit()
+                } else if (button == PSMove.Cross) {
+                    backdrop.state = (backdrop.state == 'behind')?'front':'behind'
                 }
             }
 
@@ -180,7 +221,7 @@ Rectangle {
                             }
                         }
 
-                        if (Math.abs(dz) > 3 && Math.abs(dz) > Math.abs(dx)) {
+                        /*if (Math.abs(dz) > 3 && Math.abs(dz) > Math.abs(dx)) {
                             root.first = false
                             click.stop()
                             click.play()
@@ -188,7 +229,7 @@ Rectangle {
                             move.initValue += 1 //= (dz>0)?(-1):(1)
                             var colors = ['#992', '#929', '#299']
                             move.color = colors[move.initValue % 3]
-                        }
+                        }*/
                     }
                 }
             }
