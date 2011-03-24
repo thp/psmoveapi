@@ -2,20 +2,43 @@
 PS Move API
 ===========
 
-http://thp.io/2010/psmove/
+The PS Move API provides three different APIs for accessing the PS Move Motion
+Controller via USB or Bluetooth. The most basic API is the C API, which allows
+you to write applications targetting the PS Move controller in C. Based on that,
+two high-level APIs exist: A Python binding, which allows developers to quickly
+prototype applications and script behavior using Python, and a C++ library using
+the Qt Framework. In addition to allowing developers to interface with the PS
+Move controller from C++, the C++ library includes annotations and extensions
+that are needed to utilize the PS Move controller from within the declarative
+user interface description language QML.
 
-This is a low-level PS Move library that allows you to control the RGB LEDs and
-the rumble function of the controller, as well as read the status of the sensors
-(accelerometer, gyroscope and magnetometeR) and buttons.
+The library is available for Mac OS X (both USB and Bluetooth) and Linux (only
+USB for now, as the hidraw implementation in the Linux kernel is missing some
+features that will hopefully land in a future kernel version). Thanks to the
+cross-platform hidapi library on which the PS Move API is based, a port to the
+Windows operating system should be possible, but was out of scope for this
+project.
 
-The library is based on Alan Ott's hidapi, and has been tested under Mac OS X.
-It works in USB-only mode on Linux (the Linux kernel is missing some patches for
-it to work in Bluetooth mode as well).
+Features include:
 
-The PS Move protocol information is based on the linmctool and Move On PC
-projects.
+ * Setting the RGB LED color and rumble intensity (USB and Bluetooth)
+ * Read the status of the digital buttons (Bluetooth only)
+ * Read the status of the analog trigger (Bluetooth only)
+ * Read sensor values for the accelerometer and gyroscope (Bluetooth only)
 
---
-Thomas Perl <thp.io/about>
-2011-03-13
+The library also includes several examples in C, Python and C++ (Qt). A Test
+GUI has been developed to test the library features without having to write any
+code at all, and to serve as an example for developing custom solutions. A QML
+movie trailer browser was also developed as part of the project to demonstrate
+the possibilities of using the trigger and gyroscope for navigation gestures.
+
+The PS Move protocol information is based on information from the the linmctool
+and Move On PC projects.
+
+Author / contact info: Thomas Perl <m@thp.io>
+Project homepage: http://thp.io/2010/psmove/
+Git repository: https://github.com/thp/psmoveapi
+License: GNU Lesser General Public License, v2.1 or later (see COPYING)
+
+Release date: 2011-03-24
 
