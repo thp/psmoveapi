@@ -8,6 +8,7 @@
 PSMoveTestGUI::PSMoveTestGUI(QWidget *parent) :
     QMainWindow(parent),
     psm(NULL),
+    scene(NULL),
     colorLEDs(Qt::black),
     _chosenIndex(-1),
     _red(NULL),
@@ -55,8 +56,10 @@ void PSMoveTestGUI::on_checkboxEnable_toggled(bool checked)
                 } else {
                     ui->checkboxEnable->toggle();
                     _red = new PSMoveQt(0);
+                    _red->setEnabled(true);
                     _red->setColor(Qt::red);
                     _green = new PSMoveQt(1);
+                    _green->setEnabled(true);
                     _green->setColor(Qt::green);
                     _chosenIndex = -1;
                     (new DeviceChooserDialog(this))->show();
@@ -66,6 +69,8 @@ void PSMoveTestGUI::on_checkboxEnable_toggled(bool checked)
         }
 
         psm = new PSMoveQt(index);
+        scene = new PSMoveSensorScene(this, psm);
+        ui->viewSensors->setScene(scene);
 
         switch (psm->connectionType()) {
             case PSMoveQt::Bluetooth:
@@ -87,12 +92,23 @@ void PSMoveTestGUI::on_checkboxEnable_toggled(bool checked)
         connect(psm, SIGNAL(buttonReleased(int)),
                 this, SLOT(onButtonReleased(int)));
 
+        connect(psm, SIGNAL(gyroChanged()),
+                this, SLOT(readAccelerometer()));
+
+        connect(psm, SIGNAL(accelerometerChanged()),
+                this, SLOT(readGyro()));
+
         //ui->viewSensors->setScene(new PSMoveSensorScene(this, psm));
 
         psm->setRumble(ui->sliderRumble->value());
         psm->setColor(colorLEDs);
         psm->setEnabled(true);
     } else {
+        if (scene != NULL) {
+            ui->viewSensors->setScene(NULL);
+            delete scene;
+        }
+        scene = NULL;
         if (psm != NULL) {
             psm->setRumble(0);
             psm->setColor(Qt::black);
@@ -122,11 +138,6 @@ void PSMoveTestGUI::on_buttonLEDs_clicked()
     if (result.isValid()) {
         setColor(result);
     }
-}
-
-void PSMoveTestGUI::on_buttonQuit_clicked()
-{
-    QApplication::quit();
 }
 
 void PSMoveTestGUI::setTrigger()
@@ -224,4 +235,18 @@ void PSMoveTestGUI::reconnectByIndex(int index)
     if (index != -1) {
         ui->checkboxEnable->toggle();
     }
+}
+
+void PSMoveTestGUI::readAccelerometer()
+{
+    ui->labelAx->setText("ax: "+QString::number(psm->ax()));
+    ui->labelAy->setText("ay: "+QString::number(psm->ay()));
+    ui->labelAz->setText("az: "+QString::number(psm->az()));
+}
+
+void PSMoveTestGUI::readGyro()
+{
+    ui->labelGx->setText("gx: "+QString::number(psm->gx()));
+    ui->labelGy->setText("gy: "+QString::number(psm->gy()));
+    ui->labelGz->setText("gz: "+QString::number(psm->gz()));
 }

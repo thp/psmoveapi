@@ -5,6 +5,8 @@
 
 #include "psmoveqt.hpp"
 
+#include "psmovesensorscene.h"
+
 namespace Ui {
     class PSMoveTestGUI;
 }
@@ -14,6 +16,7 @@ class PSMoveTestGUI : public QMainWindow
     Q_OBJECT
 
     PSMoveQt *psm;
+    PSMoveSensorScene *scene;
     QColor colorLEDs;
 
     int _chosenIndex;
@@ -34,13 +37,12 @@ public slots:
 private slots:
     void setColor(QColor color);
     void setButton(int button, bool pressed);
+    void readAccelerometer();
+    void readGyro();
 
     void on_checkboxEnable_toggled(bool checked);
     void on_buttonLEDs_clicked();
-    void on_buttonQuit_clicked();
-
     void on_sliderRumble_sliderMoved(int position);
-
     void on_buttonBluetoothSet_clicked();
 
 private:
