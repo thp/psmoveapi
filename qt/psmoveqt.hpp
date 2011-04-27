@@ -54,7 +54,7 @@ public:
 
     static int count();
 
-    bool pair();
+    bool pair() const;
 
     enum ButtonType {
         Triangle = Btn_TRIANGLE,
@@ -74,29 +74,29 @@ public:
         Unknown = Conn_Unknown,
     };
 
-    int connectionType();
+    int connectionType() const;
 
 #ifdef QT_DECLARATIVE_LIB
     static void registerQML();
 #endif
 
-    bool enabled();
+    bool enabled() const;
     void setEnabled(bool enabled);
-    int trigger();
+    int trigger() const;
     void setTrigger(int trigger);
-    QColor color();
-    void setColor(QColor color);
-    int rumble();
+    QColor color() const;
+    void setColor(const QColor& color);
+    int rumble() const;
     void setRumble(int rumble);
 
-    int ax() { return _ax; }
-    int ay() { return _ay; }
-    int az() { return _az; }
-    int gx() { return _gx; }
-    int gy() { return _gy; }
-    int gz() { return _gz; }
+    int ax() const { return _ax; }
+    int ay() const { return _ay; }
+    int az() const { return _az; }
+    int gx() const { return _gx; }
+    int gy() const { return _gy; }
+    int gz() const { return _gz; }
 
-    int index() { return _index; }
+    int index() const { return _index; }
     void setIndex(int index);
 
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
