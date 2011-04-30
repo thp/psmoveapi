@@ -27,10 +27,12 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/mac/hid.c)
 ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(PkgConfig REQUIRED)
+    find_package(Threads REQUIRED)
 
     pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
     include_directories(${LIBUSB_INCLUDE_DIRS})
     list(APPEND PSMOVE_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
+    list(APPEND PSMOVE_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
     # Only needed when using hidraw version of hidapi
     #pkg_check_modules(UDEV REQUIRED libudev)

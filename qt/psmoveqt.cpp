@@ -84,7 +84,7 @@ PSMoveQt::count()
 }
 
 bool
-PSMoveQt::pair()
+PSMoveQt::pair() const
 {
     if (psmove_pair(_move)) {
         return true;
@@ -94,7 +94,7 @@ PSMoveQt::pair()
 }
 
 int
-PSMoveQt::connectionType()
+PSMoveQt::connectionType() const
 {
     switch (psmove_connection_type(_move)) {
         case Conn_USB:
@@ -115,7 +115,7 @@ PSMoveQt::registerQML()
 #endif
 
 bool
-PSMoveQt::enabled()
+PSMoveQt::enabled() const
 {
     return _timer.isActive();
 }
@@ -135,7 +135,7 @@ PSMoveQt::setEnabled(bool enabled)
 }
 
 int
-PSMoveQt::trigger()
+PSMoveQt::trigger() const
 {
     return _trigger;
 }
@@ -162,13 +162,13 @@ PSMoveQt::setIndex(int index)
 }
 
 QColor
-PSMoveQt::color()
+PSMoveQt::color() const
 {
     return _color;
 }
 
 void
-PSMoveQt::setColor(QColor color)
+PSMoveQt::setColor(const QColor& color)
 {
     if (_color != color) {
         _color = color;
@@ -180,7 +180,7 @@ PSMoveQt::setColor(QColor color)
 }
 
 int
-PSMoveQt::rumble()
+PSMoveQt::rumble() const
 {
     return _rumble;
 }
