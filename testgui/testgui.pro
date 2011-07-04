@@ -56,3 +56,9 @@ macx {
     ICON = psmove.icns
 }
 
+linux-g++ {
+    SOURCES += ../hidapi/linux/hid-libusb.c
+    LIBS += -lusb-1.0
+    QMAKE_CFLAGS += -I/usr/include/libusb-1.0/
+}
+
