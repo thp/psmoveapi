@@ -17,6 +17,7 @@ qt4_wrap_cpp(psmoveapiqt_MOC_SRCS ${psmoveapiqt_MOC_HDRS})
 
 add_library(psmoveapiqt SHARED ${psmoveapiqt_SRCS} ${psmoveapiqt_MOC_SRCS})
 target_link_libraries(psmoveapiqt psmoveapi)
+set_target_properties(psmoveapiqt PROPERTIES VERSION ${PSMOVEAPI_VERSION} SOVERSION ${PSMOVEAPI_VERSION_SONAME})
 
 
 # Qt example

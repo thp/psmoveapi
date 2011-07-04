@@ -1,7 +1,7 @@
 Source: psmoveapi
 Priority: extra
 Maintainer: Thomas Perl <m@thp.io>
-Build-Depends: debhelper (>= 7.0.50~), cmake
+Build-Depends: debhelper (>= 7.0.50~), cmake, libqt4-dev
 Standards-Version: 3.8.4
 Section: libs
 Homepage: http://thp.io/2010/psmove/
@@ -11,7 +11,7 @@ Vcs-Browser: http://github.com/thp/psmoveapi
 Package: libpsmoveapi-dev
 Section: libdevel
 Architecture: any
-Depends: libpsmoveapi1 (= ${binary:Version})
+Depends: libpsmoveapi1 (= ${binary:Version}), libpsmoveapiqt1 (= ${binary:Version})
 Description: Playstation Move Motion Controller API - Development files
  This library allows you to access one or more Playstation
  Move Motion Controllers via USB or Bluetooth.
@@ -27,4 +27,14 @@ Description: Playstation Move Motion Controller API
  Move Motion Controllers via USB or Bluetooth.
  .
  This package contains the shared library for the PS Move API.
+
+Package: libpsmoveapiqt1
+Section: libs
+Architecture: any
+Depends: libpsmoveapi1 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Playstation Move Motion Controller API - Qt bindings
+ This library allows you to access one or more Playstation
+ Move Motion Controllers via USB or Bluetooth.
+ .
+ This package contains the Qt bindings for the PS Move API.
 
