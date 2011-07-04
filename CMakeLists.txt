@@ -94,8 +94,6 @@ install(FILES psmove.h DESTINATION include/psmoveapi)
 install(FILES README COPYING DESTINATION share/psmoveapi)
 
 # Qt bindings
-option(MYGPO_BUILD_TESTS "Build all unit tests" ON)
-
 if(PSMOVEAPI_BUILD_QTAPI)
     add_subdirectory(qt)
 endif(PSMOVEAPI_BUILD_QTAPI)
