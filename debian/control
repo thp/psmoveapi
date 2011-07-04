@@ -38,3 +38,13 @@ Description: Playstation Move Motion Controller API - Qt bindings
  .
  This package contains the Qt bindings for the PS Move API.
 
+Package: psmoveapi-utils
+Section: libs
+Architecture: any
+Depends: libpsmoveapi1 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: Playstation Move Motion Controller API - Utilities
+ This library allows you to access one or more Playstation
+ Move Motion Controllers via USB or Bluetooth.
+ .
+ This package contains basic utilities for the PS Move API.
+
