@@ -34,6 +34,12 @@
 #  include <IOBluetooth/Bluetooth.h>
 #endif
 
+#ifdef __linux
+#  include <bluetooth/bluetooth.h>
+#  include <bluetooth/hci.h>
+#  include <sys/ioctl.h>
+#endif
+
 
 /* Begin private definitions */
 
@@ -141,6 +147,29 @@ struct _PSMove {
         {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
 
 /* End private definitions */
+
+/* Private functionality needed by the Linux version */
+#if defined(__linux)
+
+int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
+{
+    struct hci_dev_info di = { dev_id: dev_id };
+    unsigned char *btaddr = (void*)arg;
+    int i;
+
+    if (ioctl(s, HCIGETDEVINFO, (void *) &di) == 0) {
+        for (i=0; i<6; i++) {
+            btaddr[i] = di.bdaddr.b[5-i];
+        }
+    }
+
+    return 0;
+}
+
+#endif /* defined(__linux) */
+
+
+/* Start implementation of the API */
 
 int
 psmove_count_connected()
@@ -265,6 +294,7 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     unsigned char bts[PSMOVE_BTADDR_SET_SIZE];
     int res;
     int i;
+    PSMove_Data_BTAddr btaddr;
 
     psmove_return_val_if_fail(move != NULL, 0);
     psmove_return_val_if_fail(addr != NULL, 0);
@@ -288,11 +318,17 @@ psmove_pair(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-#ifdef __APPLE__
     PSMove_Data_BTAddr btaddr;
+    int i;
+
+    if (!psmove_get_btaddr(move, &btaddr)) {
+        return 0;
+    }
+
+
+#if defined(__APPLE__)
     BluetoothDeviceAddress address;
     IOReturn result;
-    int i;
 
     result = IOBluetoothLocalDeviceReadAddress(&address, NULL, NULL, NULL);
 
@@ -300,23 +336,22 @@ psmove_pair(PSMove *move)
         return 0;
     }
 
-    if (!psmove_get_btaddr(move, &btaddr)) {
-        return 0;
-    }
-
     for (i=0; i<6; i++) {
         btaddr[i] = address.data[i];
     }
+
+#elif defined(__linux)
+    hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
+#else
+    /* TODO: Implement for Windows and other OSes */
+    return 0;
+#endif
 
     if (!psmove_set_btaddr(move, &btaddr)) {
         return 0;
     }
 
     return 1;
-#else
-    /* FIXME: Implement for Linux, using Bluez */
-    return 0;
-#endif
 }
 
 enum PSMove_Connection_Type

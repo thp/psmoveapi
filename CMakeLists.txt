@@ -39,6 +39,11 @@ ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     #include_directories(${UDEV_INCLUDE_DIRS})
     #list(APPEND PSMOVE_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
+    # On Linux, we require Bluez for getting the BT addr
+    pkg_check_modules(BLUEZ REQUIRED bluez)
+    include_directories(${BLUEZ_INCLUDE_DIRS})
+    list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
+
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/linux/hid-libusb.c)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
