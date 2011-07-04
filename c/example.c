@@ -124,6 +124,16 @@ int main(int argc, char* argv[])
             printf("magnetometer: %5d %5d %5d\n", x, y, z);
             printf("buttons: %x\n", psmove_get_buttons(move));
 
+            int battery = psmove_get_battery(move);
+
+            if (battery == Batt_CHARGING) {
+                printf("battery charging\n");
+            } else if (battery >= Batt_MIN && battery <= Batt_MAX) {
+                printf("battery level: %d / %d\n", battery, Batt_MAX);
+            } else {
+                printf("battery level: unknown (%x)\n", battery);
+            }
+
             psmove_update_leds(move);
         }
     }

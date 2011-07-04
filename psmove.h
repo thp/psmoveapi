@@ -55,6 +55,12 @@ enum PSMove_Button {
     Btn_T = 1 << 0x14,
 };
 
+enum PSMove_Battery_Level {
+    Batt_MIN = 0x00,
+    Batt_MAX = 0x05,
+    Batt_CHARGING = 0xEE,
+};
+
 /* A Bluetooth address. */
 typedef unsigned char PSMove_Data_BTAddr[6];
 
@@ -159,6 +165,16 @@ psmove_poll(PSMove *move);
  **/
 unsigned int
 psmove_get_buttons(PSMove *move);
+
+/**
+ * Get the battery level of the PS Move. You need to call
+ * PSMove_poll() to read new data from the controller first.
+ *
+ * Return value range: Batt_MIN..Batt_MAX
+ * Charging (via USB): Batt_CHARGING
+ **/
+unsigned char
+psmove_get_battery(PSMove *move);
 
 /**
  * Get the current value of the PS Move analog trigger. You need to

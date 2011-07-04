@@ -85,7 +85,7 @@ typedef struct {
     unsigned char _unk9;
     unsigned char _unk10;
     unsigned char _unk11;
-    unsigned char _unk12;
+    unsigned char battery; /* battery level; 0x05 = max, 0xEE = USB charging */
     unsigned char aXlow; /* low byte of accelerometer X value */
     unsigned char aXhigh; /* high byte of accelerometer X value */
     unsigned char aYlow;
@@ -422,6 +422,14 @@ psmove_get_buttons(PSMove *move)
             (move->input.buttons1 << 8) |
             ((move->input.buttons3 & 0x01) << 16) |
             ((move->input.buttons4 & 0xF0) << 13));
+}
+
+unsigned char
+psmove_get_battery(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+
+    return move->input.battery;
 }
 
 unsigned char
