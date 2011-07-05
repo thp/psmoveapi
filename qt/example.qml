@@ -43,6 +43,17 @@ Rectangle {
             rumble: trigger / 2
         }
 
+        Text {
+            anchors.centerIn: parent
+            color: 'black'
+            font {
+                pixelSize: 20
+                bold: true
+            }
+
+            text: (move.charging?'Charging via USB':('Battery: ' + move.battery + ' / ' + PSMove.BatteryMax))
+        }
+
         SequentialAnimation {
             loops: Animation.Infinite
             running: true

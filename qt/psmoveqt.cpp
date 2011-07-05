@@ -43,7 +43,8 @@ PSMoveQt::PSMoveQt(int index)
       _gx(0),
       _gy(0),
       _gz(0),
-      _buttons(0)
+      _buttons(0),
+      _battery(0)
 {
     _timer.setInterval(INTERVAL_SENSORS);
 
@@ -200,7 +201,7 @@ PSMoveQt::setRumble(int rumble)
 void
 PSMoveQt::onTimeout()
 {
-    int ax, ay, az, gx, gy, gz, buttons;
+    int ax, ay, az, gx, gy, gz, buttons, battery;
 
     while (psmove_poll(_move)) {
         setTrigger(psmove_get_trigger(_move));
@@ -232,6 +233,20 @@ PSMoveQt::onTimeout()
             }
 
             _buttons = buttons;
+        }
+
+        battery = psmove_get_battery(_move);
+        if (battery != _battery) {
+            bool charging = (battery == Batt_CHARGING ||
+                    _battery == Batt_CHARGING);
+
+            _battery = battery;
+
+            if (charging) {
+                emit chargingChanged();
+            } else if (_battery != Batt_CHARGING) {
+                emit batteryChanged(_battery);
+            }
         }
     }
 }

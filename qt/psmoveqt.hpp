@@ -30,7 +30,7 @@
 class PSMoveQt : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ButtonType ConnectionType)
+    Q_ENUMS(ButtonType ConnectionType BatteryChargeNames)
 
     PSMove *_move;
     QTimer _timer;
@@ -47,6 +47,7 @@ class PSMoveQt : public QObject
     int _gy;
     int _gz;
     int _buttons;
+    int _battery;
 
 public:
     PSMoveQt(int index=0);
@@ -74,6 +75,12 @@ public:
         Unknown = Conn_Unknown,
     };
 
+    enum BatteryChargeNames {
+        BatteryMin = Batt_MIN,
+        BatteryMax = Batt_MAX,
+        BatteryCharging = Batt_CHARGING,
+    };
+
     int connectionType() const;
 
 #ifdef QT_DECLARATIVE_LIB
@@ -84,6 +91,8 @@ public:
     void setEnabled(bool enabled);
     int trigger() const;
     void setTrigger(int trigger);
+    bool charging() const { return (_battery == BatteryCharging); }
+    int battery() const { return (_battery == BatteryCharging)?Batt_MAX:_battery; }
     QColor color() const;
     void setColor(const QColor& color);
     int rumble() const;
@@ -102,6 +111,8 @@ public:
     Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY enabledChanged)
     Q_PROPERTY(int index READ index WRITE setIndex NOTIFY indexChanged)
     Q_PROPERTY(int trigger READ trigger WRITE setTrigger NOTIFY triggerChanged)
+    Q_PROPERTY(bool charging READ charging NOTIFY chargingChanged)
+    Q_PROPERTY(int battery READ battery NOTIFY batteryChanged)
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
     Q_PROPERTY(int rumble READ rumble WRITE setRumble NOTIFY rumbleChanged)
     Q_PROPERTY(int ax READ ax NOTIFY accelerometerChanged)
@@ -121,6 +132,8 @@ signals:
     void enabledChanged();
     void indexChanged();
     void triggerChanged();
+    void chargingChanged();
+    void batteryChanged(int battery);
     void colorChanged();
     void rumbleChanged();
     void accelerometerChanged();
