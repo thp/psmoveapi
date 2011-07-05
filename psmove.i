@@ -78,6 +78,10 @@ int count_connected();
         return psmove_get_buttons($self);
     }
 
+    int get_battery() {
+        return psmove_get_battery($self);
+    }
+
     int get_trigger() {
         return psmove_get_trigger($self);
     }
