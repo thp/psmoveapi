@@ -35,10 +35,14 @@ the possibilities of using the trigger and gyroscope for navigation gestures.
 The PS Move protocol information is based on information from the the linmctool
 and Move On PC projects.
 
+Documentation:
+
+    http://code.google.com/p/moveonpc/wiki/InputReport
+
 Author / contact info: Thomas Perl <m@thp.io>
 Project homepage: http://thp.io/2010/psmove/
 Git repository: https://github.com/thp/psmoveapi
 License: GNU Lesser General Public License, v2.1 or later (see COPYING)
 
-Release date: 2011-03-24
+Initial release date: 2011-03-24
 

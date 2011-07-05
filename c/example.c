@@ -134,6 +134,8 @@ int main(int argc, char* argv[])
                 printf("battery level: unknown (%x)\n", battery);
             }
 
+            printf("temperature: %d\n", psmove_get_temperature(move));
+
             psmove_update_leds(move);
         }
     }

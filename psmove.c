@@ -116,9 +116,9 @@ typedef struct {
     unsigned char gYhigh2;
     unsigned char gZlow2;
     unsigned char gZhigh2;
-    unsigned char mag38; /* magnetometer data, weirdly aligned (see code) */
-    unsigned char mag39;
-    unsigned char mag40;
+    unsigned char templow; /* temperature */
+    unsigned char temphigh;
+    unsigned char mag40; /* magnetometer data ??? */
     unsigned char mag41;
     unsigned char mag42;
     unsigned char _padding[PSMOVE_BUFFER_SIZE-42]; /* unknown */
@@ -467,6 +467,15 @@ psmove_get_battery(PSMove *move)
     return move->input.battery;
 }
 
+int
+psmove_get_temperature(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+
+    return ((move->input.templow << 4) |
+            ((move->input.temphigh & 0xF0) >> 4));
+}
+
 unsigned char
 psmove_get_trigger(PSMove *move)
 {
@@ -523,7 +532,7 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
     psmove_return_if_fail(move != NULL);
 
     if (mx != NULL) {
-        *mx = move->input.mag38 << 0x0C | move->input.mag39 << 0x04;
+        *mx = move->input.templow << 0x0C | move->input.temphigh << 0x04;
     }
 
     if (my != NULL) {

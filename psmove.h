@@ -177,6 +177,15 @@ unsigned char
 psmove_get_battery(PSMove *move);
 
 /**
+ * Get the current temperature of the PS Move. You need to
+ * call PSMove_poll() to read new data from the controller first.
+ *
+ * Return value range: FIXME
+ **/
+int
+psmove_get_temperature(PSMove *move);
+
+/**
  * Get the current value of the PS Move analog trigger. You need to
  * call PSMove_poll() to read new data from the controller first.
  **/
