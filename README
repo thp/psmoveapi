@@ -39,6 +39,11 @@ Documentation:
 
     http://code.google.com/p/moveonpc/wiki/InputReport
 
+Known issues:
+
+    * On Debian Wheezy, you might need to specify the path to "swig"
+      https://github.com/thp/psmoveapi/issues/5
+
 Author / contact info: Thomas Perl <m@thp.io>
 Project homepage: http://thp.io/2010/psmove/
 Git repository: https://github.com/thp/psmoveapi
