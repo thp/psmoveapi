@@ -35,7 +35,14 @@ the possibilities of using the trigger and gyroscope for navigation gestures.
 The PS Move protocol information is based on information from the the linmctool
 and Move On PC projects.
 
-Documentation:
+The "unity" subproject includes the source for bindings to the API using C# /
+Unity. It can be used to create application in the Unity Framework. This
+project has been contributed by the Copenhagen Game Collective (thanks to
+Douglas Wilson et al) and has its own homepage at:
+
+    http://www.copenhagengamecollective.org/unimove/
+
+Documentation links:
 
     http://code.google.com/p/moveonpc/wiki/InputReport
 
