@@ -189,11 +189,15 @@ psmove_count_connected()
 }
 
 PSMove *
-psmove_connect_by_serial(wchar_t *serial, int id)
+psmove_connect_internal(wchar_t *serial, char *path, int id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
 
-    move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
+    if (serial == NULL && path != NULL) {
+        move->handle = hid_open_path(path);
+    } else {
+        move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
+    }
 
     if (!move->handle) {
         free(move);
@@ -223,7 +227,8 @@ psmove_connect_by_id(int id)
     cur_dev = devs;
     while (cur_dev) {
         if (count == id) {
-            move = psmove_connect_by_serial(cur_dev->serial_number, id);
+            move = psmove_connect_internal(cur_dev->serial_number,
+                    cur_dev->path, id);
             break;
         }
         count++;
@@ -238,7 +243,7 @@ psmove_connect_by_id(int id)
 PSMove *
 psmove_connect()
 {
-    return psmove_connect_by_serial(NULL, 0);
+    return psmove_connect_internal(NULL, NULL, 0);
 }
 
 int
