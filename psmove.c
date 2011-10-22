@@ -271,7 +271,14 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 
     if (res == sizeof(btg)) {
 #ifdef PSMOVE_DEBUG
-        fprintf(stderr, "[PSMOVE] current bt mac addr: ");
+        fprintf(stderr, "[PSMOVE] controller bt mac addr: ");
+        for (i=6; i>=1; i--) {
+            if (i != 6 putc(':', stderr);
+            fprintf(stderr, "%02x", btg[i]);
+        }
+        fprintf(stderr, "\n");
+
+        fprintf(stderr, "[PSMOVE] current host bt mac addr: ");
         for (i=15; i>=10; i--) {
             if (i != 15) putc(':', stderr);
             fprintf(stderr, "%02x", btg[i]);
