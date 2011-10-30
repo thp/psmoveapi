@@ -134,6 +134,9 @@ struct _PSMove {
     /* Various buffers for PS Move-related data */
     PSMove_Data_LEDs leds;
     PSMove_Data_Input input;
+
+    /* Save location for the controller BTAddr */
+    PSMove_Data_BTAddr btaddr;
 };
 
 /* Macro: Print a critical message if an assertion fails */
@@ -273,7 +276,7 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 #ifdef PSMOVE_DEBUG
         fprintf(stderr, "[PSMOVE] controller bt mac addr: ");
         for (i=6; i>=1; i--) {
-            if (i != 6 putc(':', stderr);
+            if (i != 6) putc(':', stderr);
             fprintf(stderr, "%02x", btg[i]);
         }
         fprintf(stderr, "\n");
@@ -298,6 +301,19 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     }
 
     return 0;
+}
+
+int
+psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
+{
+    int i;
+
+    psmove_return_val_if_fail(move != NULL, 0);
+    psmove_return_val_if_fail(addr != NULL, 0);
+
+    memcpy(addr, move->btaddr, sizeof(PSMove_Data_BTAddr));
+
+    return 1;
 }
 
 int

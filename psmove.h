@@ -100,10 +100,18 @@ psmove_connection_type(PSMove *move);
  * to connect via Bluetooth when the PS button is pressed.
  *
  * addr might be NULL in which case the address and calibration
- * data re retrieved, but the Bluetooth address is discarded.
+ * data are retrieved, but the Bluetooth address is discarded.
  **/
 int
 psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+
+/**
+ * Get the Bluetooth Mac address of the connected controller.
+ *
+ * XXX This is not implemented in the backend at the moment.
+ **/
+int
+psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 
 /**
  * Set the Host Bluetooth address that is used to connect via
