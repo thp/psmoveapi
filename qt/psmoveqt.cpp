@@ -52,6 +52,12 @@ PSMoveQt::PSMoveQt(int index)
       _gx(0),
       _gy(0),
       _gz(0),
+
+      // SNTX
+      _mx(0),
+      _my(0),
+      _mz(0),
+
       _buttons(0),
       _battery(0)
 {
@@ -210,7 +216,7 @@ PSMoveQt::setRumble(int rumble)
 void
 PSMoveQt::onTimeout()
 {
-    int ax, ay, az, gx, gy, gz, buttons, battery;
+    int ax, ay, az, gx, gy, gz, mx, my, mz, buttons, battery;
 
     while (psmove_poll(_move)) {
         setTrigger(psmove_get_trigger(_move));
@@ -228,6 +234,16 @@ PSMoveQt::onTimeout()
             _az = az;
             emit accelerometerChanged();
         }
+
+        // SNTX
+        psmove_get_magnetometer(_move, &mx, &my, &mz);
+        if (mx != _mx || my != _my || mz != _mz) {
+            _mx = mx;
+            _my = my;
+            _mz = mz;
+            emit magnetometerChanged();
+        }
+
         buttons = psmove_get_buttons(_move);
         if (buttons != _buttons) {
             int pressed = (buttons & ~_buttons);
