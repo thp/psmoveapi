@@ -55,6 +55,11 @@ class PSMoveQt : public QObject
     int _gx;
     int _gy;
     int _gz;
+
+    int _mx;
+    int _my;
+    int _mz;
+
     int _buttons;
     int _battery;
 
@@ -114,6 +119,10 @@ public:
     int gy() const { return _gy; }
     int gz() const { return _gz; }
 
+    int mx() const { return _mx; }
+    int my() const { return _my; }
+    int mz() const { return _mz; }
+
     int index() const { return _index; }
     void setIndex(int index);
 
@@ -130,6 +139,11 @@ public:
     Q_PROPERTY(int gx READ gx NOTIFY gyroChanged)
     Q_PROPERTY(int gy READ gy NOTIFY gyroChanged)
     Q_PROPERTY(int gz READ gz NOTIFY gyroChanged)
+
+    Q_PROPERTY(int mx READ mx NOTIFY magnetometerChanged)
+    Q_PROPERTY(int my READ my NOTIFY magnetometerChanged)
+    Q_PROPERTY(int mz READ mz NOTIFY magnetometerChanged)
+
     Q_PROPERTY(int connectionType READ connectionType NOTIFY indexChanged)
 
 private slots:
@@ -147,6 +161,9 @@ signals:
     void rumbleChanged();
     void accelerometerChanged();
     void gyroChanged();
+
+    void magnetometerChanged();
+
     void buttonPressed(int button);
     void buttonReleased(int button);
 };
