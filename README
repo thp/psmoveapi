@@ -1,6 +1,6 @@
 
-PS Move API
-===========
+PS Move API (Release 2)
+=======================
 
 The PS Move API provides three different APIs for accessing the PS Move Motion
 Controller via USB or Bluetooth. The most basic API is the C API, which allows
@@ -26,6 +26,14 @@ Features include:
  * Read the status of the analog trigger (Bluetooth only)
  * Read sensor values for the accelerometer and gyroscope (Bluetooth only)
 
+New features in v2:
+
+ * New, more permissive license (Simplified BSD)
+ * Support for reading the battery level/charging state (psmove_get_battery)
+ * Experimental support for reading the temperature (psmove_get_temperature)
+ * Various fixes to improve building on different systems and with/without Qt
+ * A few new examples
+
 The library also includes several examples in C, Python and C++ (Qt). A Test
 GUI has been developed to test the library features without having to write any
 code at all, and to serve as an example for developing custom solutions. A QML
@@ -42,6 +50,11 @@ Douglas Wilson et al) and has its own homepage at:
 
     http://www.copenhagengamecollective.org/unimove/
 
+The "glib" subproject includes the source for bindings to GObject using Vala
+and GIR. This will eventually allow you to interface with the PS Move API from
+JavaScript (using the GJS interpreter) and other languages supporting GObject
+Introspection. The GLib bindings are very(!) incomplete and not well tested.
+
 Documentation links:
 
     http://code.google.com/p/moveonpc/wiki/InputReport
@@ -57,4 +70,5 @@ Git repository: https://github.com/thp/psmoveapi
 License: Simplified BSD-style license (see COPYING)
 
 Initial release date: 2011-03-24
+Release of PSMoveAPI 2: 2011-12-03
 
