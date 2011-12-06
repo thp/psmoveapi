@@ -83,7 +83,7 @@ typedef struct {
     unsigned char b; /* blue value, 0x00..0xff */
     unsigned char rumble2; /* unknown, should be 0x00 for now */
     unsigned char rumble; /* rumble value, 0x00..0xff */
-    unsigned char _padding[PSMOVE_BUFFER_SIZE-7]; /* must be zero */
+    // XXX Not really needed? unsigned char _padding[PSMOVE_BUFFER_SIZE-7]; /* must be zero */
 } PSMove_Data_LEDs;
 
 typedef struct {
