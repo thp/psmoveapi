@@ -43,6 +43,17 @@ int main(int argc, char* argv[])
     int i;
     int count = psmove_count_connected();
     int result = 0;
+    int custom_addr = 0;
+
+    if (argc > 1) {
+        if (psmove_btaddr_from_string(argv[1], NULL)) {
+            printf("Using user-supplied host address: %s\n", argv[1]);
+        } else {
+            printf("Cannot convert host address: %s\n", argv[1]);
+            return 1;
+        }
+        custom_addr = 1;
+    }
 
     printf("Connected controllers: %d\n", count);
 
@@ -55,9 +66,17 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        if (psmove_connection_type(move) == Conn_USB) {
+        if (psmove_connection_type(move) != Conn_Bluetooth) {
             printf("PSMove #%d connected via USB. ", i+1);
-            if (psmove_pair(move)) {
+            int result = 0;
+
+            if (custom_addr) {
+                result = psmove_pair_custom(move, argv[1]);
+            } else {
+                result = psmove_pair(move);
+            }
+
+            if (result) {
                 printf("Pairing succeeded!\n");
             } else {
                 printf("Pairing failed.\n");

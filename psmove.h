@@ -104,6 +104,17 @@ enum PSMove_Connection_Type
 psmove_connection_type(PSMove *move);
 
 /**
+ * Read a Bluetooth address from string and write its
+ * internal representation into a PSMove_Data_BTAddr.
+ *
+ * If dest is NULL, the data is not written (only verified).
+ *
+ * Will return nonzero on success, zero on error.
+ **/
+int
+psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
+
+/**
  * Get the currently-set Host Bluetooth address that is used
  * to connect via Bluetooth when the PS button is pressed.
  *
@@ -134,12 +145,22 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
  * Set the Host Bluetooth address of the PS Move to this
  * computer's Bluetooth address. Only works via USB.
  *
- * Only implemented for OS X for now.
+ * Implemented only for Linux (Bluez) and OS X.
  *
  * Will return nonzero on success, zero on error.
  **/
 int
 psmove_pair(PSMove *move);
+
+/**
+ * Set the Host Bluetooth address of the PS Move to the
+ * Bluetooth address given by btaddr_string (which should
+ * contain a string in the format "AA:BB:CC:DD:EE:FF").
+ *
+ * Will return nonzero on success, zero on error.
+ **/
+int
+psmove_pair_custom(PSMove *move, const char *btaddr_string);
 
 /**
  * Set the LEDs of the PS Move controller. You need to

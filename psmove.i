@@ -79,6 +79,10 @@ int count_connected();
         return psmove_pair($self);
     }
 
+    int pair_custom(const char *btaddr) {
+        return psmove_pair_custom($self, btaddr);
+    }
+
     int poll() {
         return psmove_poll($self);
     }
@@ -89,6 +93,10 @@ int count_connected();
 
     int get_battery() {
         return psmove_get_battery($self);
+    }
+
+    int get_temperature() {
+        return psmove_get_temperature($self);
     }
 
     int get_trigger() {

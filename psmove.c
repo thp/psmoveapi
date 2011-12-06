@@ -390,6 +390,28 @@ psmove_pair(PSMove *move)
     return 1;
 }
 
+int
+psmove_pair_custom(PSMove *move, const char *btaddr_string)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+
+    PSMove_Data_BTAddr btaddr;
+
+    if (!psmove_get_btaddr(move, &btaddr)) {
+        return 0;
+    }
+
+    if (!psmove_btaddr_from_string(btaddr_string, &btaddr)) {
+        return 0;
+    }
+
+    if (!psmove_set_btaddr(move, &btaddr)) {
+        return 0;
+    }
+
+    return 1;
+}
+
 enum PSMove_Connection_Type
 psmove_connection_type(PSMove *move)
 {
@@ -415,6 +437,28 @@ psmove_connection_type(PSMove *move)
     }
 
     return Conn_Unknown;
+}
+
+int
+psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
+{
+    int i, value;
+    PSMove_Data_BTAddr tmp = {0};
+
+    /* strlen("00:11:22:33:44:55") == 17 */
+    psmove_return_val_if_fail(strlen(string) == 17, 0);
+
+    for (i=0; i<6; i++) {
+        value = strtol(string + i*3, NULL, 16);
+        psmove_return_val_if_fail(value >= 0x00 && value <= 0xFF, 0);
+        tmp[i] = value;
+    }
+
+    if (dest != NULL) {
+        memcpy(dest, tmp, sizeof(PSMove_Data_BTAddr));
+    }
+
+    return 1;
 }
 
 void
