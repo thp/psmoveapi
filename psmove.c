@@ -29,8 +29,6 @@
 
 #include "psmove.h"
 
-#include "hidapi.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +44,12 @@
 #  include <bluetooth/bluetooth.h>
 #  include <bluetooth/hci.h>
 #  include <sys/ioctl.h>
+#endif
+
+#ifdef WITH_MOVED_CLIENT
+#  include "moved_client.h"
+#else
+#  include "hidapi.h"
 #endif
 
 
@@ -134,7 +138,9 @@ typedef struct {
 
 struct _PSMove {
     /* The handle to the HIDAPI device */
+#ifndef WITH_MOVED_CLIENT
     hid_device *handle;
+#endif
 
     /* Index (at connection time) - not exposed yet */
     int id;
@@ -158,6 +164,11 @@ struct _PSMove {
         {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
 
 /* End private definitions */
+
+
+#ifdef WITH_MOVED_CLIENT
+static moved_client *client;
+#endif
 
 /* Private functionality needed by the Linux version */
 #if defined(__linux)
@@ -185,6 +196,12 @@ int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 int
 psmove_count_connected()
 {
+#ifdef WITH_MOVED_CLIENT
+    if (client == NULL) {
+        client = moved_client_create("127.0.0.1");
+    }
+    return moved_client_send(client, MOVED_REQ_COUNT_CONNECTED, 0, NULL);
+#else
     struct hid_device_info *devs, *cur_dev;
     int count = 0;
 
@@ -197,6 +214,7 @@ psmove_count_connected()
     hid_free_enumeration(devs);
 
     return count;
+#endif
 }
 
 PSMove *
@@ -204,6 +222,11 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
 
+#ifdef WITH_MOVED_CLIENT
+    if (client == NULL) {
+        client = moved_client_create("127.0.0.1");
+    }
+#else
     if (serial == NULL && path != NULL) {
         move->handle = hid_open_path(path);
     } else {
@@ -217,6 +240,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     /* Use Non-Blocking I/O */
     hid_set_nonblocking(move->handle, 1);
+#endif
 
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
@@ -230,6 +254,9 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 PSMove *
 psmove_connect_by_id(int id)
 {
+#ifdef WITH_MOVED_CLIENT
+    return psmove_connect_internal(NULL, NULL, id);
+#else
     struct hid_device_info *devs, *cur_dev;
     int count = 0;
     PSMove *move = NULL;
@@ -248,6 +275,7 @@ psmove_connect_by_id(int id)
     hid_free_enumeration(devs);
 
     return move;
+#endif
 }
 
 
@@ -260,6 +288,9 @@ psmove_connect()
 int
 psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 {
+#ifdef WITH_MOVED_CLIENT
+    return 0;
+#else /* !WITH_MOVED_CLIENT */
     unsigned char cal[PSMOVE_CALIBRATION_SIZE];
     unsigned char btg[PSMOVE_BTADDR_GET_SIZE];
     int res;
@@ -295,7 +326,7 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
             fprintf(stderr, "%02x", btg[i]);
         }
         fprintf(stderr, "\n");
-#endif
+#endif /* PSMOVE_DEBUG */
         if (addr != NULL) {
             /* Copy 6 bytes (btg[10]..btg[15]) into addr, reversed */
             for (i=0; i<6; i++) {
@@ -309,6 +340,7 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     }
 
     return 0;
+#endif /* !WITH_MOVED_CLIENT */
 }
 
 int
@@ -327,6 +359,9 @@ psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 int
 psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 {
+#ifdef WITH_MOVED_CLIENT
+    return 0;
+#else
     unsigned char bts[PSMOVE_BTADDR_SET_SIZE];
     int res;
     int i;
@@ -347,6 +382,7 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     res = hid_send_feature_report(move->handle, bts, sizeof(bts));
 
     return (res == sizeof(bts));
+#endif
 }
 
 int
@@ -376,7 +412,7 @@ psmove_pair(PSMove *move)
         btaddr[i] = address.data[i];
     }
 
-#elif defined(__linux)
+#elif defined(__linux) && !defined(WITH_MOVED_CLIENT)
     hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
 #else
     /* TODO: Implement for Windows and other OSes */
@@ -415,6 +451,9 @@ psmove_pair_custom(PSMove *move, const char *btaddr_string)
 enum PSMove_Connection_Type
 psmove_connection_type(PSMove *move)
 {
+#ifdef WITH_MOVED_CLIENT
+    return Conn_Bluetooth;
+#else
     wchar_t wstr[255];
     int res;
 
@@ -437,6 +476,7 @@ psmove_connection_type(PSMove *move)
     }
 
     return Conn_Unknown;
+#endif
 }
 
 int
@@ -486,9 +526,14 @@ psmove_update_leds(PSMove *move)
 
     psmove_return_val_if_fail(move != NULL, 0);
 
+#ifdef WITH_MOVED_CLIENT
+    moved_client_send(client, MOVED_REQ_WRITE, move->id, (unsigned char*)(&move->leds));
+    return 1; // XXX
+#else
     res = hid_write(move->handle, (unsigned char*)(&(move->leds)),
             sizeof(move->leds));
     return (res == sizeof(move->leds));
+#endif
 }
 
 int
@@ -503,8 +548,16 @@ psmove_poll(PSMove *move)
     int oldseq = (move->input.buttons4 & 0x0F);
 #endif
 
+#ifdef WITH_MOVED_CLIENT
+    if (moved_client_send(client, MOVED_REQ_READ, 0, NULL)) {
+        memcpy((unsigned char*)(&(move->input)),
+                client->read_response_buf, sizeof(move->input));
+        res = sizeof(move->input); // XXX
+    }
+#else
     res = hid_read(move->handle, (unsigned char*)(&(move->input)),
         sizeof(move->input));
+#endif
 
     if (res == sizeof(move->input)) {
         /* Sanity check: The first byte should be PSMove_Req_GetInput */

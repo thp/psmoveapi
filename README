@@ -19,6 +19,14 @@ cross-platform hidapi library on which the PS Move API is based, a port to the
 Windows operating system should be possible, but was out of scope for this
 project.
 
+========== WIP features for release 3 ========================
+ - moved: A daemon for Linux to maintain Bluetooth connections
+ - moved-client: Example demo of how to use the client library
+ - Integration of moved support into the PS Move API
+ - Right now, the throughput is not as fast as on OS X, though
+ - moved TODO: Implement support for getting the BT address
+==============================================================
+
 Features include:
 
  * Setting the RGB LED color and rumble intensity (USB and Bluetooth)

@@ -25,7 +25,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVE_REQUIRED_LIBS ${IOBLUETOOTH})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/mac/hid.c)
-ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+ELSE()
     find_package(PkgConfig REQUIRED)
     find_package(Threads REQUIRED)
 
@@ -40,11 +40,19 @@ ELSE(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     #list(APPEND PSMOVE_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
     # On Linux, we require Bluez for getting the BT addr
-    pkg_check_modules(BLUEZ REQUIRED bluez)
-    include_directories(${BLUEZ_INCLUDE_DIRS})
-    list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
+    #pkg_check_modules(BLUEZ REQUIRED bluez)
+    #include_directories(${BLUEZ_INCLUDE_DIRS})
+    #list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/linux/hid-libusb.c)
+
+    # Move Daemon for Linux (non-hidapi, Bluetooth-only)
+    # Comment out the lines below and uncomment the above
+    # lines (libudev/bluez) to build with HIDAPI support
+    add_executable(moved moved.c)
+    add_executable(moved-client moved_client_test.c moved_client.c)
+    set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
+    add_definitions(-DWITH_MOVED_CLIENT)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 set(PSMOVE_SRC ${HIDAPI_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
