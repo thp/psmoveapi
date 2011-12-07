@@ -37,6 +37,8 @@
  * connect to it. This is useful in cases where hidapi has problems.
  **/
 
+#define LOG(format, ...) fprintf(stderr, "moved:" format, __VA_ARGS__)
+
 
 int
 main(int argc, char *argv[])
@@ -209,7 +211,7 @@ moved_server_handle_request(moved_server *server)
     }
 
 #if 0
-    printf("Received packet from %s:%d\nData: %s\n\n",
+    LOG("Received packet from %s:%d\nData: %s\n\n",
             inet_ntoa(si_other.sin_addr),
             ntohs(si_other.sin_port),
             request);
@@ -363,8 +365,7 @@ moved_handle_connection(move_daemon *moved, fd_set *fds)
     dev->next = moved->devs;
     moved->devs = dev;
 
-    fprintf(stderr, "New device %d %s\n",
-            dev->index, myba2str(&dev->addr));
+    LOG("New device %d %s\n", dev->index, myba2str(&dev->addr));
 
     moved->devices_changed = 1;
 }
@@ -430,8 +431,8 @@ moved_handle_disconnect(move_daemon *moved)
                 prev->next = dev->next;
             }
 
-            fprintf(stderr, "Disconnecting %d %s\n",
-                    dev->index, myba2str(&dev->addr));
+            LOG("Removing device %d %s\n", dev->index,
+                    myba2str(&dev->addr));
 
             psmove_dev_delete(dev);
         }
