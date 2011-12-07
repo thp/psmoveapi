@@ -78,6 +78,17 @@ main(int argc, char *argv[])
     return 0;
 }
 
+void
+set_nonblocking(int fd)
+{
+    int flags = fcntl(fd, F_GETFL, 0);
+
+    if (flags == -1) {
+        flags = 0;
+    }
+
+    assert(fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1);
+}
 
 char *
 myba2str(const bdaddr_t *ba)
@@ -242,6 +253,9 @@ psmove_dev_accept(move_daemon *moved)
     dev->isk = accept(moved->isk, NULL, NULL);
     assert(dev->csk >= 0 && dev->isk >= 0);
 
+    /* Use non-blocking I/O for the control socket (writable socket) */
+    set_nonblocking(dev->csk);
+
     /* Header byte for LED output */
     dev->output[0] = HIDP_TRANS_SET_REPORT | HIDP_DATA_RTYPE_OUTPUT;
 
@@ -278,22 +292,12 @@ psmove_dev_get_input(psmove_dev *dev)
 int
 psmove_dev_write(psmove_dev *dev)
 {
-    char ack;
-
     if (send(dev->csk, dev->output, sizeof(dev->output), 0) <= 0) {
         return 0;
     }
 
-    if (recv(dev->csk, &ack, sizeof(ack), 0) != 1) {
-        return 0;
-    }
-
-    if (ack == 0) {
-        dev->dirty_output = 0;
-        return 1;
-    }
-
-    return 0;
+    dev->output_acks_waiting++;
+    return 1;
 }
 
 int
@@ -382,10 +386,30 @@ void
 moved_write_reports(move_daemon *moved)
 {
     psmove_dev *dev;
+    char ack;
 
     for each(dev, moved->devs) {
-        if (dev->dirty_output) {
+        /**
+         * Send new outputs for devices with "dirty" output
+         *
+         * The uppser limit for output_acks_waiting has been determined
+         * by experimentation - it turns out we can have one additional
+         * write before reading outstanding acks.
+         **/
+        if (dev->dirty_output && dev->output_acks_waiting <= 1) {
             psmove_dev_write(dev);
+        }
+
+        /**
+         * Receive outstanding acknowledgements - ignore the
+         * value in "ack", because at this point there is no
+         * way of reporting an error. Sending LED/rumble data
+         * is done on a best effort basis, anyway.
+         **/
+        while (recv(dev->csk, &ack, sizeof(ack), 0) != -1 &&
+                dev->output_acks_waiting > 0) {
+            dev->dirty_output = 0;
+            dev->output_acks_waiting--;
         }
     }
 }

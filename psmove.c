@@ -255,7 +255,11 @@ PSMove *
 psmove_connect_by_id(int id)
 {
 #ifdef WITH_MOVED_CLIENT
-    return psmove_connect_internal(NULL, NULL, id);
+    if (psmove_count_connected() > id) {
+        return psmove_connect_internal(NULL, NULL, id);
+    } else {
+        return NULL;
+    }
 #else
     struct hid_device_info *devs, *cur_dev;
     int count = 0;

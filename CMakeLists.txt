@@ -72,6 +72,9 @@ target_link_libraries(psmovepair psmoveapi)
 add_executable(example c/example.c)
 target_link_libraries(example psmoveapi)
 
+add_executable(example2 c/example2.c)
+target_link_libraries(example2 psmoveapi ncurses)
+
 add_executable(multiple c/multiple.c)
 target_link_libraries(multiple psmoveapi)
 

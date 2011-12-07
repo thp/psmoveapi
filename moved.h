@@ -39,6 +39,7 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/l2cap.h>
@@ -67,6 +68,7 @@ typedef struct _psmove_dev {
   unsigned char output[8];
 
   int dirty_output;
+  int output_acks_waiting;
   int dirty_input;
   int disconnect_flag;
 
