@@ -553,7 +553,7 @@ psmove_poll(PSMove *move)
 #endif
 
 #ifdef WITH_MOVED_CLIENT
-    if (moved_client_send(client, MOVED_REQ_READ, 0, NULL)) {
+    if (moved_client_send(client, MOVED_REQ_READ, move->id, NULL)) {
         memcpy((unsigned char*)(&(move->input)),
                 client->read_response_buf, sizeof(move->input));
         res = sizeof(move->input); // XXX
