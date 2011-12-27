@@ -46,6 +46,12 @@
 #  include <sys/ioctl.h>
 #endif
 
+#ifdef _WIN32
+#  include <windows.h>
+#  include <Bthsdpdef.h>
+#  include <BluetoothAPIs.h>
+#endif
+
 #ifdef WITH_MOVED_CLIENT
 #  include "moved_client.h"
 #else
@@ -87,7 +93,7 @@ typedef struct {
     unsigned char b; /* blue value, 0x00..0xff */
     unsigned char rumble2; /* unknown, should be 0x00 for now */
     unsigned char rumble; /* rumble value, 0x00..0xff */
-    // XXX Not really needed? unsigned char _padding[PSMOVE_BUFFER_SIZE-7]; /* must be zero */
+    unsigned char _padding[PSMOVE_BUFFER_SIZE-7]; /* must be zero */
 } PSMove_Data_LEDs;
 
 typedef struct {
@@ -151,6 +157,10 @@ struct _PSMove {
 
     /* Save location for the controller BTAddr */
     PSMove_Data_BTAddr btaddr;
+
+#ifdef _WIN32
+    int is_bluetooth;
+#endif
 };
 
 /* Macro: Print a critical message if an assertion fails */
@@ -208,6 +218,18 @@ psmove_count_connected()
     devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
     cur_dev = devs;
     while (cur_dev) {
+#ifdef _WIN32
+        /**
+         * Windows Quirk: Ignore extraneous devices (each dev is enumerated
+         * 3 times, count only the one with "&col02#" in the path)
+         *
+         * We use col02 for enumeration, and col01 for connecting. We want to
+         * have col02 here, because after connecting to col01, it disappears.
+         **/
+        if (strstr(cur_dev->path, "&col02#") == NULL) {
+            count--;
+        }
+#endif
         count++;
         cur_dev = cur_dev->next;
     }
@@ -221,6 +243,22 @@ PSMove *
 psmove_connect_internal(wchar_t *serial, char *path, int id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
+
+#ifdef _WIN32
+    /* Windows Quirk: USB devices have "0" as serial, BT devices their addr */
+    if (wcslen(serial) > 1) {
+        move->is_bluetooth = 1;
+    }
+    /* Windows Quirk: Use path instead of serial number by ignoring serial */
+    serial = NULL;
+
+    /* XXX Ugly: Convert "col02" path to "col01" path (tested w/ BT and USB) */
+    char *p;
+    psmove_return_val_if_fail((p = strstr(path, "&col02#")) != NULL, NULL);
+    p[5] = '1';
+    psmove_return_val_if_fail((p = strstr(path, "&0001#")) != NULL, NULL);
+    p[4] = '0';
+#endif
 
 #ifdef WITH_MOVED_CLIENT
     if (client == NULL) {
@@ -268,11 +306,20 @@ psmove_connect_by_id(int id)
     devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
     cur_dev = devs;
     while (cur_dev) {
-        if (count == id) {
-            move = psmove_connect_internal(cur_dev->serial_number,
-                    cur_dev->path, id);
-            break;
+#ifdef _WIN32
+        if (strstr(cur_dev->path, "&col02#") != NULL) {
+#endif
+            if (count == id) {
+                move = psmove_connect_internal(cur_dev->serial_number,
+                        cur_dev->path, id);
+                break;
+            }
+#ifdef _WIN32
+        } else {
+            count--;
         }
+#endif
+
         count++;
         cur_dev = cur_dev->next;
     }
@@ -418,8 +465,34 @@ psmove_pair(PSMove *move)
 
 #elif defined(__linux) && !defined(WITH_MOVED_CLIENT)
     hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
+#elif defined(_WIN32)
+    HBLUETOOTH_RADIO_FIND hFind;
+    HANDLE hRadio;
+    BLUETOOTH_RADIO_INFO radioInfo;
+
+    BLUETOOTH_FIND_RADIO_PARAMS btfrp;
+    btfrp.dwSize = sizeof(BLUETOOTH_FIND_RADIO_PARAMS);
+    hFind = BluetoothFindFirstRadio(&btfrp, &hRadio);
+
+    psmove_return_val_if_fail(hFind != NULL, 0);
+    radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
+
+    if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
+        psmove_CRITICAL("BluetoothGetRadioInfo");
+        CloseHandle(hRadio);
+        BluetoothFindRadioClose(hFind);
+        return 0;
+    }
+
+    for (i=0; i<6; i++) {
+        btaddr[i] = radioInfo.address.rgBytes[5-i];
+    }
+
+    CloseHandle(hRadio);
+    BluetoothFindRadioClose(hFind);
+
 #else
-    /* TODO: Implement for Windows and other OSes */
+    /* TODO: Implement for other OSes (if any?) */
     return 0;
 #endif
 
@@ -455,7 +528,9 @@ psmove_pair_custom(PSMove *move, const char *btaddr_string)
 enum PSMove_Connection_Type
 psmove_connection_type(PSMove *move)
 {
-#ifdef WITH_MOVED_CLIENT
+#if defined(_WIN32)
+    return move->is_bluetooth?Conn_Bluetooth:Conn_USB;
+#elif defined(WITH_MOVED_CLIENT)
     return Conn_Bluetooth;
 #else
     wchar_t wstr[255];
@@ -685,6 +760,7 @@ void
 psmove_disconnect(PSMove *move)
 {
     psmove_return_if_fail(move != NULL);
+    hid_close(move->handle);
     free(move);
 }
 

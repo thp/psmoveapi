@@ -42,6 +42,16 @@ New features in v2:
  * Various fixes to improve building on different systems and with/without Qt
  * A few new examples
 
+
+ |- Windows notes ----------- -- -  -
+ | If you are using MinGW from the Qt SDK, you have to replace the file
+ | libbthprops.a in mingw\lib\ with the file of the same name from the
+ | mingw-w64 package. A modified set of Bluetooth headers can be found in
+ | contrib\mingw-w64-headers if you need them - they are taken from the
+ | mingw-w64 distribution and have been modified to work with Qt SDK's mingw.
+ |
+ .
+
 The library also includes several examples in C, Python and C++ (Qt). A Test
 GUI has been developed to test the library features without having to write any
 code at all, and to serve as an example for developing custom solutions. A QML

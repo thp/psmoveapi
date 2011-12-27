@@ -34,6 +34,18 @@
 extern "C" {
 #endif
 
+#ifdef _WIN32
+#  define ADDCALL __cdecl
+#  ifdef BUILDING_SHARED_LIBRARY
+#    define ADDAPI __declspec(dllexport)
+#  else
+#    define ADDAPI __declspec(dllimport)
+#  endif
+#else
+#  define ADDAPI
+#  define ADDCALL
+#endif
+
 enum PSMove_Connection_Type {
     Conn_Bluetooth,
     Conn_USB,
@@ -79,29 +91,29 @@ typedef struct _PSMove PSMove;
 /**
  * Get the number of currently-connected PS Move controllers
  **/
-int
-psmove_count_connected();
+ADDAPI int
+ADDCALL psmove_count_connected();
 
 /**
  * Connect to the PS Move controller id (zero-based index)
  * Returns: A newly-allocated PSMove structure or NULL on error
  **/
-PSMove *
-psmove_connect_by_id(int id);
+ADDAPI PSMove *
+ADDCALL psmove_connect_by_id(int id);
 
 /**
  * Connect to the default PS Move controller
  * Returns: A newly-allocated PSMove structure or NULL on error
  **/
-PSMove *
-psmove_connect();
+ADDAPI PSMove *
+ADDCALL psmove_connect();
 
 /**
  * Determine the connection type of the controllerj
  * Returns: An enum PSMove_Connection_Type value
  **/
-enum PSMove_Connection_Type
-psmove_connection_type(PSMove *move);
+ADDAPI enum PSMove_Connection_Type
+ADDCALL psmove_connection_type(PSMove *move);
 
 /**
  * Read a Bluetooth address from string and write its
@@ -111,8 +123,8 @@ psmove_connection_type(PSMove *move);
  *
  * Will return nonzero on success, zero on error.
  **/
-int
-psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
+ADDAPI int
+ADDCALL psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
 
 /**
  * Get the currently-set Host Bluetooth address that is used
@@ -121,16 +133,16 @@ psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
  * addr might be NULL in which case the address and calibration
  * data are retrieved, but the Bluetooth address is discarded.
  **/
-int
-psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+ADDAPI int
+ADDCALL psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 
 /**
  * Get the Bluetooth Mac address of the connected controller.
  *
  * XXX This is not implemented in the backend at the moment.
  **/
-int
-psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+ADDAPI int
+ADDCALL psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 
 /**
  * Set the Host Bluetooth address that is used to connect via
@@ -138,8 +150,8 @@ psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
  * Bluetooth address when connected via USB, then disconnect
  * and press the PS button to connect the controller via BT.
  **/
-int
-psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+ADDAPI int
+ADDCALL psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 
 /**
  * Set the Host Bluetooth address of the PS Move to this
@@ -149,8 +161,8 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
  *
  * Will return nonzero on success, zero on error.
  **/
-int
-psmove_pair(PSMove *move);
+ADDAPI int
+ADDCALL psmove_pair(PSMove *move);
 
 /**
  * Set the Host Bluetooth address of the PS Move to the
@@ -159,16 +171,16 @@ psmove_pair(PSMove *move);
  *
  * Will return nonzero on success, zero on error.
  **/
-int
-psmove_pair_custom(PSMove *move, const char *btaddr_string);
+ADDAPI int
+ADDCALL psmove_pair_custom(PSMove *move, const char *btaddr_string);
 
 /**
  * Set the LEDs of the PS Move controller. You need to
  * call PSMove_update_leds() to send the update to the
  * controller.
  **/
-void
-psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
+ADDAPI void
+ADDCALL psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
         unsigned char b);
 
 /**
@@ -176,8 +188,8 @@ psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
  * need to call PSMove_update_leds() to send the update
  * to the controller.
  **/
-void
-psmove_set_rumble(PSMove *move, unsigned char rumble);
+ADDAPI void
+ADDCALL psmove_set_rumble(PSMove *move, unsigned char rumble);
 
 /**
  * Re-send the LED and Rumble status bits. This needs to
@@ -185,23 +197,23 @@ psmove_set_rumble(PSMove *move, unsigned char rumble);
  *
  * Returns: Nonzero on success, zero on error
  **/
-int
-psmove_update_leds(PSMove *move);
+ADDAPI int
+ADDCALL psmove_update_leds(PSMove *move);
 
 /**
  * Polls the PS Move for new sensor/button data.
  * Returns a positive number (sequence number + 1) if new data is
  * available or zero if no data is available.
  **/
-int
-psmove_poll(PSMove *move);
+ADDAPI int
+ADDCALL psmove_poll(PSMove *move);
 
 /**
  * Get the current status of the PS Move buttons. You need to call
  * PSMove_poll() to read new data from the controller first.
  **/
-unsigned int
-psmove_get_buttons(PSMove *move);
+ADDAPI unsigned int
+ADDCALL psmove_get_buttons(PSMove *move);
 
 /**
  * Get the battery level of the PS Move. You need to call
@@ -210,8 +222,8 @@ psmove_get_buttons(PSMove *move);
  * Return value range: Batt_MIN..Batt_MAX
  * Charging (via USB): Batt_CHARGING
  **/
-unsigned char
-psmove_get_battery(PSMove *move);
+ADDAPI unsigned char
+ADDCALL psmove_get_battery(PSMove *move);
 
 /**
  * Get the current temperature of the PS Move. You need to
@@ -219,15 +231,15 @@ psmove_get_battery(PSMove *move);
  *
  * Return value range: FIXME
  **/
-int
-psmove_get_temperature(PSMove *move);
+ADDAPI int
+ADDCALL psmove_get_temperature(PSMove *move);
 
 /**
  * Get the current value of the PS Move analog trigger. You need to
  * call PSMove_poll() to read new data from the controller first.
  **/
-unsigned char
-psmove_get_trigger(PSMove *move);
+ADDAPI unsigned char
+ADDCALL psmove_get_trigger(PSMove *move);
 
 /**
  * Get the current accelerometer readings from the PS Move. You need
@@ -237,28 +249,28 @@ psmove_get_trigger(PSMove *move);
  * to have filled with values. If you don't care about one of these
  * values, simply pass NULL and the field will be ignored..
  **/
-void
-psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az);
+ADDAPI void
+ADDCALL psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az);
 
 /**
  * Same as PSMove_get_accelerometer(), but for the gyroscope.
  **/
-void
-psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz);
+ADDAPI void
+ADDCALL psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz);
 
 /**
  * Same as PSMove_get_accelerometer(), but for the magnetometer.
  * See http://youtu.be/ltOQB_q1UTg for calibration instructions.
  * This is not really tested. YMMV.
  **/
-void
-psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
+ADDAPI void
+ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
 
 /**
  * Disconnect from the PS Move and free resources
  **/
-void
-psmove_disconnect(PSMove *move);
+ADDAPI void
+ADDCALL psmove_disconnect(PSMove *move);
 
 #ifdef __cplusplus
 }

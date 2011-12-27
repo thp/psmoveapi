@@ -55,6 +55,6 @@ target_link_libraries(qtmultiple ${QT_LIBRARIES} ${QT_QTDECLARATIVE_LIBRARY} psm
 
 # System-wide installation of the Qt library
 
-install(TARGETS psmoveapiqt LIBRARY DESTINATION lib)
+install(TARGETS psmoveapiqt RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
 install(FILES psmoveqt.hpp DESTINATION include/psmoveapi)
 

@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 2.6)
 project(PSMOVEAPI)
 
 include_directories(${PSMOVEAPI_SOURCE_DIR}/hidapi/hidapi)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 #add_definitions(-g -Wall)
 add_definitions(-O2)
 
@@ -25,7 +27,12 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVE_REQUIRED_LIBS ${IOBLUETOOTH})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/mac/hid.c)
+ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32)
+
+    set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/windows/hid.c)
 ELSE()
+    # Linux
     find_package(PkgConfig REQUIRED)
     find_package(Threads REQUIRED)
 
@@ -53,7 +60,7 @@ ELSE()
     add_executable(moved-client moved_client_test.c moved_client.c)
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
     add_definitions(-DWITH_MOVED_CLIENT)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+ENDIF()
 
 set(PSMOVE_SRC ${HIDAPI_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
 
@@ -62,6 +69,8 @@ set(PSMOVE_SRC ${HIDAPI_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
 add_library(psmoveapi SHARED ${PSMOVE_SRC})
 target_link_libraries(psmoveapi ${PSMOVE_REQUIRED_LIBS})
 set_target_properties(psmoveapi PROPERTIES VERSION ${PSMOVEAPI_VERSION} SOVERSION ${PSMOVEAPI_VERSION_SONAME})
+
+SET_TARGET_PROPERTIES(psmoveapi PROPERTIES COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
 
 # C utilities (those get installed on "make install")
 add_executable(psmovepair c/pair.c)
@@ -72,26 +81,29 @@ target_link_libraries(psmovepair psmoveapi)
 add_executable(example c/example.c)
 target_link_libraries(example psmoveapi)
 
-add_executable(example2 c/example2.c)
-target_link_libraries(example2 psmoveapi ncurses)
+find_package(CURSES)
+if(CURSES_FOUND)
+    add_executable(example2 c/example2.c)
+    target_link_libraries(example2 psmoveapi ${CURSES_LIBS})
+endif()
 
 add_executable(multiple c/multiple.c)
 target_link_libraries(multiple psmoveapi)
 
 # Python bindings (PS Move API code statically linked in Python module)
+find_package(SWIG)
+if(SWIG_FOUND)
+    include(${SWIG_USE_FILE})
+    find_package(PythonLibs)
 
-find_package(SWIG REQUIRED)
-include(${SWIG_USE_FILE})
-find_package(PythonLibs)
+    include_directories(${PYTHON_INCLUDE_PATH})
 
-include_directories(${PYTHON_INCLUDE_PATH})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+    set(CMAKE_SWIG_FLAGS "")
 
-set(CMAKE_SWIG_FLAGS "")
-
-set_source_files_properties(psmove.i PROPERTIES SWIG_FLAGS "")
-swig_add_module(psmove python psmove.i ${PSMOVE_SRC})
-swig_link_libraries(psmove ${PYTHON_LIBRARIES} ${PSMOVE_REQUIRED_LIBS})
+    set_source_files_properties(psmove.i PROPERTIES SWIG_FLAGS "")
+    swig_add_module(psmove python psmove.i ${PSMOVE_SRC})
+    swig_link_libraries(psmove ${PYTHON_LIBRARIES} ${PSMOVE_REQUIRED_LIBS})
+endif()
 
 # For system-wide installation
 
