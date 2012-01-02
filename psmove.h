@@ -1,7 +1,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -260,8 +260,12 @@ ADDCALL psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz);
 
 /**
  * Same as PSMove_get_accelerometer(), but for the magnetometer.
- * See http://youtu.be/ltOQB_q1UTg for calibration instructions.
- * This is not really tested. YMMV.
+ * The result value range is -2048..+2047. The magnetometer is located
+ * roughly below the glowing orb - you can glitch the values with a
+ * strong kitchen magnet by moving it around the bottom ring of the orb.
+ *
+ * You can detect if a magnet is nearby by checking if any two values
+ * stay at zero for several frames.
  **/
 ADDAPI void
 ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);

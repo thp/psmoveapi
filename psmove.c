@@ -1,7 +1,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,19 +96,22 @@ typedef struct {
     unsigned char _padding[PSMOVE_BUFFER_SIZE-7]; /* must be zero */
 } PSMove_Data_LEDs;
 
+/* Decode 12-bit signed value (assuming two's complement) */
+#define TWELVE_BIT_SIGNED(x) (((x) & 0x800)?(-(((~(x)) & 0xFFF) + 1)):(x))
+
 typedef struct {
     unsigned char type; /* message type, must be PSMove_Req_GetInput */
     unsigned char buttons1;
     unsigned char buttons2;
     unsigned char buttons3;
     unsigned char buttons4;
-    unsigned char _unk5;
     unsigned char trigger; /* trigger value; 0..255 */
+    unsigned char trigger2; /* trigger value, 2nd frame */
     unsigned char _unk7;
     unsigned char _unk8;
     unsigned char _unk9;
     unsigned char _unk10;
-    unsigned char _unk11;
+    unsigned char timehigh; /* high byte of timestamp */
     unsigned char battery; /* battery level; 0x05 = max, 0xEE = USB charging */
     unsigned char aXlow; /* low byte of accelerometer X value */
     unsigned char aXhigh; /* high byte of accelerometer X value */
@@ -134,12 +137,15 @@ typedef struct {
     unsigned char gYhigh2;
     unsigned char gZlow2;
     unsigned char gZhigh2;
-    unsigned char templow; /* temperature */
-    unsigned char temphigh;
-    unsigned char mag40; /* magnetometer data ??? */
-    unsigned char mag41;
-    unsigned char mag42;
-    unsigned char _padding[PSMOVE_BUFFER_SIZE-42]; /* unknown */
+    unsigned char temphigh; /* temperature (bits 12-5) */
+    unsigned char templow_mXhigh; /* temp (bits 4-1); magneto X (bits 12-9) */
+    unsigned char mXlow; /* magnetometer X (bits 8-1) */
+    unsigned char mYhigh; /* magnetometer Y (bits 12-5) */
+    unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
+    unsigned char mZlow; /* magnetometer Z (bits 8-1) */
+    unsigned char timelow; /* low byte of timestamp */
+
+    unsigned char _padding[PSMOVE_BUFFER_SIZE-44]; /* unknown */
 } PSMove_Data_Input;
 
 struct _PSMove {
@@ -684,8 +690,8 @@ psmove_get_temperature(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return ((move->input.templow << 4) |
-            ((move->input.temphigh & 0xF0) >> 4));
+    return ((move->input.temphigh << 4) |
+            ((move->input.templow_mXhigh & 0xF0) >> 4));
 }
 
 unsigned char
@@ -693,7 +699,7 @@ psmove_get_trigger(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return move->input.trigger;
+    return (move->input.trigger + move->input.trigger2) / 2;
 }
 
 void
@@ -744,15 +750,18 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
     psmove_return_if_fail(move != NULL);
 
     if (mx != NULL) {
-        *mx = move->input.templow << 0x0C | move->input.temphigh << 0x04;
+        *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
+                move->input.mXlow);
     }
 
     if (my != NULL) {
-        *my = move->input.mag40 << 0x08 | (move->input.mag41 & 0xF0);
+        *my = TWELVE_BIT_SIGNED((move->input.mYhigh << 4) |
+               (move->input.mYlow_mZhigh & 0xF0) >> 4);
     }
 
     if (mz != NULL) {
-        *mz = move->input.mag41 << 0x0C | move->input.mag42 << 0x0f;
+        *mz = TWELVE_BIT_SIGNED(((move->input.mYlow_mZhigh & 0x0F) << 8) |
+                move->input.mZlow);
     }
 }
 
