@@ -85,6 +85,10 @@ find_package(CURSES)
 if(CURSES_FOUND)
     add_executable(example2 c/example2.c)
     target_link_libraries(example2 psmoveapi ${CURSES_LIBS})
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        # Dirty hack to get example2 to compile in OS X
+        target_link_libraries(example2 ncurses)
+    endif()
 endif()
 
 add_executable(multiple c/multiple.c)
