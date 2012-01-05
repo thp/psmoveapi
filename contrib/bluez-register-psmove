@@ -1,0 +1,63 @@
+#!/bin/sh
+# bluez-register-psmove
+# Copyright (c) 2012-01-05 Thomas Perl <thp.io/about>
+# ---------------------
+# Add an entry to bluetoothd configuration files for the PS Move Motion
+# Controller to be recognized. This also works for Sixaxis controllers.
+#
+# Inspired by Bastien Nocera's patch against Bluez ("cable" plugin), but
+# this hack-ish hack works also with an unmodified version of bluetoothd.
+
+if [ "$#" != "1" ]; then
+    echo "Usage: $0 <btaddr-of-controller>"
+    exit 1
+fi
+
+if pgrep bluetoothd >/dev/null; then
+    echo "Need to kill bluetoothd, OK? (Ctrl+C to quit, Enter to continue)"
+    read
+fi
+
+if [ "$UID" != "0" ]; then
+    echo "Warning: If you get permission errors, run the script as root."
+fi
+
+# The BT address must be all-uppercase or it won't work!
+CONTROLLER_BTADDR=`echo $1 | tr 'abcdef' 'ABCDEF'`
+
+SDP_ENTRY="${CONTROLLER_BTADDR}#00010000 3601920900000A000100000900013503191124090004350D35061901000900113503190011090006350909656E09006A0901000900093508350619112409010009000D350F350D350619010009001335031900110901002513576972656C65737320436F6E74726F6C6C65720901012513576972656C65737320436F6E74726F6C6C6572090102251B536F6E7920436F6D707574657220456E7465727461696E6D656E740902000901000902010901000902020800090203082109020428010902052801090206359A35980822259405010904A101A102850175089501150026FF00810375019513150025013500450105091901291381027501950D0600FF8103150026FF0005010901A10075089504350046FF0009300931093209358102C0050175089527090181027508953009019102750895300901B102C0A1028502750895300901B102C0A10285EE750895300901B102C0A10285EF750895300901B102C0C0090207350835060904090901000902082800090209280109020A280109020B09010009020C093E8009020D280009020E2800"
+PROFILES_ENTRY="${CONTROLLER_BTADDR} 00001124-0000-1000-8000-00805f9b34fb"
+
+HOST_BTADDR=`hcitool dev | egrep -o '(..:){5}(..)'`
+BT_CONF_DIR=/var/lib/bluetooth/$HOST_BTADDR
+
+if [ "$HOST_BTADDR" == "" ]; then
+    echo "Could not determine host address using 'hcitool dev' :("
+    exit 1
+fi
+
+if [ ! -d "$BT_CONF_DIR" ]; then
+    echo "$BT_CONF_DIR is not a directory."
+    exit 1
+fi
+
+SDP_FILE=$BT_CONF_DIR/sdp
+PROFILES_FILE=$BT_CONF_DIR/profiles
+
+# Need to kill bluetoothd, otherwise our changes are overwritten when it exits
+killall bluetoothd
+
+if ! grep -q "$SDP_ENTRY" "$SDP_FILE"; then
+    echo $SDP_ENTRY >>$SDP_FILE
+else
+    echo "Entry for $CONTROLLER_BTADDR already in $SDP_FILE"
+fi
+
+if ! grep -q "$PROFILES_ENTRY" "$PROFILES_FILE"; then
+    echo $PROFILES_ENTRY >>$PROFILES_FILE
+else
+    echo "Entry for $CONTROLLER_BTADDR already in $PROFILES_FILE"
+fi
+
+echo "All done. Restart bluetoothd and press the PS button."
+

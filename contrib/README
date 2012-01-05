@@ -6,3 +6,9 @@ Here are some files that might be useful for users of the library:
  by any user on the system (otherwise you might get a permission
  problem or you might have to run the application as root).
 
+ bluez-register-psmove:
+ This adds the relevant profile and SDP entries to the bluetoothd
+ state files in /var/lib/bluetooth/ (bluetoothd mustn't be running)
+ so that a PS Move controller (also works for Sixaxis) can connect
+ as HID device without problems.
+
