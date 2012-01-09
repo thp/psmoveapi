@@ -11,7 +11,8 @@ The Qt examples are not built by default (see below).
 On a Debian-based system, you can install it like this:
 
   apt-get install cmake swig python-dev libqt4-dev \
-                  libudev-dev libusb-1.0-0-dev
+                  libudev-dev libusb-1.0-0-dev \
+                  libbluetooth-dev
 
 The hidapi library is imported as Git submodule:
 
