@@ -769,7 +769,9 @@ void
 psmove_disconnect(PSMove *move)
 {
     psmove_return_if_fail(move != NULL);
+#ifndef WITH_MOVED_CLIENT
     hid_close(move->handle);
+#endif
     free(move);
 }
 
