@@ -6,6 +6,7 @@ project(PSMOVEAPI)
 include_directories(${PSMOVEAPI_SOURCE_DIR}/hidapi/hidapi)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+add_definitions(-DPSMOVE_DEBUG)
 #add_definitions(-g -Wall)
 add_definitions(-O2)
 
@@ -47,9 +48,9 @@ ELSE()
     #list(APPEND PSMOVE_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
     # On Linux, we require Bluez for getting the BT addr
-    #pkg_check_modules(BLUEZ REQUIRED bluez)
-    #include_directories(${BLUEZ_INCLUDE_DIRS})
-    #list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
+    pkg_check_modules(BLUEZ REQUIRED bluez)
+    include_directories(${BLUEZ_INCLUDE_DIRS})
+    list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/linux/hid-libusb.c)
 
@@ -81,15 +82,16 @@ target_link_libraries(psmovepair psmoveapi)
 add_executable(example c/example.c)
 target_link_libraries(example psmoveapi)
 
-find_package(CURSES)
-if(CURSES_FOUND)
-    add_executable(example2 c/example2.c)
-    target_link_libraries(example2 psmoveapi ${CURSES_LIBS})
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        # Dirty hack to get example2 to compile in OS X
-        target_link_libraries(example2 ncurses)
-    endif()
-endif()
+# Disabled building of example2 now - uncomment if you have libncurses-dev
+#find_package(CURSES)
+#if(CURSES_FOUND)
+#    add_executable(example2 c/example2.c)
+#    target_link_libraries(example2 psmoveapi ${CURSES_LIBS})
+#    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#        # Dirty hack to get example2 to compile in OS X
+#        target_link_libraries(example2 ncurses)
+#    endif()
+#endif()
 
 add_executable(multiple c/multiple.c)
 target_link_libraries(multiple psmoveapi)
