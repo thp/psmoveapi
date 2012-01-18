@@ -339,7 +339,7 @@ psmove_connect_by_id(int id)
 PSMove *
 psmove_connect()
 {
-    return psmove_connect_internal(NULL, NULL, 0);
+    return psmove_connect_by_id(0);
 }
 
 int
