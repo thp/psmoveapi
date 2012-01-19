@@ -50,6 +50,15 @@ New features in v2:
  | contrib\mingw-w64-headers if you need them - they are taken from the
  | mingw-w64 distribution and have been modified to work with Qt SDK's mingw.
  |
+ | If for some reason, you get an assertion error (hFind != NULL) on Windows
+ | with psmovepair, it could be that you are not using the Windows Bluetooth
+ | stack. Whatever the reason is, the psmovepair utility accepts a command-line
+ | parameter that is the desired host address, so you can still pair the device
+ | by figuring out the Bluetooth host address manually and using this as the
+ | first parameter when starting psmovepair, e.g.:
+ |
+ |       psmovepair.exe AA:BB:CC:DD:EE:FF
+ |
  .
 
 The library also includes several examples in C, Python and C++ (Qt). A Test
