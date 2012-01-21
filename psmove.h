@@ -157,7 +157,11 @@ ADDCALL psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
  * Set the Host Bluetooth address of the PS Move to this
  * computer's Bluetooth address. Only works via USB.
  *
- * Implemented only for Linux (Bluez) and OS X.
+ * Implemented for Linux (Bluez), Mac OS X and the default
+ * Windows 7 Microsoft Bluetooth stack only.
+ *
+ * Windows note: Doesn't work with 3rd party stacks like Bluesoleil.
+ * In this case, you can use psmove_pair_custom() (see below).
  *
  * Will return nonzero on success, zero on error.
  **/
