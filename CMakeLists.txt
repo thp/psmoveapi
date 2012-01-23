@@ -107,8 +107,8 @@ if(SWIG_FOUND)
     set(CMAKE_SWIG_FLAGS "")
 
     set_source_files_properties(psmove.i PROPERTIES SWIG_FLAGS "")
-    swig_add_module(psmove python psmove.i ${PSMOVE_SRC})
-    swig_link_libraries(psmove ${PYTHON_LIBRARIES} ${PSMOVE_REQUIRED_LIBS})
+    swig_add_module(psmove python psmove.i)
+    swig_link_libraries(psmove psmoveapi ${PYTHON_LIBRARIES})
 endif()
 
 # For system-wide installation
