@@ -44,10 +44,15 @@ colors = [
         (255, 255, 0),
         (0, 255, 255),
         (255, 0, 255),
+        (255, 255, 255),
+        (255, 128, 255),
+        (255, 128, 128),
 ]
 
-for i in range(count):
-    move = psmove.PSMove(i)
+moves = [(m.get_serial(), m) for m in (psmove.PSMove(i) for i in range(count))]
+
+for i, (serial, move) in enumerate(sorted(moves)):
     move.set_leds(*colors[i%len(colors)])
+    print 'Move:', serial
     move.update_leds()
 
