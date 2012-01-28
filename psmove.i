@@ -85,6 +85,10 @@ void reinit();
         return psmove_pair_custom($self, btaddr);
     }
 
+    const char *get_serial() {
+        return psmove_get_serial($self);
+    }
+
     int poll() {
         return psmove_poll($self);
     }

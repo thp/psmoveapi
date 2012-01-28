@@ -77,6 +77,9 @@
 /* Buffer size for the Bluetooth address set request */
 #define PSMOVE_BTADDR_SET_SIZE 23
 
+/* Maximum length of the serial string */
+#define PSMOVE_MAX_SERIAL_LENGTH 255
+
 enum PSMove_Request_Type {
     PSMove_Req_GetInput = 0x01,
     PSMove_Req_SetLEDs = 0x02,
@@ -163,6 +166,9 @@ struct _PSMove {
 
     /* Save location for the controller BTAddr */
     PSMove_Data_BTAddr btaddr;
+
+    /* Save location for the serial number */
+    char *serial_number;
 
 #ifdef _WIN32
     int is_bluetooth;
@@ -307,6 +313,10 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     /* Remember the ID/index */
     move->id = id;
 
+    /* Remember the serial number */
+    move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
+    wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
+
     /* Bookkeeping of open handles (for psmove_reinit) */
     psmove_num_open_handles++;
 
@@ -416,6 +426,14 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 
     return 0;
 #endif /* !WITH_MOVED_CLIENT */
+}
+
+const char*
+psmove_get_serial(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+    psmove_return_val_if_fail(move->serial_number != NULL, 0);
+    return move->serial_number;
 }
 
 int
@@ -790,6 +808,7 @@ psmove_disconnect(PSMove *move)
 #ifndef WITH_MOVED_CLIENT
     hid_close(move->handle);
 #endif
+    free(move->serial_number);
     free(move);
 
     /* Bookkeeping of open handles (for psmove_reinit) */
