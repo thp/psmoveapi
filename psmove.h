@@ -89,6 +89,14 @@ struct _PSMove;
 typedef struct _PSMove PSMove;
 
 /**
+ * Reinitialize the library. Required for detecting new and removed
+ * controllers (at least on Mac OS X). Make sure to disconnect all
+ * controllers (using psmove_disconnect) before calling this!
+ **/
+ADDAPI void
+ADDCALL psmove_reinit();
+
+/**
  * Get the number of currently-connected PS Move controllers
  **/
 ADDAPI int

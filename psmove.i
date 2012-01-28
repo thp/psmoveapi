@@ -40,6 +40,8 @@ typedef struct {} PSMove;
 
 int count_connected();
 
+void reinit();
+
 %extend PSMove {
     /* Connection type */
     const int connection_type;
@@ -184,6 +186,11 @@ PSMove_mz_get(PSMove *move) {
 int count_connected()
 {
     return psmove_count_connected();
+}
+
+void reinit()
+{
+    return psmove_reinit();
 }
 
 %}

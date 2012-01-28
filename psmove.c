@@ -186,6 +186,9 @@ struct _PSMove {
 static moved_client *client;
 #endif
 
+/* Number of valid, open PSMove* handles "in the wild" */
+static int psmove_num_open_handles = 0;
+
 /* Private functionality needed by the Linux version */
 #if defined(__linux)
 
@@ -208,6 +211,18 @@ int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 
 
 /* Start implementation of the API */
+
+
+void
+psmove_reinit()
+{
+    if (psmove_num_open_handles != 0) {
+        psmove_CRITICAL("reinit called with open handles "
+                "(forgot psmove_disconnect?)");
+        exit(0);
+    }
+    hid_exit();
+}
 
 int
 psmove_count_connected()
@@ -291,6 +306,9 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     /* Remember the ID/index */
     move->id = id;
+
+    /* Bookkeeping of open handles (for psmove_reinit) */
+    psmove_num_open_handles++;
 
     return move;
 }
@@ -773,6 +791,10 @@ psmove_disconnect(PSMove *move)
     hid_close(move->handle);
 #endif
     free(move);
+
+    /* Bookkeeping of open handles (for psmove_reinit) */
+    psmove_return_if_fail(psmove_num_open_handles > 0);
+    psmove_num_open_handles--;
 }
 
 
