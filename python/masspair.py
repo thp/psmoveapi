@@ -35,6 +35,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'build'))
 import time
 import psmove
 
+# Mass pairing of controllers via USB - use with care!
+# How it works: Connect controllers via USB and disconnect when they turn green
+# Please note: Make sure to disconnect the controller as soon as it turns green,
+# or the pairing will happen several times until you disconnect.
 
 while True:
     print 'checking...'
@@ -52,7 +56,7 @@ while True:
                 print 'pairing succeeded.'
                 move.set_leds(0, 255, 0)
                 move.update_leds()
-                time.sleep(5) # wait a bit so we can disconnect the move
+                time.sleep(3) # wait a bit so we can disconnect the move
         del move # make sure the controller object is freed to avoid segfaults
     moves = []
     time.sleep(1)
