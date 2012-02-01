@@ -1,4 +1,32 @@
+
+#if defined(SWIGJAVA)
+
+/* Java */
+%include "enums.swg"
+%javaconst(1);
+%rename PSMove_Button Button;
+%rename PSMove_Battery_Level BatteryLevel;
+%rename PSMove_Connection_Type ConnectionType;
+%module psmoveapi
+
+#else
+
+/* Python et al. */
 %module psmove
+
+#endif /* defined(SWIGJAVA) */
+
+%pragma(java) jniclasscode=%{
+    static {
+        try {
+            System.loadLibrary("psmove_java");
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("Failed to load native 'psmove' library: " + e);
+            System.exit(1);
+        }
+    }
+%}
+
 %{
 
  /**
@@ -61,7 +89,11 @@ void reinit();
     const int my;
     const int mz;
 
-    PSMove(int id=0) {
+    PSMove() {
+        return psmove_connect_by_id(0);
+    }
+
+    PSMove(int id) {
         return psmove_connect_by_id(id);
     }
 

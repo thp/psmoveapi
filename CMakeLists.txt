@@ -96,19 +96,31 @@ target_link_libraries(example psmoveapi)
 add_executable(multiple c/multiple.c)
 target_link_libraries(multiple psmoveapi)
 
-# Python bindings (PS Move API code statically linked in Python module)
+# These will be set to "Yes" below if the dependencies are found
+set(BUILD_PYTHON_BINDINGS "No ")
+set(BUILD_JAVA_BINDINGS "No ")
+set(BUILD_QT_BINDINGS "No ")
+
+# Language bindings (Python and Java)
 find_package(SWIG)
 if(SWIG_FOUND)
     include(${SWIG_USE_FILE})
+
     find_package(PythonLibs)
+    if(PYTHONLIBS_FOUND)
+        include_directories(${PYTHON_INCLUDE_PATH})
+        swig_add_module(psmove python psmove.i)
+        swig_link_libraries(psmove psmoveapi ${PYTHON_LIBRARIES})
+        set(BUILD_PYTHON_BINDINGS "Yes")
+    endif()
 
-    include_directories(${PYTHON_INCLUDE_PATH})
-
-    set(CMAKE_SWIG_FLAGS "")
-
-    set_source_files_properties(psmove.i PROPERTIES SWIG_FLAGS "")
-    swig_add_module(psmove python psmove.i)
-    swig_link_libraries(psmove psmoveapi ${PYTHON_LIBRARIES})
+    find_package(JNI)
+    if(JNI_FOUND)
+        include_directories(${JNI_INCLUDE_DIRS})
+        swig_add_module(psmove_java java psmove.i)
+        swig_link_libraries(psmove_java psmoveapi ${JNI_LIBRARIES})
+        set(BUILD_JAVA_BINDINGS "Yes")
+    endif()
 endif()
 
 # For system-wide installation
@@ -132,5 +144,15 @@ find_package(Qt4)
 
 if(QT_QTDECLARATIVE_FOUND)
     add_subdirectory(qt)
+    set(BUILD_QT_BINDINGS "Yes")
 endif(QT_QTDECLARATIVE_FOUND)
+
+set(PADDING "                     ")
+MESSAGE("")
+MESSAGE("      +------ PS Move API Build Configuration ------+ ")
+MESSAGE("      |  Python bindings: " ${PADDING} ${BUILD_PYTHON_BINDINGS} "  |")
+MESSAGE("      |  Java bindings:   " ${PADDING} ${BUILD_JAVA_BINDINGS} "  |")
+MESSAGE("      |  Qt bindings:     " ${PADDING} ${BUILD_QT_BINDINGS} "  |")
+MESSAGE("      +---------------------------------------------+ ")
+MESSAGE("")
 
