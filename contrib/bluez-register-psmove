@@ -37,7 +37,7 @@ if [ "$HOST_BTADDR" == "" ]; then
 fi
 
 if [ ! -d "$BT_CONF_DIR" ]; then
-    echo "$BT_CONF_DIR is not a directory."
+    echo "'$BT_CONF_DIR' is not a directory."
     exit 1
 fi
 
