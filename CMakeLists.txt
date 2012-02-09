@@ -43,24 +43,24 @@ ELSE()
     list(APPEND PSMOVE_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
     # Only needed when using hidraw version of hidapi
-    #pkg_check_modules(UDEV REQUIRED libudev)
-    #include_directories(${UDEV_INCLUDE_DIRS})
-    #list(APPEND PSMOVE_REQUIRED_LIBS ${UDEV_LIBRARIES})
+    pkg_check_modules(UDEV REQUIRED libudev)
+    include_directories(${UDEV_INCLUDE_DIRS})
+    list(APPEND PSMOVE_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
     # On Linux, we require Bluez for getting the BT addr
     pkg_check_modules(BLUEZ REQUIRED bluez)
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
-    set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/linux/hid-libusb.c)
+    set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/linux/hid.c)
 
     # Move Daemon for Linux (non-hidapi, Bluetooth-only)
     # Comment out the lines below and uncomment the above
     # lines (libudev/bluez) to build with HIDAPI support
-    add_executable(moved moved.c)
-    add_executable(moved-client moved_client_test.c moved_client.c)
-    set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
-    add_definitions(-DWITH_MOVED_CLIENT)
+    #add_executable(moved moved.c)
+    #add_executable(moved-client moved_client_test.c moved_client.c)
+    #set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
+    #add_definitions(-DWITH_MOVED_CLIENT)
 ENDIF()
 
 set(PSMOVE_SRC ${HIDAPI_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
@@ -108,6 +108,7 @@ if(SWIG_FOUND)
 
     find_package(PythonLibs)
     if(PYTHONLIBS_FOUND)
+        unset(CMAKE_SWIG_FLAGS)
         include_directories(${PYTHON_INCLUDE_PATH})
         swig_add_module(psmove python psmove.i)
         swig_link_libraries(psmove psmoveapi ${PYTHON_LIBRARIES})
@@ -116,10 +117,23 @@ if(SWIG_FOUND)
 
     find_package(JNI)
     if(JNI_FOUND)
+        set(PSMOVEAPI_JAVA_PKG "io.thp.psmove")
+        string(REPLACE "." "/" PSMOVEAPI_JAVA_PKG_DIR ${PSMOVEAPI_JAVA_PKG})
+
+        set(CMAKE_SWIG_FLAGS -package ${PSMOVEAPI_JAVA_PKG})
         include_directories(${JNI_INCLUDE_DIRS})
         swig_add_module(psmove_java java psmove.i)
         swig_link_libraries(psmove_java psmoveapi ${JNI_LIBRARIES})
         set(BUILD_JAVA_BINDINGS "Yes")
+
+        add_custom_target(psmoveapi.jar ALL
+            COMMAND mkdir -p ${PSMOVEAPI_JAVA_PKG_DIR}
+            COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR}
+            COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
+            COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Java bindings JAR archive"
+        )
     endif()
 endif()
 
