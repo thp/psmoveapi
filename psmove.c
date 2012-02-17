@@ -315,7 +315,14 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     /* Remember the serial number */
     move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
-    wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
+    if (serial != NULL) {
+        wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
+    } else {
+        // FIXME
+        fprintf(stderr, "[PSMOVE] no serial, using path: %s\n", path);
+        strcpy(move->serial_number, "path:");
+        strcat(move->serial_number, path);
+    }
 
     /* Bookkeeping of open handles (for psmove_reinit) */
     psmove_num_open_handles++;
