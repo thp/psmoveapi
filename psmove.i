@@ -121,6 +121,10 @@ void reinit();
         return psmove_get_serial($self);
     }
 
+    int is_remote() {
+        return psmove_is_remote($self);
+    }
+
     int poll() {
         return psmove_poll($self);
     }

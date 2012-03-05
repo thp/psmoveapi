@@ -89,6 +89,39 @@ struct _PSMove;
 typedef struct _PSMove PSMove;
 
 /**
+ * Disable the connection to remote servers
+ *
+ * This can only be called at the beginning, and will disable connections to
+ * any remote "moved" servers.
+ **/
+ADDAPI void
+ADDCALL psmove_disable_remote();
+
+/**
+ * Disable local (hidapi-based) controllers
+ *
+ * This can only be called at the beginning, and will disable all local
+ * controllers that are connected via hidapi.
+ **/
+ADDAPI void
+ADDCALL psmove_disable_local();
+
+
+/**
+ * [PRIVATE API] Write raw data blob to device
+ **/
+ADDAPI void
+ADDCALL _psmove_write_data(PSMove *move, unsigned char *data, int length);
+
+
+/**
+ * [PRIVATE API] Read raw data blob from device
+ **/
+ADDAPI void
+ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
+
+
+/**
  * Reinitialize the library. Required for detecting new and removed
  * controllers (at least on Mac OS X). Make sure to disconnect all
  * controllers (using psmove_disconnect) before calling this!
@@ -163,6 +196,14 @@ ADDCALL psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
  **/
 ADDAPI const char*
 ADDCALL psmove_get_serial(PSMove *move);
+
+/**
+ * Check if the controller handle is a remote (moved) connection.
+ *
+ * Return 0 if "move" is local (USB/Bluetooth), 1 if it's remote (moved)
+ **/
+ADDAPI int
+ADDCALL psmove_is_remote(PSMove *move);
 
 /**
  * Set the Host Bluetooth address that is used to connect via

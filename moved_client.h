@@ -1,7 +1,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
@@ -44,14 +45,25 @@
 #include "moved_protocol.h"
 
 typedef struct {
+    char *hostname;
+
     int socket;
     struct sockaddr_in moved_addr;
 
     unsigned char request_buf[MOVED_SIZE_REQUEST];
-    unsigned char response_buf[MOVED_SIZE_RESPONSE];
     unsigned char read_response_buf[MOVED_SIZE_READ_RESPONSE];
 } moved_client;
 
+typedef struct _moved_client_list {
+    moved_client *client;
+    struct _moved_client_list *next;
+} moved_client_list;
+
+moved_client_list *
+moved_client_list_open();
+
+void
+moved_client_list_destroy(moved_client_list *client_list);
 
 moved_client *
 moved_client_create(const char *hostname);

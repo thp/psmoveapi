@@ -1,7 +1,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,8 @@
 #define MOVED_H
 
 
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
@@ -41,36 +43,20 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/l2cap.h>
-
 #include "moved_protocol.h"
+
+#include "psmove.h"
 
 
 #define each(name,set) (name=set; name; name=name->next)
 
-
-#define L2CAP_PSM_HIDP_CTRL 0x11
-#define L2CAP_PSM_HIDP_INTR 0x13
-
-#define HIDP_TRANS_SET_REPORT    0x50
-#define HIDP_DATA_RTYPE_OUTPUT   0x02
-
-
 typedef struct _psmove_dev {
-  int index;
+  PSMove *move;
 
-  bdaddr_t addr;
-  int csk;
-  int isk;
-
-  unsigned char input[50];
-  unsigned char output[8];
+  unsigned char input[MOVED_SIZE_READ_RESPONSE];
+  unsigned char output[7];
 
   int dirty_output;
-  int output_acks_waiting;
-  int dirty_input;
-  int disconnect_flag;
 
   struct _psmove_dev *next;
 } psmove_dev;
@@ -78,14 +64,6 @@ typedef struct _psmove_dev {
 
 typedef struct _move_daemon {
     psmove_dev *devs;
-    int next_devindex;
-
-    int devices_changed;
-    fd_set fds;
-    int fdmax;
-
-    int csk;
-    int isk;
 } move_daemon;
 
 
@@ -95,6 +73,8 @@ typedef struct {
     move_daemon *moved;
 } moved_server;
 
+
+/* moved_server */
 
 moved_server *
 moved_server_create();
@@ -106,47 +86,31 @@ void
 moved_server_destroy(moved_server *server);
 
 
-
-int
-l2cap_listen(unsigned short psm);
-
+/* psmove_dev */
 
 psmove_dev *
-psmove_dev_accept(move_daemon *moved);
-
-void
-psmove_dev_delete(psmove_dev *dev);
+psmove_dev_create(int id);
 
 void
 psmove_dev_set_output(psmove_dev *dev, const unsigned char *output);
 
-const unsigned char *
-psmove_dev_get_input(psmove_dev *dev);
+void
+psmove_dev_destroy(psmove_dev *dev);
 
-int
-psmove_dev_write(psmove_dev *dev);
 
-int
-psmove_dev_read(psmove_dev *dev);
-
+/* move_daemon */
 
 move_daemon *
 moved_init();
 
 void
-moved_update_devices(move_daemon *moved, moved_server *server);
-
-void
-moved_handle_connection(move_daemon *moved, fd_set *fds);
-
-void
-moved_read_reports(move_daemon *moved, fd_set *fds);
+moved_handle_connection(move_daemon *moved, int id);
 
 void
 moved_write_reports(move_daemon *moved);
 
 void
-moved_handle_disconnect(move_daemon *moved);
+moved_destroy(move_daemon *moved);
 
 
 #endif

@@ -1,7 +1,7 @@
 
 #
 # PS Move API - An interface for the PS Move Motion Controller
-# Copyright (c) 2011 Thomas Perl <m@thp.io>
+# Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,47 +27,43 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'build'))
 
-import psmove
 import time
+import random
+import psmove
 
-move = psmove.PSMove()
+def mapidx(l):
+    x, y = l.split(': ')
+    return (y, int(x))
 
-if move.connection_type == psmove.Conn_Bluetooth:
-    print 'bluetooth'
-elif move.connection_type == psmove.Conn_USB:
-    print 'usb'
-else:
-    print 'unknown'
+# Run mk-index.py to create the file serials.txt, which contains an ordered
+# list of controllers' serial numbers (btaddr)
+serial_to_idx = dict(map(mapidx, open('serials.txt').read().splitlines()))
 
+count = psmove.count_connected()
+print 'Connected controllers:', count
+print 'Serials:', len(serial_to_idx)
+assert count == len(serial_to_idx)
+
+moves = [move for idx, move in
+        sorted([(serial_to_idx[m.get_serial()], m)
+            for m in (psmove.PSMove(i) for i in range(count))])]
+
+
+for move in moves:
+    move.intensity = 0.
+
+i = 0
 while True:
-    if move.poll():
-        trigger_value = move.get_trigger()
-        move.set_leds(trigger_value, 0, 0)
+    for idx, move in enumerate(moves):
+        move.intensity *= random.uniform(.7, .9)
+        if (i%len(moves)) == idx:
+            move.intensity = 1.
+        move.set_leds(0, int(255*move.intensity), int(255*move.intensity))
         move.update_leds()
-
-        buttons = move.get_buttons()
-        if buttons & psmove.Btn_TRIANGLE:
-            print 'triangle pressed'
-            move.set_rumble(trigger_value)
-        else:
-            move.set_rumble(0)
-
-        battery = move.get_battery()
-        if battery == psmove.Batt_CHARGING:
-            print 'battery charging via USB'
-        elif battery >= psmove.Batt_MIN and battery <= psmove.Batt_MAX:
-            print 'battery: %d / %d' % (battery, psmove.Batt_MAX)
-        else:
-            print 'unknown battery value:', battery
-
-        print 'accel:', (move.ax, move.ay, move.az)
-        print 'gyro:', (move.gx, move.gy, move.gz)
-        print 'magnetometer:', (move.mx, move.my, move.mz)
-
-    time.sleep(.1)
+    i += 1
+    time.sleep(.5)
 

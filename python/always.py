@@ -1,7 +1,7 @@
 
 #
 # PS Move API - An interface for the PS Move Motion Controller
-# Copyright (c) 2011 Thomas Perl <m@thp.io>
+# Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,42 +32,16 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'build'))
 
-import psmove
 import time
+import psmove
 
-move = psmove.PSMove()
 
-if move.connection_type == psmove.Conn_Bluetooth:
-    print 'bluetooth'
-elif move.connection_type == psmove.Conn_USB:
-    print 'usb'
-else:
-    print 'unknown'
+moves = [psmove.PSMove(x) for x in range(psmove.count_connected())]
+for move in moves:
+    move.set_leds(0, 150, 0)
 
 while True:
-    if move.poll():
-        trigger_value = move.get_trigger()
-        move.set_leds(trigger_value, 0, 0)
+    for move in moves:
         move.update_leds()
-
-        buttons = move.get_buttons()
-        if buttons & psmove.Btn_TRIANGLE:
-            print 'triangle pressed'
-            move.set_rumble(trigger_value)
-        else:
-            move.set_rumble(0)
-
-        battery = move.get_battery()
-        if battery == psmove.Batt_CHARGING:
-            print 'battery charging via USB'
-        elif battery >= psmove.Batt_MIN and battery <= psmove.Batt_MAX:
-            print 'battery: %d / %d' % (battery, psmove.Batt_MAX)
-        else:
-            print 'unknown battery value:', battery
-
-        print 'accel:', (move.ax, move.ay, move.az)
-        print 'gyro:', (move.gx, move.gy, move.gz)
-        print 'magnetometer:', (move.mx, move.my, move.mz)
-
-    time.sleep(.1)
+    time.sleep(1)
 

@@ -148,6 +148,7 @@ int main(int argc, char* argv[])
 
             psmove_update_leds(move);
         }
+        usleep(100000);
     }
 
     psmove_disconnect(move);

@@ -1,7 +1,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,11 @@
 #define MOVED_UDP_PORT 17777
 
 #define MOVED_REQ_COUNT_CONNECTED 0x01
-#define MOVED_REQ_DISCONNECT 0x02
+/* Request ID 0x02 is reserved / obsolete */
 #define MOVED_REQ_WRITE 0x03
 #define MOVED_REQ_READ 0x04
 
 #define MOVED_SIZE_REQUEST 9
-#define MOVED_SIZE_RESPONSE 1
 #define MOVED_SIZE_READ_RESPONSE 50
 
 #endif

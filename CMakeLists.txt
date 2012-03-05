@@ -6,8 +6,8 @@ project(PSMOVEAPI)
 include_directories(${PSMOVEAPI_SOURCE_DIR}/hidapi/hidapi)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-add_definitions(-DPSMOVE_DEBUG)
-#add_definitions(-g -Wall)
+#add_definitions(-DPSMOVE_DEBUG)
+add_definitions(-g -Wall)
 add_definitions(-O2)
 
 set(PSMOVEAPI_MAJOR_VERSION "1")
@@ -53,17 +53,10 @@ ELSE()
     list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/linux/hid.c)
-
-    # Move Daemon for Linux (non-hidapi, Bluetooth-only)
-    # Comment out the lines below and uncomment the above
-    # lines (libudev/bluez) to build with HIDAPI support
-    #add_executable(moved moved.c)
-    #add_executable(moved-client moved_client_test.c moved_client.c)
-    #set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
-    #add_definitions(-DWITH_MOVED_CLIENT)
 ENDIF()
 
-set(PSMOVE_SRC ${HIDAPI_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
+set(MOVED_CLIENT_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
+set(PSMOVE_SRC ${HIDAPI_SRC} ${MOVED_CLIENT_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
 
 # Shared library
 
@@ -81,6 +74,11 @@ target_link_libraries(psmovepair psmoveapi)
 
 add_executable(example c/example.c)
 target_link_libraries(example psmoveapi)
+
+add_executable(moved moved.c)
+target_link_libraries(moved psmoveapi)
+
+add_executable(moved-client moved_client_test.c ${MOVED_CLIENT_SRC})
 
 # Disabled building of example2 now - uncomment if you have libncurses-dev
 #find_package(CURSES)

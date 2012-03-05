@@ -52,11 +52,6 @@ int main(int argc, char *argv[])
         printf("\n====================\n");
     }
 
-    for (i=connected-1; i>=0; i--) {
-        printf("Disconnecting: %d...\n", i);
-        moved_client_send(client, MOVED_REQ_DISCONNECT, i, NULL);
-    }
-
     moved_client_destroy(client);
     return 0;
 }

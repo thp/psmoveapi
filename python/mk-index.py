@@ -1,7 +1,7 @@
 
 #
 # PS Move API - An interface for the PS Move Motion Controller
-# Copyright (c) 2011 Thomas Perl <m@thp.io>
+# Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,47 +27,39 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'build'))
 
-import psmove
 import time
+import psmove
 
-move = psmove.PSMove()
+count = psmove.count_connected()
+print 'Connected controllers:', count
 
-if move.connection_type == psmove.Conn_Bluetooth:
-    print 'bluetooth'
-elif move.connection_type == psmove.Conn_USB:
-    print 'usb'
-else:
-    print 'unknown'
+moves = [(m.get_serial(), m) for m in (psmove.PSMove(i) for i in range(count))]
 
-while True:
-    if move.poll():
-        trigger_value = move.get_trigger()
-        move.set_leds(trigger_value, 0, 0)
-        move.update_leds()
+serials = []
 
-        buttons = move.get_buttons()
-        if buttons & psmove.Btn_TRIANGLE:
-            print 'triangle pressed'
-            move.set_rumble(trigger_value)
-        else:
-            move.set_rumble(0)
+while len(serials) < len(moves):
+    for i, (serial, move) in enumerate(sorted(moves)):
+        if serial in serials:
+            continue
 
-        battery = move.get_battery()
-        if battery == psmove.Batt_CHARGING:
-            print 'battery charging via USB'
-        elif battery >= psmove.Batt_MIN and battery <= psmove.Batt_MAX:
-            print 'battery: %d / %d' % (battery, psmove.Batt_MAX)
-        else:
-            print 'unknown battery value:', battery
+        move.poll()
+        if move.get_buttons():
+            move.set_leds(0, 255, 0)
+            move.update_leds()
+            serials.append(serial)
+            print i
+        #move.set_leds(*colors[i%len(colors)])
+        #print 'Move:', serial
+        #move.update_leds()
 
-        print 'accel:', (move.ax, move.ay, move.az)
-        print 'gyro:', (move.gx, move.gy, move.gz)
-        print 'magnetometer:', (move.mx, move.my, move.mz)
 
-    time.sleep(.1)
+fp = open('serials.txt', 'w')
+stxt = '\n'.join('%d: %s' % x for x in enumerate(serials))
+print stxt
+fp.write(stxt)
+fp.close()
 
