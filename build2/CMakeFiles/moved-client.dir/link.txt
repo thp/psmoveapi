@@ -1,0 +1,1 @@
+/usr/bin/gcc   -arch i386 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.7.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/moved-client.dir/moved_client_test.c.o CMakeFiles/moved-client.dir/moved_client.c.o  -o moved-client  

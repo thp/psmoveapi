@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/justinb/Developer/psmoveapi/moved_client.c
+moved_client.h
+/Users/justinb/Developer/psmoveapi/moved_client.h
+
+/Users/justinb/Developer/psmoveapi/moved_client.h
+arpa/inet.h
+-
+netinet/in.h
+-
+stdio.h
+-
+stdlib.h
+-
+sys/types.h
+-
+sys/socket.h
+-
+netdb.h
+-
+unistd.h
+-
+assert.h
+-
+string.h
+-
+moved_protocol.h
+/Users/justinb/Developer/psmoveapi/moved_protocol.h
+
+/Users/justinb/Developer/psmoveapi/moved_client_test.c
+moved_client.h
+/Users/justinb/Developer/psmoveapi/moved_client.h
+
+/Users/justinb/Developer/psmoveapi/moved_protocol.h
+

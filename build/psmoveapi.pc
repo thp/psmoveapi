@@ -1,0 +1,13 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/psmoveapi
+
+Name: psmoveapi
+Description: API for Sony Motion Controllers (PS Move)
+URL: http://thp.io/2010/psmove/
+Version: 1.0.2
+Requires.private: libusb-1.0
+Libs: -L${libdir} -lpsmoveapi
+Cflags: -I${includedir}
+

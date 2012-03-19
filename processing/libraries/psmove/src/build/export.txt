@@ -1,0 +1,5 @@
+# only export the jar file for applets..
+# everything else is installed as a separate browser plugin
+applet=psmove.jar
+# application needs everything
+application=psmove.jar,libpsmove_java.jnilib

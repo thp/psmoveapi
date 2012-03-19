@@ -1,0 +1,1 @@
+/usr/bin/gcc    -arch i386 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.7.sdk -bundle -Wl,-headerpad_max_install_names   -o libpsmove_java.jnilib CMakeFiles/psmove_java.dir/psmoveJAVA_wrap.c.o libpsmoveapi.1.0.2.dylib -framework JavaVM -framework JavaVM -framework IOKit -framework CoreFoundation -framework IOBluetooth 

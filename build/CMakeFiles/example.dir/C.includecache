@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../psmove.h
+
+/Users/justinb/Developer/psmoveapi/c/example.c
+unistd.h
+-
+stdio.h
+-
+stdlib.h
+-
+psmove.h
+/Users/justinb/Developer/psmoveapi/c/psmove.h
+
