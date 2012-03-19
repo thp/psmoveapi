@@ -1,4 +1,0 @@
-# Hashes of file build rules.
-235a91651c360eddb8f8fdf455ae5183 CMakeFiles/psmoveapi.jar
-ea5620a245a9b30646ca8add66faf17c psmoveJAVA_wrap.c
-ec51ea372767c7ba9fef469b59dbe1f4 psmovePYTHON_wrap.c

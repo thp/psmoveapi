@@ -1,9 +1,0 @@
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/_psmove.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/example.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/moved.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/moved-client.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/multiple.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/psmove_java.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/psmoveapi.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/psmoveapi.jar.dir
-/Users/justinb/Developer/psmoveapi/build/CMakeFiles/psmovepair.dir
