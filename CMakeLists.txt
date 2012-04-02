@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 2.6)
 
 project(PSMOVEAPI)
@@ -28,6 +27,10 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVE_REQUIRED_LIBS ${IOBLUETOOTH})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/mac/hid.c)
+
+	# Build Universal Binaries for OS X
+	set(CMAKE_OSX_ARCHITECTURES "i386;x86_64") 
+
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32)
 
@@ -66,6 +69,13 @@ set_target_properties(psmoveapi PROPERTIES VERSION ${PSMOVEAPI_VERSION} SOVERSIO
 
 SET_TARGET_PROPERTIES(psmoveapi PROPERTIES COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
 
+# Static library
+
+add_library(psmoveapi_static STATIC ${PSMOVE_SRC})
+target_link_libraries(psmoveapi_static ${PSMOVE_REQUIRED_LIBS})
+set_target_properties(psmoveapi_static PROPERTIES VERSION ${PSMOVEAPI_VERSION} SOVERSION ${PSMOVEAPI_VERSION_SONAME})
+
+
 # C utilities (those get installed on "make install")
 add_executable(psmovepair c/pair.c)
 target_link_libraries(psmovepair psmoveapi)
@@ -97,6 +107,7 @@ target_link_libraries(multiple psmoveapi)
 # These will be set to "Yes" below if the dependencies are found
 set(BUILD_PYTHON_BINDINGS "No ")
 set(BUILD_JAVA_BINDINGS "No ")
+set(BUILD_PROCESSING_LIB "No ")
 set(BUILD_QT_BINDINGS "No ")
 
 # Language bindings (Python and Java)
@@ -113,6 +124,9 @@ if(SWIG_FOUND)
         set(BUILD_PYTHON_BINDINGS "Yes")
     endif()
 
+
+	
+
     find_package(JNI)
     if(JNI_FOUND)
         set(PSMOVEAPI_JAVA_PKG "io.thp.psmove")
@@ -121,18 +135,71 @@ if(SWIG_FOUND)
         set(CMAKE_SWIG_FLAGS -package ${PSMOVEAPI_JAVA_PKG})
         include_directories(${JNI_INCLUDE_DIRS})
         swig_add_module(psmove_java java psmove.i)
-        swig_link_libraries(psmove_java psmoveapi ${JNI_LIBRARIES})
+        swig_link_libraries(psmove_java psmoveapi_static ${JNI_LIBRARIES})
         set(BUILD_JAVA_BINDINGS "Yes")
 
+
         add_custom_target(psmoveapi.jar ALL
-            COMMAND mkdir -p ${PSMOVEAPI_JAVA_PKG_DIR}
-            COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/copyjava.cmake ${CMAKE_CURRENT_BINARY_DIR}/copyjava.cmake
+            COMMAND ${CMAKE_COMMAND} -P copyjava.cmake
             COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
             COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMENT "Java bindings JAR archive"
         )
+
+        set(BUILD_PROCESSING_LIB "Yes")
+		set(PSMOVEAPI_PROCESSING_DIR "processing/libraries/psmove")
+		set(PROCESSING_LIB_DIR "${PSMOVEAPI_PROCESSING_DIR}/library")
+
+		IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			set(PSMOVEAPI_LIB_PLATFORM "macosx")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.jnilib")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
+		ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+			set(PSMOVEAPI_LIB_PLATFORM "windows")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.dll")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair.exe")
+		ELSE() # Linux 
+			set(PSMOVEAPI_LIB_PLATFORM "linux")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.so")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
+		ENDIF()
+
+		
+		add_custom_target(processing_lib ALL
+			# Create Folder Structure
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/examples
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/linux
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/macosx
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/windows
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/linux
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/macosx
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/windows
+
+			# Copy java library, native library, pairing tool, and example app into folder structure
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.jar ${PSMOVEAPI_PROCESSING_DIR}/library/psmove.jar
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_NATIVE_LIB} ${PSMOVEAPI_PROCESSING_DIR}/library/${PSMOVEAPI_LIB_PLATFORM}/${PSMOVEAPI_NATIVE_LIB}
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_PAIRING_TOOL_NAME} ${PSMOVEAPI_PROCESSING_DIR}/tools/${PSMOVEAPI_LIB_PLATFORM}/${PSMOVEAPI_PAIRING_TOOL_NAME}
+			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/processing/libraries/psmove/examples/psmove ${PSMOVEAPI_PROCESSING_DIR}/examples/psmove
+
+			# Cross-platform zipping :) 	
+			COMMAND jar cfM psmove_processing.zip processing 
+
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			COMMENT "Building and packacing Processing library"
+		)
+
+		# Ensure building targets in the correct order (native lib->java lib->processing lib)
+		add_dependencies(psmoveapi.jar psmove_java)
+		add_dependencies(processing_lib psmoveapi.jar)
+		add_dependencies(processing_lib psmovepair)
+
     endif()
+
 endif()
 
 # For system-wide installation
@@ -146,6 +213,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc DESTINATION lib/pkgconfig
 install(TARGETS psmovepair psmoveapi
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib 
 )
 
 install(FILES psmove.h DESTINATION include/psmoveapi)
@@ -153,18 +221,20 @@ install(FILES README COPYING DESTINATION share/psmoveapi)
 
 # Qt bindings
 find_package(Qt4)
-
 if(QT_QTDECLARATIVE_FOUND)
     add_subdirectory(qt)
     set(BUILD_QT_BINDINGS "Yes")
 endif(QT_QTDECLARATIVE_FOUND)
+
 
 set(PADDING "                     ")
 MESSAGE("")
 MESSAGE("      +------ PS Move API Build Configuration ------+ ")
 MESSAGE("      |  Python bindings: " ${PADDING} ${BUILD_PYTHON_BINDINGS} "  |")
 MESSAGE("      |  Java bindings:   " ${PADDING} ${BUILD_JAVA_BINDINGS} "  |")
+MESSAGE("      |  Processing lib:  " ${PADDING} ${BUILD_PROCESSING_LIB} "  |")
 MESSAGE("      |  Qt bindings:     " ${PADDING} ${BUILD_QT_BINDINGS} "  |")
 MESSAGE("      +---------------------------------------------+ ")
 MESSAGE("")
+
 
