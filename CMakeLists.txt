@@ -154,15 +154,15 @@ if(SWIG_FOUND)
 		set(PROCESSING_LIB_DIR "${PSMOVEAPI_PROCESSING_DIR}/library")
 
 		IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-			set(LIB_PLATFORM "macosx")
+			set(PSMOVEAPI_LIB_PLATFORM "macosx")
 			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.jnilib")
 			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
 		ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-			set(LIB_PLATFORM "windows")
+			set(PSMOVEAPI_LIB_PLATFORM "windows")
 			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.dll")
 			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair.exe")
 		ELSE() # Linux 
-			set(LIB_PLATFORM "linux")
+			set(PSMOVEAPI_LIB_PLATFORM "linux")
 			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.so")
 			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
 		ENDIF()
@@ -170,16 +170,20 @@ if(SWIG_FOUND)
 		
 		add_custom_target(processing_lib ALL
 			# Create Folder Structure
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/examples
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/linux
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/macosx
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/examples
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/windows
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/linux
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/macosx
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/windows
 
 			# Copy java library, native library, pairing tool, and example app into folder structure
 			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.jar ${PSMOVEAPI_PROCESSING_DIR}/library/psmove.jar
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_NATIVE_LIB} ${PSMOVEAPI_PROCESSING_DIR}/library/${LIB_PLATFORM}/${PSMOVEAPI_NATIVE_LIB}
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_PAIRING_TOOL_NAME} ${PSMOVEAPI_PROCESSING_DIR}/tools/${PSMOVEAPI_PAIRING_TOOL_NAME}
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_NATIVE_LIB} ${PSMOVEAPI_PROCESSING_DIR}/library/${PSMOVEAPI_LIB_PLATFORM}/${PSMOVEAPI_NATIVE_LIB}
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_PAIRING_TOOL_NAME} ${PSMOVEAPI_PROCESSING_DIR}/tools/${PSMOVEAPI_LIB_PLATFORM}/${PSMOVEAPI_PAIRING_TOOL_NAME}
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/processing/libraries/psmove/examples/psmove ${PSMOVEAPI_PROCESSING_DIR}/examples/psmove
 
 			# Cross-platform zipping :) 	
