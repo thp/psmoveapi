@@ -39,7 +39,6 @@
 int main(int argc, char* argv[])
 {
     PSMove *move;
-    enum PSMove_Connection_Type ctype;
     int i;
     int count = psmove_count_connected();
     int result = 0;
