@@ -45,7 +45,7 @@ while True:
             move.set_leds(int(proximity*255), 0, 0)
         else:
             proximity = math.pow(float(sum(l))/len(l)/2048, 3)
-            print 'proximity:', proximity
+            print('proximity:', proximity)
             move.set_leds(0, int(proximity*255), 0)
 
         move.update_leds()

@@ -37,11 +37,11 @@ import psmove
 move = psmove.PSMove()
 
 if move.connection_type == psmove.Conn_Bluetooth:
-    print 'bluetooth'
+    print('bluetooth')
 elif move.connection_type == psmove.Conn_USB:
-    print 'usb'
+    print('usb')
 else:
-    print 'unknown'
+    print('unknown')
 
 if len(sys.argv) == 2:
     result = move.pair_custom(sys.argv[-1])
@@ -49,7 +49,7 @@ else:
     result = move.pair()
 
 if result:
-    print 'successfully paired :)'
+    print('successfully paired :)')
 else:
-    print 'pairing failed :/'
+    print('pairing failed :/')
 

@@ -38,11 +38,11 @@ import time
 move = psmove.PSMove()
 
 if move.connection_type == psmove.Conn_Bluetooth:
-    print 'bluetooth'
+    print('bluetooth')
 elif move.connection_type == psmove.Conn_USB:
-    print 'usb'
+    print('usb')
 else:
-    print 'unknown'
+    print('unknown')
 
 while True:
     if move.poll():
@@ -52,22 +52,22 @@ while True:
 
         buttons = move.get_buttons()
         if buttons & psmove.Btn_TRIANGLE:
-            print 'triangle pressed'
+            print('triangle pressed')
             move.set_rumble(trigger_value)
         else:
             move.set_rumble(0)
 
         battery = move.get_battery()
         if battery == psmove.Batt_CHARGING:
-            print 'battery charging via USB'
+            print('battery charging via USB')
         elif battery >= psmove.Batt_MIN and battery <= psmove.Batt_MAX:
-            print 'battery: %d / %d' % (battery, psmove.Batt_MAX)
+            print('battery: %d / %d' % (battery, psmove.Batt_MAX))
         else:
-            print 'unknown battery value:', battery
+            print('unknown battery value:', battery)
 
-        print 'accel:', (move.ax, move.ay, move.az)
-        print 'gyro:', (move.gx, move.gy, move.gz)
-        print 'magnetometer:', (move.mx, move.my, move.mz)
+        print('accel:', (move.ax, move.ay, move.az))
+        print('gyro:', (move.gx, move.gy, move.gz))
+        print('magnetometer:', (move.mx, move.my, move.mz))
 
     time.sleep(.1)
 
