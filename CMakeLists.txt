@@ -29,7 +29,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/mac/hid.c)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32)
+    list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
+    list(APPEND MOVED_CLIENT_REQUIRED_LIBS ws2_32)
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/windows/hid.c)
 ELSE()
@@ -79,6 +80,7 @@ add_executable(moved moved.c)
 target_link_libraries(moved psmoveapi)
 
 add_executable(moved-client moved_client_test.c ${MOVED_CLIENT_SRC})
+target_link_libraries(moved-client ${MOVED_CLIENT_REQUIRED_LIBS})
 
 # Disabled building of example2 now - uncomment if you have libncurses-dev
 #find_package(CURSES)

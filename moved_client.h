@@ -31,14 +31,21 @@
 #ifndef MOVED_CLIENT_H
 #define MOVED_CLIENT_H
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
+
+#ifdef _WIN32
+#  include <Winsock2.h>
+#  include <Ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
+#  include <netinet/in.h>
+#  include <netdb.h>
+#  include <unistd.h>
+#  include <sys/socket.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
 #include <assert.h>
 #include <string.h>
 
