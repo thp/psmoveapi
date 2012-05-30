@@ -34,6 +34,7 @@
 #include <string.h>
 #include <wchar.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
@@ -76,6 +77,12 @@
 
 /* Maximum length of the serial string */
 #define PSMOVE_MAX_SERIAL_LENGTH 255
+
+/* Maximum milliseconds to inhibit further updates to LEDs if not changed */
+#define PSMOVE_MAX_LED_INHIBIT_MS 4000
+
+/* Minimum time (in milliseconds) between two LED updates (rate limiting) */
+#define PSMOVE_MIN_LED_UPDATE_WAIT_MS 120
 
 enum PSMove_Request_Type {
     PSMove_Req_GetInput = 0x01,
@@ -177,8 +184,18 @@ struct _PSMove {
     /* Save location for the serial number */
     char *serial_number;
 
+    /* Nonzero if the value of the LEDs or rumble has changed */
+    unsigned char leds_dirty;
+
+    /* Nonzero if LED update rate limiting is enabled */
+    unsigned char leds_rate_limiting;
+
+    /* Milliseconds timestamp of last LEDs update (psmove_util_get_ticks) */
+    long last_leds_update;
+
 #ifdef _WIN32
-    int is_bluetooth;
+    /* Nonzero if this device is a Bluetooth device (on Windows only) */
+    unsigned char is_bluetooth;
 #endif
 };
 
@@ -339,6 +356,9 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_HIDAPI;
+
+    /* Make sure the first LEDs update will go through (+ init get_ticks) */
+    move->last_leds_update = psmove_util_get_ticks() - PSMOVE_MAX_LED_INHIBIT_MS;
 
 #ifdef _WIN32
     /* Windows Quirk: USB devices have "0" as serial, BT devices their addr */
@@ -736,42 +756,85 @@ psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
         unsigned char b)
 {
     psmove_return_if_fail(move != NULL);
+
+    if (move->leds.r == r && move->leds.g == g && move->leds.b == b) {
+        /**
+         * Avoid extraneous LED updates - this does not set the "leds_dirty"
+         * flag below, so we don't have to send an update the next time.
+         **/
+        return;
+    }
+
     move->leds.r = r;
     move->leds.g = g;
     move->leds.b = b;
+    move->leds_dirty = 1;
 }
 
 void
 psmove_set_rumble(PSMove *move, unsigned char rumble)
 {
     psmove_return_if_fail(move != NULL);
+
+    if (move->leds.rumble == rumble) {
+        /* Avoid extraneous updates (see psmove_set_leds above) */
+        return;
+    }
+
     move->leds.rumble2 = 0x00;
     move->leds.rumble = rumble;
+    move->leds_dirty = 1;
 }
 
 int
 psmove_update_leds(PSMove *move)
 {
     int res;
+    long timediff_ms;
 
     psmove_return_val_if_fail(move != NULL, 0);
+
+    timediff_ms = (psmove_util_get_ticks() - move->last_leds_update);
+
+    if (move->leds_rate_limiting &&
+            move->leds_dirty && timediff_ms < PSMOVE_MIN_LED_UPDATE_WAIT_MS) {
+        /* Rate limiting (too many updates) */
+        return PSMOVE_UPDATE_IGNORED;
+    } else if (!move->leds_dirty && timediff_ms < PSMOVE_MAX_LED_INHIBIT_MS) {
+        /* Unchanged LEDs value (no need to update yet) */
+        return PSMOVE_UPDATE_IGNORED;
+    }
+
+    move->leds_dirty = 0;
+    move->last_leds_update = psmove_util_get_ticks();
 
     switch (move->type) {
         case PSMove_HIDAPI:
             res = hid_write(move->handle, (unsigned char*)(&(move->leds)),
                     sizeof(move->leds));
-            return (res == sizeof(move->leds));
+            if (res == sizeof(move->leds)) {
+                return PSMOVE_UPDATE_SUCCESS;
+            } else {
+                return PSMOVE_UPDATE_FAILED;
+            }
             break;
         case PSMove_MOVED:
             moved_client_send(move->client, MOVED_REQ_WRITE,
                     move->remote_id, (unsigned char*)(&move->leds));
-            return 1; // XXX
+            return PSMOVE_UPDATE_SUCCESS; // XXX: Error handling
             break;
         default:
             psmove_CRITICAL("Unknown device type");
             return 0;
             break;
     }
+}
+
+void
+psmove_set_rate_limiting(PSMove *move, unsigned char enabled)
+{
+    psmove_return_if_fail(move != NULL);
+    move->leds_rate_limiting = (enabled != 0);
 }
 
 int
@@ -962,4 +1025,23 @@ psmove_disconnect(PSMove *move)
     psmove_num_open_handles--;
 }
 
+long
+psmove_util_get_ticks()
+{
+    /* XXX: Implement alternative for Windows */
+
+    static long startup_time = 0;
+    long now;
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+    now = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+
+    /* The first time this function gets called, we init startup_time */
+    if (startup_time == 0) {
+        startup_time = now;
+    }
+
+    return (now - startup_time);
+}
 

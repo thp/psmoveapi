@@ -81,6 +81,11 @@ enum PSMove_Battery_Level {
     Batt_CHARGING = 0xEE,
 };
 
+/* Return values for psmove_update_leds */
+#define PSMOVE_UPDATE_FAILED 0
+#define PSMOVE_UPDATE_SUCCESS 1
+#define PSMOVE_UPDATE_IGNORED 2
+
 /* A Bluetooth address. */
 typedef unsigned char PSMove_Data_BTAddr[6];
 
@@ -260,10 +265,24 @@ ADDCALL psmove_set_rumble(PSMove *move, unsigned char rumble);
  * Re-send the LED and Rumble status bits. This needs to
  * be done regularly to keep the LEDs and rumble turned on.
  *
- * Returns: Nonzero on success, zero on error
+ * Return values:
+ *   PSMOVE_UPDATE_SUCCESS ........ success
+ *   PSMOVE_UPDATE_IGNORED ........ ignored (LEDs/rumble unchanged)
+ *   PSMOVE_UPDATE_FAILED (= 0) ... error
  **/
 ADDAPI int
 ADDCALL psmove_update_leds(PSMove *move);
+
+/**
+ * Enable or disable LED update rate limiting
+ *
+ * If enabled is 1, then psmove_update_leds will ignore extraneous updates
+ * if the update rate is too high. If enabled is 0, all LED updates will be
+ * sent (when the LED or rumble value has changed), which might worsen the
+ * performance of reading sensor values, especially on Linux.
+ **/
+ADDAPI void
+ADDCALL psmove_set_rate_limiting(PSMove *move, unsigned char enabled);
 
 /**
  * Polls the PS Move for new sensor/button data.
@@ -340,6 +359,12 @@ ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
  **/
 ADDAPI void
 ADDCALL psmove_disconnect(PSMove *move);
+
+/**
+ * Utility function: Get milliseconds since first library use
+ **/
+ADDAPI long
+ADDCALL psmove_util_get_ticks();
 
 #ifdef __cplusplus
 }

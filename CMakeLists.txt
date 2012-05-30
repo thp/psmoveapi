@@ -96,6 +96,12 @@ target_link_libraries(moved-client ${MOVED_CLIENT_REQUIRED_LIBS})
 add_executable(multiple c/multiple.c)
 target_link_libraries(multiple psmoveapi)
 
+# C test programs
+foreach(PSMOVE_TEST led_update read_performance)
+    add_executable(test_${PSMOVE_TEST} c/test_${PSMOVE_TEST}.c)
+    target_link_libraries(test_${PSMOVE_TEST} psmoveapi)
+endforeach(PSMOVE_TEST)
+
 # These will be set to "Yes" below if the dependencies are found
 set(BUILD_PYTHON_BINDINGS "No ")
 set(BUILD_JAVA_BINDINGS "No ")
@@ -128,7 +134,7 @@ if(SWIG_FOUND)
 
         add_custom_target(psmoveapi.jar ALL
             COMMAND mkdir -p ${PSMOVEAPI_JAVA_PKG_DIR}
-            COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR}
+            COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR} || true
             COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
             COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

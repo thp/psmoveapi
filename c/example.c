@@ -108,6 +108,9 @@ int main(int argc, char* argv[])
         psmove_update_leds(move);
     }
 
+    /* Enable rate limiting for LED updates */
+    psmove_set_rate_limiting(move, 1);
+
     psmove_set_leds(move, 0, 0, 0);
     psmove_set_rumble(move, 0);
     psmove_update_leds(move);
@@ -148,7 +151,6 @@ int main(int argc, char* argv[])
 
             psmove_update_leds(move);
         }
-        usleep(100000);
     }
 
     psmove_disconnect(move);
