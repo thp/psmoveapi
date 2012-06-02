@@ -400,11 +400,6 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
     if (serial != NULL) {
         wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
-    } else {
-        // FIXME
-        fprintf(stderr, "[PSMOVE] no serial, using path: %s\n", path);
-        strcpy(move->serial_number, "path:");
-        strcat(move->serial_number, path);
     }
 
     /* Bookkeeping of open handles (for psmove_reinit) */
@@ -709,23 +704,15 @@ psmove_connection_type(PSMove *move)
         return Conn_Bluetooth;
     }
 
-    wstr[0] = 0x0000;
-    res = hid_get_serial_number_string(move->handle,
-            wstr, sizeof(wstr)/sizeof(wstr[0]));
-
-    /**
-     * As it turns out, we don't get a serial number when connected via USB,
-     * so assume that when the serial number length is zero, then we have the
-     * USB connection type, and if we have a greater-than-zero length, then it
-     * is a Bluetooth connection.
-     **/
-    if (res == 0) {
-        return Conn_USB;
-    } else if (res > 0) {
-        return Conn_Bluetooth;
+    if (move->serial_number == NULL) {
+        return Conn_Unknown;
     }
 
-    return Conn_Unknown;
+    if (strlen(move->serial_number) == 0) {
+        return Conn_USB;
+    }
+
+    return Conn_Bluetooth;
 #endif
 }
 
