@@ -37,18 +37,12 @@ ELSE()
     # Linux
     find_package(PkgConfig REQUIRED)
     find_package(Threads REQUIRED)
+    list(APPEND PSMOVE_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
-    #pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
-    #include_directories(${LIBUSB_INCLUDE_DIRS})
-    #list(APPEND PSMOVE_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
-    #list(APPEND PSMOVE_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
-
-    # Only needed when using hidraw version of hidapi
     pkg_check_modules(UDEV REQUIRED libudev)
     include_directories(${UDEV_INCLUDE_DIRS})
     list(APPEND PSMOVE_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
-    # On Linux, we require Bluez for getting the BT addr
     pkg_check_modules(BLUEZ REQUIRED bluez)
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
