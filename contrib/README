@@ -12,3 +12,12 @@ Here are some files that might be useful for users of the library:
  so that a PS Move controller (also works for Sixaxis) can connect
  as HID device without problems.
 
+ create_move.py:
+ This is a less intrusive variant of the above "bluez-register-move"
+ script. It uses D-Bus to communicate with bluetoothd and tells it
+ to add a Move Controller to the system. If that works, the device
+ is set as Trusted, so that bluetoothd will accept connections from
+ the Move Controller. It might still be necessary to restart Bluez
+ after this script has been run, but it won't tamper with the state
+ files directly.
+
