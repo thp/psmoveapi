@@ -109,6 +109,10 @@ void reinit();
         return psmove_update_leds($self);
     }
 
+    void set_rate_limiting(int enabled) {
+        psmove_set_rate_limiting($self, enabled);
+    }
+
     int pair() {
         return psmove_pair($self);
     }
