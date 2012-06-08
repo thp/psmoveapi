@@ -67,14 +67,7 @@ set_target_properties(psmoveapi PROPERTIES VERSION ${PSMOVEAPI_VERSION} SOVERSIO
 
 SET_TARGET_PROPERTIES(psmoveapi PROPERTIES COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
 
-# C utilities (those get installed on "make install")
-add_executable(psmovepair c/pair.c)
-target_link_libraries(psmovepair psmoveapi)
-
 # C examples
-
-add_executable(example c/example.c)
-target_link_libraries(example psmoveapi)
 
 add_executable(moved moved.c)
 target_link_libraries(moved psmoveapi)
@@ -82,19 +75,11 @@ target_link_libraries(moved psmoveapi)
 add_executable(moved-client moved_client_test.c ${MOVED_CLIENT_SRC})
 target_link_libraries(moved-client ${MOVED_CLIENT_REQUIRED_LIBS})
 
-# Disabled building of example2 now - uncomment if you have libncurses-dev
-#find_package(CURSES)
-#if(CURSES_FOUND)
-#    add_executable(example2 c/example2.c)
-#    target_link_libraries(example2 psmoveapi ${CURSES_LIBS})
-#    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#        # Dirty hack to get example2 to compile in OS X
-#        target_link_libraries(example2 ncurses)
-#    endif()
-#endif()
-
-add_executable(multiple c/multiple.c)
-target_link_libraries(multiple psmoveapi)
+# C examples
+foreach(PSMOVE_EXAMPLE example multiple psmovepair calibrate)
+    add_executable(${PSMOVE_EXAMPLE} c/${PSMOVE_EXAMPLE}.c)
+    target_link_libraries(${PSMOVE_EXAMPLE} psmoveapi)
+endforeach(PSMOVE_EXAMPLE)
 
 # C test programs
 foreach(PSMOVE_TEST led_update read_performance)
