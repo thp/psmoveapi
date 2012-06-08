@@ -354,6 +354,8 @@ psmove_count_connected()
 PSMove *
 psmove_connect_internal(wchar_t *serial, char *path, int id)
 {
+    char *tmp;
+
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_HIDAPI;
 
@@ -400,6 +402,20 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
     if (serial != NULL) {
         wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
+    }
+
+    /**
+     * Normalize "aa-bb-cc-dd-ee-ff" (OS X format) into "aa:bb:cc:dd:ee:ff"
+     * Also normalize "AA:BB:CC:DD:EE:FF" into "aa:bb:cc:dd:ee:ff" (lowercase)
+     **/
+    tmp = move->serial_number;
+    while (*tmp != '\0') {
+        if (*tmp == '-') {
+            *tmp = ':';
+        }
+
+        *tmp = tolower(*tmp);
+        tmp++;
     }
 
     /* Bookkeeping of open handles (for psmove_reinit) */

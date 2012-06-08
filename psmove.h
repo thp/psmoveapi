@@ -193,11 +193,9 @@ ADDCALL psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 /**
  * Get the serial number of the controller.
  *
- * On Mac OS X for Bluetooth controllers, this is the Bluetooth Mac address of
- * the controller in string format, e.g. "aa-bb-cc-dd-ee-ff"
- *
- * XXX What is the serial number on OS X via USB?
- * XXX What is the serial number on other platforms?
+ * This is only defined for Bluetooth controllers, and contains
+ * the Bluetooth Mac address of the controller as a string, e.g.
+ * "aa:bb:cc:dd:ee:ff".
  **/
 ADDAPI const char*
 ADDCALL psmove_get_serial(PSMove *move);
