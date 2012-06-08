@@ -36,6 +36,46 @@
 #include "psmove.h"
 
 int
+decode(char *data, int offset)
+{
+    unsigned char low = data[offset] & 0xFF;
+    unsigned char high = (data[offset+1]) & 0xFF;
+    unsigned int value = low | (high << 8);
+
+    /* XXX: This might still need some work */
+    if (value & 0x8000) {
+        return -(value & 0x7FFF);
+    } else {
+        return ((~value) & 0x7FFF);
+    }
+}
+
+void
+parse_calibration_data(char *data, size_t size)
+{
+    int orientation;
+    int x, y, z;
+
+    /* http://code.google.com/p/moveonpc/wiki/CalibrationData */
+
+    for (orientation=0; orientation<6; orientation++) {
+        x = decode(data, 0x04 + 6*orientation);
+        y = decode(data, 0x04 + 6*orientation + 2);
+        z = decode(data, 0x04 + 6*orientation + 4);
+        printf("# Orientation #%d: (%5d | %5d | %5d)\n", orientation, x, y, z);
+    }
+
+    for (orientation=0; orientation<3; orientation++) {
+        x = decode(data, 0x46 + 8*orientation);
+        y = decode(data, 0x46 + 8*orientation + 2);
+        z = decode(data, 0x46 + 8*orientation + 4);
+        printf("# Gyro %c, 80 rpm: (%5d | %5d | %5d)\n", "XYZ"[orientation], x, y, z);
+    }
+
+    printf("# byte at 0x3F: %02hhx\n", data[0x3F]);
+}
+
+int
 main(int argc, char* argv[])
 {
     PSMove *move;
@@ -45,6 +85,12 @@ main(int argc, char* argv[])
     int i, j;
     int count;
     PSMove_Data_BTAddr addr;
+    int parse = 0;
+
+    /* Use "./dump_calibration parse" to parse the data */
+    if (argc == 2 && strcmp(argv[1], "parse") == 0) {
+        parse = 1;
+    }
 
     if ((count = psmove_count_connected()) < 1) {
         fprintf(stderr, "No controllers connected.\n");
@@ -78,11 +124,15 @@ main(int argc, char* argv[])
             printf("%02hhx", data[j]);
             if (j % 16 == 15) {
                 printf("\n");
-            } else {
+            } else if (j < size-1) {
                 printf(" ");
             }
         }
-        printf("\n\n");
+        printf("\n");
+        if (parse) {
+            parse_calibration_data(data, size);
+        }
+        printf("\n");
 
         free(data);
 
