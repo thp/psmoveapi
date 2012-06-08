@@ -178,9 +178,6 @@ struct _PSMove {
     PSMove_Data_LEDs leds;
     PSMove_Data_Input input;
 
-    /* Save location for the controller BTAddr */
-    PSMove_Data_BTAddr btaddr;
-
     /* Save location for the serial number */
     char *serial_number;
 
@@ -202,6 +199,10 @@ struct _PSMove {
 /* Macro: Print a critical message if an assertion fails */
 #define psmove_CRITICAL(x) \
         {fprintf(stderr, "[PSMOVE] Assertion fail in %s: %s\n", __func__, x);}
+
+/* Macro: Deprecated functions */
+#define psmove_DEPRECATED(x) \
+        {fprintf(stderr, "[PSMOVE] %s is deprecated: %s\n", __func__, x);}
 
 /* Macros: Return immediately if an assertion fails + log */
 #define psmove_return_if_fail(expr) \
@@ -515,9 +516,8 @@ psmove_connect()
 }
 
 int
-psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
+psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller)
 {
-    unsigned char cal[PSMOVE_CALIBRATION_SIZE];
     unsigned char btg[PSMOVE_BTADDR_GET_SIZE];
     int res;
     int i;
@@ -526,14 +526,6 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 
     if (move->type == PSMove_MOVED) {
         psmove_CRITICAL("Not implemented in MOVED mode");
-        return 0;
-    }
-
-    /* Get calibration data */
-    memset(cal, 0, sizeof(cal));
-    cal[0] = PSMove_Req_GetCalibration;
-    res = hid_get_feature_report(move->handle, cal, sizeof(cal));
-    if (res < 0) {
         return 0;
     }
 
@@ -550,20 +542,21 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
             fprintf(stderr, "%02x", btg[i]);
         }
         fprintf(stderr, "\n");
+#endif
+        if (controller != NULL) {
+            memcpy(*controller, btg+1, 6);
+        }
 
+#ifdef PSMOVE_DEBUG
         fprintf(stderr, "[PSMOVE] current host bt mac addr: ");
         for (i=15; i>=10; i--) {
             if (i != 15) putc(':', stderr);
             fprintf(stderr, "%02x", btg[i]);
         }
         fprintf(stderr, "\n");
-#endif /* PSMOVE_DEBUG */
-        if (addr != NULL) {
-            /* Copy 6 bytes (btg[10]..btg[15]) into addr, reversed */
-            for (i=0; i<6; i++) {
-                (*addr)[i] = btg[15-i];
-            }
-            memcpy(addr, btg+10, 6);
+#endif
+        if (host != NULL) {
+            memcpy(*host, btg+10, 6);
         }
 
         /* Success! */
@@ -573,23 +566,76 @@ psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     return 0;
 }
 
+int
+psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
+{
+    psmove_DEPRECATED("Use psmove_read_btaddrs() instead");
+    return psmove_read_btaddrs(move, addr, NULL);
+}
+
+int
+psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
+{
+    psmove_DEPRECATED("Use psmove_read_btaddrs() instead");
+    return psmove_read_btaddrs(move, NULL, addr);
+}
+
+int
+psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+    psmove_return_val_if_fail(dest != NULL, 0);
+    psmove_return_val_if_fail(size != NULL, 0);
+
+    /* Three blocks, minus 2x the header (2 bytes) for the 2nd and 3rd block */
+    unsigned char calibration[PSMOVE_CALIBRATION_SIZE*3 - 2*2];
+
+    unsigned char cal[PSMOVE_CALIBRATION_SIZE];
+    int res;
+    int x;
+
+    int dest_offset;
+    int src_offset;
+
+    for (x=0; x<3; x++) {
+        memset(cal, 0, sizeof(cal));
+        cal[0] = PSMove_Req_GetCalibration;
+        res = hid_get_feature_report(move->handle, cal, sizeof(cal));
+        assert(res == PSMOVE_CALIBRATION_SIZE);
+
+        if (cal[1] == 0x00) {
+            /* First block */
+            dest_offset = 0;
+            src_offset = 0;
+        } else if (cal[1] == 0x01) {
+            /* Second block */
+            dest_offset = PSMOVE_CALIBRATION_SIZE;
+            src_offset = 2;
+        } else if (cal[1] == 0x82) {
+            /* Third block */
+            dest_offset = 2*PSMOVE_CALIBRATION_SIZE - 2;
+            src_offset = 2;
+        } else {
+            return 0;
+        }
+
+        memcpy(calibration+dest_offset, cal+src_offset,
+                sizeof(cal)-src_offset);
+    }
+
+    *dest = (char*)malloc(sizeof(calibration));
+    memcpy(*dest, calibration, sizeof(calibration));
+    *size = sizeof(calibration);
+
+    return 1;
+}
+
 const char*
 psmove_get_serial(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
     psmove_return_val_if_fail(move->serial_number != NULL, 0);
     return move->serial_number;
-}
-
-int
-psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
-{
-    psmove_return_val_if_fail(move != NULL, 0);
-    psmove_return_val_if_fail(addr != NULL, 0);
-
-    memcpy(addr, move->btaddr, sizeof(PSMove_Data_BTAddr));
-
-    return 1;
 }
 
 int
@@ -624,7 +670,7 @@ psmove_pair(PSMove *move)
     PSMove_Data_BTAddr btaddr;
     int i;
 
-    if (!psmove_get_btaddr(move, &btaddr)) {
+    if (!psmove_read_btaddrs(move, &btaddr, NULL)) {
         return 0;
     }
 
@@ -690,7 +736,7 @@ psmove_pair_custom(PSMove *move, const char *btaddr_string)
 
     PSMove_Data_BTAddr btaddr;
 
-    if (!psmove_get_btaddr(move, &btaddr)) {
+    if (!psmove_read_btaddrs(move, &btaddr, NULL)) {
         return 0;
     }
 
@@ -748,10 +794,22 @@ psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
     }
 
     if (dest != NULL) {
-        memcpy(dest, tmp, sizeof(PSMove_Data_BTAddr));
+        memcpy(*dest, tmp, sizeof(PSMove_Data_BTAddr));
     }
 
     return 1;
+}
+
+char *
+psmove_btaddr_to_string(const PSMove_Data_BTAddr addr)
+{
+    int size = 18; /* strlen("aa:bb:cc:dd:ee:ff") + 1 */
+    char *result = (char*)malloc(size);
+
+    snprintf(result, size, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+            addr[5], addr[4], addr[3], addr[2], addr[1], addr[0]);
+
+    return result;
 }
 
 void

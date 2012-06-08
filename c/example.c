@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 
     if (ctype == Conn_USB) {
         PSMove_Data_BTAddr addr;
-        psmove_get_btaddr(move, &addr);
+        psmove_read_btaddrs(move, &addr, NULL);
         printf("Current BT Host: ");
         for (i=0; i<6; i++) {
             printf("%02x ", addr[i]);

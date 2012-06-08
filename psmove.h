@@ -34,6 +34,8 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
+
 #ifdef _WIN32
 #  define ADDCALL __cdecl
 #  ifdef BUILDING_SHARED_LIBRARY
@@ -172,12 +174,30 @@ ADDCALL psmove_connection_type(PSMove *move);
 ADDAPI int
 ADDCALL psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
 
+
+/**
+ * Formats the contents of addr to a newly-allocated string and
+ * returns it. The caller has to free() the return value.
+ **/
+ADDAPI char *
+ADDCALL psmove_btaddr_to_string(const PSMove_Data_BTAddr addr);
+
+/**
+ * Read the current Bluetooth addresses stored in the controller
+ *
+ * This only works via USB.
+ *
+ * If host is not NULL, the current host address will be stored there.
+ * If controller is not NULL, the controller address will be stored there.
+ **/
+ADDAPI int
+ADDCALL psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller);
+
 /**
  * Get the currently-set Host Bluetooth address that is used
  * to connect via Bluetooth when the PS button is pressed.
  *
- * addr might be NULL in which case the address and calibration
- * data are retrieved, but the Bluetooth address is discarded.
+ * DEPRECATED - use psmove_read_btaddrs(move, addr, NULL) instead
  **/
 ADDAPI int
 ADDCALL psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
@@ -185,10 +205,20 @@ ADDCALL psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 /**
  * Get the Bluetooth Mac address of the connected controller.
  *
- * XXX This is not implemented in the backend at the moment.
+ * DEPRECATED - use psmove_read_btaddrs(move, NULL, addr) instead
  **/
 ADDAPI int
 ADDCALL psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+
+/**
+ * Get the calibration data from a connected USB controller.
+ *
+ * The pointer *dest will be set to a newly-allocated byte array
+ * of a certain size (which will be saved in *size) and the caller
+ * has to free this field with free()
+ **/
+ADDAPI int
+ADDCALL psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size);
 
 /**
  * Get the serial number of the controller.
