@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 #include "psmove.h"
 
@@ -46,8 +47,8 @@
 #define MAX_DEVIATION_VECTOR 100
 
 struct _SensorReading {
-    int ax, ay, az;
-    int mx, my, mz;
+    double ax, ay, az;
+    double mx, my, mz;
 };
 
 typedef struct _SensorReading SensorReading;
@@ -56,6 +57,10 @@ struct _Position {
     char *name;
     int readings;
     SensorReading data[READINGS_PER_POSITION];
+    SensorReading min;
+    SensorReading max;
+    SensorReading avg;
+    SensorReading dev;
 };
 
 typedef struct _Position Position;
@@ -149,50 +154,47 @@ square_diff(const SensorReading *cur, const SensorReading *avg)
 void
 sqrt_reading(SensorReading *dev)
 {
-    dev->ax = (int)sqrt(dev->ax);
-    dev->ay = (int)sqrt(dev->ay);
-    dev->az = (int)sqrt(dev->az);
+    dev->ax = sqrt(dev->ax);
+    dev->ay = sqrt(dev->ay);
+    dev->az = sqrt(dev->az);
 
-    dev->mx = (int)sqrt(dev->mx);
-    dev->my = (int)sqrt(dev->my);
-    dev->mz = (int)sqrt(dev->mz);
+    dev->mx = sqrt(dev->mx);
+    dev->my = sqrt(dev->my);
+    dev->mz = sqrt(dev->mz);
 }
 
 
-int
-print_position(Position *position, SensorReading *min_all, SensorReading *max_all)
+double
+calculate_calibration(Position *position)
 {
     int reading;
-    int deviation_vector;
 
-    SensorReading min, max, avg, dev;
+    memset(&position->avg, 0, sizeof(SensorReading));
+    memset(&position->dev, 0, sizeof(SensorReading));
 
-    memset(&avg, 0, sizeof(avg));
-    memset(&dev, 0, sizeof(dev));
-
-    min = max = position->data[0];
+    position->min = position->max = position->data[0];
     for (reading=0; reading<READINGS_PER_POSITION; reading++) {
         SensorReading cur = position->data[reading];
 
-        get_min_reading(&min, &cur);
-        get_max_reading(&max, &cur);
-        add_reading(&avg, cur);
+        get_min_reading(&position->min, &cur);
+        get_max_reading(&position->max, &cur);
+        add_reading(&position->avg, cur);
     }
-    divide_reading(&avg, READINGS_PER_POSITION);
+    divide_reading(&position->avg, READINGS_PER_POSITION);
 
     for (reading=0; reading<READINGS_PER_POSITION; reading++) {
         SensorReading cur = position->data[reading];
-        add_reading(&dev, square_diff(&cur, &avg));
+        add_reading(&position->dev, square_diff(&cur, &position->avg));
     }
-    divide_reading(&dev, READINGS_PER_POSITION);
-    sqrt_reading(&dev);
+    divide_reading(&position->dev, READINGS_PER_POSITION);
+    sqrt_reading(&position->dev);
 
     printf("%s:\n", position->name);
 
-    printf("a (min: %5d | %5d | %5d)\n", min.ax, min.ay, min.az);
-    printf("  (max: %5d | %5d | %5d)\n", max.ax, max.ay, max.az);
-    printf("  (avg: %5d | %5d | %5d)\n", avg.ax, avg.ay, avg.az);
-    printf("  (dev: %5d | %5d | %5d)\n", dev.ax, dev.ay, dev.az);
+    printf("a (min: %5.0f | %5.0f | %5.0f)\n", position->min.ax, position->min.ay, position->min.az);
+    printf("  (max: %5.0f | %5.0f | %5.0f)\n", position->max.ax, position->max.ay, position->max.az);
+    printf("  (avg: %5.0f | %5.0f | %5.0f)\n", position->avg.ax, position->avg.ay, position->avg.az);
+    printf("  (dev: %5.0f | %5.0f | %5.0f)\n", position->dev.ax, position->dev.ay, position->dev.az);
 
 #if 0
     printf("m (min: %5d | %5d | %5d)\n", min.mx, min.my, min.mz);
@@ -203,12 +205,7 @@ print_position(Position *position, SensorReading *min_all, SensorReading *max_al
 
     printf("\n");
 
-    if (min_all != NULL) get_min_reading(min_all, &min);
-    if (max_all != NULL) get_max_reading(max_all, &max);
-
-    deviation_vector = (int)sqrt(POW2(dev.ax) + POW2(dev.ay) + POW2(dev.az));
-
-    return deviation_vector;
+    return sqrt(POW2(position->dev.ax) + POW2(position->dev.ay) + POW2(position->dev.az));
 }
 
 int
@@ -217,7 +214,10 @@ main(int argc, char* argv[])
     PSMove *move;
     const char *serial;
     int i;
-    int deviation_vector;
+    int x, y, z;
+    double deviation_vector;
+    FILE *fp;
+    char tmp[512];
 
     Position positions[POSITIONS] = {
         { .name = "bulb up" },
@@ -264,14 +264,24 @@ main(int argc, char* argv[])
                 if (psmove_poll(move)) {
                     printf("\rTaking reading %d...", positions[i].readings + 1);
                     fflush(stdout);
+
                     SensorReading *reading = &(positions[i].data[positions[i].readings]);
-                    psmove_get_accelerometer(move, &reading->ax, &reading->ay, &reading->az);
-                    psmove_get_magnetometer(move, &reading->mx, &reading->my, &reading->mz);
+
+                    psmove_get_accelerometer(move, &x, &y, &z);
+                    reading->ax = (double)x;
+                    reading->ay = (double)y;
+                    reading->az = (double)z;
+
+                    psmove_get_magnetometer(move, &x, &y, &z);
+                    reading->mx = (double)x;
+                    reading->my = (double)y;
+                    reading->mz = (double)z;
+
                     positions[i].readings++;
                 }
             }
             printf("\rAll readings done for %s.\n", positions[i].name);
-            deviation_vector = print_position(&positions[i], NULL, NULL);
+            deviation_vector = calculate_calibration(&positions[i]);
 
             if (deviation_vector > MAX_DEVIATION_VECTOR) {
                 printf("\n\n  DEVIATION TOO HIGH - PLEASE RETRY\n\n");
@@ -279,20 +289,20 @@ main(int argc, char* argv[])
         } while (deviation_vector > MAX_DEVIATION_VECTOR);
     }
 
-    printf("==========\n");
 
-    SensorReading min_all, max_all;
-    min_all = max_all = positions[0].data[0];
-    for (i=0; i<POSITIONS; i++) {
-        print_position(&positions[i], &min_all, &max_all);
+    snprintf(tmp, sizeof(tmp), "calibration.%s.txt", serial);
+    for (i=0; i<strlen(tmp); i++) {
+        if (tmp[i] == ':') {
+            tmp[i] = '-';
+        }
     }
 
-    printf("==========\n");
-
-    printf("\ncombined values:\n");
-
-    printf("a (min: %5d | %5d | %5d)\n", min_all.ax, min_all.ay, min_all.az);
-    printf("  (max: %5d | %5d | %5d)\n", max_all.ax, max_all.ay, max_all.az);
+    fp = fopen(tmp, "w");
+    assert(fp != NULL);
+    for (i=0; i<POSITIONS; i++) {
+        fprintf(fp, "%f %f %f\n", positions[i].avg.ax, positions[i].avg.ay, positions[i].avg.az);
+    }
+    fclose(fp);
 
     psmove_disconnect(move);
 
