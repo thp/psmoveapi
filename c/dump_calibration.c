@@ -40,14 +40,7 @@ decode(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
     unsigned char high = (data[offset+1]) & 0xFF;
-    unsigned int value = low | (high << 8);
-
-    /* XXX: This might still need some work */
-    if (value & 0x8000) {
-        return -(value & 0x7FFF);
-    } else {
-        return ((~value) & 0x7FFF);
-    }
+    return (low | (high << 8)) - 0x8000;
 }
 
 void
