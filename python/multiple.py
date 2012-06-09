@@ -35,7 +35,7 @@ import time
 import psmove
 
 count = psmove.count_connected()
-print 'Connected controllers:', count
+print('Connected controllers:', count)
 
 colors = [
         (255, 0, 0),
@@ -53,6 +53,6 @@ moves = [(m.get_serial(), m) for m in (psmove.PSMove(i) for i in range(count))]
 
 for i, (serial, move) in enumerate(sorted(moves)):
     move.set_leds(*colors[i%len(colors)])
-    print 'Move:', serial
+    print('Move:', serial)
     move.update_leds()
 

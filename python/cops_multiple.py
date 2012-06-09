@@ -35,7 +35,7 @@ import time
 import psmove
 
 if psmove.count_connected() < 2:
-    print 'This examples requires at least 2 controllers.'
+    print('This examples requires at least 2 controllers.')
     sys.exit(1)
 
 a = psmove.PSMove(0)

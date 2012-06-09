@@ -35,7 +35,7 @@ import time
 import psmove
 
 count = psmove.count_connected()
-print 'Connected controllers:', count
+print('Connected controllers:', count)
 
 moves = [(m.get_serial(), m) for m in (psmove.PSMove(i) for i in range(count))]
 
@@ -51,7 +51,7 @@ while len(serials) < len(moves):
             move.set_leds(0, 255, 0)
             move.update_leds()
             serials.append(serial)
-            print i
+            print(i)
         #move.set_leds(*colors[i%len(colors)])
         #print 'Move:', serial
         #move.update_leds()
@@ -59,7 +59,7 @@ while len(serials) < len(moves):
 
 fp = open('serials.txt', 'w')
 stxt = '\n'.join('%d: %s' % x for x in enumerate(serials))
-print stxt
+print(stxt)
 fp.write(stxt)
 fp.close()
 
