@@ -72,6 +72,9 @@ SET_TARGET_PROPERTIES(psmoveapi PROPERTIES COMPILE_FLAGS -DBUILDING_SHARED_LIBRA
 add_executable(moved moved.c)
 target_link_libraries(moved psmoveapi)
 
+add_executable(blink c/blink.c)
+target_link_libraries(blink psmoveapi)
+
 add_executable(moved-client moved_client_test.c ${MOVED_CLIENT_SRC})
 target_link_libraries(moved-client ${MOVED_CLIENT_REQUIRED_LIBS})
 
