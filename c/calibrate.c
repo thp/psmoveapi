@@ -213,7 +213,7 @@ main(int argc, char* argv[])
 {
     PSMove *move;
     const char *serial;
-    int i;
+    int i, j;
     int x, y, z;
     double deviation_vector;
     FILE *fp;
@@ -301,6 +301,16 @@ main(int argc, char* argv[])
     assert(fp != NULL);
     for (i=0; i<POSITIONS; i++) {
         fprintf(fp, "%f %f %f\n", positions[i].avg.ax, positions[i].avg.ay, positions[i].avg.az);
+    }
+    fclose(fp);
+
+    fp = fopen("orientation.csv", "w");
+    assert(fp != NULL);
+    fprintf(fp, "ax,ay,az\n");
+    for (i=0; i<POSITIONS; i++) {
+        for (j=0; j<READINGS_PER_POSITION; j++) {
+            fprintf(fp, "%f,%f,%f\n", positions[i].data[j].ax, positions[i].data[j].ay, positions[i].data[j].az);
+        }
     }
     fclose(fp);
 
