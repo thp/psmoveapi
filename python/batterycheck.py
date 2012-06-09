@@ -37,14 +37,14 @@ import psmove
 
 
 while True:
-    print 'checking...'
+    print('checking...')
     psmove.reinit() # need this to re-enumerate new/disconnected devices
     moves = [psmove.PSMove(x) for x in range(psmove.count_connected())]
 
-    print 'connections:', sum(m.connection_type == psmove.Conn_USB
+    print('connections:', sum(m.connection_type == psmove.Conn_USB
             for m in moves), 'usb,', \
                     sum(m.connection_type == psmove.Conn_Bluetooth
-            for m in moves), 'bluetooth.'
+            for m in moves), 'bluetooth.')
 
     for move in moves:
         if move.connection_type == psmove.Conn_Bluetooth:

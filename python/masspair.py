@@ -41,19 +41,19 @@ import psmove
 # or the pairing will happen several times until you disconnect.
 
 while True:
-    print 'checking...'
+    print('checking...')
     psmove.reinit() # need this to re-enumerate new/disconnected devices
     moves = [psmove.PSMove(x) for x in range(psmove.count_connected())]
 
-    print 'connections:', sum(m.connection_type == psmove.Conn_USB
+    print('connections:', sum(m.connection_type == psmove.Conn_USB
             for m in moves), 'usb,', \
                     sum(m.connection_type == psmove.Conn_Bluetooth
-            for m in moves), 'bluetooth.'
+            for m in moves), 'bluetooth.')
 
     for move in moves:
         if move.connection_type == psmove.Conn_USB:
             if move.pair():
-                print 'pairing succeeded.'
+                print('pairing succeeded.')
                 move.set_leds(0, 255, 0)
                 move.update_leds()
                 time.sleep(3) # wait a bit so we can disconnect the move

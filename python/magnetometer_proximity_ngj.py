@@ -43,8 +43,8 @@ NUM_READINGS = 50
 NUM_MEANS = 10
 
 def mean(readings):
-    sums = map(sum, zip(*readings))
-    return map(lambda sum: sum/len(readings), sums)
+    sums = list(map(sum, list(zip(*readings))))
+    return [sum/len(readings) for sum in sums]
 
 def calc_diffsums(lastmeans, currentmeans):
     cx, cy, cz = currentmeans
@@ -58,13 +58,13 @@ def calc_diffsums(lastmeans, currentmeans):
 
 def stdev(readings):
     def calc_stdev(l):
-        print l
+        print(l)
         mean = sum(l) / len(l)
-        x2 = map(lambda x: x**2, l)
-        print x2
-        print sum(x2), len(l), mean*mean
+        x2 = [x**2 for x in l]
+        print(x2)
+        print(sum(x2), len(l), mean*mean)
         return math.sqrt(sum(x2)/len(l) - mean*mean)
-    return map(calc_stdev, readings)
+    return list(map(calc_stdev, readings))
 
 while True:
     if move.poll():
@@ -77,7 +77,7 @@ while True:
         if len(lastmeans) > NUM_MEANS:
             lastmeans.pop(0)
 
-        rx, ry, rz = zip(*readings)
+        rx, ry, rz = list(zip(*readings))
         #print max(map(abs, reading))
 
         #means = mean(readings)
@@ -89,7 +89,7 @@ while True:
         length = math.sqrt(move.mx**2 + move.my**2 + move.mz**2)
         #print length
 
-        print ('%10.3f '*3) % reading, length
+        print(('%10.3f '*3) % reading, length)
         diffsums = calc_diffsums(lastmeans, mean(readings))
         change = sum(map(abs, diffsums))
         #print change

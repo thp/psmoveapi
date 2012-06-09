@@ -41,11 +41,11 @@ def mapidx(l):
 
 # Run mk-index.py to create the file serials.txt, which contains an ordered
 # list of controllers' serial numbers (btaddr)
-serial_to_idx = dict(map(mapidx, open('serials.txt').read().splitlines()))
+serial_to_idx = dict(list(map(mapidx, open('serials.txt').read().splitlines())))
 
 count = psmove.count_connected()
-print 'Connected controllers:', count
-print 'Serials:', len(serial_to_idx)
+print('Connected controllers:', count)
+print('Serials:', len(serial_to_idx))
 assert count == len(serial_to_idx)
 
 moves = [move for idx, move in
