@@ -77,6 +77,16 @@ enum PSMove_Button {
     Btn_T = 1 << 0x14,
 };
 
+enum PSMove_Sensor {
+    Sensor_Accelerometer = 0,
+    Sensor_Gyroscope,
+};
+
+enum PSMove_Frame {
+    Frame_FirstHalf = 0,
+    Frame_SecondHalf,
+};
+
 enum PSMove_Battery_Level {
     Batt_MIN = 0x00,
     Batt_MAX = 0x05,
@@ -226,6 +236,9 @@ ADDCALL psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size);
  * This is only defined for Bluetooth controllers, and contains
  * the Bluetooth Mac address of the controller as a string, e.g.
  * "aa:bb:cc:dd:ee:ff".
+ *
+ * The serial number is owned by the move handle - the caller MUST NOT
+ * free the returned string. It will be freed on psmove_disconnect().
  **/
 ADDAPI const char*
 ADDCALL psmove_get_serial(PSMove *move);
@@ -352,6 +365,21 @@ ADDCALL psmove_get_temperature(PSMove *move);
  **/
 ADDAPI unsigned char
 ADDCALL psmove_get_trigger(PSMove *move);
+
+/**
+ * Get a half-frame from the accelerometer or gyroscope from the
+ * PS Move after using psmove_poll() previously.
+ *
+ * sensor must be Sensor_Accelerometer or Sensor_Accelerometer.
+ *
+ * frame must be Frame_FirstHalf or Frame_SecondHalf.
+ *
+ * x, y and z can point to integer locations that will be filled
+ * with the readings. If any are NULL, the fields will be ignored.
+ **/
+ADDAPI void
+ADDCALL psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
+        enum PSMove_Frame frame, int *x, int *y, int *z);
 
 /**
  * Get the current accelerometer readings from the PS Move. You need

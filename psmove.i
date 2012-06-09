@@ -97,6 +97,10 @@ void reinit();
         return psmove_connect_by_id(id);
     }
 
+    void get_half_frame(enum PSMove_Sensor sensor,
+        enum PSMove_Frame frame,
+        int *OUTPUT, int *OUTPUT, int *OUTPUT);
+
     void set_leds(int r, int g, int b) {
         psmove_set_leds($self, r, g, b);
     }
@@ -157,6 +161,12 @@ void reinit();
 
 
 %{
+
+void
+PSMove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
+    enum PSMove_Frame frame, int *x, int *y, int *z) {
+    psmove_get_half_frame(move, sensor, frame, x, y, z);
+}
 
 int
 PSMove_connection_type_get(PSMove *move) {

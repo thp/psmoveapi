@@ -31,6 +31,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
+#include <ctype.h>
 #include <string.h>
 #include <wchar.h>
 #include <unistd.h>
@@ -110,6 +112,16 @@ typedef struct {
 
 /* Decode 12-bit signed value (assuming two's complement) */
 #define TWELVE_BIT_SIGNED(x) (((x) & 0x800)?(-(((~(x)) & 0xFFF) + 1)):(x))
+
+/* Decode 16-bit signed value from data pointer and offset */
+inline int
+psmove_decode_16bit(char *data, int offset)
+{
+    unsigned char low = data[offset] & 0xFF;
+    unsigned char high = (data[offset+1]) & 0xFF;
+    return (low | (high << 8)) - 0x8000;
+}
+
 
 typedef struct {
     unsigned char type; /* message type, must be PSMove_Req_GetInput */
@@ -999,6 +1011,44 @@ psmove_get_trigger(PSMove *move)
     psmove_return_val_if_fail(move != NULL, 0);
 
     return (move->input.trigger + move->input.trigger2) / 2;
+}
+
+void
+psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
+        enum PSMove_Frame frame, int *x, int *y, int *z)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(sensor == Sensor_Accelerometer || sensor == Sensor_Gyroscope);
+    psmove_return_if_fail(frame == Frame_FirstHalf || frame == Frame_SecondHalf);
+
+    int base;
+
+    switch (sensor) {
+        case Sensor_Accelerometer:
+            base = offsetof(PSMove_Data_Input, aXlow);
+            break;
+        case Sensor_Gyroscope:
+            base = offsetof(PSMove_Data_Input, gXlow);
+            break;
+        default:
+            return;
+    }
+
+    if (frame == Frame_SecondHalf) {
+        base += 6;
+    }
+
+    if (x != NULL) {
+        *x = psmove_decode_16bit((void*)&move->input, base + 0);
+    }
+
+    if (y != NULL) {
+        *y = psmove_decode_16bit((void*)&move->input, base + 2);
+    }
+
+    if (z != NULL) {
+        *z = psmove_decode_16bit((void*)&move->input, base + 4);
+    }
 }
 
 void
