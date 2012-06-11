@@ -4,12 +4,10 @@
 #include <QtGui>
 
 #include "psmove.h"
+#include "psmove_filter.h"
+#include "psmove_calibration.h"
 
-class Reading {
-    public:
-        Reading() : x(0), y(0), z(0) {}
-        int x, y, z;
-};
+#define MAX_READINGS 1050
 
 class MoveGraph : public QWidget {
     Q_OBJECT
@@ -17,18 +15,22 @@ class MoveGraph : public QWidget {
     public:
         MoveGraph();
 
-    private:
-        void insertReading(int x, int y, int z);
-
     protected:
         virtual void paintEvent(QPaintEvent *event);
 
     public slots:
         void readSensors();
+        void setAlpha(int);
 
     private:
         PSMove *move;
-        Reading readings[1024];
+        PSMoveFilter *filter;
+        PSMoveCalibration *calibration;
+
+        QStaticText labelPositive;
+        QStaticText labelNegative;
+
+        float readings[MAX_READINGS][3];
         int offset;
 };
 

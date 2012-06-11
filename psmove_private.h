@@ -28,52 +28,34 @@
  **/
 
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include "psmove.h"
-#include "psmove_calibration.h"
+#ifndef PSMOVE_PRIVATE_H
+#define PSMOVE_PRIVATE_H
 
-int
-main(int argc, char* argv[])
-{
-    PSMove *move;
-    int i;
-    int count;
-    PSMoveCalibration *calibration;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    if ((count = psmove_count_connected()) < 1) {
-        fprintf(stderr, "No controllers connected.\n");
-        return EXIT_FAILURE;
-    }
 
-    for (i=0; i<count; i++) {
-        move = psmove_connect_by_id(i);
+    /**
+     * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c
+     *
+     * These constants are considered implementation details and should
+     * not be used by external code (they are subject to change).
+     *
+     * All constants that need to be shared between psmove.c and other
+     * implementation modules (psmove_*.c) should go here.
+     **/
 
-        if (move == NULL) {
-            fprintf(stderr, "Could not connect to controller #%d.\n", i);
-            continue;
-        }
 
-        calibration = psmove_calibration_new(move);
-        psmove_calibration_load(calibration);
+/* Buffer size for calibration data */
+#define PSMOVE_CALIBRATION_SIZE 49
 
-        if (psmove_connection_type(move) != Conn_USB) {
-            psmove_calibration_dump(calibration);
-            goto next;
-        }
+/* Three blocks, minus 2x the header (2 bytes) for the 2nd and 3rd block */
+#define PSMOVE_CALIBRATION_BLOB_SIZE (PSMOVE_CALIBRATION_SIZE*3 - 2*2)
 
-        psmove_calibration_read_from_usb(calibration);
-        psmove_calibration_save(calibration);
-        psmove_calibration_dump(calibration);
-
-next:
-        psmove_calibration_destroy(calibration);
-        psmove_disconnect(move);
-    }
-
-    return EXIT_SUCCESS;
+#ifdef __cplusplus
 }
+#endif
 
+#endif

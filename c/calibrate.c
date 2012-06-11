@@ -36,6 +36,7 @@
 #include <assert.h>
 
 #include "psmove.h"
+#include "psmove_calibration.h"
 
 #define POSITIONS 6
 #define READINGS_PER_POSITION 200
@@ -48,6 +49,7 @@
 
 struct _SensorReading {
     double ax, ay, az;
+    double gx, gy, gz;
     double mx, my, mz;
 };
 
@@ -92,6 +94,8 @@ get_min_reading(SensorReading *min, const SensorReading *cur)
     if (min->ay > cur->ay) min->ay = cur->ay;
     if (min->az > cur->az) min->az = cur->az;
 
+    /* XXX: Gyroscope */
+
     if (min->mx > cur->mx) min->mx = cur->mx;
     if (min->my > cur->my) min->my = cur->my;
     if (min->mz > cur->mz) min->mz = cur->mz;
@@ -103,6 +107,8 @@ get_max_reading(SensorReading *max, const SensorReading *cur)
     if (max->ax < cur->ax) max->ax = cur->ax;
     if (max->ay < cur->ay) max->ay = cur->ay;
     if (max->az < cur->az) max->az = cur->az;
+
+    /* XXX: Gyroscope */
 
     if (max->mx < cur->mx) max->mx = cur->mx;
     if (max->my < cur->my) max->my = cur->my;
@@ -116,6 +122,10 @@ add_reading(SensorReading *avg, const SensorReading cur)
     avg->ay += cur.ay;
     avg->az += cur.az;
 
+    avg->gx += cur.gx;
+    avg->gy += cur.gy;
+    avg->gz += cur.gz;
+
     avg->mx += cur.mx;
     avg->my += cur.my;
     avg->mz += cur.mz;
@@ -127,6 +137,10 @@ divide_reading(SensorReading *avg, int divisor)
     avg->ax /= divisor;
     avg->ay /= divisor;
     avg->az /= divisor;
+
+    avg->gx /= divisor;
+    avg->gy /= divisor;
+    avg->gz /= divisor;
 
     avg->mx /= divisor;
     avg->my /= divisor;
@@ -144,6 +158,10 @@ square_diff(const SensorReading *cur, const SensorReading *avg)
     tmp.ay = POW2(cur->ay - avg->ay);
     tmp.az = POW2(cur->az - avg->az);
 
+    tmp.gx = POW2(cur->gx - avg->gx);
+    tmp.gy = POW2(cur->gy - avg->gy);
+    tmp.gz = POW2(cur->gz - avg->gz);
+
     tmp.mx = POW2(cur->mx - avg->mx);
     tmp.my = POW2(cur->my - avg->my);
     tmp.mz = POW2(cur->mz - avg->mz);
@@ -157,6 +175,10 @@ sqrt_reading(SensorReading *dev)
     dev->ax = sqrt(dev->ax);
     dev->ay = sqrt(dev->ay);
     dev->az = sqrt(dev->az);
+
+    dev->gx = sqrt(dev->gx);
+    dev->gy = sqrt(dev->gy);
+    dev->gz = sqrt(dev->gz);
 
     dev->mx = sqrt(dev->mx);
     dev->my = sqrt(dev->my);
@@ -191,21 +213,21 @@ calculate_calibration(Position *position)
 
     printf("%s:\n", position->name);
 
-    printf("a (min: %5.0f | %5.0f | %5.0f)\n", position->min.ax, position->min.ay, position->min.az);
-    printf("  (max: %5.0f | %5.0f | %5.0f)\n", position->max.ax, position->max.ay, position->max.az);
-    printf("  (avg: %5.0f | %5.0f | %5.0f)\n", position->avg.ax, position->avg.ay, position->avg.az);
-    printf("  (dev: %5.0f | %5.0f | %5.0f)\n", position->dev.ax, position->dev.ay, position->dev.az);
+    //printf("a (min: %5.0f | %5.0f | %5.0f)\n", position->min.ax, position->min.ay, position->min.az);
+    //printf("a (max: %5.0f | %5.0f | %5.0f)\n", position->max.ax, position->max.ay, position->max.az);
+    printf("a (avg: %5.0f | %5.0f | %5.0f)\n", position->avg.ax, position->avg.ay, position->avg.az);
+    printf("a (dev: %5.0f | %5.0f | %5.0f)\n", position->dev.ax, position->dev.ay, position->dev.az);
 
-#if 0
-    printf("m (min: %5d | %5d | %5d)\n", min.mx, min.my, min.mz);
-    printf("  (max: %5d | %5d | %5d)\n", max.mx, max.my, max.mz);
-    printf("  (avg: %5d | %5d | %5d)\n", avg.mx, avg.my, avg.mz);
-    printf("  (dev: %5d | %5d | %5d)\n", dev.mx, dev.my, dev.mz);
-#endif
+    //printf("m (min: %5.0f | %5.0f | %5.0f)\n", position->min.mx, position->min.my, position->min.mz);
+    //printf("m (max: %5.0f | %5.0f | %5.0f)\n", position->max.mx, position->max.my, position->max.mz);
+    printf("m (avg: %5.0f | %5.0f | %5.0f)\n", position->avg.mx, position->avg.my, position->avg.mz);
+    printf("m (dev: %5.0f | %5.0f | %5.0f)\n", position->dev.mx, position->dev.my, position->dev.mz);
 
     printf("\n");
 
-    return sqrt(POW2(position->dev.ax) + POW2(position->dev.ay) + POW2(position->dev.az));
+    return sqrt(POW2(position->dev.ax) +
+                POW2(position->dev.ay) +
+                POW2(position->dev.az));
 }
 
 int
@@ -217,7 +239,8 @@ main(int argc, char* argv[])
     int x, y, z;
     double deviation_vector;
     FILE *fp;
-    char tmp[512];
+    PSMoveCalibration *calibration;
+    float custom[6*9];
 
     Position positions[POSITIONS] = {
         { .name = "bulb up" },
@@ -272,6 +295,11 @@ main(int argc, char* argv[])
                     reading->ay = (double)y;
                     reading->az = (double)z;
 
+                    psmove_get_gyroscope(move, &x, &y, &z);
+                    reading->gx = (double)x;
+                    reading->gy = (double)y;
+                    reading->gz = (double)z;
+
                     psmove_get_magnetometer(move, &x, &y, &z);
                     reading->mx = (double)x;
                     reading->my = (double)y;
@@ -289,7 +317,29 @@ main(int argc, char* argv[])
         } while (deviation_vector > MAX_DEVIATION_VECTOR);
     }
 
+    calibration = psmove_calibration_new(move);
+    psmove_calibration_load(calibration);
 
+    for (i=0; i<POSITIONS; i++) {
+        custom[i*9 + 0] = positions[i].avg.ax;
+        custom[i*9 + 1] = positions[i].avg.ay;
+        custom[i*9 + 2] = positions[i].avg.az;
+
+        custom[i*9 + 3] = 0;//positions[i].avg.gx;
+        custom[i*9 + 4] = 0;//positions[i].avg.gy;
+        custom[i*9 + 5] = 0;//positions[i].avg.gz;
+
+        custom[i*9 + 6] = positions[i].avg.mx;
+        custom[i*9 + 7] = positions[i].avg.my;
+        custom[i*9 + 8] = positions[i].avg.mz;
+    }
+
+    psmove_calibration_set_custom(calibration, custom, POSITIONS, 9);
+
+    psmove_calibration_save(calibration);
+    psmove_calibration_destroy(calibration);
+
+    /*
     snprintf(tmp, sizeof(tmp), "calibration.%s.txt", serial);
     for (i=0; i<strlen(tmp); i++) {
         if (tmp[i] == ':') {
@@ -303,6 +353,7 @@ main(int argc, char* argv[])
         fprintf(fp, "%f %f %f\n", positions[i].avg.ax, positions[i].avg.ay, positions[i].avg.az);
     }
     fclose(fp);
+    */
 
     fp = fopen("orientation.csv", "w");
     assert(fp != NULL);

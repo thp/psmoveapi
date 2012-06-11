@@ -28,6 +28,7 @@
  **/
 
 #include "psmove.h"
+#include "psmove_private.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +38,7 @@
 #include <wchar.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/syslimits.h>
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
@@ -67,9 +69,6 @@
 
 /* Buffer size for writing LEDs and reading sensor data */
 #define PSMOVE_BUFFER_SIZE 49
-
-/* Buffer size for calibration data */
-#define PSMOVE_CALIBRATION_SIZE 49
 
 /* Buffer size for the Bluetooth address get request */
 #define PSMOVE_BTADDR_GET_SIZE 16
@@ -599,8 +598,7 @@ psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
     psmove_return_val_if_fail(dest != NULL, 0);
     psmove_return_val_if_fail(size != NULL, 0);
 
-    /* Three blocks, minus 2x the header (2 bytes) for the 2nd and 3rd block */
-    unsigned char calibration[PSMOVE_CALIBRATION_SIZE*3 - 2*2];
+    unsigned char calibration[PSMOVE_CALIBRATION_BLOB_SIZE];
 
     unsigned char cal[PSMOVE_CALIBRATION_SIZE];
     int res;
@@ -1154,5 +1152,18 @@ psmove_util_get_ticks()
     }
 
     return (now - startup_time);
+}
+
+const char *
+psmove_util_get_data_dir()
+{
+    static char dir[PATH_MAX];
+
+    if (strlen(dir) == 0) {
+        strncpy(dir, getenv("HOME"), PATH_MAX);
+        strncat(dir, "/.psmoveapi/", PATH_MAX);
+    }
+
+    return dir;
 }
 

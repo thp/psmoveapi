@@ -422,6 +422,14 @@ ADDCALL psmove_disconnect(PSMove *move);
 ADDAPI long
 ADDCALL psmove_util_get_ticks();
 
+/**
+ * Utility function: Get local save directory for settings
+ *
+ * The returned value is reserved in static memory. It must not be free()d.
+ **/
+ADDAPI const char *
+ADDCALL psmove_util_get_data_dir();
+
 #ifdef __cplusplus
 }
 #endif

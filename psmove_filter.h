@@ -28,52 +28,38 @@
  **/
 
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifndef PSMOVE_FILTER_H
+#define PSMOVE_FILTER_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 
-int
-main(int argc, char* argv[])
-{
-    PSMove *move;
-    int i;
-    int count;
-    PSMoveCalibration *calibration;
+typedef struct _PSMoveFilter PSMoveFilter;
 
-    if ((count = psmove_count_connected()) < 1) {
-        fprintf(stderr, "No controllers connected.\n");
-        return EXIT_FAILURE;
-    }
+ADDAPI PSMoveFilter *
+ADDCALL psmove_filter_new(PSMove *move);
 
-    for (i=0; i<count; i++) {
-        move = psmove_connect_by_id(i);
+ADDAPI void
+ADDCALL psmove_filter_update(PSMoveFilter *filter);
 
-        if (move == NULL) {
-            fprintf(stderr, "Could not connect to controller #%d.\n", i);
-            continue;
-        }
+ADDAPI void
+ADDCALL psmove_filter_set_alpha(PSMoveFilter *filter, float alpha);
 
-        calibration = psmove_calibration_new(move);
-        psmove_calibration_load(calibration);
+ADDAPI float
+ADDCALL psmove_filter_get_alpha(PSMoveFilter *filter);
 
-        if (psmove_connection_type(move) != Conn_USB) {
-            psmove_calibration_dump(calibration);
-            goto next;
-        }
+ADDAPI void
+ADDCALL psmove_filter_get_accelerometer(PSMoveFilter *filter,
+        int *x, int *y, int *z);
 
-        psmove_calibration_read_from_usb(calibration);
-        psmove_calibration_save(calibration);
-        psmove_calibration_dump(calibration);
+ADDAPI void
+ADDCALL psmove_filter_destroy(PSMoveFilter *filter);
 
-next:
-        psmove_calibration_destroy(calibration);
-        psmove_disconnect(move);
-    }
-
-    return EXIT_SUCCESS;
+#ifdef __cplusplus
 }
+#endif
 
+#endif

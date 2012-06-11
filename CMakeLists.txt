@@ -57,7 +57,10 @@ ELSE()
 ENDIF()
 
 set(MOVED_CLIENT_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
-set(PSMOVE_SRC ${HIDAPI_SRC} ${MOVED_CLIENT_SRC} ${PSMOVEAPI_SOURCE_DIR}/psmove.c)
+set(PSMOVE_SRC ${HIDAPI_SRC} ${MOVED_CLIENT_SRC}
+    ${PSMOVEAPI_SOURCE_DIR}/psmove.c
+    ${PSMOVEAPI_SOURCE_DIR}/psmove_filter.c
+    ${PSMOVEAPI_SOURCE_DIR}/psmove_calibration.c)
 
 # Shared library
 
