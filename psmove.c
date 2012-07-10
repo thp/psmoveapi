@@ -38,17 +38,18 @@
 #include <wchar.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <sys/syslimits.h>
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
 #  include <IOBluetooth/Bluetooth.h>
+#  include <sys/syslimits.h>
 #endif
 
 #ifdef __linux
 #  include <bluetooth/bluetooth.h>
 #  include <bluetooth/hci.h>
 #  include <sys/ioctl.h>
+#  include <linux/limits.h>
 #endif
 
 #ifdef _WIN32

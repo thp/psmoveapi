@@ -6,7 +6,7 @@ project(PSMOVEAPI)
 include_directories(${PSMOVEAPI_SOURCE_DIR}/hidapi/hidapi)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-#add_definitions(-DPSMOVE_DEBUG)
+add_definitions(-DPSMOVE_DEBUG)
 add_definitions(-g -Wall)
 add_definitions(-O2)
 
