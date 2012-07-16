@@ -49,7 +49,8 @@ def gyro_frames(move):
                     psmove.Frame_FirstHalf)
             yield move.get_half_frame(psmove.Sensor_Gyroscope,
                     psmove.Frame_SecondHalf)
-
+        else:
+            QThread.msleep(20)
 
 class DriftCalculator:
     MINIMUM_READINGS = 500
@@ -150,23 +151,19 @@ class MyThread(QThread):
 
                 summer.add(calculator.fix(frame))
 
-                #print ' '.join(map(lambda x: '%10.2f' % x, scaler.scale(summer.values)))
                 for idx, rotation in enumerate(scaler.scale(summer.values)):
                     transforms[idx].setAngle((-1 if idx != 1 else 1)*rotation*360)
-                #rot = scaler.scale(summer.values)[2]
-                #rect.setRotation(-rot*360)
-                #rect.setRotation(rect.rotation() + 1)
-                #print rect.rotation()
                 scene.invalidate()
-                #self.sleep(.1)
             else:
                 calculator.feed(frame)
 
+QApplication.setGraphicsSystem('opengl')
 app = QApplication([])
 
 
 view = QGraphicsView()
 scene = QGraphicsScene(-600, -200, 1200, 400)
+scene.setBackgroundBrush(Qt.black)
 rect = scene.addRect(-100, -100, 200, 200, QPen(), Qt.green)
 transforms = [QGraphicsRotation(), QGraphicsRotation(), QGraphicsRotation()]
 transforms[0].setAxis(Qt.XAxis)
