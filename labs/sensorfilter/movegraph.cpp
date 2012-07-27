@@ -43,7 +43,7 @@ MoveGraph::paintEvent(QPaintEvent *event)
     painter.drawStaticText(rightBorder + 5, Yzero/2*3 - labelNegative.size().height()/2, labelNegative);
 
     int newValue;
-    int oldValue;
+    int oldValue = 0;
     int idx;
 
     for (int a=0; a<3; a++) {
@@ -81,8 +81,7 @@ MoveGraph::readSensors()
 
         psmove_filter_get_accelerometer(filter, &a[0], &a[1], &a[2]);
 
-        psmove_calibration_map(calibration, Calibration_Any,
-                a, readings[offset], 3);
+        psmove_calibration_map(calibration, a, readings[offset], 3);
     }
     update();
 }

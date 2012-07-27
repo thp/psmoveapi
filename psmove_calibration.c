@@ -37,6 +37,7 @@
 #include <assert.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <math.h>
 
 #define PSMOVE_CALIBRATION_EXTENSION ".calibration.txt"
 
@@ -92,6 +93,52 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
     }
 
     printf("# byte at 0x3F: %02hhx\n", data[0x3F]);
+}
+
+void
+psmove_calibration_get_usb_accel_values(PSMoveCalibration *calibration,
+        int *x1, int *x2, int *y1, int *y2, int *z1, int *z2)
+{
+    assert(calibration != NULL);
+    assert(psmove_calibration_supports_method(calibration, Calibration_USB));
+    char *data = calibration->usb_calibration;
+
+    int orientation;
+
+    /* Minimum (negative) value of each axis */
+    orientation = 1;
+    *x1 = psmove_calibration_decode(data, 0x04 + 6*orientation);
+    orientation = 5;
+    *y1 = psmove_calibration_decode(data, 0x04 + 6*orientation + 2);
+    orientation = 2;
+    *z1 = psmove_calibration_decode(data, 0x04 + 6*orientation + 4);
+
+    /* Maximum (positive) values of each axis */
+    orientation = 3;
+    *x2 = psmove_calibration_decode(data, 0x04 + 6*orientation);
+    orientation = 4;
+    *y2 = psmove_calibration_decode(data, 0x04 + 6*orientation + 2);
+    orientation = 0;
+    *z2 = psmove_calibration_decode(data, 0x04 + 6*orientation + 4);
+}
+
+
+void
+psmove_calibration_get_usb_gyro_values(PSMoveCalibration *calibration,
+        int *x, int *y, int *z)
+{
+    assert(calibration != NULL);
+    assert(psmove_calibration_supports_method(calibration, Calibration_USB));
+    char *data = calibration->usb_calibration;
+
+    int orientation;
+
+    orientation = 0;
+    *x = psmove_calibration_decode(data, 0x46 + 8*orientation);
+    orientation = 1;
+    *y = psmove_calibration_decode(data, 0x46 + 8*orientation + 2);
+    orientation = 2;
+    *z = psmove_calibration_decode(data, 0x46 + 8*orientation + 4);
 }
 
 void
@@ -227,32 +274,69 @@ psmove_calibration_dump(PSMoveCalibration *calibration)
 
 enum PSMove_Calibration_Method
 psmove_calibration_map(PSMoveCalibration *calibration,
-        enum PSMove_Calibration_Method preferred,
         int *input, float *output, size_t n)
 {
     assert(calibration != NULL);
-    assert(preferred == Calibration_Any ||
-            preferred == Calibration_USB ||
-            preferred == Calibration_Custom);
     assert(input != NULL);
     assert(output != NULL);
-    assert(n == 3); // TODO: support n==6 and n==9 too!
+    assert(n == 3 || n == 6 || n == 9);
 
     int i;
 
-    if (!psmove_calibration_supports_method(calibration, Calibration_Custom)) {
-        for (i=0; i<n; i++) {
-            output[i] = (float)input[i];
+    if (psmove_calibration_supports_method(calibration, Calibration_USB)) {
+        for (i=0; i<3; i++) {
+            int axlow, axhigh, aylow, ayhigh, azlow, azhigh;
+            psmove_calibration_get_usb_accel_values(calibration,
+                    &axlow, &axhigh, &aylow, &ayhigh, &azlow, &azhigh);
+
+            /* axlow maps to -1, axhigh maps to +1 */
+            output[0] = -1. + (float)(input[0] - axlow) /
+                              (float)(axhigh - axlow)*2.f;
+            output[1] = -1. + (float)(input[1] - aylow) /
+                              (float)(ayhigh - aylow)*2.f;
+            output[2] = -1. + (float)(input[2] - azlow) /
+                              (float)(azhigh - azlow)*2.f;
         }
-        return Calibration_None;
+
+        if (n == 6 || n == 9) {
+            /* Constant factor to convert 80 rot/min to 1 rad/s */
+            float CONVERT_80RPM_TO_RADPS = (2.f * M_PI) * 80.f / 60.f;
+
+            int gx80, gy80, gz80;
+            psmove_calibration_get_usb_gyro_values(calibration,
+                    &gx80, &gy80, &gz80);
+            output[3] = (float)input[3] / (float)gx80 * CONVERT_80RPM_TO_RADPS;
+            output[4] = (float)input[4] / (float)gy80 * CONVERT_80RPM_TO_RADPS;
+            output[5] = (float)input[5] / (float)gz80 * CONVERT_80RPM_TO_RADPS;
+        }
+
+        if (n == 9) {
+            /* Magnetometer values are always reported as-is for now */
+            for (i=6; i<9; i++) {
+                output[i] = (float)input[i];
+            }
+        }
+
+        return Calibration_USB;
     }
 
-    /* ax, ay, az */
-    output[0] = ((float)input[0])/(calibration->custom_calibration[4][0] - calibration->custom_calibration[5][0])*2.;
-    output[1] = ((float)input[1])/(calibration->custom_calibration[0][1] - calibration->custom_calibration[1][1])*2.;
-    output[2] = ((float)input[2])/(calibration->custom_calibration[2][2] - calibration->custom_calibration[3][2])*2.;
+    if (psmove_calibration_supports_method(calibration, Calibration_Custom)) {
+        /* For now, we only calibrate the accelerometer with custom calibration */
+        assert(n == 3);
 
-    return Calibration_Custom;
+        /* ax, ay, az */
+        output[0] = ((float)input[0])/(calibration->custom_calibration[4][0] - calibration->custom_calibration[5][0])*2.;
+        output[1] = ((float)input[1])/(calibration->custom_calibration[0][1] - calibration->custom_calibration[1][1])*2.;
+        output[2] = ((float)input[2])/(calibration->custom_calibration[2][2] - calibration->custom_calibration[3][2])*2.;
+
+        return Calibration_Custom;
+    }
+
+    for (i=0; i<n; i++) {
+        /* No calibration - just raw values copied */
+        output[i] = (float)input[i];
+    }
+    return Calibration_None;
 }
 
 int
@@ -304,7 +388,8 @@ psmove_calibration_save(PSMoveCalibration *calibration)
 {
     assert(calibration != NULL);
 
-    char *parent = dirname(calibration->filename);
+    char *tmp = strdup(calibration->filename);
+    char *parent = dirname(tmp);
     struct stat st;
     FILE *fp;
 
@@ -326,6 +411,8 @@ psmove_calibration_save(PSMoveCalibration *calibration)
                 sizeof(calibration->flags),
                 1, fp) == 1);
     fclose(fp);
+
+    free(tmp);
 
     return 1;
 }

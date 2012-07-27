@@ -100,7 +100,6 @@ ADDCALL psmove_calibration_dump(PSMoveCalibration *calibration);
  * Map raw sensor values to calibrated values.
  *
  * calibration ... a valid PSMoveCalibration * instance.
- * preferred ... the preferred method for mapping values (Any, USB, Custom).
  * input ... pointer to a n-array containing raw values.
  * output ... pointer to a n-array to store output values.
  * n ... 3 (accel only), 6 (accel+gyro) or 9 (accel+gyro+magnetometer)
@@ -110,7 +109,6 @@ ADDCALL psmove_calibration_dump(PSMoveCalibration *calibration);
  **/
 ADDAPI enum PSMove_Calibration_Method
 ADDCALL psmove_calibration_map(PSMoveCalibration *calibration,
-        enum PSMove_Calibration_Method preferred,
         int *input, float *output, size_t n);
 
 /**

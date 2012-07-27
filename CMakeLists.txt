@@ -85,7 +85,7 @@ foreach(PSMOVE_EXAMPLE example multiple psmovepair calibrate dump_calibration li
 endforeach(PSMOVE_EXAMPLE)
 
 # C test programs
-foreach(PSMOVE_TEST led_update read_performance)
+foreach(PSMOVE_TEST led_update read_performance calibration)
     add_executable(test_${PSMOVE_TEST} c/test_${PSMOVE_TEST}.c)
     target_link_libraries(test_${PSMOVE_TEST} psmoveapi)
 endforeach(PSMOVE_TEST)

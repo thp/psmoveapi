@@ -1,0 +1,12 @@
+
+This application expects that the PS Move API has been
+build in "build/" in the root source folder.
+
+After you have built the PS Move API in this way, you can
+use "qmake" to generate a Makefile and then "make" to build
+the application.
+
+Additional requirements:
+
+  This requires Qt 4.8.2 + Qt3D 1.0.
+
