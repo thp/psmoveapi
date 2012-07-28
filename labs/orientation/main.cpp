@@ -11,8 +11,10 @@ int main(int argc, char **argv)
     Orientation orientation;
     orientation.start();
 
-    QObject::connect(&orientation, SIGNAL(orientation(qreal,qreal,qreal,qreal)),
-                     &view, SLOT(orientation(qreal,qreal,qreal,qreal)));
+    QObject::connect(&orientation,
+            SIGNAL(orientation(qreal,qreal,qreal,qreal,qreal,qreal,qreal)),
+            &view,
+            SLOT(orientation(qreal,qreal,qreal,qreal,qreal,qreal,qreal)));
 
     view.show();
 

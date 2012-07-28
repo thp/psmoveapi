@@ -36,18 +36,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 #include "psmove.h"
 #include "psmove_calibration.h"
+#include "psmove_tracker.h"
 
 #include "MadgwickAHRS/MadgwickAHRS.h"
+
+extern "C" {
+    void cvShowImage(const char *, void*);
+};
 
 class Orientation : public QThread
 {
     Q_OBJECT
 
     signals:
-        void orientation(qreal a, qreal b, qreal c, qreal d);
+        void orientation(qreal a, qreal b, qreal c, qreal d,
+                qreal scale, qreal x, qreal y);
 
     public:
         Orientation() : QThread() {}
@@ -62,6 +69,10 @@ class Orientation : public QThread
                 QApplication::quit();
             }
 
+            PSMoveTracker *tracker = psmove_tracker_new();
+            int result = psmove_tracker_enable(tracker, move);
+            assert(result == Tracker_CALIBRATED);
+
             PSMoveCalibration *calibration = psmove_calibration_new(move);
             psmove_calibration_load(calibration);
             assert(psmove_calibration_supports_method(calibration,
@@ -71,10 +82,7 @@ class Orientation : public QThread
                 int frame;
                 int input[9];
                 float output[9]; // ax, ay, az, gx, gy, gz, mx, my, mz
-                int seq = psmove_poll(move);
-
-                if (seq) {
-
+                while (int seq = psmove_poll(move)) {
                     if (psmove_get_buttons(move) & Btn_PS) {
                         quit = 1;
                         break;
@@ -105,10 +113,26 @@ class Orientation : public QThread
                                 output[6], output[7], output[8]);
                     }
 
-                    emit orientation(q0, q1, q2, q3);
+                    int x, y, radius;
+                    psmove_tracker_get_position(tracker, move, &x, &y, &radius);
+                    emit orientation(q0, q1, q2, q3,
+                            1.-((qreal)radius/150.),
+                            1.-((qreal)x/640.)*2.,
+                            1.-((qreal)y/480.)*2.);
                 }
+
+                psmove_tracker_update_image(tracker);
+                psmove_tracker_update(tracker, NULL);
+
+                cvShowImage("asdf", psmove_tracker_get_image(tracker));
+
+                unsigned char r, g, b;
+                psmove_tracker_get_color(tracker, move, &r, &g, &b);
+                psmove_set_leds(move, r, g, b);
+                psmove_update_leds(move);
             }
 
+            psmove_tracker_free(tracker);
             psmove_calibration_destroy(calibration);
             psmove_disconnect(move);
             QApplication::quit();

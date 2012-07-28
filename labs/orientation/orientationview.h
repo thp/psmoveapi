@@ -20,7 +20,8 @@ private:
     QGLSceneNode *teapot;
 
 public slots:
-    void orientation(qreal a, qreal b, qreal c, qreal d);
+    void orientation(qreal a, qreal b, qreal c, qreal d,
+            qreal scale, qreal x, qreal y);
 };
 
 #endif

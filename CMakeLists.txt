@@ -47,14 +47,23 @@ ELSE()
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
+    pkg_check_modules(OPENCV REQUIRED opencv)
+    include_directories(${OPENCV_INCLUDE_DIRS})
+    list(APPEND PSMOVE_REQUIRED_LIBS ${OPENCV_LIBRARIES})
+
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/hidapi/linux/hid.c)
 ENDIF()
+
+file(GLOB PSMOVEAPI_TRACKER_SRC "${PSMOVEAPI_SOURCE_DIR}/tracker/*.c")
+include_directories(${PSMOVEAPI_SOURCE_DIR}/tracker)
 
 set(MOVED_CLIENT_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
 set(PSMOVE_SRC ${HIDAPI_SRC} ${MOVED_CLIENT_SRC}
     ${PSMOVEAPI_SOURCE_DIR}/psmove.c
     ${PSMOVEAPI_SOURCE_DIR}/psmove_filter.c
-    ${PSMOVEAPI_SOURCE_DIR}/psmove_calibration.c)
+    ${PSMOVEAPI_SOURCE_DIR}/psmove_calibration.c
+    ${PSMOVEAPI_SOURCE_DIR}/psmove_tracker.c
+    ${PSMOVEAPI_TRACKER_SRC})
 
 # Shared library
 
@@ -79,7 +88,7 @@ foreach(PSMOVE_EXAMPLE example multiple psmovepair calibrate dump_calibration li
 endforeach(PSMOVE_EXAMPLE)
 
 # C test programs
-foreach(PSMOVE_TEST led_update read_performance calibration)
+foreach(PSMOVE_TEST led_update read_performance calibration tracker)
     add_executable(test_${PSMOVE_TEST} c/test_${PSMOVE_TEST}.c)
     target_link_libraries(test_${PSMOVE_TEST} psmoveapi)
 endforeach(PSMOVE_TEST)

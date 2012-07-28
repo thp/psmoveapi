@@ -19,5 +19,5 @@ INCLUDEPATH += ../..
 DEPENDPATH += ../../external
 INCLUDEPATH += ../../external
 
-LIBS += -L../../build/ -lpsmoveapi
+LIBS += -L../../build/ -lpsmoveapi -lopencv_highgui
 
