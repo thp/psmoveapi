@@ -29,8 +29,8 @@ class DebugOutput : public QObject {
             out.flush();
         }
 
-        void hover(int x, int y) {
-            out << "hover: " << " (" << x << "," << y << ")\n";
+        void hover(int idx, int x, int y) {
+            out << "hover: " << idx << " (" << x << "," << y << ")\n";
             out.flush();
         }
 };

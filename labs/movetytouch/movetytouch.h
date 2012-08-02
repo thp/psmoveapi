@@ -55,7 +55,7 @@ class MovetyTouch : public QThread
         void pressed(int id, int x, int y);
         void motion(int id, int x, int y);
         void released(int id, int x, int y);
-        void hover(int x, int y);
+        void hover(int idx, int x, int y);
 
     public:
         MovetyTouch() : QThread() {}
@@ -88,6 +88,7 @@ class MovetyTouch : public QThread
                     int x, y;
                     psmove_tracker_get_position(tracker, moves[i],
                             &x, &y, NULL);
+                    x = 640 - x;
 
                     bool pressed_now = ((psmove_get_buttons(moves[i]) & Btn_T) != 0);
                     bool moved_now = (x != states[i].x || y != states[i].y);
@@ -106,9 +107,8 @@ class MovetyTouch : public QThread
                     } else if (moved_now) {
                         if (pressed_now) {
                             emit motion(states[i].id, x, y);
-                        } else {
-                            emit hover(x, y);
                         }
+                        emit hover(i, x, y);
                     }
 
                     states[i].pressed = pressed_now;
