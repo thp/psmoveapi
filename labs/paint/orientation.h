@@ -56,73 +56,104 @@ class Orientation : public QThread
 
         void run()
         {
-            PSMove *move = psmove_connect();
-            int quit = 0;
+            int i;
+            int count = psmove_count_connected();
 
-            if (move == NULL) {
-                fprintf(stderr, "Could not connect to controller.\n");
-                QApplication::quit();
+            PSMove **moves = (PSMove**)calloc(count, sizeof(PSMove*));
+
+            for (i=0; i<count; i++) {
+                moves[i] = psmove_connect_by_id(i);
+                assert(moves[i] != NULL);
             }
 
+            int quit = 0;
+
             PSMoveTracker *tracker = psmove_tracker_new();
-            while (psmove_tracker_enable(tracker, move) != Tracker_CALIBRATED) {
-                // Wait until calibration is done
+
+            for (i=0; i<count; i++) {
+                while (psmove_tracker_enable(tracker, moves[i])
+                        != Tracker_CALIBRATED) {
+                    // Wait until calibration is done
+                }
             }
 
             while (!quit) {
-                while (psmove_poll(move)) {
-                    if (psmove_get_buttons(move) & Btn_PS) {
-                        quit = 1;
-                        break;
-                    }
+                int again;
 
-                    if (psmove_get_buttons(move) & Btn_SELECT) {
-                        emit backup_frame();
-                    }
+                do {
+                    again = 0;
 
-                    if (psmove_get_buttons(move) & Btn_START) {
-                        emit restore_frame();
-                    }
+                    for (i=0; i<count; i++) {
+                        PSMove *move = moves[i];
 
-                    if (psmove_get_buttons(move) & Btn_MOVE) {
-                        emit newcolor(0, 0, 0);
-                    }
+                        int res = psmove_poll(move);
 
-                    if (psmove_get_buttons(move) & Btn_CROSS) {
-                        emit newcolor(0, 0, 255);
-                    }
+                        if (!res) {
+                            continue;
+                        }
 
-                    if (psmove_get_buttons(move) & Btn_SQUARE) {
-                        emit newcolor(255, 255, 0);
-                    }
+                        again++;
 
-                    if (psmove_get_buttons(move) & Btn_TRIANGLE) {
-                        emit newcolor(0, 255, 0);
-                    }
+                        if (psmove_get_buttons(move) & Btn_PS) {
+                            quit = 1;
+                            break;
+                        }
 
-                    if (psmove_get_buttons(move) & Btn_CIRCLE) {
-                        emit newcolor(255, 0, 0);
-                    }
+                        if (psmove_get_buttons(move) & Btn_SELECT) {
+                            emit backup_frame();
+                        }
 
-                    int x, y, radius;
-                    psmove_tracker_get_position(tracker, move, &x, &y, &radius);
-                    emit newposition(radius, x, y,
-                            (qreal)psmove_get_trigger(move) / 255.);
+                        if (psmove_get_buttons(move) & Btn_START) {
+                            emit restore_frame();
+                        }
+
+                        if (psmove_get_buttons(move) & Btn_MOVE) {
+                            emit newcolor(0, 0, 0);
+                        }
+
+                        if (psmove_get_buttons(move) & Btn_CROSS) {
+                            emit newcolor(0, 0, 255);
+                        }
+
+                        if (psmove_get_buttons(move) & Btn_SQUARE) {
+                            emit newcolor(255, 255, 0);
+                        }
+
+                        if (psmove_get_buttons(move) & Btn_TRIANGLE) {
+                            emit newcolor(0, 255, 0);
+                        }
+
+                        if (psmove_get_buttons(move) & Btn_CIRCLE) {
+                            emit newcolor(255, 0, 0);
+                        }
+
+                        int x, y, radius;
+                        psmove_tracker_get_position(tracker, move, &x, &y, &radius);
+                        emit newposition(radius, x, y,
+                                (qreal)psmove_get_trigger(move) / 255.);
+                    }
+                } while (again);
+
+                for (i=0; i<count; i++) {
+                    PSMove *move = moves[i];
+
+                    unsigned char r, g, b;
+                    psmove_tracker_get_color(tracker, move, &r, &g, &b);
+                    psmove_set_leds(move, r, g, b);
+                    psmove_update_leds(move);
                 }
 
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
-
                 emit newimage(psmove_tracker_get_image(tracker));
-
-                unsigned char r, g, b;
-                psmove_tracker_get_color(tracker, move, &r, &g, &b);
-                psmove_set_leds(move, r, g, b);
-                psmove_update_leds(move);
             }
 
             psmove_tracker_free(tracker);
-            psmove_disconnect(move);
+
+            for (i=0; i<count; i++) {
+                psmove_disconnect(moves[i]);
+            }
+
             QApplication::quit();
         }
 };
