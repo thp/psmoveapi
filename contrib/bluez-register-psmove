@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # bluez-register-psmove
 # Copyright (c) 2012-01-05 Thomas Perl <thp.io/about>
 # ---------------------
