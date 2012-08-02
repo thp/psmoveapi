@@ -13,5 +13,8 @@ HEADERS += orientation.h
 DEPENDPATH += ../..
 INCLUDEPATH += ../..
 
-LIBS += -L../../build/ -lpsmoveapi -lopencv_highgui
+CONFIG += link_pkgconfig
+PKGCONFIG += opencv
+
+LIBS += -L../../build/ -lpsmoveapi
 
