@@ -4,7 +4,6 @@
 #include <QtGui>
 
 #include "psmove.h"
-#include "psmove_filter.h"
 #include "psmove_calibration.h"
 
 #define MAX_READINGS 1050
@@ -21,11 +20,9 @@ class MoveGraph : public QWidget {
 
     public slots:
         void readSensors();
-        void setAlpha(int);
 
     private:
         PSMove *move;
-        PSMoveFilter *filter;
         PSMoveCalibration *calibration;
 
         QStaticText labelPositive;

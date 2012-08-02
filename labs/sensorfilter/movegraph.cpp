@@ -4,7 +4,6 @@
 MoveGraph::MoveGraph()
     : QWidget(NULL),
       move(psmove_connect()),
-      filter(psmove_filter_new(move)),
       calibration(psmove_calibration_new(move)),
       labelPositive("+1g"),
       labelNegative("-1g"),
@@ -80,20 +79,10 @@ MoveGraph::readSensors()
     int a[3];
 
     if (psmove_poll(move)) {
-        psmove_filter_update(filter);
-
         offset = (offset + 1) % MAX_READINGS;
-
-        psmove_filter_get_accelerometer(filter, &a[0], &a[1], &a[2]);
-
+        psmove_get_accelerometer(move, &a[0], &a[1], &a[2]);
         psmove_calibration_map(calibration, a, readings[offset], 3);
     }
     update();
-}
-
-void
-MoveGraph::setAlpha(int alpha)
-{
-    psmove_filter_set_alpha(filter, (float)alpha / 100.);
 }
 

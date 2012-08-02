@@ -19,23 +19,12 @@ int main(int argc, char *argv[])
 
     QTimer timer;
 
-    QSlider slider;
-    layout.addWidget(&slider);
-
-    slider.setRange(0, 100);
-
     MoveGraph moveGraph;
     layout.addWidget(&moveGraph);
     mainWindow.setCentralWidget(&centralWidget);
 
     QObject::connect(&timer, SIGNAL(timeout()),
             &moveGraph, SLOT(readSensors()));
-
-    QObject::connect(&slider, SIGNAL(valueChanged(int)),
-            &moveGraph, SLOT(setAlpha(int)));
-
-    slider.setValue(50);
-    moveGraph.setAlpha(50);
 
     timer.start(1);
 
