@@ -9,6 +9,7 @@
 // 29/09/2011	SOH Madgwick    Initial release
 // 02/10/2011	SOH Madgwick	Optimised for reduced CPU load
 // 19/02/2012	SOH Madgwick	Magnetometer measurement is normalised
+// 02/08/2012   Thomas Perl     Modifications for PS Move API integration
 //
 //=====================================================================================================
 
@@ -21,14 +22,12 @@
 //---------------------------------------------------------------------------------------------------
 // Definitions
 
-#define sampleFreq	120.0f		// sample frequency in Hz
 #define betaDef		0.01f		// 2 * proportional gain
 
 //---------------------------------------------------------------------------------------------------
 // Variable definitions
 
 volatile float beta = betaDef;								// 2 * proportional gain (Kp)
-volatile float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;	// quaternion of sensor frame relative to auxiliary frame
 
 //---------------------------------------------------------------------------------------------------
 // Function declarations
@@ -41,7 +40,16 @@ float invSqrt(float x);
 //---------------------------------------------------------------------------------------------------
 // AHRS algorithm update
 
-void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) {
+void MadgwickAHRSupdate(float *quaternion, float sampleFreq,
+        float ax, float ay, float az,
+        float gx, float gy, float gz,
+        float mx, float my, float mz)
+{
+        float q0 = quaternion[0],
+              q1 = quaternion[1],
+              q2 = quaternion[2],
+              q3 = quaternion[3];
+
 	float recipNorm;
 	float s0, s1, s2, s3;
 	float qDot1, qDot2, qDot3, qDot4;
@@ -50,7 +58,7 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
-		MadgwickAHRSupdateIMU(gx, gy, gz, ax, ay, az);
+		MadgwickAHRSupdateIMU(quaternion, sampleFreq, ax, ay, az, gx, gy, gz);
 		return;
 	}
 
@@ -135,12 +143,25 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 	q1 *= recipNorm;
 	q2 *= recipNorm;
 	q3 *= recipNorm;
+
+        quaternion[0] = q0;
+        quaternion[1] = q1;
+        quaternion[2] = q2;
+        quaternion[3] = q3;
 }
 
 //---------------------------------------------------------------------------------------------------
 // IMU algorithm update
 
-void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az) {
+void MadgwickAHRSupdateIMU(float *quaternion, float sampleFreq,
+        float ax, float ay, float az,
+        float gx, float gy, float gz)
+{
+        float q0 = quaternion[0],
+              q1 = quaternion[1],
+              q2 = quaternion[2],
+              q3 = quaternion[3];
+
 	float recipNorm;
 	float s0, s1, s2, s3;
 	float qDot1, qDot2, qDot3, qDot4;
@@ -206,6 +227,11 @@ void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, flo
 	q1 *= recipNorm;
 	q2 *= recipNorm;
 	q3 *= recipNorm;
+
+        quaternion[0] = q0;
+        quaternion[1] = q1;
+        quaternion[2] = q2;
+        quaternion[3] = q3;
 }
 
 //---------------------------------------------------------------------------------------------------

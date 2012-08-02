@@ -268,9 +268,7 @@ psmove_calibration_read_from_usb(PSMoveCalibration *calibration)
 void
 psmove_calibration_dump(PSMoveCalibration *calibration)
 {
-    int i, j;
-
-    assert(calibration != NULL);
+    psmove_return_if_fail(calibration != NULL);
 
     printf("File: %s\n", calibration->filename);
     printf("Flags: %x\n", calibration->flags);
@@ -285,10 +283,10 @@ int
 psmove_calibration_map(PSMoveCalibration *calibration,
         int *input, float *output, size_t n)
 {
-    assert(calibration != NULL);
-    assert(input != NULL);
-    assert(output != NULL);
-    assert(n == 3 || n == 6 || n == 9);
+    psmove_return_val_if_fail(calibration != NULL, 0);
+    psmove_return_val_if_fail(input != NULL, 0);
+    psmove_return_val_if_fail(output != NULL, 0);
+    psmove_return_val_if_fail(n == 3 || n == 6 || n == 9, 0);
 
     int i;
 
@@ -340,7 +338,7 @@ psmove_calibration_map(PSMoveCalibration *calibration,
 int
 psmove_calibration_supported(PSMoveCalibration *calibration)
 {
-    assert(calibration != NULL);
+    psmove_return_val_if_fail(calibration != NULL, 0);
 
     return (calibration->flags & CalibrationFlag_HaveUSB) != 0;
 }
@@ -348,7 +346,7 @@ psmove_calibration_supported(PSMoveCalibration *calibration)
 int
 psmove_calibration_load(PSMoveCalibration *calibration)
 {
-    assert(calibration != NULL);
+    psmove_return_val_if_fail(calibration != NULL, 0);
     FILE *fp;
 
     fp = fopen(calibration->filename, "rb");
@@ -370,7 +368,7 @@ psmove_calibration_load(PSMoveCalibration *calibration)
 int
 psmove_calibration_save(PSMoveCalibration *calibration)
 {
-    assert(calibration != NULL);
+    psmove_return_val_if_fail(calibration != NULL, 0);
 
     char *tmp = strdup(calibration->filename);
     char *parent = dirname(tmp);
@@ -401,7 +399,7 @@ psmove_calibration_save(PSMoveCalibration *calibration)
 void
 psmove_calibration_free(PSMoveCalibration *calibration)
 {
-    assert(calibration != NULL);
+    psmove_return_if_fail(calibration != NULL);
 
     free(calibration->filename);
     free(calibration);

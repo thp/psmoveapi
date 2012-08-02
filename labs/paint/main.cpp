@@ -11,14 +11,14 @@ int main(int argc, char **argv)
     Orientation orientation;
     orientation.start();
 
-    QObject::connect(&orientation,
-            SIGNAL(orientation(qreal,qreal,qreal,qreal,qreal,qreal,qreal,qreal)),
-            &view,
-            SLOT(orientation(qreal,qreal,qreal,qreal,qreal,qreal,qreal,qreal)));
-    QObject::connect(&orientation,
-            SIGNAL(newcolor(int,int,int)),
-            &view,
-            SLOT(newcolor(int,int,int)));
+    QObject::connect(&orientation, SIGNAL(newposition(qreal,qreal,qreal,qreal)),
+            &view, SLOT(newposition(qreal,qreal,qreal,qreal)));
+    QObject::connect(&orientation, SIGNAL(newcolor(int,int,int)),
+            &view, SLOT(newcolor(int,int,int)));
+    QObject::connect(&orientation, SIGNAL(backup_frame()),
+            &view, SLOT(backup_frame()));
+    QObject::connect(&orientation, SIGNAL(restore_frame()),
+            &view, SLOT(restore_frame()));
 
     view.show();
 

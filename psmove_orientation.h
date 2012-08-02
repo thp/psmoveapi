@@ -28,46 +28,37 @@
  **/
 
 
-
-#ifndef PSMOVE_PRIVATE_H
-#define PSMOVE_PRIVATE_H
+#ifndef PSMOVE_ORIENTATION_H
+#define PSMOVE_ORIENTATION_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdio.h>
-
-    /**
-     * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c
-     *
-     * These constants are considered implementation details and should
-     * not be used by external code (they are subject to change).
-     *
-     * All constants that need to be shared between psmove.c and other
-     * implementation modules (psmove_*.c) should go here.
-     **/
-
-/* Macro: Print a critical message if an assertion fails */
-#define psmove_CRITICAL(x) \
-        {fprintf(stderr, "[PSMOVE] Assertion fail in %s: %s\n", __func__, x);}
-
-/* Macro: Deprecated functions */
-#define psmove_DEPRECATED(x) \
-        {fprintf(stderr, "[PSMOVE] %s is deprecated: %s\n", __func__, x);}
-
-/* Macros: Return immediately if an assertion fails + log */
-#define psmove_return_if_fail(expr) \
-        {if(!(expr)){psmove_CRITICAL(#expr);return;}}
-#define psmove_return_val_if_fail(expr, val) \
-        {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
+#include "psmove.h"
 
 
-/* Buffer size for calibration data */
-#define PSMOVE_CALIBRATION_SIZE 49
+struct _PSMoveOrientation;
+typedef struct _PSMoveOrientation PSMoveOrientation;
 
-/* Three blocks, minus 2x the header (2 bytes) for the 2nd and 3rd block */
-#define PSMOVE_CALIBRATION_BLOB_SIZE (PSMOVE_CALIBRATION_SIZE*3 - 2*2)
+
+ADDAPI PSMoveOrientation *
+ADDCALL psmove_orientation_new(PSMove *move);
+
+ADDAPI int
+ADDCALL psmove_orientation_poll(PSMoveOrientation *orientation);
+
+ADDAPI void
+ADDCALL psmove_orientation_get_quaternion(PSMoveOrientation *orientation,
+        float *q0, float *q1, float *q2, float *q3);
+
+ADDAPI void
+ADDCALL psmove_orientation_set_quaternion(PSMoveOrientation *orientation,
+        float q0, float q1, float q2, float q3);
+
+ADDAPI void
+ADDCALL psmove_orientation_free(PSMoveOrientation *orientation);
+
 
 #ifdef __cplusplus
 }

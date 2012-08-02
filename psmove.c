@@ -218,20 +218,6 @@ struct _PSMove {
 #endif
 };
 
-/* Macro: Print a critical message if an assertion fails */
-#define psmove_CRITICAL(x) \
-        {fprintf(stderr, "[PSMOVE] Assertion fail in %s: %s\n", __func__, x);}
-
-/* Macro: Deprecated functions */
-#define psmove_DEPRECATED(x) \
-        {fprintf(stderr, "[PSMOVE] %s is deprecated: %s\n", __func__, x);}
-
-/* Macros: Return immediately if an assertion fails + log */
-#define psmove_return_if_fail(expr) \
-        {if(!(expr)){psmove_CRITICAL(#expr);return;}}
-#define psmove_return_val_if_fail(expr, val) \
-        {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
-
 /* End private definitions */
 
 static moved_client_list *clients;

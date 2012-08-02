@@ -38,10 +38,7 @@
 #include <math.h>
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 #include "psmove_tracker.h"
-
-#include "MadgwickAHRS/MadgwickAHRS.h"
 
 extern "C" {
     void cvShowImage(const char *, void*);
@@ -52,9 +49,10 @@ class Orientation : public QThread
     Q_OBJECT
 
     signals:
-        void orientation(qreal a, qreal b, qreal c, qreal d,
-                qreal scale, qreal x, qreal y, qreal trigger);
+        void newposition(qreal scale, qreal x, qreal y, qreal trigger);
         void newcolor(int r, int g, int b);
+        void backup_frame();
+        void restore_frame();
 
     public:
         Orientation() : QThread() {}
@@ -70,33 +68,26 @@ class Orientation : public QThread
             }
 
             PSMoveTracker *tracker = psmove_tracker_new();
-            int result = psmove_tracker_enable(tracker, move);
-            assert(result == Tracker_CALIBRATED);
-
-            PSMoveCalibration *calibration = psmove_calibration_new(move);
-            assert(psmove_calibration_supported(calibration));
+            while (psmove_tracker_enable(tracker, move) != Tracker_CALIBRATED) {
+                // Wait until calibration is done
+            }
 
             while (!quit) {
-                int frame;
-                int input[9];
-                float output[9]; // ax, ay, az, gx, gy, gz, mx, my, mz
-                while (int seq = psmove_poll(move)) {
+                while (psmove_poll(move)) {
                     if (psmove_get_buttons(move) & Btn_PS) {
                         quit = 1;
                         break;
                     }
 
                     if (psmove_get_buttons(move) & Btn_SELECT) {
-                        emit newcolor(1, 1, 1);
+                        emit backup_frame();
                     }
 
                     if (psmove_get_buttons(move) & Btn_START) {
-                        emit newcolor(2, 2, 2);
+                        emit restore_frame();
                     }
 
                     if (psmove_get_buttons(move) & Btn_MOVE) {
-                        q0 = 1.;
-                        q1 = q2 = q3 = 0.;
                         emit newcolor(0, 0, 0);
                     }
 
@@ -116,39 +107,14 @@ class Orientation : public QThread
                         emit newcolor(255, 0, 0);
                     }
 
-                    psmove_get_magnetometer(move, &input[6], &input[7], &input[8]);
-
-                    seq -= 1;
-
-                    for (frame=0; frame<2; frame++) {
-                        psmove_get_half_frame(move, Sensor_Accelerometer,
-                                (enum PSMove_Frame)frame,
-                                &input[0], &input[1], &input[2]);
-
-                        psmove_get_half_frame(move, Sensor_Gyroscope,
-                                (enum PSMove_Frame)frame,
-                                &input[3], &input[4], &input[5]);
-
-                        psmove_calibration_map(calibration, input, output, 9);
-
-                        MadgwickAHRSupdate(output[3], output[4], output[5],
-                                output[0], output[1], output[2],
-                                output[6], output[7], output[8]);
-                    }
-
                     int x, y, radius;
                     psmove_tracker_get_position(tracker, move, &x, &y, &radius);
-                    emit orientation(q0, q1, q2, q3,
-                            radius,
-                            x,
-                            y,
+                    emit newposition(radius, x, y,
                             (qreal)psmove_get_trigger(move) / 255.);
                 }
 
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
-
-                //cvShowImage("asdf", psmove_tracker_get_image(tracker));
 
                 unsigned char r, g, b;
                 psmove_tracker_get_color(tracker, move, &r, &g, &b);
@@ -157,7 +123,6 @@ class Orientation : public QThread
             }
 
             psmove_tracker_free(tracker);
-            psmove_calibration_free(calibration);
             psmove_disconnect(move);
             QApplication::quit();
         }

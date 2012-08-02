@@ -23,8 +23,9 @@ private:
     QPoint m_old;
 
 public slots:
-    void orientation(qreal a, qreal b, qreal c, qreal d,
-            qreal scale, qreal x, qreal y, qreal trigger);
+    void newposition(qreal scale, qreal x, qreal y, qreal trigger);
+    void backup_frame();
+    void restore_frame();
     void newcolor(int r, int g, int b);
 };
 

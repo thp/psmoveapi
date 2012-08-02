@@ -30,15 +30,14 @@ void PaintView::paintEvent(QPaintEvent *event)
     painter.drawRect(0, 0, 20, 20);
 
     painter.setBrush(Qt::transparent);
-    painter.setPen(QPen(Qt::white, 3));
+    painter.setPen(QPen(Qt::white, 2));
     painter.drawLine(m_cursor+QPointF(-10, -10), m_cursor+QPoint(10, 10));
     painter.drawLine(m_cursor+QPointF(10, -10), m_cursor+QPoint(-10, 10));
 }
 
-void PaintView::orientation(qreal a, qreal b, qreal c, qreal d,
-        qreal scale, qreal x, qreal y, qreal trigger)
+void PaintView::newposition(qreal scale, qreal x, qreal y, qreal trigger)
 {
-    int size = trigger * 30;
+    int size = trigger?scale:0;//trigger * 30;
 
     x = 640 - x;
 
@@ -67,22 +66,21 @@ void PaintView::orientation(qreal a, qreal b, qreal c, qreal d,
 }
 
 void
+PaintView::backup_frame()
+{
+    m_painting_backup = m_painting;
+}
+
+void
+PaintView::restore_frame()
+{
+    m_painting = m_painting_backup;
+}
+
+void
 PaintView::newcolor(int r, int g, int b)
 {
-    if (r+g+b == 3) {
-        m_painting_backup = m_painting.copy();
-        return;
-    } else if (r+g+b == 6) {
-        m_painting = m_painting_backup;
-        return;
-    }
-#if 0
-    if (r+g+b == 0) {
-        m_painting.fill(Qt::black);
-    } else {
-#endif
-        m_color.setRgb(r, g, b);
-        m_color.setAlpha(10);
-//    }
+    m_color.setRgb(r, g, b);
+    m_color.setAlpha(10);
 }
 

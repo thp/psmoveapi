@@ -60,8 +60,9 @@ include_directories(${PSMOVEAPI_SOURCE_DIR}/tracker)
 set(MOVED_CLIENT_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)
 set(PSMOVE_SRC ${HIDAPI_SRC} ${MOVED_CLIENT_SRC}
     ${PSMOVEAPI_SOURCE_DIR}/psmove.c
-    ${PSMOVEAPI_SOURCE_DIR}/psmove_filter.c
     ${PSMOVEAPI_SOURCE_DIR}/psmove_calibration.c
+    ${PSMOVEAPI_SOURCE_DIR}/psmove_orientation.c
+    ${PSMOVEAPI_SOURCE_DIR}/external/MadgwickAHRS/MadgwickAHRS.c
     ${PSMOVEAPI_SOURCE_DIR}/psmove_tracker.c
     ${PSMOVEAPI_TRACKER_SRC})
 
