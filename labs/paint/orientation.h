@@ -88,6 +88,14 @@ class Orientation : public QThread
                         break;
                     }
 
+                    if (psmove_get_buttons(move) & Btn_SELECT) {
+                        emit newcolor(1, 1, 1);
+                    }
+
+                    if (psmove_get_buttons(move) & Btn_START) {
+                        emit newcolor(2, 2, 2);
+                    }
+
                     if (psmove_get_buttons(move) & Btn_MOVE) {
                         q0 = 1.;
                         q1 = q2 = q3 = 0.;
@@ -99,7 +107,7 @@ class Orientation : public QThread
                     }
 
                     if (psmove_get_buttons(move) & Btn_SQUARE) {
-                        emit newcolor(255, 0, 128);
+                        emit newcolor(255, 255, 0);
                     }
 
                     if (psmove_get_buttons(move) & Btn_TRIANGLE) {

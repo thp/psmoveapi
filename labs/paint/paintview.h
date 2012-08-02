@@ -15,6 +15,7 @@ protected:
 
 private:
     QPixmap m_painting;
+    QPixmap m_painting_backup;
     QPoint m_cursor;
     QColor m_color;
 
