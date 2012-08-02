@@ -38,11 +38,16 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_orientation.h"
 
 struct ControllerState
 {
-    bool pressed;
-    int id;
+    bool t_pressed;
+    int t_id;
+
+    bool move_pressed;
+    int move_id;
+
     int x;
     int y;
 };
@@ -57,6 +62,10 @@ class MovetyTouch : public QThread
         void released(int id, int x, int y);
         void hover(int idx, int x, int y);
 
+        void startRotation(int id, int x, int y, float q0, float q1, float q2, float q3);
+        void updateRotation(int id, float q0, float q1, float q2, float q3);
+        void stopRotation(int id);
+
     public:
         MovetyTouch() : QThread() {}
 
@@ -64,16 +73,22 @@ class MovetyTouch : public QThread
         {
             int count = psmove_count_connected();
             int i;
-            int active = 0;
+            int t_active = 0;
+            int move_active = 0;
 
             PSMoveTracker *tracker = psmove_tracker_new();
             PSMove **moves = (PSMove**)calloc(count, sizeof(PSMove*));
+            PSMoveOrientation **orientations = (PSMoveOrientation**)calloc(count,
+                    sizeof(PSMoveOrientation*));
             ControllerState *states = (ControllerState*)calloc(count,
                     sizeof(ControllerState));
 
             for (i=0; i<count; i++) {
                 moves[i] = psmove_connect_by_id(i);
                 assert(moves[i] != NULL);
+
+                orientations[i] = psmove_orientation_new(moves[i]);
+                assert(orientations[i] != NULL);
 
                 while (psmove_tracker_enable(tracker, moves[i])
                         != Tracker_CALIBRATED) {
@@ -83,7 +98,11 @@ class MovetyTouch : public QThread
 
             while (true) {
                 for (i=0; i<count; i++) {
-                    while (psmove_poll(moves[i]));
+                    while (psmove_orientation_poll(orientations[i]));
+
+                    if (psmove_get_buttons(moves[i]) & Btn_PS) {
+                        QApplication::quit();
+                    }
 
                     int x, y;
                     psmove_tracker_get_position(tracker, moves[i],
@@ -93,25 +112,53 @@ class MovetyTouch : public QThread
                     bool pressed_now = ((psmove_get_buttons(moves[i]) & Btn_T) != 0);
                     bool moved_now = (x != states[i].x || y != states[i].y);
 
-                    if (pressed_now != states[i].pressed) {
+                    if (pressed_now != states[i].t_pressed) {
                         if (pressed_now) {
-                            states[i].id = active;
-                            active++;
+                            states[i].t_id = t_active;
+                            t_active++;
 
-                            emit pressed(states[i].id, x, y);
+                            emit pressed(states[i].t_id, x, y);
                         } else {
-                            emit released(states[i].id, x, y);
+                            emit released(states[i].t_id, x, y);
 
-                            active--;
+                            t_active--;
                         }
                     } else if (moved_now) {
                         if (pressed_now) {
-                            emit motion(states[i].id, x, y);
+                            emit motion(states[i].t_id, x, y);
                         }
                         emit hover(i, x, y);
                     }
 
-                    states[i].pressed = pressed_now;
+                    float q0, q1, q2, q3;
+                    psmove_orientation_get_quaternion(orientations[i],
+                            &q0, &q1, &q2, &q3);
+
+                    bool move_now = ((psmove_get_buttons(moves[i]) & Btn_MOVE) != 0);
+
+                    if (move_now != states[i].move_pressed) {
+                        if (move_now) {
+                            states[i].move_id = move_active;
+                            move_active++;
+
+                            q0 = 1.;
+                            q1 = q2 = q3 = 0.;
+                            psmove_orientation_set_quaternion(orientations[i],
+                                    1., 0., 0., 0.);
+
+                            emit startRotation(states[i].move_id, x, y,
+                                    q0, q1, q2, q3);
+                        } else {
+                            emit stopRotation(states[i].move_id);
+
+                            move_active--;
+                        }
+                    } else if (states[i].move_pressed) {
+                        emit updateRotation(states[i].move_id, q0, q1, q2, q3);
+                    }
+
+                    states[i].t_pressed = pressed_now;
+                    states[i].move_pressed = move_now;
                     states[i].x = x;
                     states[i].y = y;
                 }
@@ -130,6 +177,7 @@ class MovetyTouch : public QThread
             psmove_tracker_free(tracker);
 
             for (i=0; i<count; i++) {
+                psmove_orientation_free(orientations[i]);
                 psmove_disconnect(moves[i]);
             }
 

@@ -1,4 +1,6 @@
 
+CONFIG += debug
+
 TEMPLATE = app
 DEPENDPATH += .
 INCLUDEPATH += .

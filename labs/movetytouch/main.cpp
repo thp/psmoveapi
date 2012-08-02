@@ -46,8 +46,21 @@ int main(int argc, char **argv)
     QObject::connect(&eventmapper, SIGNAL(stopZoom(int,int,float,float)),
             &demoview, SLOT(stopZoom(int,int,float,float)));
 
+    QObject::connect(&movetytouch,
+            SIGNAL(startRotation(int,int,int,float,float,float,float)),
+            &demoview,
+            SLOT(startRotation(int,int,int,float,float,float,float)));
+
+    QObject::connect(&movetytouch,
+            SIGNAL(updateRotation(int,float,float,float,float)),
+            &demoview,
+            SLOT(updateRotation(int,float,float,float,float)));
+
+    QObject::connect(&movetytouch, SIGNAL(stopRotation(int)),
+            &demoview, SLOT(stopRotation(int)));
+
     movetytouch.start();
-    demoview.show();
+    demoview.showFullScreen();
 
     return app.exec();
 }
