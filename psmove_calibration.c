@@ -39,24 +39,55 @@
 #include <sys/stat.h>
 #include <math.h>
 
-#define PSMOVE_CALIBRATION_EXTENSION ".calibration.txt"
+#define PSMOVE_CALIBRATION_EXTENSION ".calibration"
 
 enum _PSMoveCalibrationFlag {
     CalibrationFlag_None = 0,
-    CalibrationFlag_HaveCustom,
     CalibrationFlag_HaveUSB,
 };
 
 struct _PSMoveCalibration {
     PSMove *move;
 
-    float custom_calibration[PSMOVE_CALIBRATION_POSITIONS]
-        [PSMOVE_CALIBRATION_FIELDS];
     char usb_calibration[PSMOVE_CALIBRATION_BLOB_SIZE];
     int flags;
 
     char *filename;
 };
+
+
+/* PRIVATE FUNCTION DEFINITIONS - ONLY USED IN THIS MODULE DIRECTLY */
+
+/**
+ * Read calibration data from controller storage via USB
+ *
+ * calibration ... a valid PSMoveCalibration * instance.
+ *
+ * The calibration data blob will be read from the controller and will be
+ * stored inside this calibration object for future use in value mapping.
+ *
+ * Returns nonzero on success, zero on error (e.g. not connected via USB)
+ **/
+int
+psmove_calibration_read_from_usb(PSMoveCalibration *calibration);
+
+/**
+ * Load the calibration from persistent storage.
+ *
+ * Returns nonzero on success, zero on error.
+ **/
+int
+psmove_calibration_load(PSMoveCalibration *calibration);
+
+/**
+ * Save the calibration to persistent storage.
+ *
+ * Returns nonzero on success, zero on error.
+ **/
+int
+psmove_calibration_save(PSMoveCalibration *calibration);
+
+
 
 
 
@@ -100,7 +131,7 @@ psmove_calibration_get_usb_accel_values(PSMoveCalibration *calibration,
         int *x1, int *x2, int *y1, int *y2, int *z1, int *z2)
 {
     assert(calibration != NULL);
-    assert(psmove_calibration_supports_method(calibration, Calibration_USB));
+    assert(psmove_calibration_supported(calibration));
     char *data = calibration->usb_calibration;
 
     int orientation;
@@ -128,7 +159,7 @@ psmove_calibration_get_usb_gyro_values(PSMoveCalibration *calibration,
         int *x, int *y, int *z)
 {
     assert(calibration != NULL);
-    assert(psmove_calibration_supports_method(calibration, Calibration_USB));
+    assert(psmove_calibration_supported(calibration));
     char *data = calibration->usb_calibration;
 
     int orientation;
@@ -200,6 +231,18 @@ psmove_calibration_new(PSMove *move)
 
     free(serial);
 
+    /* Try to load the calibration data from disk, or from USB */
+    psmove_calibration_load(calibration);
+    if (!psmove_calibration_supported(calibration)) {
+        if (psmove_connection_type(move) == Conn_USB) {
+#ifdef PSMOVE_DEBUG
+            fprintf(stderr, "[PSMOVE] Storing calibration from USB\n");
+#endif
+            psmove_calibration_read_from_usb(calibration);
+            psmove_calibration_save(calibration);
+        }
+    }
+
     return calibration;
 }
 
@@ -223,26 +266,6 @@ psmove_calibration_read_from_usb(PSMoveCalibration *calibration)
 }
 
 void
-psmove_calibration_set_custom(PSMoveCalibration *calibration,
-        float *positions, size_t n_positions, size_t n_fields)
-{
-    assert(calibration != NULL);
-    assert(positions != NULL);
-    assert(n_positions == 6);
-    assert(n_fields == 9);
-
-    int i, j;
-
-    for (i=0; i<n_positions; i++) {
-        for (j=0; j<n_fields; j++) {
-            calibration->custom_calibration[i][j] = positions[i*n_fields+j];
-        }
-    }
-
-    calibration->flags |= CalibrationFlag_HaveCustom;
-}
-
-void
 psmove_calibration_dump(PSMoveCalibration *calibration)
 {
     int i, j;
@@ -256,23 +279,9 @@ psmove_calibration_dump(PSMoveCalibration *calibration)
         printf("Have USB calibration:\n");
         psmove_calibration_dump_usb(calibration);
     }
-
-    if (calibration->flags & CalibrationFlag_HaveCustom) {
-        printf("Have custom calibration:\n");
-        printf("         ax         ay         az         mx         my         mz\n");
-        for (i=0; i<PSMOVE_CALIBRATION_POSITIONS; i++) {
-            printf("#%d: ", i);
-            for (j=0; j<PSMOVE_CALIBRATION_FIELDS; j++) {
-                if (j < 3 || j > 5 /* Don't print the gyro column */) {
-                    printf("%10.2f ", calibration->custom_calibration[i][j]);
-                }
-            }
-            printf("\n");
-        }
-    }
 }
 
-enum PSMove_Calibration_Method
+int
 psmove_calibration_map(PSMoveCalibration *calibration,
         int *input, float *output, size_t n)
 {
@@ -283,7 +292,7 @@ psmove_calibration_map(PSMoveCalibration *calibration,
 
     int i;
 
-    if (psmove_calibration_supports_method(calibration, Calibration_USB)) {
+    if (psmove_calibration_supported(calibration)) {
         for (i=0; i<3; i++) {
             int axlow, axhigh, aylow, ayhigh, azlow, azhigh;
             psmove_calibration_get_usb_accel_values(calibration,
@@ -317,45 +326,23 @@ psmove_calibration_map(PSMoveCalibration *calibration,
             }
         }
 
-        return Calibration_USB;
-    }
-
-    if (psmove_calibration_supports_method(calibration, Calibration_Custom)) {
-        /* For now, we only calibrate the accelerometer with custom calibration */
-        assert(n == 3);
-
-        /* ax, ay, az */
-        output[0] = ((float)input[0])/(calibration->custom_calibration[4][0] - calibration->custom_calibration[5][0])*2.;
-        output[1] = ((float)input[1])/(calibration->custom_calibration[0][1] - calibration->custom_calibration[1][1])*2.;
-        output[2] = ((float)input[2])/(calibration->custom_calibration[2][2] - calibration->custom_calibration[3][2])*2.;
-
-        return Calibration_Custom;
+        return 1;
     }
 
     for (i=0; i<n; i++) {
         /* No calibration - just raw values copied */
         output[i] = (float)input[i];
     }
-    return Calibration_None;
+
+    return 0;
 }
 
 int
-psmove_calibration_supports_method(PSMoveCalibration *calibration,
-        enum PSMove_Calibration_Method method)
+psmove_calibration_supported(PSMoveCalibration *calibration)
 {
     assert(calibration != NULL);
-    assert(method == Calibration_USB || method == Calibration_Custom);
 
-    switch (method) {
-        case Calibration_USB:
-            return (calibration->flags & CalibrationFlag_HaveUSB) != 0;
-            break;
-        case Calibration_Custom:
-            return (calibration->flags & CalibrationFlag_HaveCustom) != 0;
-            break;
-        default:
-            return 0;
-    }
+    return (calibration->flags & CalibrationFlag_HaveUSB) != 0;
 }
 
 int
@@ -369,9 +356,6 @@ psmove_calibration_load(PSMoveCalibration *calibration)
         return 0;
     }
 
-    assert(fread(calibration->custom_calibration,
-                sizeof(calibration->custom_calibration),
-                1, fp) == 1);
     assert(fread(calibration->usb_calibration,
                 sizeof(calibration->usb_calibration),
                 1, fp) == 1);
@@ -401,9 +385,6 @@ psmove_calibration_save(PSMoveCalibration *calibration)
 
     fp = fopen(calibration->filename, "wb");
     assert(fp != NULL);
-    assert(fwrite(calibration->custom_calibration,
-                sizeof(calibration->custom_calibration),
-                1, fp) == 1);
     assert(fwrite(calibration->usb_calibration,
                 sizeof(calibration->usb_calibration),
                 1, fp) == 1);
@@ -418,7 +399,7 @@ psmove_calibration_save(PSMoveCalibration *calibration)
 }
 
 void
-psmove_calibration_destroy(PSMoveCalibration *calibration)
+psmove_calibration_free(PSMoveCalibration *calibration)
 {
     assert(calibration != NULL);
 

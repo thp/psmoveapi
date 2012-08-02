@@ -82,7 +82,7 @@ add_executable(moved-client moved_client_test.c ${MOVED_CLIENT_SRC})
 target_link_libraries(moved-client ${MOVED_CLIENT_REQUIRED_LIBS})
 
 # C examples
-foreach(PSMOVE_EXAMPLE example multiple psmovepair calibrate dump_calibration linmcfake)
+foreach(PSMOVE_EXAMPLE example multiple psmovepair dump_calibration linmcfake)
     add_executable(${PSMOVE_EXAMPLE} c/${PSMOVE_EXAMPLE}.c)
     target_link_libraries(${PSMOVE_EXAMPLE} psmoveapi m)
 endforeach(PSMOVE_EXAMPLE)

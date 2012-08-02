@@ -50,11 +50,9 @@ main(int argc, char* argv[])
     }
 
     calibration = psmove_calibration_new(move);
-    psmove_calibration_load(calibration);
     psmove_calibration_dump(calibration);
 
-    assert(psmove_calibration_supports_method(calibration,
-                Calibration_USB));
+    assert(psmove_calibration_supported(calibration));
 
     if (psmove_connection_type(move) == Conn_Bluetooth) {
         int in[9];
@@ -80,7 +78,7 @@ main(int argc, char* argv[])
         }
     }
 
-    psmove_calibration_destroy(calibration);
+    psmove_calibration_free(calibration);
     psmove_disconnect(move);
 
     return EXIT_SUCCESS;

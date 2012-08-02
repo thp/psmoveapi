@@ -14,6 +14,7 @@ class MoveGraph : public QWidget {
 
     public:
         MoveGraph();
+        ~MoveGraph();
 
     protected:
         virtual void paintEvent(QPaintEvent *event);

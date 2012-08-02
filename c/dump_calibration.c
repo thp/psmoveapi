@@ -58,19 +58,8 @@ main(int argc, char* argv[])
         }
 
         calibration = psmove_calibration_new(move);
-        psmove_calibration_load(calibration);
-
-        if (psmove_connection_type(move) != Conn_USB) {
-            psmove_calibration_dump(calibration);
-            goto next;
-        }
-
-        psmove_calibration_read_from_usb(calibration);
-        psmove_calibration_save(calibration);
         psmove_calibration_dump(calibration);
-
-next:
-        psmove_calibration_destroy(calibration);
+        psmove_calibration_free(calibration);
         psmove_disconnect(move);
     }
 

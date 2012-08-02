@@ -38,54 +38,46 @@ extern "C" {
 #include "psmove.h"
 
 
-/* Positions in the 6-point tumble test */
-#define PSMOVE_CALIBRATION_POSITIONS 6
-
-/* Calibration fields for each position (3x accel, 3x gyro, 3x magneto) */
-#define PSMOVE_CALIBRATION_FIELDS 9
-
-enum PSMove_Calibration_Method {
-    Calibration_None = 0,
-    Calibration_Any,
-    Calibration_USB,
-    Calibration_Custom,
-};
-
+struct _PSMoveCalibration;
 typedef struct _PSMoveCalibration PSMoveCalibration;
 
+
+/**
+ * Create a new calibration object for a given controller
+ *
+ * move ... a valid PSMove * instance.
+ *
+ * The calibration will be read from disk if possible. If not (and if the
+ * controller is connected via USB), the calibration will be fetched from
+ * the controller and saved on-disk for future loading).
+ **/
 ADDAPI PSMoveCalibration *
 ADDCALL psmove_calibration_new(PSMove *move);
 
 /**
- * Read calibration data from controller storage via USB
+ * Check if a calibration object has the necessary calibration data.
  *
  * calibration ... a valid PSMoveCalibration * instance.
  *
- * The calibration data blob will be read from the controller and will be
- * stored inside this calibration object for future use in value mapping.
- *
- * Returns nonzero on success, zero on error (e.g. not connected via USB)
+ * Returns nonzero if calibration is supported, zero otherwise (and on error).
  **/
 ADDAPI int
-ADDCALL psmove_calibration_read_from_usb(PSMoveCalibration *calibration);
-
+ADDCALL psmove_calibration_supported(PSMoveCalibration *calibration);
 
 /**
- * Set custom calibration data from 6 point tumble test.
+ * Map raw sensor values to calibrated values.
  *
  * calibration ... a valid PSMoveCalibration * instance.
- * positions ... pointer to a two-dimensional array with calibration values.
- * n_positions ... must be 6.
- * n_fields ... must be 9.
+ * input ... pointer to a n-array containing raw values.
+ * output ... pointer to a n-array to store output values.
+ * n ... 3 (accel only), 6 (accel+gyro) or 9 (accel+gyro+magnetometer)
  *
- * The positions array is usually a float[6*9]-array containing sensor
- * readings (3x accel, 3x gyro, 3x magneto) for each of the 6 positions,
- * like this: p1.ax, p1.ay, p1.az, p1.gx, ..., p1.mx, p2.ax, ..., p6.mz
+ * Returns nonzero if calibration was successful, zero if no calibration
+ * data is available (pair via USB to load calibration data).
  **/
-ADDAPI void
-ADDCALL psmove_calibration_set_custom(PSMoveCalibration *calibration,
-        float *positions, size_t n_positions, size_t n_fields);
-
+ADDAPI int
+ADDCALL psmove_calibration_map(PSMoveCalibration *calibration,
+        int *input, float *output, size_t n);
 
 /**
  * Dump calibration information to stdout.
@@ -97,54 +89,10 @@ ADDAPI void
 ADDCALL psmove_calibration_dump(PSMoveCalibration *calibration);
 
 /**
- * Map raw sensor values to calibrated values.
- *
- * calibration ... a valid PSMoveCalibration * instance.
- * input ... pointer to a n-array containing raw values.
- * output ... pointer to a n-array to store output values.
- * n ... 3 (accel only), 6 (accel+gyro) or 9 (accel+gyro+magnetometer)
- *
- * Returns Calibration_None if no calibration data is found, else
- * the method used to map the input data to the output data.
- **/
-ADDAPI enum PSMove_Calibration_Method
-ADDCALL psmove_calibration_map(PSMoveCalibration *calibration,
-        int *input, float *output, size_t n);
-
-/**
- * Check if a calibration object supports a given method.
- *
- * calibration ... a valid PSMoveCalibration * instance.
- * method ... the method that needs to be checked (USB or Custom).
- *
- * Returns nonzero if the method is supported, zero otherwise (and on error).
- **/
-ADDAPI int
-ADDCALL psmove_calibration_supports_method(PSMoveCalibration *calibration,
-        enum PSMove_Calibration_Method method);
-
-/**
- * Load the calibration from persistent storage.
- *
- * Returns nonzero on success, zero on error.
- **/
-ADDAPI int
-ADDCALL psmove_calibration_load(PSMoveCalibration *calibration);
-
-
-/**
- * Save the calibration to persistent storage.
- *
- * Returns nonzero on success, zero on error.
- **/
-ADDAPI int
-ADDCALL psmove_calibration_save(PSMoveCalibration *calibration);
-
-/**
  * Destroy a PSMoveCalibration * instance and free() associated memory.
  **/
 ADDAPI void
-ADDCALL psmove_calibration_destroy(PSMoveCalibration *calibration);
+ADDCALL psmove_calibration_free(PSMoveCalibration *calibration);
 
 
 #ifdef __cplusplus

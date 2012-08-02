@@ -74,9 +74,7 @@ class Orientation : public QThread
             assert(result == Tracker_CALIBRATED);
 
             PSMoveCalibration *calibration = psmove_calibration_new(move);
-            psmove_calibration_load(calibration);
-            assert(psmove_calibration_supports_method(calibration,
-                        Calibration_USB));
+            assert(psmove_calibration_supported(calibration));
 
             while (!quit) {
                 int frame;
@@ -133,7 +131,7 @@ class Orientation : public QThread
             }
 
             psmove_tracker_free(tracker);
-            psmove_calibration_destroy(calibration);
+            psmove_calibration_free(calibration);
             psmove_disconnect(move);
             QApplication::quit();
         }

@@ -11,10 +11,15 @@ MoveGraph::MoveGraph()
       readings(),
       offset(0)
 {
-    psmove_calibration_load(calibration);
     psmove_calibration_dump(calibration);
 
     memset(&readings, 0, sizeof(readings));
+}
+
+MoveGraph::~MoveGraph()
+{
+    psmove_calibration_free(calibration);
+    psmove_disconnect(move);
 }
 
 void
