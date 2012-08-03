@@ -15,7 +15,14 @@ View::View()
       m_time(0),
       m_timer(),
       m_quaternion(),
-      m_accelerometer()
+      m_accelerometer(),
+      m_buttons(),
+      m_trigger(),
+      m_position(),
+      m_velocity(),
+      m_show_controller(),
+      m_buttons_old(),
+      m_eye()
 {
     m_timer.setSingleShot(false);
     m_timer.setInterval(10);
@@ -112,8 +119,6 @@ drawVector(QVector3D vector)
 void
 renderSphere(QVector3D vector)
 {
-    return;
-
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
 
@@ -245,11 +250,27 @@ View::paintGL()
     QMatrix4x4 mat;
     mat.rotate(m_quaternion);
 
-#if 0
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(30*sinf(m_time), 40, 90*cosf(m_time), 0, 0, -10*cosf(m_time), 0, 1, 0);
-#endif
+    if (m_buttons & Btn_START) {
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        gluLookAt(30*sinf(m_time), 40, 90*cosf(m_time), 0, 0, -10*cosf(m_time), 0, 1, 0);
+    } else if (m_buttons & Btn_SELECT) {
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        m_time -= .005;
+        QVector3D eye(30*sinf(m_time), 40+((float)m_trigger/255.)*40, 90*cosf(m_time));
+        //QVector3D eye(m_eye);
+        QVector3D direction_diff(mat.map(QVector3D(0, 0, -1)));
+        QVector3D direction(eye + direction_diff);
+        m_eye += direction_diff / 5;
+        QVector3D up(mat.map(QVector3D(0, 1, 0)));
+        gluLookAt(eye.x(), eye.y(), eye.z(),
+                direction.x(), direction.y(), direction.z(),
+                up.x(), up.y(), up.z());
+    } else {
+        m_time = 0;
+        m_eye = QVector3D(150, 150, 150);
+    }
 
     glColor3f(1, 0, 0);
     drawAxis();
@@ -296,13 +317,24 @@ View::paintGL()
             accelerometer_negative);
 
     accelerometer_movement = QVector3D(
-            -accelerometer_movement.x(),
-            -accelerometer_movement.z(),
-            -accelerometer_movement.y());
+            powf(-accelerometer_movement.x(), 3),
+            powf(-accelerometer_movement.z(), 3),
+            powf(-accelerometer_movement.y(), 3));
 
     /* Resulting accelerometer vector */
     glColor3f(1, 0, 1);
     drawVector(mat.map(accelerometer_movement));
+
+    m_velocity += accelerometer_movement / 1000;
+    m_velocity *= .9;
+    //m_velocity += QVector3D(m_accelerometer.x(), 0, m_accelerometer.y()) / 1000;
+    m_position += m_velocity;
+    if (m_buttons & Btn_MOVE) {
+        m_velocity = QVector3D(0, 0, 0);
+        m_position *= .5;
+    }
+    qDebug() << m_position;
+    renderSphere(m_position);
 
     QList< QPair<QVector3D,QVector3D> > lines;
 
@@ -324,13 +356,21 @@ View::paintGL()
     ADD_LINE(0, 1, 0, 0, 1, 1);
     ADD_LINE(0, 1, 1, 0, 0, 1);
 
-    //renderController(m_quaternion, m_buttons, m_trigger);
+    if (m_show_controller) {
+        renderController(m_quaternion, m_buttons, m_trigger);
+    }
+
+    if ((m_buttons ^ m_buttons_old) & Btn_PS) {
+        if (m_buttons & Btn_PS) {
+            m_show_controller = !m_show_controller;
+        }
+    }
 
     glColor3f(1, 1, 0);
 
     QPair<QVector3D,QVector3D> line;
     foreach (line, lines) {
-        //drawLine(mat.map(line.first), mat.map(line.second));
+        drawLine(mat.map(line.first), mat.map(line.second));
     }
 
     glColor3f(1, 1, 1);
@@ -365,7 +405,7 @@ View::paintGL()
     renderSphere(m_accelerometer);
 
     //qDebug() << m_time;
-    m_time += 0.001;
+    m_time += 0.01;
 }
 
 void
@@ -388,6 +428,7 @@ View::updateAccelerometer(QVector3D accelerometer)
 void
 View::updateButtons(int buttons, int trigger)
 {
+    m_buttons_old = m_buttons;
     m_buttons = buttons;
     m_trigger = trigger;
 }

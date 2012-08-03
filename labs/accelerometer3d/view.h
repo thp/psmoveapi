@@ -32,6 +32,11 @@ private:
     QVector3D m_accelerometer;
     int m_buttons;
     int m_trigger;
+    QVector3D m_position;
+    QVector3D m_velocity;
+    bool m_show_controller;
+    int m_buttons_old;
+    QVector3D m_eye;
 };
 
 #endif
