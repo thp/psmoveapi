@@ -78,6 +78,10 @@ struct _PSMoveOrientation {
     /* Current sampling frequency */
     float sample_freq;
 
+    /* Sample frequency measurements */
+    long sample_freq_measure_start;
+    long sample_freq_measure_count;
+
     /* Output value as quaternion */
     float quaternion[4];
 };
@@ -105,6 +109,10 @@ psmove_orientation_new(PSMove *move)
     /* Initial sampling frequency */
     orientation->sample_freq = 120.0f;
 
+    /* Measurement */
+    orientation->sample_freq_measure_start = psmove_util_get_ticks();
+    orientation->sample_freq_measure_count = 0;
+
     /* Initial quaternion */
     orientation->quaternion[0] = 1;
     orientation->quaternion[1] = 0;
@@ -123,6 +131,20 @@ psmove_orientation_poll(PSMoveOrientation *orientation)
     int frame;
     int seq;
 
+    long now = psmove_util_get_ticks();
+    if (now - orientation->sample_freq_measure_start >= 1000) {
+        float measured = ((float)orientation->sample_freq_measure_count) /
+            ((float)(now-orientation->sample_freq_measure_start))*1000.;
+
+#ifdef PSMOVE_DEBUG
+        printf("[PSMOVE] Measured sample_freq: %f\n", measured);
+#endif
+
+        orientation->sample_freq = measured;
+        orientation->sample_freq_measure_start = now;
+        orientation->sample_freq_measure_count = 0;
+    }
+
     seq = psmove_poll(orientation->move);
 
     /**
@@ -131,6 +153,9 @@ psmove_orientation_poll(PSMoveOrientation *orientation)
      **/
 
     if (seq) {
+        /* We get 2 measurements per call to psmove_poll() */
+        orientation->sample_freq_measure_count += 2;
+
         psmove_get_magnetometer(orientation->move,
                 &orientation->input[6],
                 &orientation->input[7],
@@ -156,15 +181,23 @@ psmove_orientation_poll(PSMoveOrientation *orientation)
 
             MadgwickAHRSupdate(orientation->quaternion,
                     orientation->sample_freq,
-                    orientation->output[0],
+
+                    -orientation->output[0],
                     orientation->output[1],
                     orientation->output[2],
+
                     orientation->output[3],
-                    orientation->output[4],
                     orientation->output[5],
+                    -orientation->output[4],
+
+                    /* Magnetometer orientation disabled for now */
+                    0, 0, 0
+#if 0
                     orientation->output[6],
-                    orientation->output[7],
-                    orientation->output[8]);
+                    orientation->output[8],
+                    orientation->output[7]
+#endif
+            );
         }
     }
 
@@ -206,6 +239,24 @@ psmove_orientation_set_quaternion(PSMoveOrientation *orientation,
     orientation->quaternion[3] = q3;
 }
 
+void
+psmove_orientation_get_accelerometer(PSMoveOrientation *orientation,
+        float *ax, float *ay, float *az)
+{
+    psmove_return_if_fail(orientation != NULL);
+
+    if (ax) {
+        *ax = orientation->output[0];
+    }
+
+    if (ay) {
+        *ay = orientation->output[1];
+    }
+
+    if (az) {
+        *az = orientation->output[2];
+    }
+}
 
 void
 psmove_orientation_free(PSMoveOrientation *orientation)

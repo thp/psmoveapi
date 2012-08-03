@@ -32,7 +32,6 @@ void OrientationView::orientation(qreal a, qreal b, qreal c, qreal d,
     QMatrix4x4 mat;
     mat.translate(QVector3D(x*2, y*1.5, 0));
     mat.scale(scale);
-    mat.rotate(-90., 1., 0., 0.);
     mat.rotate(QQuaternion(a, b, c, d));
     teapot->setLocalTransform(mat);
     update();
