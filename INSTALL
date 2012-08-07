@@ -1,32 +1,14 @@
 
-You need CMake, SWIG, Qt >= 4.7 and Python's headers to build this.
-
-On Linux, you also need libusb-1.0 and libudev.
-On Mac OS X, you need IOKit and CoreFoundation.
-
-The Qt Trailers example also needs Qt Mobility >= 1.1 with its
-Declarative Components installed (for Video and Audio playback).
-The Qt examples are not built by default (see below).
-
-On a Debian-based system, you can install it like this:
-
-  apt-get install cmake swig python-dev libqt4-dev \
-                  libudev-dev libusb-1.0-0-dev \
-                  libbluetooth-dev
-
 The hidapi library is imported as Git submodule:
 
-  git submodule init
-  git submodule update
+    git submodule init
+    git submodule update
 
 Building:
 
     mkdir build
     cd build
-    # If you want to build WITHOUT Qt API / bindings:
     cmake ..
-    # If you want to build WITH Qt API / bindings:
-    cmake -DPSMOVEAPI_BUILD_QTAPI=on ..
     make
 
 Installing:

@@ -37,7 +37,7 @@
 #include "psmove_calibration.h"
 #include "psmove_orientation.h"
 
-#include "external/MadgwickAHRS/MadgwickAHRS.h"
+#include "../external/MadgwickAHRS/MadgwickAHRS.h"
 
 
 /* HOWTO USE: */

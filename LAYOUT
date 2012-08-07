@@ -1,0 +1,37 @@
+
+bindings - Language bindings
+    bindings/unity - UniMove, Unity and C# bindings
+    bindings/qt - psmoveapiqt Library / Qt bindings
+    bindings/glib - GObject Introspection bindings (Vala/GJS)
+    bindings/swig - SWIG-based bindings (Python and Java)
+
+examples - Applications and utilities
+    examples/c - Tests and core utilities using the C API
+    examples/labs - Qt-based applications (not using the Qt bindings)
+        examples/labs/testgui - "Old" Qt-based Test GUI
+        examples/labs/sensorfilter - Accelerometer reading
+        examples/labs/accelerometer3d - OpenGL Orientation visualization
+        examples/labs/orientation - Qt3D Teapot Orientation example
+        examples/labs/paint - Simple multi-controller paint example
+        examples/labs/movetytouch - Multitouch-like image rotoscale/drag
+    examples/python - Examples and utilities using the Python bindings
+    examples/qt - Example applications using the Qt bindings (psmoveapiqt)
+
+src - Source code for the C library
+    src/platform - Platform-specific code
+    src/tracker - Code for the vision based tracker
+    src/daemon - Code for the PS Move API Daemon protocol (client/server)
+
+external - Code from external sources (see README for details)
+    external/CLEye - Headers for using the CLEye SDK in Windows
+    external/MahonyAHRS - currently unused
+    external/hidapi - Alan Ott's cross-platform HID API
+    external/iniparser - Nicolas Devillard's iniparser library
+    external/MadgwickAHRS - Madgwick's orientation algorithm
+
+debian - Packaging files for Debian GNU/Linux
+
+include - Public headers for the C library
+
+contrib - Assorted utilities / config files / etc..
+

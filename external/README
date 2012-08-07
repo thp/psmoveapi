@@ -9,6 +9,22 @@ from http://codelaboratories.com/products/eye/sdk/
 Modified by Benjamin Venditti for interoperability with the Tracker
 
 
+hidapi
+======
+
+HIDAPI
+by Alan Ott
+from http://www.signal11.us/oss/hidapi/
+
+
+mingw-w64-headers
+=================
+
+Headers for Bluetooth support on Windows
+by the MinGW-w64 project
+from http://mingw-w64.sourceforge.net/
+
+
 MadgwickAHRS, MahonyAHRS
 ========================
 

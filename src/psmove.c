@@ -62,7 +62,7 @@
 #  include <BluetoothAPIs.h>
 #endif
 
-#include "moved_client.h"
+#include "daemon/moved_client.h"
 #include "hidapi.h"
 
 

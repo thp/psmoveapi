@@ -49,7 +49,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "moved_protocol.h"
+#include "psmove_moved_protocol.h"
 
 typedef struct {
     char *hostname;

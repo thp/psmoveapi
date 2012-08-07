@@ -1,7 +1,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,32 +27,95 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#ifndef MOVED_H
+#define MOVED_H
 
-#include "moved_client.h"
 
-int main(int argc, char *argv[])
-{
-    moved_client *client = moved_client_create("127.0.0.1");
-    int connected = moved_client_send(client, MOVED_REQ_COUNT_CONNECTED, 0, NULL);
-    int i;
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <assert.h>
 
-    printf("Connected: %d\n", connected);
-    unsigned char output[] = {2, 0, 255, 255, 0, 0, 0};
+#ifdef _WIN32
+#  include <Winsock2.h>
+#  include <Ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
+#  include <netinet/in.h>
+#  include <sys/types.h>
+#  include <sys/socket.h>
+#  include <fcntl.h>
+#endif
 
-    for (i=0; i<connected; i++) {
-        printf("Writing to dev %d...\n", i);
-        moved_client_send(client, MOVED_REQ_WRITE, i, output);
-    }
+#include "psmove_moved_protocol.h"
 
-    if (moved_client_send(client, MOVED_REQ_READ, 0, NULL)) {
-        printf("====================\n");
-        for (i=0; i<MOVED_SIZE_READ_RESPONSE; i++) {
-            printf("%02x ", client->read_response_buf[i]);
-        }
-        printf("\n====================\n");
-    }
+#include "psmove.h"
 
-    moved_client_destroy(client);
-    return 0;
-}
 
+#define each(name,set) (name=set; name; name=name->next)
+
+typedef struct _psmove_dev {
+  PSMove *move;
+
+  unsigned char input[MOVED_SIZE_READ_RESPONSE];
+  unsigned char output[7];
+
+  int dirty_output;
+
+  struct _psmove_dev *next;
+} psmove_dev;
+
+
+typedef struct _move_daemon {
+    psmove_dev *devs;
+} move_daemon;
+
+
+typedef struct {
+    int socket;
+    struct sockaddr_in server_addr;
+    move_daemon *moved;
+} moved_server;
+
+
+/* moved_server */
+
+moved_server *
+moved_server_create();
+
+void
+moved_server_handle_request(moved_server *server);
+
+void
+moved_server_destroy(moved_server *server);
+
+
+/* psmove_dev */
+
+psmove_dev *
+psmove_dev_create(int id);
+
+void
+psmove_dev_set_output(psmove_dev *dev, const unsigned char *output);
+
+void
+psmove_dev_destroy(psmove_dev *dev);
+
+
+/* move_daemon */
+
+move_daemon *
+moved_init();
+
+void
+moved_handle_connection(move_daemon *moved, int id);
+
+void
+moved_write_reports(move_daemon *moved);
+
+void
+moved_destroy(move_daemon *moved);
+
+
+#endif

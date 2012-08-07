@@ -1,48 +1,29 @@
 
-PS Move API (Release 2)
-=======================
+PS Move API
+===========
 
-The PS Move API provides three different APIs for accessing the PS Move Motion
-Controller via USB or Bluetooth. The most basic API is the C API, which allows
-you to write applications targetting the PS Move controller in C. Based on that,
-two high-level APIs exist: A Python binding, which allows developers to quickly
-prototype applications and script behavior using Python, and a C++ library using
-the Qt Framework. In addition to allowing developers to interface with the PS
-Move controller from C++, the C++ library includes annotations and extensions
-that are needed to utilize the PS Move controller from within the declarative
-user interface description language QML.
+A cross-platform C library for using the Sony Playstation Move Motion
+Controller, with bindings for Python, Java, Qt and others.
 
 The library is available for Mac OS X, Windows and Linux (USB and Bluetooth).
 
-========== WIP features for release 3 ========================
- - moved: A daemon for Linux to maintain Bluetooth connections
- - moved-client: Example demo of how to use the client library
- - Integration of moved support into the PS Move API
- - Right now, the throughput is not as fast as on OS X, though
- - moved TODO: Implement support for getting the BT address
-==============================================================
+Basic features:
 
-Features include:
+ * Set the RGB LED color and rumble intensity (USB and Bluetooth)
+ * Read digital buttons, analog trigger and sensors (Bluetooth only)
 
- * Setting the RGB LED color and rumble intensity (USB and Bluetooth)
- * Read the status of the digital buttons (Bluetooth only)
- * Read the status of the analog trigger (Bluetooth only)
- * Read sensor values for the accelerometer and gyroscope (Bluetooth only)
+Advanced features:
 
-New features in v2:
-
- * New, more permissive license (Simplified BSD)
- * Support for reading the battery level/charging state (psmove_get_battery)
- * Experimental support for reading the temperature (psmove_get_temperature)
- * Various fixes to improve building on different systems and with/without Qt
- * A few new examples
+ * Tracking: Controller tracking with a camera using OpenCV
+ * Calibration: Reading of normalized/calibrated values
+ * Orientation: Rotation tracking using gyro and accelerometer
 
 
  |- Windows notes ----------- -- -  -
  | If you are using MinGW from the Qt SDK, you have to replace the file
  | libbthprops.a in mingw\lib\ with the file of the same name from the
  | mingw-w64 package. A modified set of Bluetooth headers can be found in
- | contrib\mingw-w64-headers if you need them - they are taken from the
+ | external/mingw-w64-headers if you need them - they are taken from the
  | mingw-w64 distribution and have been modified to work with Qt SDK's mingw.
  |
  | If for some reason, you get an assertion error (hFind != NULL) on Windows
@@ -64,26 +45,15 @@ New features in v2:
  |
  .
 
-The library also includes several examples in C, Python and C++ (Qt). A Test
-GUI has been developed to test the library features without having to write any
-code at all, and to serve as an example for developing custom solutions. A QML
-movie trailer browser was also developed as part of the project to demonstrate
-the possibilities of using the trigger and gyroscope for navigation gestures.
-
 The PS Move protocol information is based on information from the the linmctool
 and Move On PC projects.
 
-The "unity" subproject includes the source for bindings to the API using C# /
-Unity. It can be used to create application in the Unity Framework. This
-project has been contributed by the Copenhagen Game Collective (thanks to
-Douglas Wilson et al) and has its own homepage at:
+Bindings to the API using C# / Unity are available in "bindings/unity". They
+can be used to create application in the Unity Framework. This project has been
+contributed by the Copenhagen Game Collective (thanks to Douglas Wilson et al)
+and has its own homepage at:
 
     http://www.copenhagengamecollective.org/unimove/
-
-The "glib" subproject includes the source for bindings to GObject using Vala
-and GIR. This will eventually allow you to interface with the PS Move API from
-JavaScript (using the GJS interpreter) and other languages supporting GObject
-Introspection. The GLib bindings are very(!) incomplete and not well tested.
 
 Documentation links:
 
@@ -99,6 +69,8 @@ Project homepage: http://thp.io/2010/psmove/
 Git repository: https://github.com/thp/psmoveapi
 License: Simplified BSD-style license (see COPYING)
 
-Initial release date: 2011-03-24
-Release of PSMoveAPI 2: 2011-12-03
+Initial release date 1.0.0: 2011-03-24
+Release of PSMoveAPI 1.0.2: 2011-12-03
+
+Updated: 2012-08-07
 
