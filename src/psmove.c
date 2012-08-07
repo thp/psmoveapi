@@ -1019,14 +1019,14 @@ psmove_poll(PSMove *move)
          * so we add 1 to signal "success" and add the sequence number for
          * consumers to utilize the data
          **/
-#ifdef PSMOVE_DEBUG
         int seq = (move->input.buttons4 & 0x0F);
+#ifdef PSMOVE_DEBUG
         if (seq != ((oldseq + 1) % 16)) {
             fprintf(stderr, "[PSMOVE] Warning: Dropped frames (seq %d -> %d)\n",
                     oldseq, seq);
         }
 #endif
-        return 1 + (move->input.buttons4 & 0x0F);
+        return 1 + seq;
     }
 
     return 0;

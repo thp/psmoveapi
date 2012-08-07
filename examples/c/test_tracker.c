@@ -39,8 +39,7 @@ int main(int arg, char** args) {
                 break;
             } else {
                 printf("ERROR\n");
-                cvNamedWindow("Unable to calibrate (ESC to retry)", 0);
-                th_wait_esc();
+                return 1;
             }
         }
 
