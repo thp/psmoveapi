@@ -47,27 +47,12 @@ FORMS    += psmovetestgui.ui \
 
 RESOURCES +=
 
-SOURCES += ../qt/psmoveqt.cpp
-HEADERS += ../qt/psmoveqt.hpp
+INCLUDEPATH += ../../
+INCLUDEPATH += ../../qt
 
-SOURCES += ../psmove.c
-HEADERS += ../psmove.h
-
-HEADERS += ../hidapi/hidapi/hidapi.h
-
-INCLUDEPATH += ..
-INCLUDEPATH += ../qt
-INCLUDEPATH += ../hidapi/hidapi
+LIBS += -L../../build -lpsmoveapi -L../../build/qt -lpsmoveapiqt
 
 macx {
-    SOURCES += ../hidapi/mac/hid.c
-    LIBS += -framework IOKit -framework CoreFoundation -framework IOBluetooth
     ICON = psmove.icns
-}
-
-linux-g++ {
-    SOURCES += ../hidapi/linux/hid-libusb.c
-    LIBS += -lusb-1.0
-    QMAKE_CFLAGS += -I/usr/include/libusb-1.0/
 }
 
