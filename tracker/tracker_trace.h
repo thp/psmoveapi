@@ -31,43 +31,30 @@
 
 #include "opencv2/core/core_c.h"
 
-// uncomment this line to disable trace-output of the tracker
 #define USE_TRACKER_TRACE
 
-void psmove_trace_image(IplImage *image, char* name, int no_js_var);
-void psmove_trace_image_at(IplImage *image, int index, char* target);
-void psmove_trace_array_item_at(int index, char* target, char* value);
-void psmove_trace_array_item(char* target, const char* value);
-void psmove_trace_clear();
-void psmove_trace_put_int_var(const char* var, int value);
-void psmove_trace_put_color_var(const char* var, CvScalar color);
-void psmove_trace_put_text_var(const char* var, const char* value);
-void psmove_trace_put_log_entry(const char* type, const char* value);
-void psmove_trace_put_text(const char* text);
-
-
 #ifndef USE_TRACKER_TRACE
-	#define psmove_html_trace_image(image, name,no_js_var)
-	#define psmove_html_trace_image_at(image, index, target)
-	#define psmove_html_trace_array_item(target,value)
-	#define psmove_html_trace_array_item_at(index,target,value)
-	#define psmove_html_trace_var_int(var,value)
-	#define psmove_html_trace_var_text(var,value)
-	#define psmove_html_trace_var_color(var,value)
-	#define psmove_html_trace_log_entry(text)
-	#define psmove_html_trace_text(text)
-	#define psmove_html_trace_clear()
+#    define psmove_html_trace_image(image, name, no_js_var)
+#    define psmove_html_trace_image_at(image, index, target)
+#    define psmove_html_trace_array_item(target, value)
+#    define psmove_html_trace_array_item_at(index, target, value)
+#    define psmove_html_trace_put_int_var(var, value)
+#    define psmove_html_trace_put_text_var(var, value)
+#    define psmove_html_trace_put_color_var(var, value)
+#    define psmove_html_trace_put_log_entry(text)
+#    define psmove_html_trace_put_text(text)
+#    define psmove_html_trace_clear()
 #else
-	#define psmove_html_trace_image(image, name,no_js_var) psmove_trace_image((image),(name),(no_js_var))
-	#define psmove_html_trace_image_at(image, index, target) psmove_trace_image_at((image),(index),(target))
-	#define psmove_html_trace_array_item(target,value) psmove_trace_array_item((target), (value))
-	#define psmove_html_trace_array_item_at(index,target,value) psmove_trace_array_item_at((index),(target), (value))
-	#define psmove_html_trace_var_int(var,value) psmove_trace_put_int_var((var), (value))
-	#define psmove_html_trace_var_text(var,value) psmove_trace_put_text_var((var), (value))
-	#define psmove_html_trace_var_color(var,value) psmove_trace_put_color_var((var), (value))
-	#define psmove_html_trace_log_entry(type,value) psmove_trace_put_log_entry((type), (value));
-	#define psmove_html_trace_text(text) psmove_trace_put_text((text))
-	#define psmove_html_trace_clear() psmove_trace_clear()
+void psmove_html_trace_image(IplImage *image, char* name, int no_js_var);
+void psmove_html_trace_image_at(IplImage *image, int index, char* target);
+void psmove_html_trace_array_item(char* target, const char* value);
+void psmove_html_trace_array_item_at(int index, char* target, char* value);
+void psmove_html_trace_put_int_var(const char* var, int value);
+void psmove_html_trace_put_color_var(const char* var, CvScalar color);
+void psmove_html_trace_put_text_var(const char* var, const char* value);
+void psmove_html_trace_put_log_entry(const char* type, const char* value);
+void psmove_html_trace_put_text(const char* text);
+void psmove_html_trace_clear();
 #endif
 
 #endif /* TRACKER_TRACE_H_ */

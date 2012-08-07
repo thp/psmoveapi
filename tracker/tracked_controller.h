@@ -30,26 +30,27 @@
  **/
 
 #include "opencv2/core/core_c.h"
-
 #include "psmove.h"
+#include <time.h>
 
 struct _TrackedController;
 typedef struct _TrackedController TrackedController;
 
 struct _TrackedController {
 	PSMove* move;
-	// defined color
-	CvScalar dColor;
-	// estimated color
-	CvScalar eColor;
-	CvScalar eColorHSV;
 
-	int roi_x;
-	int roi_y;
-	//CvRect roi; // this saves the current region of interest
-	int roi_level; // the current index for the level of ROI
-
-	float x,y,r;
+	CvScalar dColor;			// defined color
+	CvScalar eFColor;			// first estimated color (BGR)
+	CvScalar eFColorHSV;		// first estimated color (HSV)
+	CvScalar eColor;			// estimated color (BGR)
+	CvScalar eColorHSV; 		// estimated color (HSV)
+	int roi_x, roi_y;			// x/y - Coordinates of the ROI
+	int roi_level; 	 			// the current index for the level of ROI
+	float mx, my;				// x/y - Coordinates of center of mass of the blob
+	float x, y, r;				// x/y - Coordinates of the controllers sphere and its radius
+	float rs;					// a smoothed variant of the radius
+	int is_tracked;				// 1 if tracked 0 otherwise
+	time_t last_color_update;	// the timestamp when the last color adaption has been performed
 	TrackedController* next;
 };
 
@@ -67,5 +68,11 @@ tracked_controller_insert(TrackedController** head, PSMove* data);
 
 void
 tracked_controller_remove(TrackedController** head, PSMove* data);
+
+void
+tracked_controller_save_colors(TrackedController* head);
+
+int
+tracked_controller_load_color(TrackedController* tc);
 
 #endif //__TRACKED_CONTROLLER_H

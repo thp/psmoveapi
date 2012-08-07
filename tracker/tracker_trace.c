@@ -35,143 +35,150 @@
 #	include  <sys/types.h>
 #endif
 
+#include "psmove.h"
 #include "tracker_trace.h"
-#include "tracker_helpers.h"
+#include "../tracker/tracker_helpers.h"
 
-int TRACE_IMG_COUNT;
-#define TRACE_OUTPUT "debug.js"
-#define TRACE_IMG_DIR "trace_images"
+typedef struct {
+    FILE *fp;
+    int img_count;
+} TrackerTrace;
 
-void psmove_trace_clear() {
-	TRACE_IMG_COUNT = 0;
-	FILE *pFile;
-	time_t rawtime;
-	struct tm* timeinfo;
-	char texttime[256];
-	time(&rawtime);
-	timeinfo=localtime(&rawtime);
-	strftime(texttime,256,"%Y-%m-%d / %H:%M:%S",timeinfo);
-#ifdef WIN32
-	mkdir(TRACE_IMG_DIR);
-#else
-	mkdir(TRACE_IMG_DIR,0777);
-#endif
-	pFile = fopen(TRACE_OUTPUT, "w");
-	if (pFile != NULL) {
-		fputs("originals = new Array();\n", pFile);
-		fputs("rawdiffs = new Array();\n", pFile);
-		fputs("threshdiffs = new Array();\n", pFile);
-		fputs("erodediffs = new Array();\n", pFile);
-		fputs("finaldiff = new Array();\n", pFile);
-		fputs("filtered = new Array();\n", pFile);
-		fputs("contours = new Array();\n", pFile);
-		fputs("log_table = new Array();\n\n", pFile);
-		fclose(pFile);
-	}
+TrackerTrace tracker_trace = {
+    .fp = NULL,
+    .img_count = 0,
+};
 
-	psmove_trace_put_text_var("time",texttime);
+
+const char *
+tracker_trace_filename(const char *template)
+{
+    static char filename[1024];
+
+    strncpy(filename, psmove_util_get_data_dir(), sizeof(filename));
+    strncat(filename, template, sizeof(filename));
+
+    return filename;
 }
 
-void psmove_trace_image_at(IplImage *image, int index, char* target) {
-	char img_name[256];
-	// write image to file sysxtem
-	sprintf(img_name, "./%s/%s%d%s", TRACE_IMG_DIR, "image_", TRACE_IMG_COUNT, ".jpg");
 
-	th_save_jpg(img_name, image, 100);
-	TRACE_IMG_COUNT++;
+FILE *
+tracker_trace_file()
+{
+    if (!tracker_trace.fp) {
+        tracker_trace.fp = fopen(tracker_trace_filename("debug.js"), "w");
+    }
 
-	// write image-name to java script array
-	psmove_html_trace_array_item_at(index, target, img_name);
+    return tracker_trace.fp;
 }
 
-void psmove_trace_image(IplImage *image, char* var, int no_js_var) {
-	char img_name[256];
-	// write image to file sysxtem
-	sprintf(img_name, "./%s/%s%s%s", TRACE_IMG_DIR, "image_", var, ".jpg");
-
-	th_save_jpg(img_name, image, 100);
-
-	// write image-name to java variable (if desired)
-	if (no_js_var == 0) {
-		psmove_html_trace_var_text(var,img_name);
-	}
+#define tracker_trace_printf(...) { \
+    fprintf(tracker_trace_file(), __VA_ARGS__); \
+    fflush(tracker_trace_file()); \
 }
 
-void psmove_trace_array_item_at(int index, char* target, char* value) {
-	FILE *pFile;
-	pFile = fopen(TRACE_OUTPUT, "a");
-	char array[256];
-	// write string to array
-	sprintf(array, "%s[%d]='%s';\n", target, index, value);
 
-	if (pFile != NULL) {
-		fputs(array, pFile);
-		fclose(pFile);
-	}
+void
+psmove_html_trace_clear()
+{
+    tracker_trace.img_count = 0;
+    fclose(tracker_trace.fp);
+
+    time_t rawtime;
+    struct tm* timeinfo;
+    char texttime[256];
+    time(&rawtime);
+    timeinfo=localtime(&rawtime);
+    strftime(texttime,256,"%Y-%m-%d / %H:%M:%S",timeinfo);
+
+    FILE *pFile = tracker_trace_file();
+    if (pFile) {
+        fputs("originals = new Array();\n", pFile);
+        fputs("rawdiffs = new Array();\n", pFile);
+        fputs("threshdiffs = new Array();\n", pFile);
+        fputs("erodediffs = new Array();\n", pFile);
+        fputs("finaldiff = new Array();\n", pFile);
+        fputs("filtered = new Array();\n", pFile);
+        fputs("contours = new Array();\n", pFile);
+        fputs("log_table = new Array();\n\n", pFile);
+    }
+
+    psmove_html_trace_put_text_var("time",texttime);
 }
 
-void psmove_trace_array_item(char* target, const char* value) {
-	FILE *pFile;
-	pFile = fopen(TRACE_OUTPUT, "a");
-	char array[256];
-	// write string to array
-	sprintf(array, "%s.push('%s');\n", target, value);
+void
+psmove_html_trace_image_at(IplImage *image, int index, char* target)
+{
+    char img_name[256];
 
-	if (pFile != NULL) {
-		fputs(array, pFile);
-		fclose(pFile);
-	}
+    // write image to file sysxtem
+    sprintf(img_name, "image_%d.jpg", tracker_trace.img_count);
+    th_save_jpg(tracker_trace_filename(img_name), image, 100);
+
+    tracker_trace.img_count++;
+
+    // write image-name to java script array
+    psmove_html_trace_array_item_at(index, target, img_name);
 }
 
-void psmove_trace_put_log_entry(const char* type, const char* value) {
-	FILE *pFile;
-	pFile = fopen(TRACE_OUTPUT, "a");
-	char array[256];
-	// write string to array
-	sprintf(array, "log_table.push({type:'%s', value:'%s'});\n", type, value);
+void
+psmove_html_trace_image(IplImage *image, char* var, int no_js_var)
+{
+    char img_name[256];
+    // write image to file sysxtem
+    sprintf(img_name, "image_%s.jpg", var);
+    th_save_jpg(tracker_trace_filename(img_name), image, 100);
 
-	if (pFile != NULL) {
-		fputs(array, pFile);
-		fclose(pFile);
-	}
-}
-
-void psmove_trace_put_text(const char* text) {
-	FILE *pFile;
-	pFile = fopen(TRACE_OUTPUT, "a");
-	if (pFile != NULL) {
-		fputs(text, pFile);
-		fputs("\n", pFile);
-		fclose(pFile);
-	}
+    // write image-name to java variable (if desired)
+    if (!no_js_var) {
+        psmove_html_trace_put_text_var(var,img_name);
+    }
 }
 
-void psmove_trace_put_int_var(const char* var, int value) {
-	FILE *pFile;
-	pFile = fopen(TRACE_OUTPUT, "a");
-	char text[256];
-	sprintf(text, "%s=%d;\n", var, value);
-	if (pFile != NULL) {
-		fputs(text, pFile);
-		fclose(pFile);
-	}
-}
-void psmove_trace_put_text_var(const char* var, const char* value) {
-	FILE *pFile;
-	pFile = fopen(TRACE_OUTPUT, "a");
-	char text[256];
-	sprintf(text, "%s='%s';\n", var, value);
-	if (pFile != NULL) {
-		fputs(text, pFile);
-		fclose(pFile);
-	}
+void
+psmove_html_trace_array_item_at(int index, char* target, char* value)
+{
+    tracker_trace_printf("%s[%d]='%s';\n", target, index, value);
 }
 
-void psmove_trace_put_color_var(const char* var, CvScalar color) {
-	char text[32];
-	unsigned int r = (unsigned int) round(color.val[2]);
-	unsigned int g = (unsigned int) round(color.val[1]);
-	unsigned int b = (unsigned int) round(color.val[0]);
-	sprintf(text, "%02X%02X%02X", r, g, b);
-	psmove_trace_put_text_var(var, text);
+void
+psmove_html_trace_array_item(char* target, const char* value)
+{
+    tracker_trace_printf("%s.push('%s');\n", target, value);
 }
+
+void
+psmove_html_trace_put_log_entry(const char* type, const char* value)
+{
+    tracker_trace_printf("log_table.push({type:'%s', value:'%s'});\n", type, value);
+}
+
+void
+psmove_html_trace_put_text(const char* text)
+{
+    tracker_trace_printf("%s\n", text);
+}
+
+void
+psmove_html_trace_put_int_var(const char* var, int value)
+{
+    tracker_trace_printf("%s=%d;\n", var, value);
+}
+
+void
+psmove_html_trace_put_text_var(const char* var, const char* value)
+{
+    tracker_trace_printf("%s='%s';\n", var, value);
+}
+
+void
+psmove_html_trace_put_color_var(const char* var, CvScalar color)
+{
+    char text[32];
+    unsigned int r = (unsigned int) round(color.val[2]);
+    unsigned int g = (unsigned int) round(color.val[1]);
+    unsigned int b = (unsigned int) round(color.val[0]);
+    sprintf(text, "%02X%02X%02X", r, g, b);
+    psmove_html_trace_put_text_var(var, text);
+}
+

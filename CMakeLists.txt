@@ -60,7 +60,10 @@ ELSE()
     set(PSMOVEAPI_PLATFORM_SRC "")
 ENDIF()
 
-file(GLOB PSMOVEAPI_TRACKER_SRC "${PSMOVEAPI_SOURCE_DIR}/tracker/*.c")
+file(GLOB PSMOVEAPI_TRACKER_SRC
+    "${PSMOVEAPI_SOURCE_DIR}/tracker/*.c"
+    "${PSMOVEAPI_SOURCE_DIR}/external/iniparser/*.c"
+)
 include_directories(${PSMOVEAPI_SOURCE_DIR}/tracker)
 
 set(MOVED_CLIENT_SRC ${PSMOVEAPI_SOURCE_DIR}/moved_client.c)

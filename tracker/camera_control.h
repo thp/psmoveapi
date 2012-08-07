@@ -29,28 +29,41 @@
 #ifndef CAMERA_CONTROL_H_
 #define CAMERA_CONTROL_H_
 
-#ifdef WIN32
-#	include <windows.h>
-#endif
 #include "opencv2/core/core_c.h"
 
 struct _CameraControl;
 typedef struct _CameraControl CameraControl;
 
-CameraControl* camera_control_new();
-#ifdef WIN32
-CameraControl* camera_control_new_ex(GUID device);
-#else
-CameraControl* camera_control_new_ex(const char* device, int open_cv_device);
-#endif
+CameraControl *
+camera_control_new(int cameraID);
 
-void camera_control_read_calibration(CameraControl* cc, char* intrinsicsFile, char* distortionFile);
-void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast, int brightness);
-void camera_control_backup_sytem_settings(CameraControl* cc, const char* file);
-void camera_control_restore_sytem_settings(CameraControl* cc, const char* file);
+void
+camera_control_read_calibration(CameraControl* cc,
+        char* intrinsicsFile, char* distortionFile);
 
-IplImage* camera_control_query_frame(CameraControl* cc);
+IplImage *
+camera_control_query_frame(CameraControl* cc);
 
-void camera_control_delete(CameraControl** cc);
+void
+camera_control_delete(CameraControl* cc);
+
+
+
+/* Platform-specific functions (implement in camera_control_<os>.c) */
+
+void
+camera_control_set_parameters(CameraControl* cc,
+        int autoE, int autoG, int autoWB,
+        int exposure, int gain,
+        int wbRed, int wbGreen, int wbBlue,
+        int contrast, int brightness);
+
+void
+camera_control_backup_system_settings(CameraControl* cc,
+        const char* file);
+void camera_control_restore_system_settings(CameraControl* cc,
+        const char* file);
+
+
 
 #endif /* CAMERA_CONTROL_H_ */

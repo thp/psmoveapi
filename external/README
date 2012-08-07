@@ -1,8 +1,29 @@
 
+CLEye
+=====
+
+Header for the CLEye Windows driver
+by Codelaboratories Software
+from http://codelaboratories.com/products/eye/sdk/
+
+Modified by Benjamin Venditti for interoperability with the Tracker
+
+
+MadgwickAHRS, MahonyAHRS
+========================
+
 Open Source IMU and AHRS algorithms
-===================================
-
 by Sebastian Madgwick
-
 from http://www.x-io.co.uk/node/8
+
+Modified by Thomas Perl for multi-controller tracking (quaternion state)
+
+
+iniparser
+=========
+
+Parser for ini files
+by Nicolas Devillard
+from http://ndevilla.free.fr/iniparser/
+
 

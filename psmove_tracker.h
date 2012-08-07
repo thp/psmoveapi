@@ -1,5 +1,5 @@
-#ifndef __PSMOVE_TRACKER_H
-#define __PSMOVE_TRACKER_H
+#ifndef PSMOVE_TRACKER_H
+#define PSMOVE_TRACKER_H
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -52,6 +52,8 @@ enum PSMoveTracker_Status {
     Tracker_CALIBRATING,
     Tracker_CALIBRATION_ERROR,
     Tracker_CALIBRATED,
+    Tracker_CALIBRATED_AND_FOUND,
+    Tracker_CALIBRATED_AND_NOT_FOUND,
 };
 
 /**
@@ -59,8 +61,20 @@ enum PSMoveTracker_Status {
  *
  * Returns a new PSMoveTracker * instance or NULL (indicates error)
  **/
-PSMoveTracker *
-psmove_tracker_new();
+ADDAPI PSMoveTracker *
+ADDCALL psmove_tracker_new();
+
+
+/**
+ * Create a new PS Move tracker and set up tracking
+ *
+ * This function can be used when multiple cameras are available.
+ * camera ... zero-based index of the camera to use
+ *
+ * Returns a new PSMoveTracker * instance or NULL (indicates error)
+ **/
+ADDAPI PSMoveTracker *
+ADDCALL psmove_tracker_new_with_camera(int camera);
 
 
 /**
@@ -78,8 +92,8 @@ psmove_tracker_new();
  *   Tracker_CALIBRATED if it is already calibrated or
  *   Tracker_CALIBRATION_ERROR when there is any error.
  **/
-enum PSMoveTracker_Status
-psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move);
+ADDAPI enum PSMoveTracker_Status
+ADDCALL psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move);
 
 
 /**
@@ -95,8 +109,8 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move);
  * for psmove_tracker_enable(), and the r, g, b parameters are the
  * same as psmove_set_leds() of the PS Move API.
  **/
-enum PSMoveTracker_Status
-psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
+ADDAPI enum PSMoveTracker_Status
+ADDCALL psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char r, unsigned char g, unsigned char b);
 
 
@@ -108,8 +122,8 @@ psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
  * Returns nonzero if the color was successfully returned, zero if
  * the controller is not enabled or calibration has not completed yet.
  **/
-int
-psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move,
+ADDAPI int
+ADDCALL psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char *r, unsigned char *g, unsigned char *b);
 
 
@@ -124,8 +138,8 @@ psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move,
  * The library will set (and update) the LEDs to black in
  * this function if the PSMove * instance is valid.
  **/
-void
-psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move);
+ADDAPI void
+ADDCALL psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move);
 
 
 /**
@@ -136,8 +150,8 @@ psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move);
  *
  * Returns: Same as psmove_tracker_enable() - see there
  **/
-enum PSMoveTracker_Status
-psmove_tracker_get_status(PSMoveTracker *tracker, PSMove *move);
+ADDAPI enum PSMoveTracker_Status
+ADDCALL psmove_tracker_get_status(PSMoveTracker *tracker, PSMove *move);
 
 
 /**
@@ -149,8 +163,8 @@ psmove_tracker_get_status(PSMoveTracker *tracker, PSMove *move);
  *
  * Returns: nonzero if tracking was successful (sphere found), zero otherwise
  **/
-int
-psmove_tracker_update(PSMoveTracker *tracker, PSMove *move);
+ADDAPI int
+ADDCALL psmove_tracker_update(PSMoveTracker *tracker, PSMove *move);
 
 /**
  * Retrieves the most recently processed image by psmove_tracker_update
@@ -160,8 +174,8 @@ psmove_tracker_update(PSMoveTracker *tracker, PSMove *move);
  * Returns: returns the most recently processed image, zero otherwise
  *          XXX: Define the return value type (IplImage* internally)
  **/
-void*
-psmove_tracker_get_image(PSMoveTracker *tracker);
+ADDAPI void*
+ADDCALL psmove_tracker_get_image(PSMoveTracker *tracker);
 
 /**
  * Grabs internally a new image from the camera.
@@ -170,23 +184,23 @@ psmove_tracker_get_image(PSMoveTracker *tracker);
  * tracker - A valid PSMoveTracker * instance
  *
  **/
-void
-psmove_tracker_update_image(PSMoveTracker *tracker);
+ADDAPI void
+ADDCALL psmove_tracker_update_image(PSMoveTracker *tracker);
 
 /**
  * Get the currently-tracked low-level position of the controllers
  *
  * tracker - A valid PSMoveTracker * instance
  * move - A valid (and enabled, with status Tracker_CALIBRATED) controller
- * x - A pointer to an int for storing the X coordinate, or NULL
- * y - A pointer to an int for storing the Y coordinate, or NULL
- * radius - A pointer to an int for storing the radius, or NULL
+ * x - A pointer to a float for storing the X coordinate, or NULL
+ * y - A pointer to a float for storing the Y coordinate, or NULL
+ * radius - A pointer to a float for storing the radius, or NULL
  *
  * Returns: the age of the sensor reading in milliseconds, or -1 on error
  **/
-int
-psmove_tracker_get_position(PSMoveTracker *tracker,
-        PSMove *move, int *x, int *y, int *radius);
+ADDAPI int
+ADDCALL psmove_tracker_get_position(PSMoveTracker *tracker,
+        PSMove *move, float *x, float *y, float *radius);
 
 
 /**
@@ -194,8 +208,8 @@ psmove_tracker_get_position(PSMoveTracker *tracker,
  *
  * tracker - A valid PSMoveTracker * instance
  **/
-void
-psmove_tracker_free(PSMoveTracker *tracker);
+ADDAPI void
+ADDCALL psmove_tracker_free(PSMoveTracker *tracker);
 
 #ifdef __cplusplus
 }

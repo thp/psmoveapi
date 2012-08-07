@@ -13,10 +13,16 @@
 #define th_green cvScalar(0,0xff,0,0)
 #define th_red cvScalar(0,0,0xff,0)
 #define th_blue cvScalar(0xff,0,0,0)
+#define th_yellow cvScalar(0,0xff,0xff,0)
 #define th_min(x,y) ((x)<(y)?(y):(x))
 #define th_max(x,y) ((x)<(y)?(x):(y))
 #define th_scalar_to_rgb_int(c)(((int)(c).val[2])<<16 && ((int)(c).val[1])<<8 && ((int)(c).val[0]))
 #define th_PI 3.14159265358979
+#define th_dist_squared(a,b) (pow((a).x-(b).x,2)+pow((a).y-(b).y,2))
+#define th_dist(a,b) (sqrt(pow((a).x-(b).x,2)+pow((a).y-(b).y,2)))
+
+#define th_esc_key 27
+#define th_space_key 32
 
 // some basic statistical functions on arrays
 double th_var(double* src, int len);
@@ -30,8 +36,7 @@ void th_mul(double* array, double f, double* result, int len);
 // returns (1: if image/storage is created) (0: if nothing has been done)
 int th_create_image(IplImage** img, CvSize s, int depth, int channels);
 int th_create_mem_storage(CvMemStorage** stor, int block_size);
-int th_create_hist(CvHistogram** hist, int dims, int* sizes, int type,
-		float** ranges, int uniform);
+int th_create_hist(CvHistogram** hist, int dims, int* sizes, int type, float** ranges, int uniform);
 
 void th_put_text(IplImage* img, const char* text, CvPoint p, CvScalar color, float scale);
 IplImage* th_plot_hist(CvHistogram* hist, int bins, const char* windowName, CvScalar lineColor);
@@ -54,5 +59,5 @@ void th_wait_move_button(PSMove* move, int button);
 int th_move_button(PSMove* move, int button);
 
 void th_equalize_image(IplImage* img);
+int th_file_exists(const char* file);
 #endif // TRACKER_HELPERS_H
-

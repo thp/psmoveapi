@@ -7,8 +7,6 @@
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/core/core_c.h"
 #include "tracker_helpers.h"
-#include "iniparser.h"
-#include "dictionary.h"
 
 double th_var(double* src, int len) {
 	double f = 1.0 / (len - 1);
@@ -213,7 +211,7 @@ void th_wait_move_button(PSMove* move, int button) {
 void th_wait_esc() {
 	while (1) {
 		//If ESC key pressed
-		if ((cvWaitKey(10) & 255) == 27)
+		if ((cvWaitKey(10) & 255) == th_esc_key)
 			break;
 	}
 }
