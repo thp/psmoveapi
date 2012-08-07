@@ -36,7 +36,6 @@
 #include <string.h>
 #include <assert.h>
 #include <libgen.h>
-#include <sys/stat.h>
 #include <math.h>
 
 #define PSMOVE_CALIBRATION_EXTENSION ".calibration"
@@ -199,7 +198,6 @@ PSMoveCalibration *
 psmove_calibration_new(PSMove *move)
 {
     PSMove_Data_BTAddr addr;
-    const char *data_dir;
     char *serial;
     int i;
 
@@ -221,14 +219,14 @@ psmove_calibration_new(PSMove *move)
         }
     }
 
-    data_dir = psmove_util_get_data_dir();
+    char *template = malloc(strlen(serial) +
+            strlen(PSMOVE_CALIBRATION_EXTENSION) + 1);
+    strcpy(template, serial);
+    strcat(template, PSMOVE_CALIBRATION_EXTENSION);
 
-    i = strlen(data_dir)+strlen(serial)+strlen(PSMOVE_CALIBRATION_EXTENSION)+1;
-    calibration->filename = (char*)calloc(i, sizeof(char));
-    strncpy(calibration->filename, data_dir, i);
-    strncat(calibration->filename, serial, i);
-    strncat(calibration->filename, PSMOVE_CALIBRATION_EXTENSION, i);
+    calibration->filename = psmove_util_get_file_path(template);
 
+    free(template);
     free(serial);
 
     /* Try to load the calibration data from disk, or from USB */
@@ -370,16 +368,7 @@ psmove_calibration_save(PSMoveCalibration *calibration)
 {
     psmove_return_val_if_fail(calibration != NULL, 0);
 
-    char *tmp = strdup(calibration->filename);
-    char *parent = dirname(tmp);
-    struct stat st;
     FILE *fp;
-
-    if (stat(parent, &st) != 0) {
-        if (mkdir(parent, 0777) != 0) {
-            return 0;
-        }
-    }
 
     fp = fopen(calibration->filename, "wb");
     assert(fp != NULL);
@@ -390,8 +379,6 @@ psmove_calibration_save(PSMoveCalibration *calibration)
                 sizeof(calibration->flags),
                 1, fp) == 1);
     fclose(fp);
-
-    free(tmp);
 
     return 1;
 }

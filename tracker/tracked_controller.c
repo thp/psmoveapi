@@ -140,23 +140,11 @@ void tracked_controller_remove(TrackedController** head, PSMove* data) {
 	}
 }
 
-char *
-color_mapping_file_filename()
-{
-    const char *data_dir = psmove_util_get_data_dir();
-    char *result = malloc(strlen(data_dir) + strlen(COLOR_MAPPING_FILE) + 1);
-
-    strcpy(result, data_dir);
-    strcat(result, COLOR_MAPPING_FILE);
-
-    return result;
-}
-
 void tracked_controller_save_colors(TrackedController* head) {
 	char key[128];
 	char value[128];
 
-        char *filename = color_mapping_file_filename();
+        char *filename = psmove_util_get_file_path(COLOR_MAPPING_FILE);
 
 	dictionary* ini = iniparser_load(filename);
 	iniparser_set(ini, "ColorMapping", 0);
@@ -176,7 +164,7 @@ void tracked_controller_save_colors(TrackedController* head) {
 int tracked_controller_load_color(TrackedController* tc) {
 	int loaded = 0;
 	char key[128];
-        char *filename = color_mapping_file_filename();
+        char *filename = psmove_util_get_file_path(COLOR_MAPPING_FILE);
 	dictionary* ini = iniparser_load(filename);
         free(filename);
 	sprintf(key, "ColorMapping:%X%X%X", (int) tc->dColor.val[2], (int) tc->dColor.val[1], (int) tc->dColor.val[0]);

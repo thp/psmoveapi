@@ -430,6 +430,20 @@ ADDCALL psmove_util_get_ticks();
 ADDAPI const char *
 ADDCALL psmove_util_get_data_dir();
 
+/**
+ * Utility function: Get filename in PS Move data directory
+ *
+ * The data directory will be created in case it doesn't exist yet.
+ * Returns NULL if the data directory cannot be created.
+ *
+ * filename ... The basename of the file inside the data dir
+ *
+ * The returned value must be free()d after use.
+ **/
+ADDAPI char *
+ADDCALL psmove_util_get_file_path(const char *filename);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -49,24 +49,13 @@ TrackerTrace tracker_trace = {
     .img_count = 0,
 };
 
-
-const char *
-tracker_trace_filename(const char *template)
-{
-    static char filename[1024];
-
-    strncpy(filename, psmove_util_get_data_dir(), sizeof(filename));
-    strncat(filename, template, sizeof(filename));
-
-    return filename;
-}
-
-
 FILE *
 tracker_trace_file()
 {
     if (!tracker_trace.fp) {
-        tracker_trace.fp = fopen(tracker_trace_filename("debug.js"), "w");
+        char *filename = psmove_util_get_file_path("debug.js");
+        tracker_trace.fp = fopen(filename, "w");
+        free(filename);
     }
 
     return tracker_trace.fp;
@@ -115,7 +104,9 @@ psmove_html_trace_image_at(IplImage *image, int index, char* target)
 
     // write image to file sysxtem
     sprintf(img_name, "image_%d.jpg", tracker_trace.img_count);
-    th_save_jpg(tracker_trace_filename(img_name), image, 100);
+    char *filename = psmove_util_get_file_path(img_name);
+    th_save_jpg(filename, image, 100);
+    free(filename);
 
     tracker_trace.img_count++;
 
@@ -129,7 +120,9 @@ psmove_html_trace_image(IplImage *image, char* var, int no_js_var)
     char img_name[256];
     // write image to file sysxtem
     sprintf(img_name, "image_%s.jpg", var);
-    th_save_jpg(tracker_trace_filename(img_name), image, 100);
+    char *filename = psmove_util_get_file_path(img_name);
+    th_save_jpg(filename, image, 100);
+    free(filename);
 
     // write image-name to java variable (if desired)
     if (!no_js_var) {

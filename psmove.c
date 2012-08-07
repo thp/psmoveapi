@@ -51,6 +51,8 @@
 #  include <sys/ioctl.h>
 #  include <linux/limits.h>
 #  include <pthread.h>
+#  include <unistd.h>
+#  include <sys/stat.h>
 #  define PSMOVE_USE_PTHREADS
 #endif
 
@@ -1249,5 +1251,23 @@ psmove_util_get_data_dir()
     }
 
     return dir;
+}
+
+char *
+psmove_util_get_file_path(const char *filename)
+{
+    const char *parent = psmove_util_get_data_dir();
+    char *result;
+
+    struct stat st;
+    if (stat(parent, &st) != 0) {
+        psmove_return_val_if_fail(mkdir(parent, 0777) != 0, NULL);
+    }
+
+    result = malloc(strlen(parent) + strlen(filename) + 1);
+    strcpy(result, parent);
+    strcat(result, filename);
+
+    return result;
 }
 

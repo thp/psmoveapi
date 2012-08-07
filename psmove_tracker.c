@@ -287,8 +287,11 @@ psmove_tracker_new_with_camera(int camera) {
 	// use static adaptive exposure
 
 	// backup the systems settings, if not already backuped
-	if (th_file_exists(PSEYE_BACKUP_FILE) == 0)
-		camera_control_backup_system_settings(t->cc, PSEYE_BACKUP_FILE);
+	if (!th_file_exists(PSEYE_BACKUP_FILE)) {
+            char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
+            camera_control_backup_system_settings(t->cc, filename);
+            free(filename);
+        }
 
 	//t->exposure = psmove_tracker_adapt_to_light(t, 25, 2051, 4051);
 	camera_control_set_parameters(t->cc, 0, 0, 0, t->exposure, 0, 0xffff, 0xffff, 0xffff, -1, -1);
@@ -877,8 +880,11 @@ int psmove_tracker_get_position(PSMoveTracker *tracker, PSMove *move, float *x, 
 void psmove_tracker_free(PSMoveTracker *tracker) {
 	tracked_controller_save_colors(tracker->controllers);
 
-	if (th_file_exists(PSEYE_BACKUP_FILE))
-		camera_control_restore_system_settings(tracker->cc, PSEYE_BACKUP_FILE);
+	if (th_file_exists(PSEYE_BACKUP_FILE)) {
+            char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
+            camera_control_restore_system_settings(tracker->cc, filename);
+            free(filename);
+        }
 	cvReleaseMemStorage(&tracker->storage);
 	int i = 0;
 	for (; i < ROIS; i++) {
