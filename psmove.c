@@ -1203,13 +1203,30 @@ psmove_disconnect(PSMove *move)
 long
 psmove_util_get_ticks()
 {
-    /* XXX: Implement alternative for Windows */
+#ifdef WIN32
+    static LARGE_INTEGER startup_time = 0;
+    static LARGE_INTEGER frequency = 0;
+    LARGE_INTEGER now;
 
+    if (frequency == 0) {
+        psmove_return_val_if_fail(QueryPerformanceFrequency(&frequency), 0);
+    }
+
+    psmove_return_val_if_fail(QueryPerformanceCounter(&now), 0);
+
+    /* The first time this function gets called, we init startup_time */
+    if (startup_time == 0) {
+        startup_time.QuadPart = now.QuadPart;
+    }
+
+    return (long)((now.QuadPart - startup_time.QuadPart) * 1000 /
+            frequency.QuadPart);
+#else
     static long startup_time = 0;
     long now;
     struct timeval tv;
 
-    gettimeofday(&tv, NULL);
+    psmove_return_val_if_fail(gettimeofday(&tv, NULL) == 0, 0);
     now = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 
     /* The first time this function gets called, we init startup_time */
@@ -1218,6 +1235,7 @@ psmove_util_get_ticks()
     }
 
     return (now - startup_time);
+#endif
 }
 
 const char *
