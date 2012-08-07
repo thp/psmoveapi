@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include "opencv2/core/core_c.h"
+#include "opencv2/highgui/highgui_c.h"
+
 #include "psmove.h"
 #include "psmove_tracker.h"
 
@@ -61,9 +64,9 @@ int main(int arg, char** args) {
             psmove_set_leds(controllers[i], r, g, b);
             psmove_update_leds(controllers[i]);
 
-            int x, y, r;
+            float x, y, r;
             psmove_tracker_get_position(tracker, controllers[i], &x, &y, &r);
-            printf("x: %10d, y: %10d, r: %10d\n", x, y, r);
+            printf("x: %10.2f, y: %10.2f, r: %10.2f\n", x, y, r);
         }
     }
 

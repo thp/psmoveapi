@@ -3,7 +3,7 @@
 #include "psmove_tracker.h"
 #include "camera_control.h"
 
-void cc_backup_system_settings(CameraControl* cc, const char* file) {
+void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
 	HKEY hKey;
 	DWORD l = sizeof(DWORD);
 	DWORD AutoAEC = 0;
@@ -43,7 +43,7 @@ void cc_backup_system_settings(CameraControl* cc, const char* file) {
 	dictionary_del(ini);
 }
 
-void cc_restore_system_settings(CameraControl* cc, const char* file) {
+void camera_control_restore_system_settings(CameraControl* cc, const char* file) {
 	int NOT_FOUND = -1;
 	int val;
 	HKEY hKey;
@@ -92,7 +92,7 @@ void cc_restore_system_settings(CameraControl* cc, const char* file) {
 	iniparser_freedict(ini);
 }
 
-void cc_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
+void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
 		int brightness) {
 #if defined(USE_CL_DRIVER)
 	if (autoE >= 0)

@@ -82,7 +82,9 @@ void
 psmove_html_trace_clear()
 {
     tracker_trace.img_count = 0;
-    fclose(tracker_trace.fp);
+    if (tracker_trace.fp) {
+        fclose(tracker_trace.fp);
+    }
 
     time_t rawtime;
     struct tm* timeinfo;

@@ -127,7 +127,7 @@ class Orientation : public QThread
                             emit newcolor(255, 0, 0);
                         }
 
-                        int x, y, radius;
+                        float x, y, radius;
                         psmove_tracker_get_position(tracker, move, &x, &y, &radius);
                         emit newposition(radius, x, y,
                                 (qreal)psmove_get_trigger(move) / 255.);

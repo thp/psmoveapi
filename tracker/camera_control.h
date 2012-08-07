@@ -29,6 +29,10 @@
 #ifndef CAMERA_CONTROL_H_
 #define CAMERA_CONTROL_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "opencv2/core/core_c.h"
 
 struct _CameraControl;
@@ -61,9 +65,13 @@ camera_control_set_parameters(CameraControl* cc,
 void
 camera_control_backup_system_settings(CameraControl* cc,
         const char* file);
-void camera_control_restore_system_settings(CameraControl* cc,
+void
+camera_control_restore_system_settings(CameraControl* cc,
         const char* file);
 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* CAMERA_CONTROL_H_ */

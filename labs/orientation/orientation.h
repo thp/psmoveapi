@@ -89,7 +89,7 @@ class Orientation : public QThread
 
                     psmove_orientation_get_quaternion(orientation, &q0, &q1, &q2, &q3);
 
-                    int x, y, radius;
+                    float x, y, radius;
                     psmove_tracker_get_position(tracker, move, &x, &y, &radius);
                     emit this->orientation(q0, q1, q2, q3,
                             1.-((qreal)radius/150.),

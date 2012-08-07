@@ -1,6 +1,9 @@
 #ifdef __linux
 
 #include "camera_control.h"
+#include "camera_control_priv.h"
+
+#include "../external/iniparser/iniparser.h"
 
 #include <linux/videodev2.h>
 #include <libv4l2.h>
@@ -15,7 +18,7 @@ int open_v4l2_device(int id)
 }
 
 
-void cc_backup_system_settings(CameraControl* cc, const char* file) {
+void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
 	int AutoAEC = 0;
 	int AutoAGC = 0;
 	int Gain = 0;
@@ -47,7 +50,7 @@ void cc_backup_system_settings(CameraControl* cc, const char* file) {
 	}
 }
 
-void cc_restore_system_settings(CameraControl* cc, const char* file) {
+void camera_control_restore_system_settings(CameraControl* cc, const char* file) {
 	int NOT_FOUND = -1;
 	int AutoAEC = 0;
 	int AutoAGC = 0;
@@ -83,7 +86,7 @@ void cc_restore_system_settings(CameraControl* cc, const char* file) {
 	}
 }
 
-void cc_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
+void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
 		int brightness) {
 	int fd = open_v4l2_device(cc->cameraID);
 

@@ -104,10 +104,10 @@ class MovetyTouch : public QThread
                         QApplication::quit();
                     }
 
-                    int x, y;
+                    float x, y;
                     psmove_tracker_get_position(tracker, moves[i],
                             &x, &y, NULL);
-                    x = 640 - x;
+                    x = 640. - x;
 
                     bool pressed_now = ((psmove_get_buttons(moves[i]) & Btn_T) != 0);
                     bool moved_now = (x != states[i].x || y != states[i].y);

@@ -124,7 +124,7 @@ renderSphere(QVector3D vector)
 
     glPushMatrix();
     glTranslatef(vector.x()*10, vector.y()*10, vector.z()*10);
-    glutSolidSphere(1, 20, 20);
+    glutSolidSphere(1, 10, 10);
     glPopMatrix();
 
     glDisable(GL_LIGHTING);
@@ -250,6 +250,11 @@ View::paintGL()
     QMatrix4x4 mat;
     mat.rotate(m_quaternion);
 
+    if (m_buttons & (Btn_START | Btn_SELECT)) {
+        //qDebug() << m_time;
+        m_time += 0.01;
+    }
+
     if (m_buttons & Btn_START) {
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
@@ -267,9 +272,6 @@ View::paintGL()
         gluLookAt(eye.x(), eye.y(), eye.z(),
                 direction.x(), direction.y(), direction.z(),
                 up.x(), up.y(), up.z());
-    } else {
-        m_time = 0;
-        m_eye = QVector3D(150, 150, 150);
     }
 
     glColor3f(1, 0, 0);
@@ -292,21 +294,21 @@ View::paintGL()
     } else {
         glColor3f(1, 0, 1);
     }
-    //drawVector(m_accelerometer);
+    drawVector(m_accelerometer);
 
-    //glColor3f(1, 1, 1);
+    glColor3f(1, 1, 1);
 
     QVector3D ax_negative(mat.map(QVector3D(1, 0, 0)));
     ax_negative = QVector3D(ax_negative.y(), 0, 0);
-    //drawVector(ax_negative);
+    drawVector(ax_negative);
 
     QVector3D ay_negative(mat.map(QVector3D(0, 0, 1)));
     ay_negative = QVector3D(0, ay_negative.y(), 0);
-    //drawVector(ay_negative);
+    drawVector(ay_negative);
 
     QVector3D az_negative(mat.map(QVector3D(0, 1, 0)));
     az_negative = QVector3D(0, 0, az_negative.y());
-    //drawVector(az_negative);
+    drawVector(az_negative);
 
     QVector3D accelerometer_negative = QVector3D(
             ax_negative.x(),
@@ -333,7 +335,7 @@ View::paintGL()
         m_velocity = QVector3D(0, 0, 0);
         m_position *= .5;
     }
-    qDebug() << m_position;
+    //qDebug() << m_position;
     renderSphere(m_position);
 
     QList< QPair<QVector3D,QVector3D> > lines;
@@ -401,11 +403,18 @@ View::paintGL()
         renderSphere(sphere);
     }
 
+    glColor3f(1, 1, 0);
+    int a, b, c;
+    for (a=-5; a<=5; a+=4) {
+        for (b=-5; b<=5; b+=4) {
+            for (c=-5; c<=5; c+=4) {
+                renderSphere(QVector3D(a, b, c));
+            }
+        }
+    }
+
     glColor3f(0, 1, .5);
     renderSphere(m_accelerometer);
-
-    //qDebug() << m_time;
-    m_time += 0.01;
 }
 
 void
