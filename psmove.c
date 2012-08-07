@@ -41,7 +41,7 @@
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
-#  include <IOBluetooth/Bluetooth.h>
+#  include "psmove_osxsupport.h"
 #  include <sys/syslimits.h>
 #endif
 
@@ -740,19 +740,12 @@ psmove_pair(PSMove *move)
 
 
 #if defined(__APPLE__)
-    BluetoothDeviceAddress address;
-    IOReturn result;
-
-    result = IOBluetoothLocalDeviceReadAddress(&address, NULL, NULL, NULL);
-
-    if (result != kIOReturnSuccess) {
+    char *btaddr_string = macosx_get_btaddr();
+    if (!psmove_btaddr_from_string(btaddr_string, &btaddr)) {
+        free(btaddr_string);
         return 0;
     }
-
-    for (i=0; i<6; i++) {
-        btaddr[i] = address.data[i];
-    }
-
+    free(btaddr_string);
 #elif defined(__linux)
     hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
 #elif defined(_WIN32)

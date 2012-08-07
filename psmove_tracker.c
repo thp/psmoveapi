@@ -42,6 +42,7 @@
 #include "tracker_trace.h"
 #include "camera_control.h"
 
+#define DIMMING_FACTOR 1 // Factor to dim the color of the RGB LEDs
 #define BLINKS 4                 // number of diff images to create during calibration
 #define ROIS 5                   // the number of levels of regions of interest (roi)
 #define CALIB_MIN_SIZE 100		 // minimum size of the estimated glowing sphere during calibration process
@@ -372,9 +373,9 @@ enum PSMoveTracker_Status psmove_tracker_enable_with_color(PSMoveTracker *tracke
 int psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move, unsigned char *r, unsigned char *g, unsigned char *b) {
 	TrackedController* tc = tracked_controller_find(tracker->controllers, move);
 	if (tc != 0x0) {
-		*r = tc->dColor.val[2];
-		*g = tc->dColor.val[1];
-		*b = tc->dColor.val[0];
+		*r = tc->dColor.val[2] * DIMMING_FACTOR;
+		*g = tc->dColor.val[1] * DIMMING_FACTOR;
+		*b = tc->dColor.val[0] * DIMMING_FACTOR;
 		return 1;
 	} else
 		return 0;
@@ -734,7 +735,7 @@ void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move, int r, int g,
 	// the time to wait for the controller to set the color up
 	IplImage* frame;
 	// switch the LEDs ON and wait for the sphere to be fully lit
-	psmove_set_leds(move, r, g, b);
+	psmove_set_leds(move, r*DIMMING_FACTOR, g*DIMMING_FACTOR, b*DIMMING_FACTOR);
 	psmove_update_leds(move);
 
 	// take the first frame (sphere lit)

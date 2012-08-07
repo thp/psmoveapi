@@ -7,9 +7,11 @@
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
 
-#ifdef WIN32
+#if defined(WIN32)
 #	include <windows.h>
 #	include "CLEyeMulticam.h"
+#elif defined(__APPLE__)
+/* TODO: OSX Includes */
 #else
 #	include <fcntl.h>
 #	include <linux/videodev2.h>
@@ -17,7 +19,7 @@
 #endif
 
 struct _CameraControl {
-#ifdef WIN32
+#if defined(WIN32)
 	GUID device;		// used to open the camera on windows
 	CLEyeCameraInstance camera;
 	IplImage* frame;
@@ -254,7 +256,7 @@ void cc_backup_sytem_settings_win(CameraControl* cc, const char* file) {
 }
 
 void cc_backup_sytem_settings_linux(CameraControl* cc, const char* file) {
-#ifndef WIN32
+#if defined(__linux)
 
 	int AutoAEC = 0;
 	int AutoAGC = 0;
@@ -341,7 +343,7 @@ void cc_restore_sytem_settings_win(CameraControl* cc, const char* file) {
 }
 
 void cc_restore_sytem_settings_linux(CameraControl* cc, const char* file) {
-#ifndef WIN32
+#if defined(__linux)
 	int NOT_FOUND = -1;
 	int AutoAEC = 0;
 	int AutoAGC = 0;
@@ -401,7 +403,7 @@ void cc_set_parameters_win(CameraControl* cc, int autoE, int autoG, int autoWB, 
 }
 void cc_set_parameters_linux(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
 		int brightness) {
-#ifndef WIN32
+#if defined(__linux)
 	int fd = v4l2_open(cc->device, O_RDWR, 0);
 
 	if (fd != -1) {
