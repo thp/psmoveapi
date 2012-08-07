@@ -42,6 +42,10 @@ extern "C" {
 /* For now, we only allow 1 controller to be tracked */
 #define PSMOVE_TRACKER_MAX_CONTROLLERS 2
 
+/* Name of the environment variable used to pick a camera */
+#define PSMOVE_TRACKER_CAMERA_ENV "PSMOVE_TRACKER_CAMERA"
+
+
 /* Opaque data structure, defined only in psmove_tracker.c */
 struct _PSMoveTracker;
 typedef struct _PSMoveTracker PSMoveTracker;

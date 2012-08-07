@@ -19,6 +19,18 @@ Advanced features:
  * Orientation: Rotation tracking using gyro and accelerometer
 
 
+Environment variables:
+
+ PSMOVE_TRACKER_CAMERA
+
+     If set, this is the camera that will be used when using
+     psmove_tracker_new() instead of using auto-detection
+
+   Example: export PSMOVE_TRACKER_CAMERA=2  # Will use the 3rd camera
+
+
+
+
  |- Windows notes ----------- -- -  -
  | If you are using MinGW from the Qt SDK, you have to replace the file
  | libbthprops.a in mingw\lib\ with the file of the same name from the
