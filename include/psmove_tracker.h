@@ -59,6 +59,10 @@ enum PSMoveTracker_Status {
 /**
  * Create a new PS Move tracker and set up tracking
  *
+ * This will select the best camera for tracking (this means that if
+ * a PSEye is found, it will be used, otherwise the first available
+ * camera will be used as fallback).
+ *
  * Returns a new PSMoveTracker * instance or NULL (indicates error)
  **/
 ADDAPI PSMoveTracker *
@@ -68,8 +72,13 @@ ADDCALL psmove_tracker_new();
 /**
  * Create a new PS Move tracker and set up tracking
  *
- * This function can be used when multiple cameras are available.
+ * This function can be used when multiple cameras are available to
+ * force the use of a specific camera.
+ *
  * camera ... zero-based index of the camera to use
+ *
+ * Usually it's better to use psmove_tracker_new() and let the library
+ * choose the best camera, unless you have a good reason to use this.
  *
  * Returns a new PSMoveTracker * instance or NULL (indicates error)
  **/

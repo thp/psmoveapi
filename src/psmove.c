@@ -41,7 +41,7 @@
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
-#  include "psmove_osxsupport.h"
+#  include "platform/psmove_osxsupport.h"
 #  include <sys/syslimits.h>
 #endif
 

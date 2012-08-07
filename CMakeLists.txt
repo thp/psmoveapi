@@ -59,6 +59,7 @@ ELSE()
     list(APPEND PSMOVE_REQUIRED_LIBS ${OPENCV_LIBRARIES})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/linux/hid.c)
+    list(APPEND PSMOVEAPI_PLATFORM_SRC ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_linuxsupport.c)
 ENDIF()
 
 include_directories(${PSMOVEAPI_SOURCE_DIR}/include)

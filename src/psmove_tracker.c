@@ -41,6 +41,9 @@
 #include "tracker/tracked_color.h"
 #include "tracker/tracker_trace.h"
 
+#ifdef __linux
+#  include "platform/psmove_linuxsupport.h"
+#endif
 
 #define DIMMING_FACTOR 1  // LED color dimming for use in high exposure settings
 #define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
@@ -245,7 +248,22 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* t, PSMove* move, int r, i
 // -------- END: internal functions only
 
 PSMoveTracker *psmove_tracker_new() {
-	return psmove_tracker_new_with_camera(0);
+    int camera = 0;
+
+#ifdef __linux
+    /**
+     * On Linux, we might have multiple cameras (e.g. most laptops have
+     * built-in cameras), so we try looking for the one that is handled
+     * by the PSEye driver.
+     **/
+    camera = linux_find_pseye();
+    if (camera == -1) {
+        /* Could not find the PSEye - fallback to first camera */
+        camera = 0;
+    }
+#endif
+
+    return psmove_tracker_new_with_camera(camera);
 }
 
 PSMoveTracker *
