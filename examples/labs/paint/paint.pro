@@ -10,11 +10,8 @@ HEADERS += paintview.h
 
 HEADERS += orientation.h
 
-DEPENDPATH += ../..
-INCLUDEPATH += ../..
+DEPENDPATH += ../../../include
+INCLUDEPATH += ../../../include
 
-CONFIG += link_pkgconfig
-PKGCONFIG += opencv
-
-LIBS += -L../../build/ -lpsmoveapi
+LIBS += -L../../../build/ -lpsmoveapi
 

@@ -12,8 +12,8 @@ HEADERS += view.h
 
 HEADERS += orientation.h
 
-DEPENDPATH += ../..
-INCLUDEPATH += ../..
+DEPENDPATH += ../../../include
+INCLUDEPATH += ../../../include
 
-LIBS += -L../../build/ -lpsmoveapi -lGLU -lglut
+LIBS += -L../../../build/ -lpsmoveapi -lGLU -lglut
 

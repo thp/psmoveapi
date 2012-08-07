@@ -47,10 +47,13 @@ FORMS    += psmovetestgui.ui \
 
 RESOURCES +=
 
-INCLUDEPATH += ../../
-INCLUDEPATH += ../../qt
+DEPENDPATH += ../../../include
+INCLUDEPATH += ../../../include
 
-LIBS += -L../../build -lpsmoveapi -L../../build/qt -lpsmoveapiqt
+DEPENDPATH += ../../../bindings/qt
+INCLUDEPATH += ../../../bindings/qt
+
+LIBS += -L../../../build -lpsmoveapi -L../../../build/bindings/qt -lpsmoveapiqt
 
 macx {
     ICON = psmove.icns

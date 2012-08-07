@@ -16,11 +16,8 @@ HEADERS += eventmapper.h
 HEADERS += movetytouch.h
 HEADERS += debugoutput.h
 
-DEPENDPATH += ../..
-INCLUDEPATH += ../..
+DEPENDPATH += ../../../include
+INCLUDEPATH += ../../../include
 
-CONFIG += link_pkgconfig
-PKGCONFIG += opencv
-
-LIBS += -L../../build/ -lpsmoveapi
+LIBS += -L../../../build/ -lpsmoveapi
 
