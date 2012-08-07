@@ -73,6 +73,7 @@ psmove_html_trace_clear()
     tracker_trace.img_count = 0;
     if (tracker_trace.fp) {
         fclose(tracker_trace.fp);
+        tracker_trace.fp = NULL;
     }
 
     time_t rawtime;
