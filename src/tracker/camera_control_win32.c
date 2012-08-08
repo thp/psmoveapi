@@ -1,9 +1,15 @@
 #ifdef WIN32
 
+#include <stdio.h>
+
+#include "../../external/iniparser/iniparser.h"
+
 #include "psmove_tracker.h"
 #include "camera_control.h"
+#include "camera_control_priv.h"
 
 void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
+#ifndef CAMERA_CONTROL_USE_CL_DRIVER
 	HKEY hKey;
 	DWORD l = sizeof(DWORD);
 	DWORD AutoAEC = 0;
@@ -41,9 +47,11 @@ void camera_control_backup_system_settings(CameraControl* cc, const char* file) 
 	iniparser_set_int(ini, "PSEye:WhiteBalanceR", wbG);
 	iniparser_save_ini(ini, file);
 	dictionary_del(ini);
+#endif
 }
 
 void camera_control_restore_system_settings(CameraControl* cc, const char* file) {
+#ifndef CAMERA_CONTROL_USE_CL_DRIVER
 	int NOT_FOUND = -1;
 	int val;
 	HKEY hKey;
@@ -90,11 +98,12 @@ void camera_control_restore_system_settings(CameraControl* cc, const char* file)
 		RegSetValueExA(hKey, "WhiteBalanceG", 0, REG_DWORD, (CONST BYTE*) &val, l);
 
 	iniparser_freedict(ini);
+#endif
 }
 
 void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
 		int brightness) {
-#if defined(USE_CL_DRIVER)
+#if defined(CAMERA_CONTROL_USE_CL_DRIVER)
 	if (autoE >= 0)
 		CLEyeSetCameraParameter(cc->camera, CLEYE_AUTO_EXPOSURE, autoE > 0);
 	if (autoG >= 0)

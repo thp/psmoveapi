@@ -12,8 +12,9 @@
 #endif
 
 #if defined(CAMERA_CONTROL_USE_CL_DRIVER)
-#    define CL_DRIVER_REG_PATH "Software\\PS3EyeCamera\\Settings"
 #    include "../external/CLEye/CLEyeMulticam.h"
+#else
+#    define CL_DRIVER_REG_PATH "Software\\PS3EyeCamera\\Settings"
 #endif
 
 

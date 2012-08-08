@@ -18,6 +18,9 @@ set(PSMOVEAPI_VERSION_SONAME "${PSMOVEAPI_MAJOR_VERSION}")
 set(PSMOVE_REQUIRED_LIBS)
 set(PSMOVEAPI_PLATFORM_SRC)
 
+# Put any other libraries that you might need in here
+link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libs)
+
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(IOKIT IOKit)
     find_library(COREFOUNDATION CoreFoundation)
@@ -36,7 +39,12 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
     list(APPEND MOVED_CLIENT_REQUIRED_LIBS ws2_32)
 
-    # XXX: OpenCV is missing here
+    # XXX: Make this optional
+    FIND_PACKAGE(OpenCV REQUIRED)
+    list(APPEND PSMOVE_REQUIRED_LIBS ${OpenCV_LIBS})
+
+    # If you want to use the CL Eye SDK, uncomment the following line
+    #list(APPEND PSMOVE_REQUIRED_LIBS CLEyeMulticam)
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/windows/hid.c)
 ELSE()

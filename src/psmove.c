@@ -38,6 +38,7 @@
 #include <wchar.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
@@ -52,7 +53,6 @@
 #  include <linux/limits.h>
 #  include <pthread.h>
 #  include <unistd.h>
-#  include <sys/stat.h>
 #  define PSMOVE_USE_PTHREADS
 #endif
 
@@ -60,6 +60,7 @@
 #  include <windows.h>
 #  include <Bthsdpdef.h>
 #  include <BluetoothAPIs.h>
+#  define PATH_MAX MAX_PATH
 #endif
 
 #include "daemon/moved_client.h"
@@ -1206,18 +1207,18 @@ long
 psmove_util_get_ticks()
 {
 #ifdef WIN32
-    static LARGE_INTEGER startup_time = 0;
-    static LARGE_INTEGER frequency = 0;
+    static LARGE_INTEGER startup_time = { .QuadPart = 0 };
+    static LARGE_INTEGER frequency = { .QuadPart = 0 };
     LARGE_INTEGER now;
 
-    if (frequency == 0) {
+    if (frequency.QuadPart == 0) {
         psmove_return_val_if_fail(QueryPerformanceFrequency(&frequency), 0);
     }
 
     psmove_return_val_if_fail(QueryPerformanceCounter(&now), 0);
 
     /* The first time this function gets called, we init startup_time */
-    if (startup_time == 0) {
+    if (startup_time.QuadPart == 0) {
         startup_time.QuadPart = now.QuadPart;
     }
 
@@ -1246,8 +1247,8 @@ psmove_util_get_data_dir()
     static char dir[PATH_MAX];
 
     if (strlen(dir) == 0) {
-        strncpy(dir, getenv("HOME"), PATH_MAX);
-        strncat(dir, "/.psmoveapi/", PATH_MAX);
+        strncpy(dir, getenv("HOME"), sizeof(dir));
+        strncat(dir, "/.psmoveapi/", sizeof(dir));
     }
 
     return dir;
@@ -1261,7 +1262,11 @@ psmove_util_get_file_path(const char *filename)
 
     struct stat st;
     if (stat(parent, &st) != 0) {
+#ifdef _WIN32
+        psmove_return_val_if_fail(mkdir(parent) != 0, NULL);
+#else
         psmove_return_val_if_fail(mkdir(parent, 0777) != 0, NULL);
+#endif
     }
 
     result = malloc(strlen(parent) + strlen(filename) + 1);

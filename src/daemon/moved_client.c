@@ -92,7 +92,11 @@ moved_client_create(const char *hostname)
 
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);
+#ifdef _WIN32
+#   warning "Need a call to WSAStringToAddress"
+#else
     assert(inet_pton(AF_INET, hostname, &(client->moved_addr.sin_addr)) != 0);
+#endif
 
     return client;
 }
