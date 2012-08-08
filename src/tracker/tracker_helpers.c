@@ -246,7 +246,6 @@ int th_file_exists(const char* file) {
 	int ret = fp != 0x0;
 	if (fp)
 		fclose(fp);
-
 	return ret;
 }
 

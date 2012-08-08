@@ -120,7 +120,7 @@ target_link_libraries(moved_client_test ${MOVED_CLIENT_REQUIRED_LIBS})
 # C examples
 foreach(PSMOVE_EXAMPLE example multiple psmovepair dump_calibration linmcfake)
     add_executable(${PSMOVE_EXAMPLE} examples/c/${PSMOVE_EXAMPLE}.c)
-    target_link_libraries(${PSMOVE_EXAMPLE} psmoveapi m)
+    target_link_libraries(${PSMOVE_EXAMPLE} psmoveapi)
 endforeach(PSMOVE_EXAMPLE)
 
 # C test programs
@@ -128,6 +128,10 @@ foreach(PSMOVE_TEST led_update read_performance calibration tracker)
     add_executable(test_${PSMOVE_TEST} examples/c/test_${PSMOVE_TEST}.c)
     target_link_libraries(test_${PSMOVE_TEST} psmoveapi)
 endforeach(PSMOVE_TEST)
+
+# C Camera calibration utility
+add_executable(tracker_camera_calibration examples/c/tracker_camera_calibration.c)
+target_link_libraries(tracker_camera_calibration  psmoveapi)
 
 # These will be set to "Yes" below if the dependencies are found
 set(BUILD_PYTHON_BINDINGS "No ")

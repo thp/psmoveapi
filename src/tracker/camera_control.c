@@ -18,7 +18,6 @@ camera_control_new(int cameraID)
 #if defined(CAMERA_CONTROL_USE_CL_DRIVER)
 	int w, h;
 	int cams = CLEyeGetCameraCount();
-
 	if (cams <= cameraID) {
             free(cc);
             return NULL;
@@ -33,7 +32,6 @@ camera_control_new(int cameraID)
 	// Depending on color mode chosen, create the appropriate OpenCV image
 	cc->frame = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 4);
 	cc->frame3ch = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 3);
-
 	CLEyeCameraStart(cc->camera);
 #else
 	cc->capture = cvCaptureFromCAM(cc->cameraID);
@@ -42,7 +40,6 @@ camera_control_new(int cameraID)
 	cvSetCaptureProperty(cc->capture,
                 CV_CAP_PROP_FRAME_HEIGHT, PSMOVE_TRACKER_POSITION_Y_MAX);
 #endif
-
 	return cc;
 }
 

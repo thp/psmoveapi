@@ -61,6 +61,9 @@
 #  include <Bthsdpdef.h>
 #  include <BluetoothAPIs.h>
 #  define PATH_MAX MAX_PATH
+#  define ENV_USER_HOME "APPDATA"
+#else
+#  define ENV_USER_HOME "HOME"
 #endif
 
 #include "daemon/moved_client.h"
@@ -1245,12 +1248,10 @@ const char *
 psmove_util_get_data_dir()
 {
     static char dir[PATH_MAX];
-
     if (strlen(dir) == 0) {
-        strncpy(dir, getenv("HOME"), sizeof(dir));
+        strncpy(dir, getenv(ENV_USER_HOME), sizeof(dir));
         strncat(dir, "/.psmoveapi/", sizeof(dir));
     }
-
     return dir;
 }
 
@@ -1259,7 +1260,6 @@ psmove_util_get_file_path(const char *filename)
 {
     const char *parent = psmove_util_get_data_dir();
     char *result;
-
     struct stat st;
     if (stat(parent, &st) != 0) {
 #ifdef _WIN32
@@ -1268,11 +1268,9 @@ psmove_util_get_file_path(const char *filename)
         psmove_return_val_if_fail(mkdir(parent, 0777) != 0, NULL);
 #endif
     }
-
     result = malloc(strlen(parent) + strlen(filename) + 1);
     strcpy(result, parent);
     strcat(result, filename);
-
     return result;
 }
 
