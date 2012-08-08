@@ -47,6 +47,7 @@
 
 #define DIMMING_FACTOR 1  // LED color dimming for use in high exposure settings
 #define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
+//#define DEBUG_WINDOWS // shall additional windows be shown
 #define GOOD_EXPOSURE 2051			// a very low exposure that was found to be good for tracking
 #define ROIS 6                   	// the number of levels of regions of interest (roi)
 #define BLINKS 4                 	// number of diff images to create during calibration
@@ -696,7 +697,7 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 			// restore the biggest contour
 			cvSet(roi_m, th_black, 0x0);
 			cvDrawContours(roi_m, contourBest, th_white, th_white, -1, CV_FILLED, 8, cvPoint(0, 0));
-#ifdef PRINT_DEBUG_STATS
+#ifdef DEBUG_WINDOWS
 			if (tc->next == 0x0)
 				cvShowImage("0", roi_m);
 			else
