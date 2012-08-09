@@ -143,11 +143,14 @@ void tracked_controller_remove(TrackedController** head, PSMove* data) {
 void tracked_controller_save_colors(TrackedController* head) {
 	char key[128];
 	char value[128];
-	char *filename = psmove_util_get_file_path(COLOR_MAPPING_FILE);
+
+        char *filename = psmove_util_get_file_path(COLOR_MAPPING_FILE);
+
 	dictionary* ini = iniparser_load(filename);
 	iniparser_set(ini, "ColorMapping", 0);
 
 	TrackedController* tmp = head;
+
 	for (; tmp != 0x0; tmp = tmp->next) {
 		sprintf(key, "ColorMapping:%X%X%X", (int) tmp->dColor.val[2], (int) tmp->dColor.val[1], (int) tmp->dColor.val[0]);
 		sprintf(value, "%X%X%X", (int) tmp->eFColor.val[2], (int) tmp->eFColor.val[1], (int) tmp->eFColor.val[0]);
@@ -155,15 +158,15 @@ void tracked_controller_save_colors(TrackedController* head) {
 	}
 	iniparser_save_ini(ini, filename);
 	dictionary_del(ini);
-    free(filename);
+        free(filename);
 }
 
 int tracked_controller_load_color(TrackedController* tc) {
 	int loaded = 0;
 	char key[128];
-    char *filename = psmove_util_get_file_path(COLOR_MAPPING_FILE);
+        char *filename = psmove_util_get_file_path(COLOR_MAPPING_FILE);
 	dictionary* ini = iniparser_load(filename);
-    free(filename);
+        free(filename);
 	sprintf(key, "ColorMapping:%X%X%X", (int) tc->dColor.val[2], (int) tc->dColor.val[1], (int) tc->dColor.val[0]);
 	if (iniparser_find_entry(ini, key)) {
 		char* sValue = iniparser_getstring(ini, key, "");
@@ -181,8 +184,8 @@ int tracked_controller_load_color(TrackedController* tc) {
 		tc->eFColorHSV = th_brg2hsv(tc->eFColor);
 
 		loaded = 1;
-	}
-	dictionary_del(ini);
+	} else
+		dictionary_del(ini);
 	return loaded;
 }
 

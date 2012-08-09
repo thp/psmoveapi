@@ -7,7 +7,7 @@ include_directories(${PSMOVEAPI_SOURCE_DIR}/external/hidapi/hidapi)
 
 add_definitions(-DPSMOVE_DEBUG)
 add_definitions(-g -Wall)
-add_definitions(-O2)
+add_definitions(-O0)
 
 set(PSMOVEAPI_MAJOR_VERSION "2")
 set(PSMOVEAPI_MINOR_VERSION "0")
@@ -44,7 +44,7 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVE_REQUIRED_LIBS ${OpenCV_LIBS})
 
     # If you want to use the CL Eye SDK, uncomment the following line
-    #list(APPEND PSMOVE_REQUIRED_LIBS CLEyeMulticam)
+    list(APPEND PSMOVE_REQUIRED_LIBS CLEyeMulticam)
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/windows/hid.c)
 ELSE()
