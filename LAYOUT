@@ -15,6 +15,7 @@ examples - Applications and utilities
         examples/labs/paint - Simple multi-controller paint example
         examples/labs/playbackspeed - Turntable playback speed control
         examples/labs/movetytouch - Multitouch-like image rotoscale/drag
+        examples/labs/x11mouse - Use the PS Move as a mouse under X11
     examples/python - Examples and utilities using the Python bindings
     examples/qt - Example applications using the Qt bindings (psmoveapiqt)
 

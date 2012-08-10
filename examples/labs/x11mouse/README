@@ -1,0 +1,10 @@
+
+This application can simulate mouse movement and clicks under X11.
+
+See the source code for button mappings.
+
+Requirements:
+
+   - PS Move API built in "../../../build/" or installed system-wide
+   - libxdo-dev (from www.semicomplete.com/blog/projects/xdotool/)
+
