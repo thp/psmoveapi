@@ -12,14 +12,14 @@
 #define SCALE(v) (14*v)
 
 /* Macro to generate code to map a PS Move button to a mouse button */
-#define MAP_PSMOVE_TO_MOUSE(psm, mou, mod) \
+#define MAP_PSMOVE_INPUT(psm, mou, key) \
     { \
             if (pressed & (psm)) { \
-                if (mod) xdo_keysequence_down(xdo, CURRENTWINDOW, (mod), 0); \
-                xdo_mousedown(xdo, CURRENTWINDOW, (mou)); \
+                if (key) xdo_keysequence_down(xdo, CURRENTWINDOW, (key), 0); \
+                if (mou) xdo_mousedown(xdo, CURRENTWINDOW, (mou)); \
             } else if (released & (psm)) { \
-                xdo_mouseup(xdo, CURRENTWINDOW, (mou)); \
-                if (mod) xdo_keysequence_up(xdo, CURRENTWINDOW, (mod), 0); \
+                if (mou) xdo_mouseup(xdo, CURRENTWINDOW, (mou)); \
+                if (key) xdo_keysequence_up(xdo, CURRENTWINDOW, (key), 0); \
             } \
     }
 
@@ -52,6 +52,7 @@ main(int argc, char *argv[])
     }
 
     int old_buttons = 0;
+    int position_locked = 0;
 
     while (1) {
         while (psmove_poll(move)) {
@@ -68,17 +69,35 @@ main(int argc, char *argv[])
              *  - Move .......... middle mouse button
              *  - Circle o ...... right mouse button
              **/
-            MAP_PSMOVE_TO_MOUSE(Btn_CROSS, 1, NULL);
-            MAP_PSMOVE_TO_MOUSE(Btn_MOVE, 2, NULL);
-            MAP_PSMOVE_TO_MOUSE(Btn_CIRCLE, 3, NULL);
+            MAP_PSMOVE_INPUT(Btn_CROSS, 1, NULL);
+            MAP_PSMOVE_INPUT(Btn_MOVE, 2, NULL);
+            MAP_PSMOVE_INPUT(Btn_CIRCLE, 3, NULL);
 
             /**
-             * Additional mappings (depends on WM):
-             *  - Square [] ..... move window under cursor
-             *  - Triangle /\ ... resize window under cursor
+             * Keyboard mappings:
+             *  - Square [] ..... left cursor key
+             *  - Trigger ....... alt (for combinations)
+             *  - Select ........ esc
              **/
-            MAP_PSMOVE_TO_MOUSE(Btn_SQUARE, 1, "alt");
-            MAP_PSMOVE_TO_MOUSE(Btn_TRIANGLE, 2, "alt");
+            MAP_PSMOVE_INPUT(Btn_SQUARE, 0, "Left");
+            MAP_PSMOVE_INPUT(Btn_T, 0, "Alt_L");
+            MAP_PSMOVE_INPUT(Btn_SELECT, 0, "Escape");
+
+            /**
+             * For use with the Compiz "Annotate" plugin:
+             *  - Triangle /\ ... draw annotation
+             *  - Start ......... clear annotation
+             **/
+            MAP_PSMOVE_INPUT(Btn_TRIANGLE, 1, "Alt+Super_L");
+            MAP_PSMOVE_INPUT(Btn_START, 0, "Alt+Super_L+k");
+
+            /**
+             * Special functions (useful for presentations):
+             *  - PS button ..... toggle mouse position locking
+             **/
+            if (pressed & Btn_PS) {
+                position_locked = !position_locked;
+            }
 
             old_buttons = buttons;
 
@@ -88,7 +107,7 @@ main(int argc, char *argv[])
             int dx = SCALE(-output[5]);
             int dy = SCALE(-output[3]);
 
-            if (dx || dy) {
+            if ((dx || dy) && !position_locked) {
                 xdo_mousemove_relative(xdo, dx, dy);
             }
         }
