@@ -20,7 +20,7 @@ int main(int arg, char** args) {
     printf("%s\n", "OK");
     printf("### Found %d controllers.\n", count);
 
-    void* frame;
+    IplImage* frame;
     unsigned char r, g, b;
     int result;
 
@@ -49,15 +49,12 @@ int main(int arg, char** args) {
         if ((cvWaitKey(10) & 255) == 27) {
             break;
         }
-
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, NULL);
-
         frame = psmove_tracker_get_image(tracker);
         if (frame) {
             cvShowImage("live camera feed", frame);
         }
-
         for (i=0; i<count; i++) {
             psmove_tracker_get_color(tracker, controllers[i], &r, &g, &b);
             psmove_set_leds(controllers[i], r, g, b);
@@ -73,6 +70,7 @@ int main(int arg, char** args) {
         psmove_disconnect(controllers[i]);
     }
 
+    psmove_tracker_free(tracker);
     return 0;
 }
 

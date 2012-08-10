@@ -20,12 +20,12 @@
 
 struct _CameraControl {
 	int cameraID;
-	IplImage* frame;
 	IplImage* frame3chUndistort;
 
 #if defined(CAMERA_CONTROL_USE_CL_DRIVER)
 	CLEyeCameraInstance camera;
 	IplImage* frame3ch;
+	IplImage* frame4ch;
 	PBYTE pCapBuffer;
 #endif
 
