@@ -21,3 +21,8 @@ Here are some files that might be useful for users of the library:
  after this script has been run, but it won't tamper with the state
  files directly.
 
+ Android.mk:
+ Example makefile for use with the Android NDK and/or agcc. Can be
+ used to cross-compile the example application to run on a rooted
+ Android device, also using bluez-register-psmove.
+
