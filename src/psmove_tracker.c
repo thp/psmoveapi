@@ -319,8 +319,8 @@ psmove_tracker_new_with_camera(int camera) {
 	// use static adaptive exposure
 
 	// backup the systems settings, if not already backuped
-	if (!th_file_exists(PSEYE_BACKUP_FILE)) {
-            char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
+	char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
+	if (!th_file_exists(filename)) {
             camera_control_backup_system_settings(t->cc, filename);
             free(filename);
         }
@@ -399,7 +399,6 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* t, PSMove* move, int r, i
 			}
 
 			psmove_tracker_update_controller(t, tc, &q1, 0, &q3);
-			psmove_tracker_draw_tracking_stats(t);
 
 			// if the quality is higher than 83% and the blobs radius bigger than 8px
 			result = result && q1 > 0.83 && q3 > 8;
@@ -912,8 +911,8 @@ int psmove_tracker_get_position(PSMoveTracker *tracker, PSMove *move, float *x, 
 void psmove_tracker_free(PSMoveTracker *tracker) {
 	tracked_controller_save_colors(tracker->controllers);
 
-	if (th_file_exists(PSEYE_BACKUP_FILE)) {
-            char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
+	char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
+	if (th_file_exists(filename)) {
             camera_control_restore_system_settings(tracker->cc, filename);
             free(filename);
         }

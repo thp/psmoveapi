@@ -20,7 +20,7 @@ int main(int arg, char** args) {
     printf("%s\n", "OK");
     printf("### Found %d controllers.\n", count);
 
-    void* frame;
+    void *frame;
     unsigned char r, g, b;
     int result;
 
@@ -73,6 +73,7 @@ int main(int arg, char** args) {
         psmove_disconnect(controllers[i]);
     }
 
+    psmove_tracker_free(tracker);
     return 0;
 }
 
