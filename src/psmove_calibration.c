@@ -104,7 +104,9 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
     assert(calibration != NULL);
     char *data = calibration->usb_calibration;
     int orientation;
-    int x, y, z;
+    int x, y, z, t;
+
+    printf("\n");
 
     /* http://code.google.com/p/moveonpc/wiki/CalibrationData */
 
@@ -115,12 +117,34 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
         printf("# Orientation #%d: (%5d | %5d | %5d)\n", orientation, x, y, z);
     }
 
+    printf("\n");
+
     for (orientation=0; orientation<3; orientation++) {
         x = psmove_calibration_decode(data, 0x46 + 8*orientation);
         y = psmove_calibration_decode(data, 0x46 + 8*orientation + 2);
         z = psmove_calibration_decode(data, 0x46 + 8*orientation + 4);
         printf("# Gyro %c, 80 rpm: (%5d | %5d | %5d)\n", "XYZ"[orientation], x, y, z);
     }
+
+    printf("\n");
+
+    t = psmove_calibration_decode(data, 0x28);
+    x = psmove_calibration_decode(data, 0x2a);
+    y = psmove_calibration_decode(data, 0x2a + 2);
+    z = psmove_calibration_decode(data, 0x2a + 4);
+    printf("# Temperature at 0x28: (%5d)\n", t);
+    printf("# Vector at 0x2a: (%5d | %5d | %5d)\n", x, y, z);
+
+    printf("\n");
+
+    t = psmove_calibration_decode(data, 0x30);
+    x = psmove_calibration_decode(data, 0x32);
+    y = psmove_calibration_decode(data, 0x32 + 2);
+    z = psmove_calibration_decode(data, 0x32 + 4);
+    printf("# Temperature at 0x30: (%5d)\n", t);
+    printf("# Vector at 0x32: (%5d | %5d | %5d)\n", x, y, z);
+
+    printf("\n");
 
     printf("# byte at 0x3F: %02hhx\n", data[0x3F]);
 }
@@ -161,14 +185,19 @@ psmove_calibration_get_usb_gyro_values(PSMoveCalibration *calibration,
     assert(psmove_calibration_supported(calibration));
     char *data = calibration->usb_calibration;
 
+    int bx, by, bz; /* Bias(?) values, need to sustract those */
+    bx = psmove_calibration_decode(data, 0x2a);
+    by = psmove_calibration_decode(data, 0x2a + 2);
+    bz = psmove_calibration_decode(data, 0x2a + 4);
+
     int orientation;
 
     orientation = 0;
-    *x = psmove_calibration_decode(data, 0x46 + 8*orientation);
+    *x = psmove_calibration_decode(data, 0x46 + 8*orientation) - bx;
     orientation = 1;
-    *y = psmove_calibration_decode(data, 0x46 + 8*orientation + 2);
+    *y = psmove_calibration_decode(data, 0x46 + 8*orientation + 2) - by;
     orientation = 2;
-    *z = psmove_calibration_decode(data, 0x46 + 8*orientation + 4);
+    *z = psmove_calibration_decode(data, 0x46 + 8*orientation + 4) - bz;
 }
 
 void
