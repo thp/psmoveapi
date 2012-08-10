@@ -1,0 +1,15 @@
+
+This application expects that the PS Move API has been
+build in "build/" in the root source folder.
+
+After you have built the PS Move API in this way, you can
+use "qmake" to generate a Makefile and then "make" to build
+the application.
+
+Additional requirements: Qt Mobility 1.2 (QtMultimediaKit)
+
+To use this example, you have to place a file called "input.wav"
+in the current working directory. This file will be played back,
+and you can control the playback speed by placing your controller
+on a turntable (45 RPM) and modifying its rotational speed.
+

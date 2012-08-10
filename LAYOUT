@@ -13,6 +13,7 @@ examples - Applications and utilities
         examples/labs/accelerometer3d - OpenGL Orientation visualization
         examples/labs/orientation - Qt3D Teapot Orientation example
         examples/labs/paint - Simple multi-controller paint example
+        examples/labs/playbackspeed - Turntable playback speed control
         examples/labs/movetytouch - Multitouch-like image rotoscale/drag
     examples/python - Examples and utilities using the Python bindings
     examples/qt - Example applications using the Qt bindings (psmoveapiqt)
