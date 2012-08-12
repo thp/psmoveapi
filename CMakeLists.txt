@@ -57,8 +57,27 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
     list(APPEND MOVED_CLIENT_REQUIRED_LIBS ws2_32)
 
-    # If you want to use the CL Eye SDK, uncomment the following line
-    #list(APPEND PSMOVE_REQUIRED_LIBS CLEyeMulticam)
+    option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
+
+    set(BUILD_WITH_CL_SDK "No ")
+    IF(PSMOVE_USE_CL_EYE_SDK)
+        find_path(CL_EYE_SDK_PATH Bin/CLEyeMulticam.dll
+            HINTS "C:/Program Files/Code Laboratories/CL-Eye Platform SDK"
+            "C:/Program Files (x86)/Code Laboratories/CL-Eye Platform SDK")
+        IF(CL_EYE_SDK_PATH)
+            add_definitions(-DCAMERA_CONTROL_USE_CL_DRIVER)
+            list(APPEND PSMOVE_REQUIRED_LIBS CLEyeMulticam)
+            file(COPY ${CL_EYE_SDK_PATH}/Bin/CLEyeMulticam.dll
+                DESTINATION ${PSMOVEAPI_SOURCE_DIR}/external/libs)
+            set(BUILD_WITH_CL_SDK "Yes")
+
+            # FIXME: Figure out why the optimizations result in a bad build
+            # and remove this workaround (we always want to build with -O2)
+            remove_definitions(-O2)
+            add_definitions(-O0)
+            MESSAGE(" +++  WARNING: Compiler optimizations are disabled when using 'PSMOVE_USE_CL_EYE_SDK'.  +++")
+        ENDIF()
+    ENDIF()
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/windows/hid.c)
 ELSE()
@@ -211,6 +230,9 @@ MESSAGE("      +------ PS Move API Build Configuration ------+ ")
 MESSAGE("      |  Python bindings: " ${PADDING} ${BUILD_PYTHON_BINDINGS} "  |")
 MESSAGE("      |  Java bindings:   " ${PADDING} ${BUILD_JAVA_BINDINGS} "  |")
 MESSAGE("      |  Qt bindings:     " ${PADDING} ${BUILD_QT_BINDINGS} "  |")
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+MESSAGE("      |  Use CL Eye SDK:  " ${PADDING} ${BUILD_WITH_CL_SDK} "  |")
+ENDIF()
 MESSAGE("      +---------------------------------------------+ ")
 MESSAGE("      |  Tracker module:  " ${PADDING} ${BUILD_PSMOVE_TRACKER} "  |")
 MESSAGE("      +---------------------------------------------+ ")

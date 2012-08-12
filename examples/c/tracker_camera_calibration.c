@@ -138,9 +138,10 @@ int main(int arg, char** args) {
 		CV_MAT_ELEM( *intrinsic_matrix, float, 1, 1 ) = 1.0;
 
 		// Calibrate the camera
+		CvTermCriteria default_termination = cvTermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 30, DBL_EPSILON);
 		cvCalibrateCamera2(object_points2, image_points2, point_counts2,
                         cvGetSize(image), intrinsic_matrix, distortion_coeffs,
-                        NULL, NULL, CV_CALIB_FIX_ASPECT_RATIO);
+                        NULL, NULL, CV_CALIB_FIX_ASPECT_RATIO, default_termination);
 
 		// Save the intrinsics and distortions
 		CvAttrList empty_attribues = cvAttrList(0, 0);

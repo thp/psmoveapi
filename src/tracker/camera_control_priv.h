@@ -7,8 +7,6 @@
 
 #if defined(WIN32)
 #    include <windows.h>
-/* Comment out the next line to use pure OpenCV on Windows, too */
-#    define CAMERA_CONTROL_USE_CL_DRIVER
 #endif
 
 #if defined(CAMERA_CONTROL_USE_CL_DRIVER)

@@ -49,17 +49,17 @@
 #  include "platform/psmove_linuxsupport.h"
 #endif
 
-#define DIMMING_FACTOR 1  // LED color dimming for use in high exposure settings
+#define DIMMING_FACTOR 1  			// LED color dimming for use in high exposure settings
 #define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
-//#define DEBUG_WINDOWS // shall additional windows be shown
+#define DEBUG_WINDOWS 			// shall additional windows be shown
 #define GOOD_EXPOSURE 2051			// a very low exposure that was found to be good for tracking
-#define ROIS 6                   	// the number of levels of regions of interest (roi)
+#define ROIS 4                   	// the number of levels of regions of interest (roi)
 #define BLINKS 4                 	// number of diff images to create during calibration
 #define BLINK_DELAY 50             	// number of milliseconds to wait between a blink
 #define CALIB_MIN_SIZE 50		 	// minimum size of the estimated glowing sphere during calibration process (in pixel)
 #define CALIB_SIZE_STD 10	     	// maximum standard deviation (in %) of the glowing spheres found during calibration process
 #define CALIB_MAX_DIST 30		 	// maximum displacement of the separate found blobs
-#define COLOR_FILTER_RANGE_H 5		// +- H-Range of the hsv-colorfilter
+#define COLOR_FILTER_RANGE_H 12		// +- H-Range of the hsv-colorfilter
 #define COLOR_FILTER_RANGE_S 85		// +- s-Range of the hsv-colorfilter
 #define COLOR_FILTER_RANGE_V 85		// +- v-Range of the hsv-colorfilter
 #define CAMERA_FOCAL_LENGTH 28.3	// focal lenght constant of the ps-eye camera in (degrees)
@@ -343,14 +343,16 @@ psmove_tracker_new_with_camera(int camera) {
 	}
 
 	// prepare ROI data structures
-	t->roiI[0] = cvCreateImage(cvGetSize(frame), frame->depth, 3);
-	t->roiM[0] = cvCreateImage(cvGetSize(frame), frame->depth, 1);
-	int b = (MIN(t->roiI[0]->height, t->roiI[0]->width) / ROIS);
+	int w = frame->width/2;
+	int h = frame->height/2;
+	int b = MIN(w, h);	
+	t->roiI[0] = cvCreateImage(cvSize(w, h), frame->depth, 3);
+	t->roiM[0] = cvCreateImage(cvSize(w, h), frame->depth, 1);
 	for (i = 1; i < ROIS; i++) {
-		IplImage* z = t->roiI[i - 1];
-		int h = b * (ROIS - i);
-		t->roiI[i] = cvCreateImage(cvSize(h, h), z->depth, 3);
-		t->roiM[i] = cvCreateImage(cvSize(h, h), z->depth, 1);
+		b = b * 0.7f;
+		printf("%d  %dx%d\n", b, w, h);
+		t->roiI[i] = cvCreateImage(cvSize(b,b), frame->depth, 3);
+		t->roiM[i] = cvCreateImage(cvSize(b,b), frame->depth, 1);
 	}
 
 	// prepare structure used for
@@ -410,7 +412,6 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* t, PSMove* move, int r, i
 	}
 	tracked_controller_release(&tc, 1);
 	return result;
-
 }
 
 enum PSMoveTracker_Status psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move, unsigned char r, unsigned char g, unsigned char b) {
@@ -652,6 +653,7 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
 	tracker->frame = camera_control_query_frame(tracker->cc);
 }
 
+int notfound=0;
 int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc, float* q1, float* q2, float* q3) {
 	PSMoveTracker* t = tracker;
 	CvPoint c;
@@ -676,7 +678,7 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 			if (nRoiCenter.x != -1) {
 				tc->roi_x = nRoiCenter.x;
 				tc->roi_y = nRoiCenter.y;
-				psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->roiI[0]->width, t->roiI[0]->height);
+				psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->frame->width, t->frame->height);
 			}
 		}
 
@@ -786,7 +788,6 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 
 			// only if the quality is okay update the future ROI
 			if (sphere_found) {
-
 				// use adaptive color detection
 				// only if 	1) the sphere has been found
 				// AND		2) the UPDATE_RATE has passed
@@ -833,16 +834,16 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 					tc->roi_y = tc->y - roi_i->height / 2;
 
 				// assure that the roi is within the target image
-				psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->roiI[0]->width, t->roiI[0]->height);
+				psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->frame->width, t->frame->height);
 			}
 		}
 		cvClearMemStorage(t->storage);
 		cvResetImageROI(t->frame);
 
-		if (sphere_found || roi_i->width == t->roiI[0]->width) {
-			// the sphere was found, or the max ROI was reached
+		if (sphere_found) {
+			// the sphere was found
 			break;
-		} else {
+		}else if(tc->roi_level>0){
 			// the sphere was not found, increase the ROI and search again!
 			tc->roi_x += roi_i->width / 2;
 			tc->roi_y += roi_i->height / 2;
@@ -856,7 +857,34 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 			tc->roi_y -= roi_i->height / 2;
 
 			// assure that the roi is within the target image
-			psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->roiI[0]->width, t->roiI[0]->height);
+			psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->frame->width, t->frame->height);
+		}else {
+			// the sphere could not be found til a reasonable roi-level
+			if(notfound%4==0){
+				tc->roi_x=0;
+				tc->roi_y=0;
+			}
+			
+			if(notfound%4==1){
+				tc->roi_x=t->frame->width;
+				tc->roi_y=0;
+			}
+			
+			if(notfound%4==2){
+				tc->roi_x=t->frame->width;
+				tc->roi_y=t->frame->height;
+			}
+			
+			if(notfound%4==3){
+				tc->roi_x=0;
+				tc->roi_y=t->frame->height;
+			}
+			notfound++;
+			tc->roi_level=0;
+			roi_i = t->roiI[0];
+			roi_m = t->roiM[0];
+			psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->frame->width, t->frame->height);
+			break;			
 		}
 	}
 
@@ -923,8 +951,8 @@ void psmove_tracker_free(PSMoveTracker *tracker) {
 	cvReleaseMemStorage(&tracker->storage);
 	int i = 0;
 	for (; i < ROIS; i++) {
-		cvReleaseImage(&tracker->roiM[0]);
-		cvReleaseImage(&tracker->roiI[0]);
+		cvReleaseImage(&tracker->roiM[i]);
+		cvReleaseImage(&tracker->roiI[i]);
 	}
 	cvReleaseStructuringElement(&tracker->kCalib);
 	tracked_controller_release(&tracker->controllers, 1);
