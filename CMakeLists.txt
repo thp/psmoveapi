@@ -21,6 +21,28 @@ set(PSMOVEAPI_PLATFORM_SRC)
 # Put any other libraries that you might need in here
 link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libs)
 
+# Build the OpenCV-based camera tracking module? (see psmove_tracker.h)
+option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
+
+# Search for OpenCV, if we don't have it, build without tracker
+FIND_PACKAGE(OpenCV QUIET)
+if(OpenCV_FOUND AND PSMOVE_BUILD_TRACKER)
+    list(APPEND PSMOVE_REQUIRED_LIBS ${OpenCV_LIBS})
+
+    file(GLOB PSMOVEAPI_TRACKER_SRC
+        "${PSMOVEAPI_SOURCE_DIR}/src/tracker/*.c"
+        "${PSMOVEAPI_SOURCE_DIR}/external/iniparser/*.c"
+    )
+
+    set(BUILD_PSMOVE_TRACKER "Yes")
+    set(PSMOVE_HAVE_TRACKER ON)
+else()
+    set(PSMOVEAPI_TRACKER_SRC "")
+
+    set(BUILD_PSMOVE_TRACKER "No ")
+    set(PSMOVE_HAVE_TRACKER OFF)
+endif()
+
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(IOKIT IOKit)
     find_library(COREFOUNDATION CoreFoundation)
@@ -29,19 +51,11 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVE_REQUIRED_LIBS ${COREFOUNDATION})
     list(APPEND PSMOVE_REQUIRED_LIBS ${IOBLUETOOTH})
 
-    # XXX: Make this optional
-    FIND_PACKAGE(OpenCV REQUIRED)
-    list(APPEND PSMOVE_REQUIRED_LIBS ${OpenCV_LIBS})
-
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/mac/hid.c)
     list(APPEND PSMOVEAPI_PLATFORM_SRC ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_osxsupport.m)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
     list(APPEND MOVED_CLIENT_REQUIRED_LIBS ws2_32)
-
-    # XXX: Make this optional
-    FIND_PACKAGE(OpenCV REQUIRED)
-    list(APPEND PSMOVE_REQUIRED_LIBS ${OpenCV_LIBS})
 
     # If you want to use the CL Eye SDK, uncomment the following line
     #list(APPEND PSMOVE_REQUIRED_LIBS CLEyeMulticam)
@@ -61,21 +75,11 @@ ELSE()
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
-    # XXX: Make this optional
-    pkg_check_modules(OPENCV REQUIRED opencv)
-    include_directories(${OPENCV_INCLUDE_DIRS})
-    list(APPEND PSMOVE_REQUIRED_LIBS ${OPENCV_LIBRARIES})
-
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/linux/hid.c)
     list(APPEND PSMOVEAPI_PLATFORM_SRC ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_linuxsupport.c)
 ENDIF()
 
 include_directories(${PSMOVEAPI_SOURCE_DIR}/include)
-
-file(GLOB PSMOVEAPI_TRACKER_SRC
-    "${PSMOVEAPI_SOURCE_DIR}/src/tracker/*.c"
-    "${PSMOVEAPI_SOURCE_DIR}/external/iniparser/*.c"
-)
 
 file(GLOB PSMOVEAPI_MOVED_SRC
     "${PSMOVEAPI_SOURCE_DIR}/src/daemon/*.c"
@@ -178,6 +182,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/contrib/psmoveapi.pc.in
     ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
     @ONLY)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h
+    @ONLY)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc DESTINATION lib/pkgconfig)
 
 install(TARGETS psmovepair psmoveapi
@@ -204,5 +212,12 @@ MESSAGE("      |  Python bindings: " ${PADDING} ${BUILD_PYTHON_BINDINGS} "  |")
 MESSAGE("      |  Java bindings:   " ${PADDING} ${BUILD_JAVA_BINDINGS} "  |")
 MESSAGE("      |  Qt bindings:     " ${PADDING} ${BUILD_QT_BINDINGS} "  |")
 MESSAGE("      +---------------------------------------------+ ")
+MESSAGE("      |  Tracker module:  " ${PADDING} ${BUILD_PSMOVE_TRACKER} "  |")
+MESSAGE("      +---------------------------------------------+ ")
+MESSAGE("")
+if(NOT OpenCV_FOUND)
+    MESSAGE(" If you want to build the tracker module, install OpenCV!")
+endif()
+MESSAGE("")
 MESSAGE("")
 

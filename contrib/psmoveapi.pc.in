@@ -7,7 +7,6 @@ Name: psmoveapi
 Description: API for Sony Motion Controllers (PS Move)
 URL: http://thp.io/2010/psmove/
 Version: @PSMOVEAPI_VERSION@
-Requires.private: libusb-1.0
 Libs: -L${libdir} -lpsmoveapi
 Cflags: -I${includedir}
 

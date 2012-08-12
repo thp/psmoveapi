@@ -1,0 +1,5 @@
+
+/* This file is auto-generated from psmove_config.h.in by CMake */
+
+#cmakedefine PSMOVE_HAVE_TRACKER
+

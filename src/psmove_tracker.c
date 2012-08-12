@@ -26,6 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#include "psmove_config.h"
+
+#if defined(PSMOVE_HAVE_TRACKER)
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -1227,3 +1231,5 @@ CvPoint psmove_tracker_better_roi_center(TrackedController* tc, PSMoveTracker* t
 	cvResetImageROI(t->frame);
 	return erg;
 }
+
+#endif /* defined(PSMOVE_HAVE_TRACKER) */
