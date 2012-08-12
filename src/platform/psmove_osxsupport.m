@@ -13,9 +13,6 @@ macosx_get_btaddr()
     NSString *addr = [controller addressAsString];
     result = strdup([addr UTF8String]);
 
-    [addr release];
-    [controller release];
-
     return result;
 }
 
