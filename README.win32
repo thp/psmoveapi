@@ -1,0 +1,56 @@
+Get started on windows
+
+Get and install
+- MinGW       : http://sourceforge.net/projects/mingw/files/latest/download?source=files
+- CMake       : http://www.cmake.org/cmake/resources/software.html 
+- OpenCV      : http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
+- GIT         : e.g. http://code.google.com/p/msysgit/
+- PSEyeDriver : http://codelaboratories.com/get/cl-eye-driver/
+[optional]
+- CLEyeSDK    : http://codelaboratories.com/get/cl-eye-sdk/
+
+1. build and configure OpenCV with cmake
+	:: you may skip to build OpenCV on your own, however i had no luck
+	:: the binary distribution did not work on my system
+	cd <where you extracted opencv>
+	mkdir build
+	cd build
+	cmake .. -G "MinGW Makefiles"
+	mingw32-make
+	:: now go for a coffe-break
+
+2. Get you clone of the psmoveapi
+	git clone https://github.com/thp/psmoveapi.git
+	
+3. Check out the "tracker" branch
+	cd psmoveapi
+	git checkout tracker
+
+4. Init and update the submodules
+	git submodule init
+	git submodule update
+	
+4. Copy blue-tooth headers and library to your MinGW installation
+	:: e.g. MinGW installed at C:\MinGW\
+	:: e.g. your cloned repository is at D:\dev\psmoveapi
+	
+	copy D:\dev\psmoveapi\external\mingw-w64-headers\*.h  C:\MinGW\include
+	copy D:\dev\psmoveapi\external\mingw-w64-headers\*.a  C:\MinGW\lib
+
+5.  make OpenCV known to your system and the cmake toolchain
+	set OpenCV_DIR=<the path where you extracted opencv>
+	set PATH=%PATH%;%OpenCV_DIR%\build\bin
+
+7. prepare a new build with cmake for the psmoveapi
+	:: 
+	mkdir build
+	cd build
+	:: only with OpenCV Camera access
+	cmake .. -G "MinGW Makefiles"
+	:: additionally with Code Laboratories PS Eye SDK
+	cmake .. -G "MinGW Makefiles" -DUSE_CL_EYE_SDK=ON	
+	
+8. finally build
+	mingw32-make
+	
+11.
