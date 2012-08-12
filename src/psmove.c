@@ -44,6 +44,7 @@
 #ifdef __APPLE__
 #  include "platform/psmove_osxsupport.h"
 #  include <sys/syslimits.h>
+#  include <sys/stat.h>
 #endif
 
 #ifdef __linux
