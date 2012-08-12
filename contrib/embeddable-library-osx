@@ -1,0 +1,11 @@
+#!/bin/sh
+# OS X: Make the shared library embeddable into an application bundle
+# Thomas Perl <m@thp.io>; 2012-08-12
+
+SHARED_LIBRARY=libpsmoveapi.2.0.0.dylib
+
+install_name_tool -id \
+    "@executable_path/../Frameworks/$SHARED_LIBRARY" \
+    ../build/$SHARED_LIBRARY
+otool -D ../build/$SHARED_LIBRARY
+

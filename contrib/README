@@ -26,3 +26,7 @@ Here are some files that might be useful for users of the library:
  used to cross-compile the example application to run on a rooted
  Android device, also using bluez-register-psmove.
 
+ embeddable-library-osx:
+ Modify the built shared library so that it can be successfully
+ embedded into an Mac OS X application bundle (.app).
+
