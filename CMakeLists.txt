@@ -75,7 +75,7 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             # and remove this workaround (we always want to build with -O2)
             remove_definitions(-O2)
             add_definitions(-O0)
-            MESSAGE(" +++  WARNING: Compiler optimizations are disabled when using 'PSMOVE_USE_CL_EYE_SDK'.  +++")
+            MESSAGE("-- WARNING: Compiler optimizations are disabled when using 'PSMOVE_USE_CL_EYE_SDK'.")
         ENDIF()
     ENDIF()
 
