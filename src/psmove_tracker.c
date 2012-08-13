@@ -1,6 +1,7 @@
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2012 Benjamin Venditt <benjamin.venditti@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -350,7 +351,6 @@ psmove_tracker_new_with_camera(int camera) {
 	t->roiM[0] = cvCreateImage(cvSize(w, h), frame->depth, 1);
 	for (i = 1; i < ROIS; i++) {
 		b = b * 0.7f;
-		printf("%d  %dx%d\n", b, w, h);
 		t->roiI[i] = cvCreateImage(cvSize(b,b), frame->depth, 3);
 		t->roiM[i] = cvCreateImage(cvSize(b,b), frame->depth, 1);
 	}
@@ -653,7 +653,6 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
 	tracker->frame = camera_control_query_frame(tracker->cc);
 }
 
-int notfound=0;
 int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc, float* q1, float* q2, float* q3) {
 	PSMoveTracker* t = tracker;
 	CvPoint c;
@@ -688,7 +687,17 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 
 		// apply color filter
 		cvInRangeS(roi_i, min, max, roi_m);
-		cvSmooth(roi_i, roi_i, CV_GAUSSIAN, 5, 5, 0, 0);
+
+		#ifdef DEBUG_WINDOWS
+			if (!tc->next){
+				cvShowImage("binary:0", roi_m);
+				cvShowImage("hsv:0", roi_i);
+			}
+			else{
+				cvShowImage("binary:1", roi_m);
+				cvShowImage("hsv:1", roi_i);
+			}
+		#endif
 
 		// find the biggest contour in the image
 		float sizeBest = 0;
@@ -702,12 +711,6 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 			// restore the biggest contour
 			cvSet(roi_m, th_black, 0x0);
 			cvDrawContours(roi_m, contourBest, th_white, th_white, -1, CV_FILLED, 8, cvPoint(0, 0));
-#ifdef DEBUG_WINDOWS
-			if (tc->next == 0x0)
-				cvShowImage("0", roi_m);
-			else
-				cvShowImage("1", roi_m);
-#endif
 			// calucalte image-moments
 			cvMoments(roi_m, &mu, 0);
 			CvPoint p = cvPoint(mu.m10 / mu.m00, mu.m01 / mu.m00);
@@ -755,11 +758,15 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 			float tq2 = FLT_MAX;
 			float tq3 = tc->r;
 
+			// decrease TQ1 by half if below 20px (gives better results if controller is far away)
+			if (pixelInBlob < 20)
+				tq1 = tq1 * 0.5;
+
 			// The quality checks are all performed on the radius of the blob
 			// its old radius and size.
 			tq1 = pixelInBlob / pixelInResult;
 
-			// always check pixelration and minimal size
+			// always check pixel-ratio and minimal size
 			sphere_found = tq1 > t->tracker_t1 && tq3 > t->tracker_t3;
 
 			if (tq1 > 0.85) {
@@ -767,12 +774,8 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 				tc->y = tc->my;
 			}
 			// only perform check if we already found the sphere once
-			if (oldRadius > 0) {
+			if (oldRadius > 0 && tc->not_found==0) {
 				tq2 = abs(oldRadius - tc->r) / (oldRadius + FLT_EPSILON);
-
-				// decrease TQ1 by half if below 20px (gives better results if controller is far away)
-				if (pixelInBlob < 20)
-					tq1 = tq1 * 0.5;
 
 				// additionally check for to big changes
 				sphere_found = sphere_found && tq2 < t->tracker_t2;
@@ -841,6 +844,7 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 		cvResetImageROI(t->frame);
 
 		if (sphere_found) {
+			tc->not_found = 0;
 			// the sphere was found
 			break;
 		}else if(tc->roi_level>0){
@@ -860,26 +864,27 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 			psmove_tracker_fix_roi(tc, roi_i->width, roi_i->height, t->frame->width, t->frame->height);
 		}else {
 			// the sphere could not be found til a reasonable roi-level
-			if(notfound%4==0){
+			if(tc->not_found%4==0){
 				tc->roi_x=0;
 				tc->roi_y=0;
 			}
 			
-			if(notfound%4==1){
+			if(tc->not_found%4==1){
 				tc->roi_x=t->frame->width;
 				tc->roi_y=0;
 			}
 			
-			if(notfound%4==2){
+			if(tc->not_found%4==2){
 				tc->roi_x=t->frame->width;
 				tc->roi_y=t->frame->height;
 			}
 			
-			if(notfound%4==3){
+			if(tc->not_found%4==3){
 				tc->roi_x=0;
 				tc->roi_y=t->frame->height;
 			}
-			notfound++;
+
+			tc->not_found++;
 			tc->roi_level=0;
 			roi_i = t->roiI[0];
 			roi_m = t->roiM[0];
@@ -1073,11 +1078,11 @@ void psmove_tracker_fix_roi(TrackedController* tc, int roi_width, int roi_height
 
 void psmove_tracker_prepare_colors(PSMoveTracker* tracker) {
 	// create MAGENTA (good tracking)
-	tracked_color_insert(&tracker->available_colors, 0xff, 0x00, 0xff);
-	// create CYAN (good tracking)
-	tracked_color_insert(&tracker->available_colors, 0x00, 0xff, 0xff);
-	// create YELLOW (fair tracking)
-	tracked_color_insert(&tracker->available_colors, 0xff, 0xff, 0x00);
+	tracked_color_insert(&tracker->available_colors, 0xff, 0, 0xff);
+	// create CYAN (fair tracking)
+	tracked_color_insert(&tracker->available_colors, 0, 0xff, 0xff);
+	// create BLUE (fair tracking)
+	tracked_color_insert(&tracker->available_colors, 0, 0, 0xff);
 
 }
 

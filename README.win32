@@ -48,9 +48,9 @@ Get and install
 	:: only with OpenCV Camera access
 	cmake .. -G "MinGW Makefiles"
 	:: additionally with Code Laboratories PS Eye SDK
-	cmake .. -G "MinGW Makefiles" -DUSE_CL_EYE_SDK=ON	
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=ON
 	
 8. finally build
 	mingw32-make
 	
-11.
+9. start one of the desired test applications

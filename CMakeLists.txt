@@ -152,6 +152,11 @@ foreach(PSMOVE_TEST led_update read_performance calibration tracker)
     target_link_libraries(test_${PSMOVE_TEST} psmoveapi)
 endforeach(PSMOVE_TEST)
 
+if(PSMOVE_HAVE_TRACKER)
+    add_executable(tracker_camera_calibration examples/c/tracker_camera_calibration.c)
+    target_link_libraries(tracker_camera_calibration psmoveapi)
+endif()
+
 # These will be set to "Yes" below if the dependencies are found
 set(BUILD_PYTHON_BINDINGS "No ")
 set(BUILD_JAVA_BINDINGS "No ")
