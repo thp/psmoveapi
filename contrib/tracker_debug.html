@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="./tracker_debug.css">
+		<script type="text/javascript" src="debug.js"></script>
+		<script type="text/javascript">
+			function loadDebugOutput()
+			{			
+				/////// show calibration process
+				var table = document.createElement("table");
+
+				var row = document.createElement("tr");
+				addToRowEx('CREATED: ' + time,3, row);
+				table.appendChild(row);
+				// display diff generation process
+				for(var i=0; i<originals.length; i++) {
+					var row = document.createElement("tr");
+
+					addToRow(getImage(originals[i]), row);
+					addToRow(getImage(rawdiffs[i]), row);
+					addToRow(getImage(threshdiffs[i]), row);
+					addToRow(getImage(erodediffs[i]), row);
+
+					table.appendChild(row);
+				}
+				document.getElementById("thumbs_target").appendChild(table);
+				
+				/////// show final estimation mask
+				var table = document.createElement("table");
+				var row = document.createElement("tr");
+				var text = '';
+				// display originalimage
+				addToRow(getImage(originals[0]), row);
+				// show final contour
+				addToRow(getImage(finaldiff[0]),row);
+				// show color estimation
+				text ='<font class="cell">Estimated:' + getColorDiv(estimatedColor,estimated_hue);
+				text+='Assigned:'+ getColorDiv(assignedColor, assigned_hue)+'</font>';
+				addToRow(text, row);
+				table.appendChild(row);
+				var row = document.createElement("tr");
+				addToRowEx('Allowed HUE difference: ' + allowed_hue_difference,2, row);
+				table.appendChild(row);
+				document.getElementById("estimation_target").appendChild(table);
+
+				/////// show color filter result
+				// show estimated color check (mask images)
+				var table = document.createElement("table");
+				var row = document.createElement("tr");
+				for(var i=0; i<filtered.length; i++) {
+					addToRow(getImage(filtered[i]), row);
+				}
+				table.appendChild(row);
+				// show estimated color check (contour check result)
+				var row = document.createElement("tr");
+				for(var i=0; i<filtered.length; i++) {
+					addToRow(getResultText(contours[i]), row);
+				}
+				table.appendChild(row);
+				document.getElementById("filter_target").appendChild(table);
+							
+				/////// show extended error/info log
+				var table = document.createElement("table");
+				for(var i=0; i<log_table.length; i++) {
+					if(i%2==1) cssclass='logOdd';
+					else	   cssclass='log';
+					var row = document.createElement("tr");
+					addToRow(getResultText(log_table[i]['type']), row, cssclass);
+					addToRow(getCellText(log_table[i]['value']), row, cssclass);
+					table.appendChild(row);
+				}
+				
+				if(log_table.length==0)
+				{
+					var row = document.createElement("tr");
+					addToRow(getResultText('INFO'), row, 'log');
+					addToRow(getCellText('-- empty --'), row, 'log');
+					table.appendChild(row);
+				}
+				document.getElementById("log_target").appendChild(table);
+				
+				//setTimeout(updateLiveFeed,1000);
+				updateLiveFeed();
+			}
+			
+			function updateLiveFeed()
+			{
+				/////// show life feed
+				var target = document.getElementById("live_target");
+				
+				if(target.lastChild.nodeName=="TABLE"){
+					target.removeChild(target.lastChild);
+				}
+				
+				var img = '--not set --';
+				try{
+					img=livefeed;
+				}catch(e){/* don't care it is not defined*/}
+					
+				var liveImage = getImage(img+'?' + (new Date()).getTime());
+				var table = document.createElement("table");
+				var row = document.createElement("tr");
+				addToRow(liveImage, row);
+				table.appendChild(row);
+				target.appendChild(table);
+
+				setTimeout(updateLiveFeed,1000);
+			}
+
+			function getResultText(text)
+			{
+				if(text.toUpperCase()=='OK'|| text.toUpperCase()=='YES' ||text.toUpperCase()=='TRUE' ||text.toUpperCase()=='INFO')
+					return '<font class="cell-ok">'+text.toUpperCase()+'</font>';
+				else if(text.toUpperCase()=='WARNING'|| text.toUpperCase()=='WARN')
+					return '<font class="cell-warning">'+text.toUpperCase()+'</font>';
+				else
+					return '<font class="cell-error">'+text.toUpperCase()+'</font>';
+			}
+			
+			function getCellText(text)
+			{
+				return '<font class="cell">'+text+'</font>';
+			}
+			
+			function addToRow(val, row)
+			{
+				var cell = document.createElement("td");
+				cell.innerHTML = val;
+				row.appendChild(cell);
+			}
+			
+			function addToRowEx(val, span, row)
+			{
+				var cell = document.createElement("td");
+				cell.innerHTML = val;
+				cell.setAttribute('colspan', span);
+				row.appendChild(cell);
+			}
+			
+			function addToRow(val, row, cssclass)
+			{
+				var cell = document.createElement("td");
+				cell.innerHTML = val;
+				cell.setAttribute('class', cssclass);
+				row.appendChild(cell);
+			}
+			
+			function getImage(path)
+			{
+				var data = '';
+				data+='<img class="table" src="'+ path +'"';
+				data+='  onmouseover="showPreview(this.src);"';
+				data+='  onmouseout="hidePreview();">';
+				data+='</img>';
+				return data;
+			}
+			
+			function showPreview(bild)
+			{
+				var prevImage = document.getElementById('prev_image');
+				prevImage.src=bild;
+				
+				var prevDiv =  document.getElementById('div_preview');
+				prevDiv.setAttribute('style', 'margin-top: '+getVertScrollPos()+'px;');
+			}
+			
+			function hidePreview()
+			{
+				var prevImage = document.getElementById('prev_image');
+				var prevDiv = document.getElementById('div_preview');
+				prevDiv.setAttribute('style', 'visibility:hidden;');
+			}
+
+			
+			function getVertScrollPos()
+			{
+				return document.body.scrollTop || document.documentElement.scrollTop;
+			}
+			
+			function getColorDiv(color, hue)
+			{
+				return '<div style="background-color:#'+color+';">RGB:'+color+' / HUE:'+hue+'</div>';
+			}
+			
+		</script>
+		<title>
+			Calibration Debug Output
+		</title>
+	</head>
+	<body onload="loadDebugOutput();">
+		<div style="float:left;">
+			<div id="thumbs_target" >
+				<h3>Calibration</h3>
+			</div>
+
+			<div id="estimation_target">
+				<h3>Estimation mask and result</h3>
+			</div>
+			
+			<div id="filter_target">
+				<h3>Color filter result</h3>
+			</div>
+
+			<div id="log_target">
+				<h3>Extended logging information</h3>
+			</div>
+			
+			<div id="live_target">
+				<h3>Live feed</h3>
+			</div>
+		</div>
+		
+		<div id="div_preview" class="preview" style="visibility:hidden;">
+			<h3>Preview</h3>
+			<img id="prev_image" class="preview"></img>
+		</div>
+		
+	</body>
+</html>

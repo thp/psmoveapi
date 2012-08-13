@@ -1,0 +1,59 @@
+img.table
+{
+	border:1px solid orange;
+	width:120px;
+}
+
+div.preview
+{
+	float:left;
+}
+
+img.preview
+{
+	border:1px solid orange;
+	width:640px;
+}
+
+font.cell
+{
+	font-size:100%;
+}
+
+font.cell-ok
+{
+	color:green;
+	font-size:100%;
+}
+
+font.cell-warning
+{
+	color:orange;
+	font-size:100%;
+}
+
+font.cell-error
+{
+	color:red;
+	font-size:100%;
+}
+
+
+td.log {
+border: 1px solid #040;
+border-collapse: collapse;
+font-family: Verdana;
+font-size: 1em;
+text-align: center;
+padding: 5px;
+} 
+
+td.logOdd {
+border: 1px solid #040;
+border-collapse: collapse;
+background-color: grey;
+font-family: Verdana;
+font-size: 1em;
+text-align: center;
+padding: 5px;
+} 

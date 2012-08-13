@@ -30,3 +30,7 @@ Here are some files that might be useful for users of the library:
  Modify the built shared library so that it can be successfully
  embedded into an Mac OS X application bundle (.app).
 
+ tracker_debug.html, tracker_debug.css:
+ Debug files to display the debug information for the tracker that
+ is saved to ~/.psmoveapi/. when debugging files are written there.
+
