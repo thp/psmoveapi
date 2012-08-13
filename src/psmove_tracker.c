@@ -51,7 +51,7 @@
 
 #define DIMMING_FACTOR 1  			// LED color dimming for use in high exposure settings
 #define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
-#define DEBUG_WINDOWS 			// shall additional windows be shown
+//#define DEBUG_WINDOWS 			// shall additional windows be shown
 #define GOOD_EXPOSURE 2051			// a very low exposure that was found to be good for tracking
 #define ROIS 4                   	// the number of levels of regions of interest (roi)
 #define BLINKS 4                 	// number of diff images to create during calibration

@@ -1,6 +1,8 @@
 
 #include <stdio.h>
 
+#include "psmove.h"
+
 #if defined(PSMOVE_HAVE_TRACKER)
 
 #include <time.h>
