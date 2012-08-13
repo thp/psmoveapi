@@ -65,6 +65,7 @@ tracked_controller_create() {
 	tc->last_color_update = 0;
 
 	tc->next = 0x0;
+	tc->not_found = 0;
 	return tc;
 }
 

@@ -1,6 +1,3 @@
-#ifndef __TRACKED_CONTROLLER_H
-#define __TRACKED_CONTROLLER_H
-
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
@@ -29,6 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#ifndef __TRACKED_CONTROLLER_H
+#define __TRACKED_CONTROLLER_H
+
 #include "opencv2/core/core_c.h"
 #include "psmove.h"
 #include <time.h>
@@ -48,6 +48,7 @@ struct _TrackedController {
 	int roi_level; 	 			// the current index for the level of ROI
 	float mx, my;				// x/y - Coordinates of center of mass of the blob
 	float x, y, r;				// x/y - Coordinates of the controllers sphere and its radius
+	int not_found; 			// indicates how often the contoller has not been found (reset to 0 if found)
 	float rs;					// a smoothed variant of the radius
 	int is_tracked;				// 1 if tracked 0 otherwise
 	time_t last_color_update;	// the timestamp when the last color adaption has been performed

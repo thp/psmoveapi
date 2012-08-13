@@ -1,7 +1,7 @@
-
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,8 +26,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  **/
-
-
 
 #ifndef PSMOVE_PRIVATE_H
 #define PSMOVE_PRIVATE_H

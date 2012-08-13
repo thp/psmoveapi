@@ -1,6 +1,3 @@
-#ifndef __TRACKED_COLOR_H
-#define __TRACKED_COLOR_H
-
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
@@ -29,6 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#ifndef __TRACKED_COLOR_H
+#define __TRACKED_COLOR_H
 #include "opencv2/core/core_c.h"
 
 #include "psmove.h"
