@@ -38,35 +38,7 @@
 
 TrackedController*
 tracked_controller_create() {
-	TrackedController* tc = (TrackedController*) calloc(1, sizeof(TrackedController));
-
-	tc->move = 0x0;
-
-	tc->dColor = cvScalar(0, 0, 0, 0);
-	tc->eFColor = cvScalar(0, 0, 0, 0);
-	tc->eFColorHSV = cvScalar(0, 0, 0, 0);
-
-	tc->eColor = cvScalar(0, 0, 0, 0);
-	tc->eColorHSV = cvScalar(0, 0, 0, 0);
-
-	tc->roi_x = 0;
-	tc->roi_y = 0;
-	tc->roi_level = 0;
-
-	tc->x = 0;
-	tc->y = 0;
-	tc->r = 0;
-	tc->rs = 0;
-
-	tc->mx = 0;
-	tc->my = 0;
-
-	tc->is_tracked = 0;
-	tc->last_color_update = 0;
-
-	tc->next = 0x0;
-	tc->not_found = 0;
-	return tc;
+    return calloc(1, sizeof(TrackedController));
 }
 
 void tracked_controller_release(TrackedController** tc, int whole_list) {

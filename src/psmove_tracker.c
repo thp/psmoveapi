@@ -812,7 +812,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 				tc->y = tc->my;
 			}
 			// only perform check if we already found the sphere once
-			if (oldRadius > 0 && tc->not_found==0) {
+			if (oldRadius > 0 && tc->search_quadrant==0) {
 				tc->q2 = abs(oldRadius - tc->r) / (oldRadius + FLT_EPSILON);
 
 				// additionally check for to big changes
@@ -866,7 +866,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 		cvResetImageROI(tracker->frame);
 
 		if (sphere_found) {
-			tc->not_found = 0;
+			tc->search_quadrant = 0;
 			// the sphere was found
 			break;
 		}else if(tc->roi_level>0){
@@ -886,7 +886,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 			int ry;
 			// the sphere could not be found til a reasonable roi-level
 			
-			switch(tc->not_found)
+			switch(tc->search_quadrant)
 			{
 			case 0:
 				rx=0;
@@ -908,7 +908,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 				assert(0);
 			}
 
-			tc->not_found = (tc->not_found + 1) % 4;
+			tc->search_quadrant = (tc->search_quadrant + 1) % 4;
 			tc->roi_level=0;
 			psmove_tracker_set_roi(tracker, tc, rx, ry, tracker->roiI[tc->roi_level]->width, tracker->roiI[tc->roi_level]->height);
 			break;

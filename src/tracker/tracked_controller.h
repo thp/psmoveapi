@@ -47,7 +47,7 @@ struct _TrackedController {
 	int roi_level; 	 			// the current index for the level of ROI
 	float mx, my;				// x/y - Coordinates of center of mass of the blob
 	float x, y, r;				// x/y - Coordinates of the controllers sphere and its radius
-	int not_found; 			// indicates how often the contoller has not been found (reset to 0 if found)
+	int search_quadrant; 			// current search quadrant when controller is not found (reset to 0 if found)
 	float rs;					// a smoothed variant of the radius
 
         float q1, q2, q3; // Calculated quality criteria from the tracker
