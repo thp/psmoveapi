@@ -251,10 +251,12 @@ void psmove_tracker_estimate_circle_from_contour(CvSeq* cont, CvPoint* center, f
  *
  * tc - (in) The controller whose ROI centerpoint should be adjusted.
  * tracker  - (in) The PSMoveTracker to use.
+ * center - (out) The better center point for the current ROI
  *
- * Returns: a better center point for the current ROI.
+ * Returns: nonzero if a new point was found, zero otherwise
  */
-CvPoint psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tracker);
+int
+psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tracker, CvPoint *center);
 
 
 /*
@@ -704,8 +706,8 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 		// adjust the ROI, so that the blob is fully visible, but only if we have a reasonable FPS
 		if (tracker->debug_fps > ROI_ADJUST_FPS_T) {
 			// TODO: check for validity differently
-			CvPoint nRoiCenter = psmove_tracker_center_roi_on_controller(tc, tracker);
-			if (nRoiCenter.x != -1) {
+			CvPoint nRoiCenter;
+                        if (psmove_tracker_center_roi_on_controller(tc, tracker, &nRoiCenter)) {
 				psmove_tracker_set_roi(tracker, tc, nRoiCenter.x, nRoiCenter.y, roi_i->width, roi_i->height);
 			}
 		}
@@ -1260,8 +1262,13 @@ void psmove_tracker_estimate_circle_from_contour(CvSeq* cont, CvPoint* center, f
 	*radius = sqrt(d) / 2;
 }
 
-CvPoint psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tracker) {
-	CvPoint result = cvPoint(-1, -1);
+int
+psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tracker, CvPoint *center)
+{
+    psmove_return_val_if_fail(tc != NULL, 0);
+    psmove_return_val_if_fail(tracker != NULL, 0);
+    psmove_return_val_if_fail(center != NULL, 0);
+
 	CvScalar min, max;
 	th_minus(tc->eColorHSV.val, tracker->rHSV.val, min.val, 3);
 	th_plus(tc->eColorHSV.val, tracker->rHSV.val, max.val, 3);
@@ -1286,13 +1293,14 @@ CvPoint psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTra
 		CvMoments mu;
 		cvMoments(roi_m, &mu, 0);
 
-		result = cvPoint(mu.m10 / mu.m00, mu.m01 / mu.m00);
-		result.x += tc->roi_x - roi_m->width / 2;
-		result.y += tc->roi_y - roi_m->height / 2;
+		*center = cvPoint(mu.m10 / mu.m00, mu.m01 / mu.m00);
+		center->x += tc->roi_x - roi_m->width / 2;
+		center->y += tc->roi_y - roi_m->height / 2;
 	}
 	cvClearMemStorage(tracker->storage);
 	cvResetImageROI(tracker->frame);
-	return result;
+
+        return (contourBest != NULL);
 }
 
 #endif /* defined(PSMOVE_HAVE_TRACKER) */
