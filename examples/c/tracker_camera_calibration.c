@@ -31,6 +31,8 @@
 
 #include <stdio.h>
 
+#include "psmove.h"
+
 #ifdef WIN32
 #    include <windows.h>
 #endif
@@ -46,6 +48,9 @@
 #define TEXT_COLOR cvScalar(0xFF, 0xFF, 0xFF, 0)
 #define TEXT_POS cvPoint(20,30)
 
+#define INTRINSICS_XML "intrinsics.xml"
+#define DISTORTION_XML "distortion.xml"
+
 void put_text(IplImage* img, const char* text) {
 	CvFont font = cvFont(1.5, 1);
 	cvPutText(img, text, TEXT_POS, &font, TEXT_COLOR);
@@ -59,6 +64,9 @@ int main(int arg, char** args) {
 	int user_canceled = 0;
 	CvSize board_sz = cvSize(board_w, board_h);
 	CvCapture* capture = cvCreateCameraCapture(CAM_TO_USE);
+
+        char *intrinsics_xml = psmove_util_get_file_path(INTRINSICS_XML);
+        char *distortion_xml = psmove_util_get_file_path(DISTORTION_XML);
 
 	// Allocate Memory
 	CvMat* image_points = cvCreateMat(n_boards * board_n, 2, CV_32FC1);
@@ -176,12 +184,12 @@ int main(int arg, char** args) {
 
 		// Save the intrinsics and distortions
 		CvAttrList empty_attribues = cvAttrList(0, 0);
-		cvSave("Intrinsics.xml", intrinsic_matrix, 0, 0, empty_attribues);
-		cvSave("Distortion.xml", distortion_coeffs, 0, 0, empty_attribues);
+		cvSave(intrinsics_xml, intrinsic_matrix, 0, 0, empty_attribues);
+		cvSave(distortion_xml, distortion_coeffs, 0, 0, empty_attribues);
 
 		// Example of loading these matrices back in
-		CvMat *intrinsic = (CvMat*) cvLoad("Intrinsics.xml", 0, 0, 0);
-		CvMat *distortion = (CvMat*) cvLoad("Distortion.xml", 0, 0, 0);
+		CvMat *intrinsic = (CvMat*) cvLoad(intrinsics_xml, 0, 0, 0);
+		CvMat *distortion = (CvMat*) cvLoad(distortion_xml, 0, 0, 0);
 
 		image = cvQueryFrame(capture);
 
@@ -230,6 +238,9 @@ int main(int arg, char** args) {
 	cvReleaseImage(&small_image);
 	cvReleaseImage(&gray_image1);
 	cvReleaseImage(&gray_image2);
+
+        free(intrinsics_xml);
+        free(distortion_xml);
 
 	return 0;
 }

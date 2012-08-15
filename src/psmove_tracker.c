@@ -88,6 +88,10 @@
 #else
 #define PSEYE_BACKUP_FILE "PSEye_backup_v4l.ini"
 #endif
+
+#define INTRINSICS_XML "intrinsics.xml"
+#define DISTORTION_XML "distortion.xml"
+
 struct _PSMoveTracker {
 	CameraControl* cc;
 	IplImage* frame; // the current frame of the camera
@@ -327,7 +331,12 @@ psmove_tracker_new_with_camera(int camera) {
 
 	// start the video capture device for tracking
 	tracker->cc = camera_control_new(camera);
-	camera_control_read_calibration(tracker->cc, "Intrinsics.xml", "Distortion.xml");
+
+        char *intrinsics_xml = psmove_util_get_file_path(INTRINSICS_XML);
+        char *distortion_xml = psmove_util_get_file_path(DISTORTION_XML);
+	camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml);
+        free(intrinsics_xml);
+        free(distortion_xml);
 
 	// backup the systems settings, if not already backuped
 	char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
