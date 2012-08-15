@@ -153,6 +153,17 @@ struct _PSMoveTracker {
  **/
 int psmove_tracker_adapt_to_light(PSMoveTracker *tracker, int lumMin, int expMin, int expMax);
 
+
+/**
+ * Wait for a given time for a frame from the tracker
+ *
+ * tracker - A valid PSMoveTracker * instance
+ * frame - A pointer to an IplImage * to store the frame
+ * delay - The delay to wait for the frame
+ **/
+void
+psmove_tracker_wait_for_frame(PSMoveTracker *tracker, IplImage **frame, int delay);
+
 /**
  * This function switches the sphere of the given PSMove on to the given color and takes
  * a picture via the given capture. Then it switches it of and takes a picture again. A difference image
@@ -1038,9 +1049,20 @@ int psmove_tracker_adapt_to_light(PSMoveTracker *tracker, int lumMin, int expMin
 	return exp;
 }
 
+void
+psmove_tracker_wait_for_frame(PSMoveTracker *tracker, IplImage **frame, int delay)
+{
+    int elapsed_time = 0;
+    int step = 10;
+
+    while (elapsed_time < delay) {
+        usleep(1000 * step);
+        *frame = camera_control_query_frame(tracker->cc);
+        elapsed_time += step;
+    }
+}
+
 void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move, int r, int g, int b, IplImage* on, IplImage* diff, int delay) {
-	int elapsedTime = 0;
-	int step = 10;
 	// the time to wait for the controller to set the color up
 	IplImage* frame;
 	// switch the LEDs ON and wait for the sphere to be fully lit
@@ -1051,15 +1073,7 @@ void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move, int r, int g,
 	psmove_update_leds(move);
 
 	// take the first frame (sphere lit)
-	while (1) {
-		// TODO: write this loop as a extra function (and use the function here and in the block below, and in restore_old_color)
-		usleep(1000 * step);
-		frame = camera_control_query_frame(tracker->cc);
-		// break if delay has been reached
-		if (elapsedTime >= delay)
-			break;
-		elapsedTime += step;
-	}
+        psmove_tracker_wait_for_frame(tracker, &frame, delay);
 	cvCopy(frame, on, NULL);
 
 	// switch the LEDs OFF and wait for the sphere to be off
@@ -1067,14 +1081,8 @@ void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move, int r, int g,
 	psmove_update_leds(move);
 
 	// take the second frame (sphere iff)
-	while (1) {
-		usleep(1000 * step);
-		frame = camera_control_query_frame(tracker->cc);
-		// break if delay has been reached
-		if (elapsedTime >= delay * 2)
-			break;
-		elapsedTime += step;
-	}
+        psmove_tracker_wait_for_frame(tracker, &frame, delay);
+
 	// convert both to grayscale images
 	IplImage* grey1 = cvCloneImage(diff);
 	IplImage* grey2 = cvCloneImage(diff);
