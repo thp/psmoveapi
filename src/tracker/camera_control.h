@@ -55,6 +55,28 @@ camera_control_delete(CameraControl* cc);
 
 /* Platform-specific functions (implement in camera_control_<os>.c) */
 
+
+/**
+
+// if a negative value is passed, that means it is not changed
+
+*/
+
+/**
+ * Set the camera parameters used during capturing
+ *
+ * cc         - the camera control to modify
+ * autoE      - value range [0-0xFFFF]
+ * autoG      - value range [0-0xFFFF]
+ * autoWB     - value range [0-0xFFFF]
+ * exposure   - value range [0-0xFFFF]
+ * gain       - value range [0-0xFFFF]
+ * wbRed      - value range [0-0xFFFF]
+ * wbGreen    - value range [0-0xFFFF]
+ * wbBlue     - value range [0-0xFFFF]
+ * contrast   - value range [0-0xFFFF]
+ * brightness - value range [0-0xFFFF]
+ **/
 void
 camera_control_set_parameters(CameraControl* cc,
         int autoE, int autoG, int autoWB,
