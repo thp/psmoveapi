@@ -127,7 +127,7 @@ struct _PSMoveTracker {
 
 	// internal variables (debug)
 	float debug_fps; // the current FPS achieved by "psmove_tracker_update"
-	time_t debug_last_live; // the timesamp when the last live-image was written to the file-system
+	long debug_last_live; // the timesamp when the last live-image was written to the file-system
 
 };
 
@@ -813,8 +813,8 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 				// AND		2) the UPDATE_RATE has passed
 				// AND		3) the tracking-quality is high;
 				int do_color_adaption = 0;
-				time_t now = time(0); // TODO: use psmove_util get_ticks
-				if (tracker->color_update_rate > 0 && difftime(now, tc->last_color_update) > tracker->color_update_rate)
+				long now = psmove_util_get_ticks();
+				if (tracker->color_update_rate > 0 && (now - tc->last_color_update) > tracker->color_update_rate*1000)
 					do_color_adaption = 1;
 
 				if (do_color_adaption && tc->q1 > tracker->color_t1 && tc->q2 < tracker->color_t2 && tc->q3 > tracker->color_t3) {
@@ -1164,8 +1164,8 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 	}
 
 	// every second save a debug-image to the filesystem
-	time_t now = time(0);
-	if (difftime(now, tracker->debug_last_live) > 1) {
+	long now = psmove_util_get_ticks();
+	if ((now - tracker->debug_last_live) > 100) {
 		psmove_html_trace_image(frame, "livefeed", tracker->debug_last_live);
 		tracker->debug_last_live = now;
 	}

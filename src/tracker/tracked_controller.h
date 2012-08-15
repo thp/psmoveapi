@@ -31,7 +31,6 @@
 
 #include "opencv2/core/core_c.h"
 #include "psmove.h"
-#include <time.h>
 
 struct _TrackedController;
 typedef struct _TrackedController TrackedController;
@@ -54,7 +53,7 @@ struct _TrackedController {
         float q1, q2, q3; // Calculated quality criteria from the tracker
 
 	int is_tracked;				// 1 if tracked 0 otherwise
-	time_t last_color_update;	// the timestamp when the last color adaption has been performed
+	long last_color_update;	// the timestamp when the last color adaption has been performed
 	TrackedController* next;
 };
 
