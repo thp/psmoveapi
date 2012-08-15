@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 
-#include "camera_control_priv.h"
+#include "camera_control_private.h"
 
 CameraControl *
 camera_control_new(int cameraID)

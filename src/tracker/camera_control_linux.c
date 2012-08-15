@@ -30,7 +30,7 @@
 #ifdef __linux
 
 #include "camera_control.h"
-#include "camera_control_priv.h"
+#include "camera_control_private.h"
 
 #include "../external/iniparser/iniparser.h"
 

@@ -35,7 +35,7 @@
 
 #include "psmove_tracker.h"
 #include "camera_control.h"
-#include "camera_control_priv.h"
+#include "camera_control_private.h"
 
 void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
 #ifndef CAMERA_CONTROL_USE_CL_DRIVER
