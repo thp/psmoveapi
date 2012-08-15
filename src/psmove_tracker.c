@@ -238,10 +238,12 @@ float psmove_tracker_hsvcolor_diff(TrackedController* tc);
  * in the contour. And its by choosing the mid point of those two.
  *
  * cont 	- (in) 	The contour representing the orb.
- * center 	- (out)	The X,Y-Coordinate of the contour that is calculatedhere
+ * x            - (out) The X coordinate of the center.
+ * y            - (out) The Y coordinate of the center.
  * radius	- (out) The radius of the contour that is calculated here.
  */
-void psmove_tracker_estimate_circle_from_contour(CvSeq* cont, CvPoint* center, float* radius);
+void
+psmove_tracker_estimate_circle_from_contour(CvSeq* cont, float *x, float *y, float* radius);
 
 /*
  * This function return a optimal ROI center point for a given Tracked controller.
@@ -688,7 +690,7 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
 int
 psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 {
-	CvPoint c;
+        float x, y;
 	int i = 0;
 	int sphere_found = 0;
 
@@ -754,7 +756,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 			// remember the old radius and calcutlate the new x/y position and radius of the found contour
 			float oldRadius = tc->r;
 			// estimate x/y position and radius of the sphere
-			psmove_tracker_estimate_circle_from_contour(contourBest, &c, &tc->r);
+			psmove_tracker_estimate_circle_from_contour(contourBest, &x, &y, &tc->r);
 
 			// apply radius-smoothing if enabled
 			if (tracker->tracker_adaptive_z) {
@@ -776,12 +778,12 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 				float diff = th_dist(oldMCenter, newMCenter);
 				float f = MIN(diff / 7 + 0.15, 1);
 				// apply adaptive smoothing
-				tc->x = tc->x * (1 - f) + (c.x + tc->roi_x) * f;
-				tc->y = tc->y * (1 - f) + (c.y + tc->roi_y) * f;
+				tc->x = tc->x * (1 - f) + (x + tc->roi_x) * f;
+				tc->y = tc->y * (1 - f) + (y + tc->roi_y) * f;
 			} else {
 				// do NOT apply adaptive smoothing
-				tc->x = c.x + tc->roi_x;
-				tc->y = c.y + tc->roi_y;
+				tc->x = x + tc->roi_x;
+				tc->y = y + tc->roi_y;
 			}
 
 			// calculate the quality of the tracking
@@ -1226,13 +1228,17 @@ void psmove_tracker_biggest_contour(IplImage* img, CvMemStorage* stor, CvSeq** r
 	}
 }
 
-void psmove_tracker_estimate_circle_from_contour(CvSeq* cont, CvPoint* center, float* radius) {
+void
+psmove_tracker_estimate_circle_from_contour(CvSeq* cont, float *x, float *y, float* radius)
+{
+    psmove_return_if_fail(cont != NULL);
+    psmove_return_if_fail(x != NULL && y != NULL && radius != NULL);
+
 	int i, j;
 	float d = 0;
 	float cd = 0;
 	CvPoint m1;
 	CvPoint m2;
-	CvPoint2D32f m;
 	CvPoint * p1;
 	CvPoint * p2;
 
@@ -1253,11 +1259,8 @@ void psmove_tracker_estimate_circle_from_contour(CvSeq* cont, CvPoint* center, f
 		}
 	}
 	// calculate center of that pair
-	m.x = 0.5 * (m1.x + m2.x);
-	m.y = 0.5 * (m1.y + m2.y);
-	//cvLine(img, m1[s], m2[s], th_yellow, 1, 8, 0);
-	center->x = (int) (m.x + 0.5);
-	center->y = (int) (m.y + 0.5);
+	*x = 0.5 * (m1.x + m2.x);
+	*y = 0.5 * (m1.y + m2.y);
 	// calcualte the radius
 	*radius = sqrt(d) / 2;
 }
