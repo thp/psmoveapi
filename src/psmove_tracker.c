@@ -188,7 +188,7 @@ void psmove_tracker_prepare_colors(PSMoveTracker* tracker);
 /**
  * This function is just the internal implementation of "psmove_tracker_update"
  */
-int psmove_tracker_update_controller(PSMoveTracker* tracker, TrackedController* tc, float* q1, float* q2, float* q3);
+int psmove_tracker_update_controller(PSMoveTracker* tracker, TrackedController* tc);
 
 /**
  * This draws tracking statistics into the current camera image. This is only used internally.
@@ -215,7 +215,7 @@ void psmove_tracker_biggest_contour(IplImage* img, CvMemStorage* stor, CvSeq** r
  *
  * Returns: The distance between the orb and the camera in (mm).
  */
-float psmove_tracker_get_distance(PSMoveTracker* t, float blob_diameter);
+float psmove_tracker_calculate_distance(PSMoveTracker* t, float blob_diameter);
 
 /*
  * This returns a subjective distance between the first estimated (during calibration process) color and the currently estimated color.
@@ -397,8 +397,6 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* t, PSMove* move, int r, i
 
 	TrackedController* tc = tracked_controller_create();
 	tc->dColor = cvScalar(b, g, r, 0);
-	float q1 = 0;
-	float q3 = 0;
 
 	if (tracked_controller_load_color(tc)) {
 		result = 1;
@@ -417,11 +415,11 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* t, PSMove* move, int r, i
 			}
 
 			// try to track the contorller
-			psmove_tracker_update_controller(t, tc, &q1, NULL, &q3);
+			psmove_tracker_update_controller(t, tc);
 
 			// if the quality is higher than 83% and the blobs radius bigger than 8px
 			// TODO: move 0.83 and 8 as constants out
-			result = result && q1 > 0.83 && q3 > 8;
+			result = result && tc->q1 > 0.83 && tc->q3 > 8;
 		}
 	}
 	tracked_controller_release(&tc, 1);
@@ -675,7 +673,9 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
 	tracker->frame = camera_control_query_frame(tracker->cc);
 }
 
-int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc, float* q1, float* q2, float* q3) {
+int
+psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
+{
 	PSMoveTracker* t = tracker;
 	CvPoint c;
 	int i = 0;
@@ -776,39 +776,35 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 			// calculate the quality of the tracking
 			int pixelInBlob = cvCountNonZero(roi_m);
 			float pixelInResult = tc->r * tc->r * th_PI;
-			float tq1 = 0;
-			float tq2 = FLT_MAX;
-			float tq3 = tc->r;
+                        tc->q1 = 0;
+                        tc->q2 = FLT_MAX;
+                        tc->q3 = tc->r;
 
 			// decrease TQ1 by half if below 20px (gives better results if controller is far away)
-			if (pixelInBlob < 20)
-				tq1 = tq1 * 0.5;
+			if (pixelInBlob < 20) {
+				tc->q1 /= 2;
+                        }
 
 			// The quality checks are all performed on the radius of the blob
 			// its old radius and size.
-			tq1 = pixelInBlob / pixelInResult;
+			tc->q1 = pixelInBlob / pixelInResult;
 
 			// always check pixel-ratio and minimal size
-			sphere_found = tq1 > t->tracker_t1 && tq3 > t->tracker_t3;
+			sphere_found = tc->q1 > t->tracker_t1 && tc->q3 > t->tracker_t3;
 
 			// use the mass center if the quality is very good
 			// TODO: make 0.85 as a CONST
-			if (tq1 > 0.85) {
+			if (tc->q1 > 0.85) {
 				tc->x = tc->mx;
 				tc->y = tc->my;
 			}
 			// only perform check if we already found the sphere once
 			if (oldRadius > 0 && tc->not_found==0) {
-				tq2 = abs(oldRadius - tc->r) / (oldRadius + FLT_EPSILON);
+				tc->q2 = abs(oldRadius - tc->r) / (oldRadius + FLT_EPSILON);
 
 				// additionally check for to big changes
-				sphere_found = sphere_found && tq2 < t->tracker_t2;
+				sphere_found = sphere_found && tc->q2 < t->tracker_t2;
 			}
-
-			// save output parameters for the quality indicators
-			if (q1) *q1 = tq1;
-			if (q2) *q2 = tq2;
-			if (q3) *q3 = tq3;
 
 			// only if the quality is okay update the future ROI
 			if (sphere_found) {
@@ -821,7 +817,7 @@ int psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* 
 				if (t->color_update_rate > 0 && difftime(now, tc->last_color_update) > t->color_update_rate)
 					do_color_adaption = 1;
 
-				if (do_color_adaption && tq1 > t->color_t1 && tq2 < t->color_t2 && tq3 > t->color_t3) {
+				if (do_color_adaption && tc->q1 > t->color_t1 && tc->q2 < t->color_t2 && tc->q3 > t->color_t3) {
 					// calculate the new estimated color (adaptive color estimation)
 					CvScalar newColor = cvAvg(t->frame, roi_m);
 					th_plus(tc->eColor.val, newColor.val, tc->eColor.val, 3);
@@ -922,13 +918,13 @@ int psmove_tracker_update(PSMoveTracker *tracker, PSMove *move) {
 		// iterate trough all controllers and find their lit spheres
 		tc = tracker->controllers;
 		for (; tc && tracker->frame; tc = tc->next) {
-			spheres_found += psmove_tracker_update_controller(tracker, tc, NULL,NULL,NULL);
+			spheres_found += psmove_tracker_update_controller(tracker, tc);
 		}
 	} else {
 		// find just that specific controller
 		tc = tracked_controller_find(tracker->controllers, move);
 		if (tracker->frame && tc) {
-			spheres_found = psmove_tracker_update_controller(tracker, tc, NULL,NULL,NULL);
+			spheres_found = psmove_tracker_update_controller(tracker, tc);
 		}
 	}
     tracker->duration = (psmove_util_get_ticks() - started);
@@ -1156,7 +1152,7 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 			sprintf(text, "ROI:%dx%d", roi_w, roi_h);
 			th_put_text(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 15), c, textSmall);
 
-			double distance = psmove_tracker_get_distance(tracker, tc->r * 2);
+			double distance = psmove_tracker_calculate_distance(tracker, tc->r * 2);
 
 			sprintf(text, "radius: %.2f", tc->r);
 			th_put_text(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 35), c, textSmall);
@@ -1183,7 +1179,7 @@ float psmove_tracker_hsvcolor_diff(TrackedController* tc) {
 	return diff;
 }
 
-float psmove_tracker_get_distance(PSMoveTracker* t, float blob_diameter) {
+float psmove_tracker_calculate_distance(PSMoveTracker* t, float blob_diameter) {
 
 	// PS Eye uses OV7725 Chip --> http://image-sensors-world.blogspot.co.at/2010/10/omnivision-vga-sensor-inside-sony-eye.html
 	// http://www.ovt.com/download_document.php?type=sensor&sensorid=80

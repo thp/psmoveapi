@@ -50,6 +50,9 @@ struct _TrackedController {
 	float x, y, r;				// x/y - Coordinates of the controllers sphere and its radius
 	int not_found; 			// indicates how often the contoller has not been found (reset to 0 if found)
 	float rs;					// a smoothed variant of the radius
+
+        float q1, q2, q3; // Calculated quality criteria from the tracker
+
 	int is_tracked;				// 1 if tracked 0 otherwise
 	time_t last_color_update;	// the timestamp when the last color adaption has been performed
 	TrackedController* next;
