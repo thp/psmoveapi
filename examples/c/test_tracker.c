@@ -72,8 +72,7 @@ int main(int arg, char** args) {
                 printf("OK\n");
                 break;
             } else {
-                printf("ERROR\n");
-                return 1;
+                printf("ERROR - retrying\n");
             }
         }
 
