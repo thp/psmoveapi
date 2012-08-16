@@ -289,9 +289,11 @@ _psmove_led_write_thread_proc(void *data)
                     sizeof(leds));
 #endif
 
-            printf("hid_write(%d) = %ld ms\n",
+#ifdef PSMOVE_DEBUG
+            fprintf(stderr, "hid_write(%d) = %ld ms\n",
                     move->id,
                     psmove_util_get_ticks() - started);
+#endif
 
             pthread_yield();
         } while (memcmp(&leds, &(move->leds), sizeof(leds)) != 0);
