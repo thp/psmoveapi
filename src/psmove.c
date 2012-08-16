@@ -321,7 +321,10 @@ psmove_disable_local()
 void
 _psmove_write_data(PSMove *move, unsigned char *data, int length)
 {
-    memcpy(&(move->leds), data, length);
+    if (memcmp(&(move->leds), data, length) != 0) {
+        memcpy(&(move->leds), data, length);
+        move->leds_dirty = 1;
+    }
     psmove_update_leds(move);
 }
 
