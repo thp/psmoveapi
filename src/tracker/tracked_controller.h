@@ -46,11 +46,16 @@ struct _TrackedController {
 	CvScalar eFColorHSV;		// first estimated color (HSV)
 	CvScalar eColor;			// estimated color (BGR)
 	CvScalar eColorHSV; 		// estimated color (HSV)
+
+        int tile_width, tile_height; // search tile width and height
+        int search_tiles_horizontal; // number of search tiles horizontal
+        int search_tiles_count;  // number of search tiles
+
 	int roi_x, roi_y;			// x/y - Coordinates of the ROI
 	int roi_level; 	 			// the current index for the level of ROI
 	float mx, my;				// x/y - Coordinates of center of mass of the blob
 	float x, y, r;				// x/y - Coordinates of the controllers sphere and its radius
-	int search_quadrant; 			// current search quadrant when controller is not found (reset to 0 if found)
+	int search_tile; 			// current search quadrant when controller is not found (reset to 0 if found)
 	float rs;					// a smoothed variant of the radius
 
         float q1, q2, q3; // Calculated quality criteria from the tracker

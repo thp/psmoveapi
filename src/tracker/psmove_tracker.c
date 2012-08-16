@@ -267,6 +267,9 @@ psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue colo
 enum PSMoveTracker_Status
 psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move, struct PSMove_RGBValue color);
 
+void
+tracked_controller_setup_tiles(PSMoveTracker *tracker, TrackedController *tc);
+
 /*
  * This function reads old calibration color values and tries to track the controller with that color.
  * if it works, the function returns 1, 0 otherwise.
@@ -367,15 +370,15 @@ psmove_tracker_new_with_camera(int camera) {
 
 	// prepare ROI data structures
 	
-	/* The biggest roi is 1/4 of the whole image (a rectangle) */
-	int w = frame->width/2;
-	int h = frame->height/2;
-	
+        /* Define the size of the biggest ROI */
+	int w = MIN(frame->width/2, frame->height/2);
+        int h = w;
+
 	int i;
 	for (i = 0; i < ROIS; i++) {
 		tracker->roiI[i] = cvCreateImage(cvSize(w,h), frame->depth, 3);
 		tracker->roiM[i] = cvCreateImage(cvSize(w,h), frame->depth, 1);
-		
+
 		/* Smaller rois are always square, and 70% of the previous level */
 		h = w = MIN(w,h) * 0.7f;
 	}
@@ -420,6 +423,7 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 	int delay = 100;
 
 	TrackedController* tc = tracked_controller_create();
+        tracked_controller_setup_tiles(tracker, tc);
         tc->color = rgb;
 
 	if (tracked_controller_load_color(tc)) {
@@ -450,6 +454,25 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 	return result;
 }
 
+void
+tracked_controller_setup_tiles(PSMoveTracker *tracker, TrackedController *tc)
+{
+    tc->tile_width = tracker->roiI[0]->width;
+    tc->tile_height = tracker->roiI[0]->height;
+
+    printf("tile width: %d, tile height: %d\n", tc->tile_width, tc->tile_height);
+    printf("frame width: %d, frame height: %d\n", tracker->frame->width, tracker->frame->height);
+
+    tc->search_tiles_horizontal = (tracker->frame->width + tc->tile_width - 1) / tc->tile_width;
+    int search_tiles_vertical = (tracker->frame->height + tc->tile_height - 1) / tc->tile_height;
+    printf("horizontal: %d, vertical: %d\n", tc->search_tiles_horizontal, search_tiles_vertical);
+    tc->search_tiles_count = tc->search_tiles_horizontal * search_tiles_vertical;
+    if (tc->search_tiles_count % 2 == 0) {
+        // make search_tiles_count uneven
+        tc->search_tiles_count++;
+    }
+}
+
 enum PSMoveTracker_Status
 psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char r, unsigned char g, unsigned char b)
@@ -470,18 +493,25 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
             return Tracker_CALIBRATION_ERROR;
         }
 
+        psmove_tracker_update_image(tracker);
+	IplImage* frame = camera_control_query_frame(tracker->cc);
+
 	// try to track the controller with the old color, if it works we are done
 	if (psmove_tracker_old_color_is_tracked(tracker, move, rgb)) {
-		TrackedController* itm = tracked_controller_insert(&tracker->controllers, move);
-                itm->color = rgb;
-		tracked_controller_load_color(itm);
+		TrackedController* tc = tracked_controller_insert(&tracker->controllers, move);
+
+                tracker->frame = frame;
+                tracked_controller_setup_tiles(tracker, tc);
+                tracker->frame = NULL;
+
+                tc->color = rgb;
+		tracked_controller_load_color(tc);
 		return Tracker_CALIBRATED;
 	}
 
 	// clear the calibration html trace
 	psmove_html_trace_clear();
 
-	IplImage* frame = camera_control_query_frame(tracker->cc);
 	// check if the frame retrieved, is valid
 	assert(frame!=NULL);
 	IplImage* images[BLINKS]; // array of images saved during calibration for estimation of sphere color
@@ -620,8 +650,8 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 		mask = NULL;
 	}
 
-	int has_calibration_errors = 0;
 	// CHECK if sphere was found in each BLINK image
+	int has_calibration_errors = 0;
 	if (valid_countours < BLINKS) {
 		psmove_html_trace_put_log_entry("ERROR", "The sphere could not be found in all images.");
 		has_calibration_errors++;
@@ -639,6 +669,9 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 
 	// insert to list of tracked controllers
 	TrackedController* itm = tracked_controller_insert(&tracker->controllers, move);
+
+        tracked_controller_setup_tiles(tracker, itm);
+
 	// set current color
         itm->color = rgb;
 	// set first estimated color
@@ -822,7 +855,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 				tc->y = tc->my;
 			}
 			// only perform check if we already found the sphere once
-			if (oldRadius > 0 && tc->search_quadrant==0) {
+			if (oldRadius > 0 && tc->search_tile==0) {
 				tc->q2 = abs(oldRadius - tc->r) / (oldRadius + FLT_EPSILON);
 
 				// additionally check for to big changes
@@ -876,7 +909,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 		cvResetImageROI(tracker->frame);
 
 		if (sphere_found) {
-			tc->search_quadrant = 0;
+			tc->search_tile = 0;
 			// the sphere was found
 			break;
 		}else if(tc->roi_level>0){
@@ -895,30 +928,11 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 			int rx;
 			int ry;
 			// the sphere could not be found til a reasonable roi-level
-			
-			switch(tc->search_quadrant)
-			{
-			case 0:
-				rx=0;
-				ry=0;
-				break;
-			case 1:
-				rx=tracker->frame->width/2;
-				ry=0;
-				break;
-			case 2:
-				rx=tracker->frame->width/2;
-				ry=tracker->frame->height/2;
-				break;
-			case 3:
-				rx=0;
-				ry=tracker->frame->height/2;
-				break;
-			default:
-				assert(0);
-			}
 
-			tc->search_quadrant = (tc->search_quadrant + 1) % 4;
+                        rx = tc->tile_width * (tc->search_tile % tc->search_tiles_horizontal);
+                        ry = tc->tile_height * (int)(tc->search_tile / tc->search_tiles_horizontal);
+			tc->search_tile = (tc->search_tile + 2) % tc->search_tiles_count;
+
 			tc->roi_level=0;
 			psmove_tracker_set_roi(tracker, tc, rx, ry, tracker->roiI[tc->roi_level]->width, tracker->roiI[tc->roi_level]->height);
 			break;
@@ -1171,7 +1185,11 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 			th_put_text(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 25), c, textSmall);
 
 			cvCircle(frame, p, tc->r, th_white, 1, 8, 0);
-		}
+		} else {
+			roi_w = tracker->roiI[tc->roi_level]->width;
+			roi_h = tracker->roiI[tc->roi_level]->height;
+			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), th_red, 3, 8, 0);
+                }
 	}
 }
 

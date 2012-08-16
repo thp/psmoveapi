@@ -65,10 +65,16 @@ camera_control_new(int cameraID)
 	CLEyeCameraStart(cc->camera);
 #else
 	cc->capture = cvCaptureFromCAM(cc->cameraID);
+#if 0
+	cc->capture = cvCaptureFromFile("720p.mp4");
+        printf("FPS: %.2lf\n", cvGetCaptureProperty(cc->capture,
+                CV_CAP_PROP_FPS));
+#endif
 	cvSetCaptureProperty(cc->capture,
                 CV_CAP_PROP_FRAME_WIDTH, PSMOVE_TRACKER_POSITION_X_MAX);
 	cvSetCaptureProperty(cc->capture,
                 CV_CAP_PROP_FRAME_HEIGHT, PSMOVE_TRACKER_POSITION_Y_MAX);
+
 #endif
 
 	return cc;
@@ -126,7 +132,9 @@ camera_control_query_frame(CameraControl* cc)
 
     result = cc->frame3ch;
 #else
+    long start = psmove_util_get_ticks();
     result = cvQueryFrame(cc->capture);
+    printf("cvQueryFrame: %ld ms\n", psmove_util_get_ticks() - start);
 #endif
 
 #if defined(PSMOVE_USE_DEINTERLACE)
