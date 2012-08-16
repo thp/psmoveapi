@@ -486,14 +486,14 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     }
 
 #if defined(PSMOVE_USE_PTHREADS)
-    psmove_return_val_if_fail(pthread_create(&move->led_write_thread,
-            NULL,
-            _psmove_led_write_thread_proc,
-            (void*)move) == 0, NULL);
     psmove_return_val_if_fail(pthread_mutex_init(&move->led_write_mutex,
                 NULL) == 0, NULL);
     psmove_return_val_if_fail(pthread_cond_init(&move->led_write_new_data,
                 NULL) == 0, NULL);
+    psmove_return_val_if_fail(pthread_create(&move->led_write_thread,
+            NULL,
+            _psmove_led_write_thread_proc,
+            (void*)move) == 0, NULL);
 #endif
 
     /* Bookkeeping of open handles (for psmove_reinit) */
