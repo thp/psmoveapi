@@ -1443,3 +1443,32 @@ psmove_util_get_file_path(const char *filename)
     return result;
 }
 
+int
+psmove_util_get_env_int(const char *name)
+{
+    char *env = getenv(name);
+
+    if (env) {
+        char *end;
+        long result = strtol(env, &end, 10);
+
+        if (*end == '\0' && *env != '\0') {
+            return result;
+        }
+    }
+
+    return -1;
+}
+
+char *
+psmove_util_get_env_string(const char *name)
+{
+    char *env = getenv(name);
+
+    if (env) {
+        return strdup(env);
+    }
+
+    return NULL;
+}
+

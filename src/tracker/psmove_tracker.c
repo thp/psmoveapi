@@ -301,17 +301,13 @@ PSMoveTracker *psmove_tracker_new() {
     }
 #endif
 
-    char *camera_env = getenv(PSMOVE_TRACKER_CAMERA_ENV);
-    if (camera_env) {
-        char *end;
-        long camera_env_id = strtol(camera_env, &end, 10);
-        if (*end == '\0' && *camera_env != '\0') {
-            camera = (int)camera_env_id;
+    int camera_env = psmove_util_get_env_int(PSMOVE_TRACKER_CAMERA_ENV);
+    if (camera_env != -1) {
 #ifdef PSMOVE_DEBUG
-            fprintf(stderr, "[PSMOVE] Using camera %d (%s is set)\n",
-                    camera, PSMOVE_TRACKER_CAMERA_ENV);
+        camera = camera_env;
+        fprintf(stderr, "[PSMOVE] Using camera %d (%s is set)\n",
+                camera, PSMOVE_TRACKER_CAMERA_ENV);
 #endif
-        }
     }
 
     return psmove_tracker_new_with_camera(camera);

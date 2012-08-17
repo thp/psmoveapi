@@ -892,6 +892,30 @@ ADDCALL psmove_util_get_data_dir();
 ADDAPI char *
 ADDCALL psmove_util_get_file_path(const char *filename);
 
+/**
+ * Utility function: Get an integer from the environment
+ *
+ * Returns the integer value of the environment variable, or -1 if
+ * the variable is not set or could not be parsed as integer.
+ *
+ * name ... The name of the environment variable
+ **/
+ADDAPI int
+ADDCALL psmove_util_get_env_int(const char *name);
+
+/**
+ * Utility function: Get a string from the environment
+ *
+ * Returns the string value of the environment variable, or NULL if
+ * the variable is not set.
+ *
+ * name ... The name of the environment variable
+ *
+ * The returned value must be free()d after use.
+ **/
+ADDAPI char *
+ADDCALL psmove_util_get_env_string(const char *name);
+
 
 #ifdef __cplusplus
 }
