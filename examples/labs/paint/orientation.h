@@ -51,8 +51,18 @@ class Orientation : public QThread
         void backup_frame();
         void restore_frame();
 
+    private:
+        PSMoveTracker *tracker;
+
     public:
-        Orientation() : QThread() {}
+        Orientation() : QThread() {
+            tracker = psmove_tracker_new();
+        }
+
+        void get_size(int &width, int &height) {
+            psmove_tracker_update_image(tracker);
+            psmove_tracker_get_size(tracker, &width, &height);
+        }
 
         void run()
         {
@@ -67,8 +77,6 @@ class Orientation : public QThread
             }
 
             int quit = 0;
-
-            PSMoveTracker *tracker = psmove_tracker_new();
 
             for (i=0; i<count; i++) {
                 while (psmove_tracker_enable(tracker, moves[i])

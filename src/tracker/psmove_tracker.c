@@ -47,7 +47,8 @@
 #  include "platform/psmove_linuxsupport.h"
 #endif
 
-#define DIMMING_FACTOR 1  			// LED color dimming for use in high exposure settings
+float dimming_factor = 1;
+
 #define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
 //#define DEBUG_WINDOWS 			// shall additional windows be shown
 #define GOOD_EXPOSURE 2051			// a very low exposure that was found to be good for tracking
@@ -288,6 +289,15 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 PSMoveTracker *psmove_tracker_new() {
     int camera = 0;
 
+    int dimming_env = psmove_util_get_env_int(PSMOVE_TRACKER_DIMMING_ENV);
+    if (dimming_env != -1) {
+        dimming_env = MIN(100, MAX(1, dimming_env));
+#ifdef PSMOVE_DEBUG
+        fprintf(stderr, "[PSMOVE] Dimming factor: %d %%\n", dimming_env);
+#endif
+        dimming_factor = (float)dimming_env * .01;
+    }
+
 #if defined(__linux) && defined(PSMOVE_USE_PSEYE)
     /**
      * On Linux, we might have multiple cameras (e.g. most laptops have
@@ -365,10 +375,19 @@ psmove_tracker_new_with_camera(int camera) {
 	}
 
 	// prepare ROI data structures
-	
+
         /* Define the size of the biggest ROI */
-	int w = MIN(frame->width/2, frame->height/2);
-        int h = w;
+        int size = psmove_util_get_env_int(PSMOVE_TRACKER_ROI_SIZE_ENV);
+
+        if (size == -1) {
+            size = MIN(frame->width/2, frame->height/2);
+        } else {
+#ifdef PSMOVE_DEBUG
+            fprintf(stderr, "[PSMOVE] Using ROI size: %d\n", size);
+#endif
+        }
+
+        int w = size, h = size;
 
 	int i;
 	for (i = 0; i < ROIS; i++) {
@@ -424,6 +443,13 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 
 	if (tracked_controller_load_color(tc)) {
 		result = 1;
+                char *color = psmove_util_get_env_string(
+                        PSMOVE_TRACKER_COLOR_ENV);
+                if (color) {
+                    free(color);
+                    return 1;
+                }
+
 		int i;
 		for (i = 0; i < nTimes; i++) {
 			// sleep a little befor checking the next image
@@ -431,9 +457,9 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 			for (d = 0; d < delay / 10; d++) {
 				usleep(1000 * 10);
 				psmove_set_leds(move,
-                                        rgb.r * DIMMING_FACTOR,
-                                        rgb.g * DIMMING_FACTOR,
-                                        rgb.b * DIMMING_FACTOR);
+                                        rgb.r * dimming_factor,
+                                        rgb.g * dimming_factor,
+                                        rgb.b * dimming_factor);
 				psmove_update_leds(move);
 				psmove_tracker_update_image(tracker);
 			}
@@ -688,9 +714,9 @@ int psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move, unsigned char
 	TrackedController* tc = tracked_controller_find(tracker->controllers, move);
 	psmove_return_val_if_fail(tc != NULL, 0);
 
-	*r = tc->color.r * DIMMING_FACTOR;
-	*g = tc->color.g * DIMMING_FACTOR;
-	*b = tc->color.b * DIMMING_FACTOR;
+	*r = tc->color.r * dimming_factor;
+	*g = tc->color.g * dimming_factor;
+	*b = tc->color.b * dimming_factor;
 	return 1;
 }
 
@@ -988,6 +1014,17 @@ int psmove_tracker_get_position(PSMoveTracker *tracker, PSMove *move, float *x, 
 	return 1;
 }
 
+void
+psmove_tracker_get_size(PSMoveTracker *tracker,
+        int *width, int *height)
+{
+    psmove_return_if_fail(tracker != NULL);
+    psmove_return_if_fail(tracker->frame != NULL);
+
+    *width = tracker->frame->width;
+    *height = tracker->frame->height;
+}
+
 void psmove_tracker_free(PSMoveTracker *tracker) {
 	tracked_controller_save_colors(tracker->controllers);
 
@@ -1076,9 +1113,9 @@ void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move,
 	// the time to wait for the controller to set the color up
 	IplImage* frame;
 	// switch the LEDs ON and wait for the sphere to be fully lit
-	rgb.r *= DIMMING_FACTOR;
-	rgb.g *= DIMMING_FACTOR;
-	rgb.b *= DIMMING_FACTOR;
+	rgb.r *= dimming_factor;
+	rgb.g *= dimming_factor;
+	rgb.b *= dimming_factor;
 	psmove_set_leds(move, rgb.r, rgb.g, rgb.b);
 	psmove_update_leds(move);
 

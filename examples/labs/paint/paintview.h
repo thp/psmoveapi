@@ -39,7 +39,7 @@ class PaintView : public QWidget
 {
     Q_OBJECT
 public:
-    PaintView(QWidget *parent=0);
+    PaintView(QWidget *parent, int width, int height);
     ~PaintView();
 
 protected:

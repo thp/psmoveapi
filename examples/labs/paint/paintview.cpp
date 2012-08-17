@@ -36,9 +36,9 @@
 
 #include "psmove_tracker.h"
 
-PaintView::PaintView(QWidget *parent)
+PaintView::PaintView(QWidget *parent, int width, int height)
     : QWidget(parent),
-      m_painting(PSMOVE_TRACKER_POSITION_X_MAX, PSMOVE_TRACKER_POSITION_Y_MAX),
+      m_painting(width, height),
       m_painting_backup(m_painting.size()),
       m_cursor(),
       m_color(),

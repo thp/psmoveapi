@@ -35,10 +35,14 @@
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
-    PaintView view;
 
     Orientation orientation;
     orientation.start();
+
+    int width, height;
+    orientation.get_size(width, height);
+
+    PaintView view(NULL, width, height);
 
     QObject::connect(&orientation, SIGNAL(newposition(int,qreal,qreal,qreal,qreal)),
             &view, SLOT(newposition(int,qreal,qreal,qreal,qreal)));

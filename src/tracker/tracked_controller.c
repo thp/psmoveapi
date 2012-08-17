@@ -27,6 +27,7 @@
  **/
 
 #include "psmove.h"
+#include "psmove_tracker.h"
 
 #include "tracked_controller.h"
 #include "tracker_helpers.h"
@@ -138,6 +139,32 @@ void tracked_controller_save_colors(TrackedController* head) {
 }
 
 int tracked_controller_load_color(TrackedController* tc) {
+    char *color = psmove_util_get_env_string(PSMOVE_TRACKER_COLOR_ENV);
+    if (color) {
+        int value = 0;
+        sscanf(color, "%x", &value);
+
+        tc->eFColor.val[2] = (value >> 16) & 0xFF;
+        tc->eFColor.val[1] = (value >> 8) & 0xFF;
+        tc->eFColor.val[0] = (value) & 0xFF;
+
+#ifdef PSMOVE_DEBUG
+        fprintf(stderr, "[PSMOVE] Tracked color: brg(%.0f, %.0f, %.0f)\n",
+                tc->eFColor.val[2], tc->eFColor.val[1], tc->eFColor.val[0]);
+#endif
+
+        tc->eColor.val[2] = tc->eFColor.val[2];
+        tc->eColor.val[1] = tc->eFColor.val[1];
+        tc->eColor.val[0] = tc->eFColor.val[0];
+
+        tc->eColorHSV = th_brg2hsv(tc->eColor);
+        tc->eFColorHSV = th_brg2hsv(tc->eFColor);
+
+        free(color);
+
+        return 1;
+    }
+
 	int loaded = 0;
 	char key[128];
         char *filename = psmove_util_get_file_path(COLOR_MAPPING_FILE);

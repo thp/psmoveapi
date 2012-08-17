@@ -38,14 +38,30 @@ extern "C" {
 #endif
 
 /* Defines the range of x/y values for the position getting, etc.. */
-#define PSMOVE_TRACKER_POSITION_X_MAX 640
-#define PSMOVE_TRACKER_POSITION_Y_MAX 480
+#define PSMOVE_TRACKER_DEFAULT_WIDTH 640
+#define PSMOVE_TRACKER_DEFAULT_HEIGHT 480
 
 /* For now, we only allow 1 controller to be tracked */
 #define PSMOVE_TRACKER_MAX_CONTROLLERS 2
 
 /* Name of the environment variable used to pick a camera */
 #define PSMOVE_TRACKER_CAMERA_ENV "PSMOVE_TRACKER_CAMERA"
+
+/* Name of the environment variable used to choose a pre-recorded video */
+#define PSMOVE_TRACKER_FILENAME_ENV "PSMOVE_TRACKER_FILENAME"
+
+/* Name of the environment variable used to set the visible sphere color */
+#define PSMOVE_TRACKER_COLOR_ENV "PSMOVE_TRACKER_COLOR"
+
+/* Name of the environment variable used to set the biggest ROI size */
+#define PSMOVE_TRACKER_ROI_SIZE_ENV "PSMOVE_TRACKER_ROI_SIZE"
+
+/* Name of the environment variables for the camera image size */
+#define PSMOVE_TRACKER_WIDTH_ENV "PSMOVE_TRACKER_WIDTH"
+#define PSMOVE_TRACKER_HEIGHT_ENV "PSMOVE_TRACKER_HEIGHT"
+
+/* Name of the environment variable for the dimming factor */
+#define PSMOVE_TRACKER_DIMMING_ENV "PSMOVE_TRACKER_DIMMING"
 
 
 /* Opaque data structure, defined only in psmove_tracker.c */
@@ -215,6 +231,10 @@ ADDAPI int
 ADDCALL psmove_tracker_get_position(PSMoveTracker *tracker,
         PSMove *move, float *x, float *y, float *radius);
 
+
+ADDAPI void
+ADDCALL psmove_tracker_get_size(PSMoveTracker *tracker,
+        int *width, int *height);
 
 /**
  * Destroy an existing tracker instance and free allocated resources

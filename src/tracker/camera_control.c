@@ -37,6 +37,22 @@
 
 #include "camera_control_private.h"
 
+void
+get_metrics(int *width, int *height)
+{
+    *width = psmove_util_get_env_int(PSMOVE_TRACKER_WIDTH_ENV);
+    *height = psmove_util_get_env_int(PSMOVE_TRACKER_HEIGHT_ENV);
+
+    if (*width == -1) {
+        *width = PSMOVE_TRACKER_DEFAULT_WIDTH;
+    }
+
+    if (*height == -1) {
+        *height = PSMOVE_TRACKER_DEFAULT_HEIGHT;
+    }
+}
+
+
 CameraControl *
 camera_control_new(int cameraID)
 {
@@ -64,17 +80,24 @@ camera_control_new(int cameraID)
 
 	CLEyeCameraStart(cc->camera);
 #else
-	cc->capture = cvCaptureFromCAM(cc->cameraID);
-#if 0
-	cc->capture = cvCaptureFromFile("720p.mp4");
-        printf("FPS: %.2lf\n", cvGetCaptureProperty(cc->capture,
-                CV_CAP_PROP_FPS));
-#endif
-	cvSetCaptureProperty(cc->capture,
-                CV_CAP_PROP_FRAME_WIDTH, PSMOVE_TRACKER_POSITION_X_MAX);
-	cvSetCaptureProperty(cc->capture,
-                CV_CAP_PROP_FRAME_HEIGHT, PSMOVE_TRACKER_POSITION_Y_MAX);
+        char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
 
+        if (video) {
+#ifdef PSMOVE_DEBUG
+            fprintf(stderr, "[PSMOVE] Using '%s' as video input.\n",
+                    video);
+#endif
+            cc->capture = cvCaptureFromFile(video);
+            free(video);
+        } else {
+            cc->capture = cvCaptureFromCAM(cc->cameraID);
+
+            int width, height;
+            get_metrics(&width, &height);
+
+            cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_WIDTH, width);
+            cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_HEIGHT, height);
+        }
 #endif
 
 	return cc;
@@ -100,10 +123,11 @@ camera_control_read_calibration(CameraControl* cc,
                     camera_control_query_frame(cc));
         }
 
-        cc->mapx = cvCreateImage(cvSize(PSMOVE_TRACKER_POSITION_X_MAX,
-                    PSMOVE_TRACKER_POSITION_Y_MAX), IPL_DEPTH_32F, 1);
-        cc->mapy = cvCreateImage(cvSize(PSMOVE_TRACKER_POSITION_X_MAX,
-                    PSMOVE_TRACKER_POSITION_Y_MAX), IPL_DEPTH_32F, 1);
+        int width, height;
+        get_metrics(&width, &height);
+
+        cc->mapx = cvCreateImage(cvSize(width, height), IPL_DEPTH_32F, 1);
+        cc->mapy = cvCreateImage(cvSize(width, height), IPL_DEPTH_32F, 1);
 
         cvInitUndistortMap(intrinsic, distortion, cc->mapx, cc->mapy);
 
