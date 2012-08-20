@@ -41,6 +41,15 @@ Get and install
 	set OpenCV_DIR=<the path where you extracted opencv>
 	set PATH=%PATH%;%OpenCV_DIR%\build\bin
 
+
+    # You can manually specify the OpenCV libs in CMakeLists.txt, too:
+
+        list(APPEND PSMOVE_REQUIRED_LIBS
+                opencv_highgui242 opencv_core242 opencv_imgproc242)
+        include_directories(${PSMOVEAPI_SOURCE_DIR}/../opencv/include)
+        link_directories(${PSMOVEAPI_SOURCE_DIR}/../opencv/lib)
+
+
 7. prepare a new build with cmake for the psmoveapi
 	:: 
 	mkdir build
