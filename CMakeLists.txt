@@ -24,6 +24,9 @@ link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libs)
 # Build the OpenCV-based camera tracking module? (see psmove_tracker.h)
 option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 
+# Build with registry settings (CL Eye driver) on Windows
+option(PSMOVE_USE_PSEYE "Compile for PS Eye features on Windows" ON)
+
 # Search for OpenCV, if we don't have it, build without tracker
 FIND_PACKAGE(OpenCV QUIET)
 if(OpenCV_FOUND AND PSMOVE_BUILD_TRACKER)

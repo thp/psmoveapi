@@ -38,7 +38,7 @@
 #include "camera_control_private.h"
 
 void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
-#ifndef CAMERA_CONTROL_USE_CL_DRIVER
+#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && defined(PSMOVE_USE_PSEYE)
 	HKEY hKey;
 	DWORD l = sizeof(DWORD);
 	DWORD AutoAEC = 0;
@@ -80,7 +80,7 @@ void camera_control_backup_system_settings(CameraControl* cc, const char* file) 
 }
 
 void camera_control_restore_system_settings(CameraControl* cc, const char* file) {
-#ifndef CAMERA_CONTROL_USE_CL_DRIVER
+#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && defined(PSMOVE_USE_PSEYE)
 	int NOT_FOUND = -1;
 	int val;
 	HKEY hKey;
@@ -149,7 +149,7 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 		CLEyeSetCameraParameter(cc->camera, CLEYE_WHITEBALANCE_GREEN, round((255 * wbGreen) / 0xFFFF));
 	if (wbBlue >= 0)
 		CLEyeSetCameraParameter(cc->camera, CLEYE_WHITEBALANCE_BLUE, round((255 * wbBlue) / 0xFFFF));
-#else
+#elif defined(PSMOVE_USE_PSEYE)
 	int val;
 	HKEY hKey;
 	DWORD l = sizeof(DWORD);
@@ -177,8 +177,9 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	RegSetValueExA(hKey, "WhiteBalanceB", 0, REG_DWORD, (CONST BYTE*) &val, l);
 
 	// restart the camera capture with openCv
-	if (cc->capture != 0x0)
-	cvReleaseCapture(&cc->capture);
+	if (cc->capture) {
+            cvReleaseCapture(&cc->capture);
+        }
 
 	cc->capture = cvCaptureFromCAM(cc->cameraID);
 	cvSetCaptureProperty(cc->capture,
