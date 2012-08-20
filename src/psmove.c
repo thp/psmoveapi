@@ -821,17 +821,19 @@ psmove_pair_custom(PSMove *move, const char *btaddr_string)
 enum PSMove_Connection_Type
 psmove_connection_type(PSMove *move)
 {
-#if defined(_WIN32)
-    return move->is_bluetooth?Conn_Bluetooth:Conn_USB;
-#else
-    wchar_t wstr[255];
-    int res;
-
     psmove_return_val_if_fail(move != NULL, Conn_Unknown);
 
     if (move->type == PSMove_MOVED) {
         return Conn_Bluetooth;
     }
+
+#if defined(_WIN32)
+    if (move->is_bluetooth) {
+        return Conn_Bluetooth;
+    } else {
+        return Conn_USB;
+    }
+#endif
 
     if (move->serial_number == NULL) {
         return Conn_Unknown;
@@ -842,7 +844,6 @@ psmove_connection_type(PSMove *move)
     }
 
     return Conn_Bluetooth;
-#endif
 }
 
 int
