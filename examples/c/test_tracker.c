@@ -78,11 +78,7 @@ int main(int arg, char** args) {
 
     }
 
-    while (1) {
-        if ((cvWaitKey(10) & 255) == 27) {
-            break;
-        }
-
+    while ((cvWaitKey(1) & 0xFF) != 27) {
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, NULL);
 
