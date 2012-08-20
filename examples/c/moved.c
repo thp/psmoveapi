@@ -163,6 +163,7 @@ psmove_dev_create(int id)
     assert(dev != NULL);
 
     dev->move = psmove_connect_by_id(id);
+    psmove_set_rate_limiting(dev->move, 0);
     return dev;
 }
 
