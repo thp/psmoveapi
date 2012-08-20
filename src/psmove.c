@@ -511,8 +511,6 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
     move->client = client;
     move->remote_id = remote_id;
 
-    move->id = id;
-
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
 
