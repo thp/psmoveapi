@@ -131,7 +131,6 @@ struct _PSMoveTracker {
 
 	// internal variables (debug)
 	float debug_fps; // the current FPS achieved by "psmove_tracker_update"
-	long debug_last_live; // the timesamp when the last live-image was written to the file-system
 
 };
 
@@ -1182,13 +1181,6 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 
 			cvCircle(frame, p, tc->r, th_white, 1, 8, 0);
 		}
-	}
-
-	// every second save a debug-image to the filesystem
-	long now = psmove_util_get_ticks();
-	if ((now - tracker->debug_last_live) > 100) {
-		psmove_html_trace_image(frame, "livefeed", tracker->debug_last_live);
-		tracker->debug_last_live = now;
 	}
 }
 
