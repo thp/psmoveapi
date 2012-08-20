@@ -90,6 +90,17 @@ moved_client_list_destroy(moved_client_list *client_list)
 moved_client *
 moved_client_create(const char *hostname)
 {
+#ifdef _WIN32
+    /* "wsa" = Windows Sockets API, not a misspelling of "was" */
+    static int wsa_initialized = 0;
+
+    if (!wsa_initialized) {
+        WSADATA wsa_data;
+        assert(WSAStartup(MAKEWORD(1, 1), &wsa_data) == 0);
+        wsa_initialized = 1;
+    }
+#endif
+
     moved_client *client = (moved_client*)calloc(1, sizeof(moved_client));
 
     client->hostname = strdup(hostname);
@@ -100,7 +111,8 @@ moved_client_create(const char *hostname)
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);
 #ifdef _WIN32
-#   warning "Need a call to WSAStringToAddress"
+    client->moved_addr.sin_addr.s_addr = inet_addr(hostname);
+    assert(client->moved_addr.sin_addr.s_addr != INADDR_NONE);
 #else
     assert(inet_pton(AF_INET, hostname, &(client->moved_addr.sin_addr)) != 0);
 #endif
