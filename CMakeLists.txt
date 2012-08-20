@@ -55,7 +55,6 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVEAPI_PLATFORM_SRC ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_osxsupport.m)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
-    list(APPEND MOVED_CLIENT_REQUIRED_LIBS ws2_32)
 
     option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
 
@@ -136,9 +135,6 @@ set_target_properties(psmoveapi PROPERTIES COMPILE_FLAGS -DBUILDING_SHARED_LIBRA
 
 add_executable(moved examples/c/moved.c)
 target_link_libraries(moved psmoveapi)
-
-add_executable(moved_client_test examples/c/moved_client_test.c src/daemon/moved_client.c)
-target_link_libraries(moved_client_test ${MOVED_CLIENT_REQUIRED_LIBS})
 
 # C examples
 foreach(PSMOVE_EXAMPLE example multiple psmovepair dump_calibration linmcfake)

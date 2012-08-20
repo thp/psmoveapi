@@ -40,4 +40,6 @@
 #define MOVED_SIZE_REQUEST 9
 #define MOVED_SIZE_READ_RESPONSE 50
 
+#define MOVED_HOSTS_LIST_FILE "moved_hosts.txt"
+
 #endif

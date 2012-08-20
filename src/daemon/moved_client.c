@@ -28,6 +28,7 @@
  **/
 
 
+#include "psmove.h"
 #include "moved_client.h"
 
 moved_client_list *
@@ -49,16 +50,22 @@ moved_client_list_open()
     char hostname[255];
     FILE *fp;
 
-    fp = fopen("remotes.txt", "r");
+    char *filename = psmove_util_get_file_path(MOVED_HOSTS_LIST_FILE);
+
+    fp = fopen(filename, "r");
     if (fp != NULL) {
         while (fgets(hostname, sizeof(hostname), fp) != NULL) {
-            hostname[strlen(hostname)-1] = '\0';
+            char *end = hostname + strlen(hostname) - 1;
+            if (*end == '\n' || *end == '\r') {
+                *end = '\0';
+            }
             printf("using remote host (from remotes.txt): '%s'\n", hostname);
             result = moved_client_list_insert(result,
                     moved_client_create(hostname));
         }
         fclose(fp);
     }
+    free(filename);
 
     /* XXX: Read from config file */
     //result = moved_client_list_insert(result, moved_client_create("localhost"));
