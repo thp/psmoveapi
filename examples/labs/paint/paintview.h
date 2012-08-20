@@ -48,15 +48,15 @@ protected:
 private:
     QPixmap m_painting;
     QPixmap m_painting_backup;
-    QPoint m_cursor;
-    QColor m_color;
+    QPoint m_cursor[2];
+    QColor m_color[2];
     QImage *m_image;
 
 public slots:
-    void newposition(qreal scale, qreal x, qreal y, qreal trigger);
+    void newposition(int id, qreal scale, qreal x, qreal y, qreal trigger);
     void backup_frame();
     void restore_frame();
-    void newcolor(int r, int g, int b);
+    void newcolor(int id, int r, int g, int b);
     void newimage(void *image);
 };
 

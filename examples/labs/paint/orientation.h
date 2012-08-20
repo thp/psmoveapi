@@ -45,8 +45,8 @@ class Orientation : public QThread
     Q_OBJECT
 
     signals:
-        void newposition(qreal scale, qreal x, qreal y, qreal trigger);
-        void newcolor(int r, int g, int b);
+        void newposition(int id, qreal scale, qreal x, qreal y, qreal trigger);
+        void newcolor(int id, int r, int g, int b);
         void newimage(void *image);
         void backup_frame();
         void restore_frame();
@@ -108,28 +108,28 @@ class Orientation : public QThread
                         }
 
                         if (psmove_get_buttons(move) & Btn_MOVE) {
-                            emit newcolor(0, 0, 0);
+                            emit newcolor(i, 255, 255, 255);
                         }
 
                         if (psmove_get_buttons(move) & Btn_CROSS) {
-                            emit newcolor(0, 0, 255);
+                            emit newcolor(i, 0, 0, 255);
                         }
 
                         if (psmove_get_buttons(move) & Btn_SQUARE) {
-                            emit newcolor(255, 255, 0);
+                            emit newcolor(i, 255, 255, 0);
                         }
 
                         if (psmove_get_buttons(move) & Btn_TRIANGLE) {
-                            emit newcolor(0, 255, 0);
+                            emit newcolor(i, 0, 255, 0);
                         }
 
                         if (psmove_get_buttons(move) & Btn_CIRCLE) {
-                            emit newcolor(255, 0, 0);
+                            emit newcolor(i, 255, 0, 0);
                         }
 
                         float x, y, radius;
                         psmove_tracker_get_position(tracker, move, &x, &y, &radius);
-                        emit newposition(radius, x, y,
+                        emit newposition(i, radius, x, y,
                                 (qreal)psmove_get_trigger(move) / 255.);
                     }
                 } while (again);
