@@ -34,5 +34,6 @@
 
 #cmakedefine PSMOVE_HAVE_TRACKER
 #cmakedefine PSMOVE_USE_PSEYE
+#cmakedefine PSMOVE_USE_DEINTERLACE
 
 #endif

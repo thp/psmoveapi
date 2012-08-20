@@ -129,6 +129,36 @@ camera_control_query_frame(CameraControl* cc)
     result = cvQueryFrame(cc->capture);
 #endif
 
+#if defined(PSMOVE_USE_DEINTERLACE)
+    /**
+     * Dirty hack follows:
+     *  - Clone image
+     *  - Hack internal variables to make an image of all odd lines
+     **/
+    IplImage *tmp = cvCloneImage(result);
+    tmp->imageData += tmp->widthStep; // odd lines
+    tmp->widthStep *= 2;
+    tmp->height /= 2;
+
+    /**
+     * Use nearest-neighbor to be faster. In my tests, this does not
+     * cause a speed disadvantage, and tracking quality is still good.
+     *
+     * This will scale the half-height image "tmp" to the original frame
+     * size by doubling lines (so we can still do normal circle tracking).
+     **/
+    cvResize(tmp, result, CV_INTER_NN);
+
+    /**
+     * Need to revert changes in tmp from above, otherwise the call
+     * to cvReleaseImage would cause a crash.
+     **/
+    tmp->height = result->height;
+    tmp->widthStep = result->widthStep;
+    tmp->imageData -= tmp->widthStep; // odd lines
+    cvReleaseImage(&tmp);
+#endif
+
     // undistort image
     if (cc->mapx && cc->mapy) {
         cvRemap(result, cc->frame3chUndistort,

@@ -27,6 +27,9 @@ option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 # Build with registry settings (CL Eye driver) on Windows
 option(PSMOVE_USE_PSEYE "Compile for PS Eye features on Windows" ON)
 
+# Build with support for deinterlacing interlaced HD video input
+option(PSMOVE_USE_DEINTERLACE "Deinterlace input video (for HD inputs)" OFF)
+
 # Search for OpenCV, if we don't have it, build without tracker
 FIND_PACKAGE(OpenCV QUIET)
 if(OpenCV_FOUND AND PSMOVE_BUILD_TRACKER)
