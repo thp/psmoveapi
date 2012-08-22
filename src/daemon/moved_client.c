@@ -110,11 +110,20 @@ moved_client_create(const char *hostname)
     client->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     assert(client->socket != -1);
 
-    /* The receiving socket must have a timeout to not block indefinitely */
+    /**
+     * The receiving socket must have a timeout to not block indefinitely
+     *
+     * With Berkeley sockets, SO_RCVTIMEO takes a struct timeval, whereas
+     * Microsoft's WinSock takes a DWORD containing a milliseconds value.
+     **/
+#ifdef _WIN32
+    DWORD receive_timeout = MOVED_TIMEOUT_MS;
+#else
     struct timeval receive_timeout = {
         .tv_sec = MOVED_TIMEOUT_MS / 1000,
         .tv_usec = (MOVED_TIMEOUT_MS % 1000) * 1000,
     };
+#endif
     assert(setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
                 &receive_timeout, sizeof(receive_timeout)) == 0);
 
@@ -178,16 +187,16 @@ moved_client_send(moved_client *client, char req, char id, const unsigned char *
 
     switch (req) {
         case MOVED_REQ_COUNT_CONNECTED:
-            psmove_WARNING("Could not get device count from %s: %s\n",
-                    client->hostname, strerror(errno));
+            psmove_WARNING("Could not get device count from %s (errno=%d)\n",
+                    client->hostname, errno);
             break;
         case MOVED_REQ_READ:
-            psmove_WARNING("Could not read data from %s: %s\n",
-                    client->hostname, strerror(errno));
+            psmove_WARNING("Could not read data from %s (errno=%d)\n",
+                    client->hostname, errno);
             break;
         default:
-            psmove_WARNING("Request ID %d to %s failed: %s\n",
-                    req, client->hostname, strerror(errno));
+            psmove_WARNING("Request ID %d to %s failed (errno=%d)\n",
+                    req, client->hostname, errno);
             break;
     }
 
