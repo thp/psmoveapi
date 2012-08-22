@@ -43,6 +43,10 @@
 #include "psmove.h"
 #include "psmove_tracker.h"
 
+#ifdef _WIN32
+#  include "conio.h"
+#endif
+
 #include <TuioServer.h>
 #include <TuioCursor.h>
 #include <TuioTime.h>
@@ -155,6 +159,17 @@ main(int argc, const char **argv) {
     psmove_tracker_get_size(tracker, &width, &height);
 
     while (!quit) {
+#ifdef _WIN32
+        /* Allow program abortion using the Enter/Return key */
+        if (kbhit()) {
+            int ch = getch();
+            if (ch == 10 || ch == 13) {
+                quit = 1;
+                break;
+            }
+        }
+#endif
+
         tuio_server->initFrame(TUIO::TuioTime::getSessionTime());
 
         psmove_tracker_update_image(tracker);
