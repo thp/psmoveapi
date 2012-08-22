@@ -33,7 +33,6 @@
 #include <QtGui>
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 
 #define MAX_READINGS 1050
 
@@ -52,7 +51,6 @@ class MoveGraph : public QWidget {
 
     private:
         PSMove *move;
-        PSMoveCalibration *calibration;
 
         QStaticText labelPositive;
         QStaticText labelNegative;

@@ -33,20 +33,18 @@
 MoveGraph::MoveGraph()
     : QWidget(NULL),
       move(psmove_connect()),
-      calibration(psmove_calibration_new(move)),
       labelPositive("+1g"),
       labelNegative("-1g"),
       readings(),
       offset(0)
 {
-    psmove_calibration_dump(calibration);
+    psmove_dump_calibration(move);
 
     memset(&readings, 0, sizeof(readings));
 }
 
 MoveGraph::~MoveGraph()
 {
-    psmove_calibration_free(calibration);
     psmove_disconnect(move);
 }
 
@@ -105,12 +103,14 @@ MoveGraph::paintEvent(QPaintEvent *event)
 void
 MoveGraph::readSensors()
 {
-    int a[3];
-
     if (psmove_poll(move)) {
         offset = (offset + 1) % MAX_READINGS;
-        psmove_get_accelerometer(move, &a[0], &a[1], &a[2]);
-        psmove_calibration_map(calibration, a, readings[offset], 3);
+        psmove_get_accelerometer_frame(move, Frame_FirstHalf,
+                &readings[offset][0], &readings[offset][1], &readings[offset][2]);
+
+        offset = (offset + 1) % MAX_READINGS;
+        psmove_get_accelerometer_frame(move, Frame_SecondHalf,
+                &readings[offset][0], &readings[offset][1], &readings[offset][2]);
     }
     update();
 }
