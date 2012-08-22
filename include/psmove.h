@@ -388,26 +388,6 @@ ADDAPI unsigned char
 ADDCALL psmove_get_trigger(PSMove *move);
 
 /**
- * Get a half-frame from the accelerometer or gyroscope from the
- * PS Move after using psmove_poll() previously.
- *
- * sensor must be Sensor_Accelerometer or Sensor_Accelerometer.
- *
- * frame must be Frame_FirstHalf or Frame_SecondHalf.
- *
- * x, y and z can point to integer locations that will be filled
- * with the readings. If any are NULL, the fields will be ignored.
- *
- * DEPRECATED - Use psmove_get_accelerometer_frame() or
- * psmove_get_gyroscope_frame() instead - these functions return the
- * half-frame in calibrated form, which is usually what you want when
- * using the half-frames.
- **/
-ADDAPI void
-ADDCALL psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
-        enum PSMove_Frame frame, int *x, int *y, int *z);
-
-/**
  * Get the current accelerometer readings from the PS Move. You need
  * to call PSMove_poll() to read new data from the controller first.
  *

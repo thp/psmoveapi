@@ -37,7 +37,6 @@
 #include <math.h>
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 
 /* normal playback rate (1x) and direction of the turntable */
 #define TURNTABLE_RPM -45
@@ -63,11 +62,9 @@ class PSMoveRotationReaderThread : public QThread
         void run()
         {
             PSMove *move;
-            PSMoveCalibration *calibration;
 
             /* 6 values = ax, ay, az, gx, gy, gz (accel + gyro) */
-            int inputs[6] = { 0, 0, 0, 0, 0, 0 };
-            float outputs[6];
+            float gx, gy, gz;
 
             int i = 0;
             qreal rate = 1.;
@@ -75,24 +72,18 @@ class PSMoveRotationReaderThread : public QThread
             assert((move = psmove_connect()) != NULL);
             assert(psmove_connection_type(move) == Conn_Bluetooth);
 
-            assert((calibration = psmove_calibration_new(move)) != NULL);
-            assert(psmove_calibration_supported(calibration));
+            assert(psmove_has_calibration(move));
 
             while (true) {
                 if (psmove_poll(move)) {
-                    psmove_get_half_frame(move,
-                            Sensor_Gyroscope,
-                            Frame_SecondHalf,
-                            &inputs[3], &inputs[4], &inputs[5]);
-
-                    psmove_calibration_map(calibration, inputs, outputs, 6);
+                    psmove_get_gyroscope_frame(move, Frame_SecondHalf, &gx, &gy, &gz);
 
                     /**
                      * Playback rate is calculated based on the RPM of the
-                     * controller on the Z axis (outputs[5]) and the normal
+                     * controller on the Z axis and the normal
                      * playback rate of the turntable (see above).
                      **/
-                    rate = RAD_PER_S_TO_RPM(outputs[5]) / TURNTABLE_RPM;
+                    rate = RAD_PER_S_TO_RPM(gz) / TURNTABLE_RPM;
 
                     /* Rate-limiting the updates of the playback rate */
                     if (i % READ_FRAME_UPDATE_RATE == 0) {
@@ -112,7 +103,6 @@ class PSMoveRotationReaderThread : public QThread
                 }
             }
 
-            psmove_calibration_free(calibration);
             psmove_disconnect(move);
         }
 

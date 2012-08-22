@@ -314,6 +314,25 @@ _psmove_led_write_thread_proc(void *data)
 #endif /* defined(PSMOVE_USE_PTHREADS) */
 
 
+
+/* Previously public functions, now private: */
+
+/**
+ * Get a half-frame from the accelerometer or gyroscope from the
+ * PS Move after using psmove_poll() previously.
+ *
+ * sensor must be Sensor_Accelerometer or Sensor_Accelerometer.
+ *
+ * frame must be Frame_FirstHalf or Frame_SecondHalf.
+ *
+ * x, y and z can point to integer locations that will be filled
+ * with the readings. If any are NULL, the fields will be ignored.
+ **/
+void
+psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
+        enum PSMove_Frame frame, int *x, int *y, int *z);
+
+
 /* Start implementation of the API */
 
 

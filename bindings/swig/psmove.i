@@ -7,6 +7,7 @@
 %rename PSMove_Button Button;
 %rename PSMove_Battery_Level BatteryLevel;
 %rename PSMove_Connection_Type ConnectionType;
+%rename PSMove_Frame Frame;
 %module psmoveapi
 
 #else
@@ -97,9 +98,11 @@ void reinit();
         return psmove_connect_by_id(id);
     }
 
-    void get_half_frame(enum PSMove_Sensor sensor,
-        enum PSMove_Frame frame,
-        int *OUTPUT, int *OUTPUT, int *OUTPUT);
+    void get_accelerometer_frame(enum PSMove_Frame frame,
+        float *OUTPUT, float *OUTPUT, float *OUTPUT);
+
+    void get_gyroscope_frame(enum PSMove_Frame frame,
+        float *OUTPUT, float *OUTPUT, float *OUTPUT);
 
     void set_leds(int r, int g, int b) {
         psmove_set_leds($self, r, g, b);
@@ -163,9 +166,15 @@ void reinit();
 %{
 
 void
-PSMove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
-    enum PSMove_Frame frame, int *x, int *y, int *z) {
-    psmove_get_half_frame(move, sensor, frame, x, y, z);
+PSMove_get_accelerometer_frame(PSMove *move, enum PSMove_Frame frame,
+    float *x, float *y, float *z) {
+    psmove_get_accelerometer_frame(move, frame, x, y, z);
+}
+
+void
+PSMove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
+    float *x, float *y, float *z) {
+    psmove_get_gyroscope_frame(move, frame, x, y, z);
 }
 
 int
