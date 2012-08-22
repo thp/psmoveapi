@@ -156,9 +156,17 @@ camera_control_query_frame(CameraControl* cc)
 
     result = cc->frame3ch;
 #else
+
+#ifdef PSMOVE_DEBUG
     long start = psmove_util_get_ticks();
+#endif
+
     result = cvQueryFrame(cc->capture);
+
+#ifdef PSMOVE_DEBUG
     printf("cvQueryFrame: %ld ms\n", psmove_util_get_ticks() - start);
+#endif
+
 #endif
 
 #if defined(PSMOVE_USE_DEINTERLACE)
