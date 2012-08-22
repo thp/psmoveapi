@@ -42,4 +42,10 @@
 
 #define MOVED_HOSTS_LIST_FILE "moved_hosts.txt"
 
+/* Client socket timeout for receiving data (in ms) */
+#define MOVED_TIMEOUT_MS 10
+
+/* Maximum number of retries for client requests */
+#define MOVED_MAX_RETRIES 5
+
 #endif

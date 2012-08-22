@@ -48,6 +48,10 @@ extern "C" {
      * implementation modules (psmove_*.c) should go here.
      **/
 
+/* Macro: Print a warning message */
+#define psmove_WARNING(x, ...) \
+        {fprintf(stderr, "[PSMOVE] " x, __VA_ARGS__);}
+
 /* Macro: Print a critical message if an assertion fails */
 #define psmove_CRITICAL(x) \
         {fprintf(stderr, "[PSMOVE] Assertion fail in %s: %s\n", __func__, x);}

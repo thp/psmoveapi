@@ -995,9 +995,20 @@ psmove_update_leds(PSMove *move)
 #endif
             break;
         case PSMove_MOVED:
-            moved_client_send(move->client, MOVED_REQ_WRITE,
+            res = moved_client_send(move->client, MOVED_REQ_WRITE,
                     move->remote_id, (unsigned char*)(&move->leds));
-            return Update_Success; // XXX: Error handling
+
+            /**
+             * XXX: This only tells us that the sending went through, but
+             * as we don't wait for a confirmation, the packet might still
+             * not arrive at the target machine. As we usually send many
+             * updates, a few dropped packets are normally no problem.
+             **/
+            if (res) {
+                return Update_Success;
+            } else {
+                return Update_Failed;
+            }
             break;
         default:
             psmove_CRITICAL("Unknown device type");

@@ -29,6 +29,7 @@
 
 
 #include "psmove.h"
+#include "../psmove_private.h"
 #include "moved_client.h"
 
 moved_client_list *
@@ -109,6 +110,14 @@ moved_client_create(const char *hostname)
     client->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     assert(client->socket != -1);
 
+    /* The receiving socket must have a timeout to not block indefinitely */
+    struct timeval receive_timeout = {
+        .tv_sec = MOVED_TIMEOUT_MS / 1000,
+        .tv_usec = (MOVED_TIMEOUT_MS % 1000) * 1000,
+    };
+    assert(setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
+                &receive_timeout, sizeof(receive_timeout)) == 0);
+
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);
 #ifdef _WIN32
@@ -124,6 +133,8 @@ moved_client_create(const char *hostname)
 int
 moved_client_send(moved_client *client, char req, char id, const unsigned char *data)
 {
+    int retry_count = 0;
+
     client->request_buf[0] = req;
     client->request_buf[1] = id;
 
@@ -131,30 +142,53 @@ moved_client_send(moved_client *client, char req, char id, const unsigned char *
         memcpy(client->request_buf+2, data, sizeof(client->request_buf)-2);
     }
 
-    if (sendto(client->socket, client->request_buf,
-                sizeof(client->request_buf), 0,
-                (struct sockaddr *)&(client->moved_addr),
-                sizeof(client->moved_addr)) >= 0)
-    {
-        switch (req) {
-            case MOVED_REQ_COUNT_CONNECTED:
-                assert(recv(client->socket, client->read_response_buf,
-                            sizeof(client->read_response_buf), 0) != -1);
-                return client->read_response_buf[0];
-                break;
-            case MOVED_REQ_READ:
-                if (recv(client->socket, client->read_response_buf,
-                            sizeof(client->read_response_buf), 0) == -1) {
-                    printf("Warn: recv cancelled\n");
-                }
-                return 1;
-                break;
-            case MOVED_REQ_WRITE:
-                return 1;
-                break;
-            default:
-                break;
+    while (retry_count < MOVED_MAX_RETRIES) {
+        if (sendto(client->socket, client->request_buf,
+                    sizeof(client->request_buf), 0,
+                    (struct sockaddr *)&(client->moved_addr),
+                    sizeof(client->moved_addr)) >= 0)
+        {
+            switch (req) {
+                case MOVED_REQ_COUNT_CONNECTED:
+                    if (recv(client->socket, client->read_response_buf,
+                                sizeof(client->read_response_buf), 0) == -1) {
+                        retry_count++;
+                        continue;
+                    }
+                    return client->read_response_buf[0];
+                    break;
+                case MOVED_REQ_READ:
+                    if (recv(client->socket, client->read_response_buf,
+                                sizeof(client->read_response_buf), 0) == -1) {
+                        retry_count++;
+                        continue;
+                    }
+                    return 1;
+                    break;
+                case MOVED_REQ_WRITE:
+                    return 1;
+                    break;
+                default:
+                    psmove_WARNING("Unknown request ID: %d\n", req);
+                    return 0;
+                    break;
+            }
         }
+    }
+
+    switch (req) {
+        case MOVED_REQ_COUNT_CONNECTED:
+            psmove_WARNING("Could not get device count from %s: %s\n",
+                    client->hostname, strerror(errno));
+            break;
+        case MOVED_REQ_READ:
+            psmove_WARNING("Could not read data from %s: %s\n",
+                    client->hostname, strerror(errno));
+            break;
+        default:
+            psmove_WARNING("Request ID %d to %s failed: %s\n",
+                    req, client->hostname, strerror(errno));
+            break;
     }
 
     return 0;
