@@ -21,10 +21,7 @@ Get and install
 
 2. Get you clone of the psmoveapi
 	git clone https://github.com/thp/psmoveapi.git
-	
-3. Check out the "tracker" branch
 	cd psmoveapi
-	git checkout tracker
 
 4. Init and update the submodules
 	git submodule init
