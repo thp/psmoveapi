@@ -39,33 +39,6 @@
 #include "../external/MadgwickAHRS/MadgwickAHRS.h"
 
 
-/* HOWTO USE: */
-#if 0
-PSMove *move = psmove_connect();
-
-PSMoveTracker *tracker = psmove_tracker_new();
-int result = psmove_tracker_enable(tracker, move);
-assert(result == Tracker_CALIBRATED);
-
-PSMoveOrientation *orientation = psmove_orientation_new(move);
-
-    /* XXX: Move into a separate high-level tracker module? */
-    if (orientation->tracker) {
-        int x, y, radius;
-        psmove_tracker_get_position(tracker, move, &x, &y, &radius);
-        psmove_tracker_update_image(orientation->tracker);
-        psmove_tracker_update(orientation->tracker, orientation->move);
-
-        /* XXX: Move into psmove_tracker_update? */
-        unsigned char r, g, b;
-        psmove_tracker_get_color(orientation->tracker, orientation->move,
-                &r, &g, &b);
-        psmove_set_leds(orientation->move, r, g, b);
-        psmove_update_leds(orientation->move);
-    }
-#endif
-
-
 struct _PSMoveOrientation {
     PSMove *move;
 
@@ -141,11 +114,6 @@ psmove_orientation_poll(PSMoveOrientation *orientation)
     }
 
     seq = psmove_poll(orientation->move);
-
-    /**
-     * TODO: Calculate orientation->sample_freq based on real sampling
-     * rate (based on successful calls to psmove_poll() per second).
-     **/
 
     if (seq) {
         /* We get 2 measurements per call to psmove_poll() */
@@ -225,25 +193,6 @@ psmove_orientation_set_quaternion(PSMoveOrientation *orientation,
     orientation->quaternion[1] = q1;
     orientation->quaternion[2] = q2;
     orientation->quaternion[3] = q3;
-}
-
-void
-psmove_orientation_get_accelerometer(PSMoveOrientation *orientation,
-        float *ax, float *ay, float *az)
-{
-    psmove_return_if_fail(orientation != NULL);
-
-    if (ax) {
-        *ax = orientation->output[0];
-    }
-
-    if (ay) {
-        *ay = orientation->output[1];
-    }
-
-    if (az) {
-        *az = orientation->output[2];
-    }
 }
 
 void

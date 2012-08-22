@@ -57,10 +57,6 @@ ADDCALL psmove_orientation_set_quaternion(PSMoveOrientation *orientation,
         float q0, float q1, float q2, float q3);
 
 ADDAPI void
-ADDCALL psmove_orientation_get_accelerometer(PSMoveOrientation *orientation,
-        float *ax, float *ay, float *az);
-
-ADDAPI void
 ADDCALL psmove_orientation_free(PSMoveOrientation *orientation);
 
 
