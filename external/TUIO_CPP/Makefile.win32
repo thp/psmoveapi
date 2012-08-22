@@ -1,0 +1,31 @@
+#
+# Simple Makefile to build a static libTUIO on Windows using MinGW
+# Based on "Makefile" from TUIO_CPP
+# Thomas Perl <m@thp.io>; 2012-08-22
+#
+# Usage: mingw32-make -f Makefile.win32
+#
+
+ENDIANESS=OSC_HOST_LITTLE_ENDIAN
+
+TUIO_STATIC  = libTUIO.a
+
+INCLUDES = -I.\TUIO -I.\oscpack
+CFLAGS  = -Wall -O3
+#CFLAGS  = -g -Wall -O3
+CXXFLAGS = $(CFLAGS) $(INCLUDES) -D$(ENDIANESS)
+
+TUIO_SOURCES = $(wildcard TUIO/*.cpp)
+OSC_SOURCES = $(wildcard oscpack/osc/*.cpp) $(wildcard oscpack/ip/win32/*.cpp)
+
+COMMON_SOURCES = $(TUIO_SOURCES) $(OSC_SOURCES)
+COMMON_OBJECTS = $(COMMON_SOURCES:.cpp=.o)
+
+all: static
+
+static:	$(COMMON_OBJECTS)
+	ar rcs $(TUIO_STATIC) $(COMMON_OBJECTS)
+
+clean:
+	del $(subst /,\,$(TUIO_STATIC) $(COMMON_OBJECTS))
+

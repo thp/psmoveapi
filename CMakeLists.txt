@@ -98,7 +98,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_macosx.c)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
 
     IF(PSMOVE_USE_CL_EYE_SDK)
         find_path(CL_EYE_SDK_PATH Bin/CLEyeMulticam.dll
