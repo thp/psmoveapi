@@ -34,7 +34,6 @@
 
 #include "psmove.h"
 #include "psmove_private.h"
-#include "psmove_calibration.h"
 #include "psmove_orientation.h"
 
 #include "../external/MadgwickAHRS/MadgwickAHRS.h"
@@ -69,7 +68,6 @@ PSMoveOrientation *orientation = psmove_orientation_new(move);
 
 struct _PSMoveOrientation {
     PSMove *move;
-    PSMoveCalibration *calibration;
 
     /* 9 values = 3x accelerometer + 3x gyroscope + 3x magnetometer */
     int input[9];
@@ -92,19 +90,16 @@ psmove_orientation_new(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, NULL);
 
-    PSMoveCalibration *calibration = psmove_calibration_new(move);
-    if (!psmove_calibration_supported(calibration)) {
+    if (!psmove_has_calibration(move)) {
 #ifdef PSMOVE_DEBUG
         fprintf(stderr, "[PSMOVE] Can't create orientation - no calibration!\n");
 #endif
-        psmove_calibration_free(calibration);
         return NULL;
     }
 
     PSMoveOrientation *orientation = calloc(1, sizeof(PSMoveOrientation));
 
     orientation->move = move;
-    orientation->calibration = calibration;
 
     /* Initial sampling frequency */
     orientation->sample_freq = 120.0f;
@@ -162,22 +157,15 @@ psmove_orientation_poll(PSMoveOrientation *orientation)
                 &orientation->input[8]);
 
         for (frame=0; frame<2; frame++) {
-            psmove_get_half_frame(orientation->move,
-                    Sensor_Accelerometer, frame,
-                    &orientation->input[0],
-                    &orientation->input[1],
-                    &orientation->input[2]);
+            psmove_get_accelerometer_frame(orientation->move, frame,
+                    &orientation->output[0],
+                    &orientation->output[1],
+                    &orientation->output[2]);
 
-            psmove_get_half_frame(orientation->move,
-                    Sensor_Gyroscope, frame,
-                    &orientation->input[3],
-                    &orientation->input[4],
-                    &orientation->input[5]);
-
-            psmove_calibration_map(orientation->calibration,
-                    orientation->input,
-                    orientation->output,
-                    9);
+            psmove_get_gyroscope_frame(orientation->move, frame,
+                    &orientation->output[3],
+                    &orientation->output[4],
+                    &orientation->output[5]);
 
             MadgwickAHRSupdate(orientation->quaternion,
                     orientation->sample_freq,
@@ -262,10 +250,6 @@ void
 psmove_orientation_free(PSMoveOrientation *orientation)
 {
     psmove_return_if_fail(orientation != NULL);
-
-    if (orientation->calibration) {
-        psmove_calibration_free(orientation->calibration);
-    }
 
     free(orientation);
 }

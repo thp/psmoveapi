@@ -420,26 +420,6 @@ psmove_calibration_dump(PSMoveCalibration *calibration)
     }
 }
 
-int
-psmove_calibration_map(PSMoveCalibration *calibration,
-        int *input, float *output, size_t n)
-{
-    psmove_return_val_if_fail(calibration != NULL, 0);
-    psmove_return_val_if_fail(input != NULL, 0);
-    psmove_return_val_if_fail(output != NULL, 0);
-    psmove_return_val_if_fail(n == 3 || n == 6, 0);
-
-    psmove_calibration_map_accelerometer(calibration, input,
-            output, output+1, output+2);
-
-    if (n == 6) {
-        psmove_calibration_map_gyroscope(calibration, input+3,
-                output+3, output+4, output+5);
-    }
-
-    return psmove_calibration_supported(calibration);
-}
-
 void
 psmove_calibration_map_accelerometer(PSMoveCalibration *calibration,
         int *raw_input, float *ax, float *ay, float *az)

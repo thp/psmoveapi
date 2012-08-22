@@ -29,6 +29,7 @@
 
 #include "psmove.h"
 #include "psmove_private.h"
+#include "psmove_calibration.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -213,6 +214,9 @@ struct _PSMove {
 
     /* Previous values of buttons (psmove_get_button_events) */
     int last_buttons;
+
+    /* Calibration object */
+    PSMoveCalibration *calibration;
 
 #ifdef PSMOVE_USE_PTHREADS
     /* Write thread for updating LEDs in the background */
@@ -582,6 +586,8 @@ psmove_connect_by_id(int id)
         cur_dev = cur_dev->next;
     }
     hid_free_enumeration(devs);
+
+    move->calibration = psmove_calibration_new(move);
 
     return move;
 }
@@ -1180,6 +1186,55 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 }
 
 void
+psmove_get_accelerometer_frame(PSMove *move, enum PSMove_Frame frame,
+        float *ax, float *ay, float *az)
+{
+    int raw_input[3];
+
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(frame == Frame_FirstHalf ||
+            frame == Frame_SecondHalf);
+
+    psmove_get_half_frame(move, Sensor_Accelerometer, frame,
+            raw_input, raw_input+1, raw_input+2);
+
+    psmove_calibration_map_accelerometer(move->calibration, raw_input,
+            ax, ay, az);
+}
+
+void
+psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
+        float *gx, float *gy, float *gz)
+{
+    int raw_input[3];
+
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(frame == Frame_FirstHalf ||
+            frame == Frame_SecondHalf);
+
+    psmove_get_half_frame(move, Sensor_Gyroscope, frame,
+            raw_input, raw_input+1, raw_input+2);
+
+    psmove_calibration_map_gyroscope(move->calibration, raw_input,
+            gx, gy, gz);
+}
+
+int
+psmove_has_calibration(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+    return psmove_calibration_supported(move->calibration);
+}
+
+void
+psmove_dump_calibration(PSMove *move)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_calibration_dump(move->calibration);
+}
+
+
+void
 psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 {
     psmove_return_if_fail(move != NULL);
@@ -1223,6 +1278,10 @@ psmove_disconnect(PSMove *move)
         case PSMove_MOVED:
             // XXX: Close connection?
             break;
+    }
+
+    if (move->calibration) {
+        psmove_calibration_free(move->calibration);
     }
 
     free(move->serial_number);

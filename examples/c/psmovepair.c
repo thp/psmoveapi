@@ -35,12 +35,10 @@
 #include <stdlib.h>
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 
 int main(int argc, char* argv[])
 {
     PSMove *move;
-    PSMoveCalibration *calibration;
     int i;
     int count = psmove_count_connected();
     int result = 0;
@@ -83,13 +81,11 @@ int main(int argc, char* argv[])
                 printf("Pairing failed.\n");
             }
 
-            calibration = psmove_calibration_new(move);
-            if (psmove_calibration_supported(calibration)) {
+            if (psmove_has_calibration(move)) {
                 printf("Calibration data available and saved.\n");
             } else {
                 printf("Error reading/loading calibration data.\n");
             }
-            psmove_calibration_free(calibration);
         } else {
             printf("Ignoring non-USB PSMove #%d\n", i+1);
         }

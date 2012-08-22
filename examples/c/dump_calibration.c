@@ -34,7 +34,6 @@
 #include <string.h>
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 
 int
 main(int argc, char* argv[])
@@ -42,7 +41,6 @@ main(int argc, char* argv[])
     PSMove *move;
     int i;
     int count;
-    PSMoveCalibration *calibration;
 
     if ((count = psmove_count_connected()) < 1) {
         fprintf(stderr, "No controllers connected.\n");
@@ -57,9 +55,7 @@ main(int argc, char* argv[])
             continue;
         }
 
-        calibration = psmove_calibration_new(move);
-        psmove_calibration_dump(calibration);
-        psmove_calibration_free(calibration);
+        psmove_dump_calibration(move);
         psmove_disconnect(move);
     }
 

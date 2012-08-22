@@ -107,6 +107,9 @@ typedef unsigned char PSMove_Data_BTAddr[6];
 struct _PSMove;
 typedef struct _PSMove PSMove;
 
+struct _PSMoveCalibration;
+typedef struct _PSMoveCalibration PSMoveCalibration;
+
 /**
  * Disable the connection to remote servers
  *
@@ -394,6 +397,11 @@ ADDCALL psmove_get_trigger(PSMove *move);
  *
  * x, y and z can point to integer locations that will be filled
  * with the readings. If any are NULL, the fields will be ignored.
+ *
+ * DEPRECATED - Use psmove_get_accelerometer_frame() or
+ * psmove_get_gyroscope_frame() instead - these functions return the
+ * half-frame in calibrated form, which is usually what you want when
+ * using the half-frames.
  **/
 ADDAPI void
 ADDCALL psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
@@ -415,6 +423,50 @@ ADDCALL psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az);
  **/
 ADDAPI void
 ADDCALL psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz);
+
+/**
+ * Get the calibrated accelerometer values (in g)
+ *
+ * move ......... a valid PSMove * instance
+ * frame ........ Frame_FirstHalf or Frame_SecondHalf
+ * ax, ay, az ... pointers for the result value (or NULL to ignore)
+ *
+ * You need to call psmove_poll() first to read the data from the controller.
+ **/
+ADDAPI void
+ADDCALL psmove_get_accelerometer_frame(PSMove *move, enum PSMove_Frame frame,
+        float *ax, float *ay, float *az);
+
+/**
+ * Get the calibrated gyroscope values (in rad/s)
+ *
+ * move ......... a valid PSMove * instance
+ * frame ........ Frame_FirstHalf or Frame_SecondHalf
+ * ax, ay, az ... pointers for the result value (or NULL to ignore)
+ *
+ * You need to call psmove_poll() first to read the data from the controller.
+ **/
+ADDAPI void
+ADDCALL psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
+        float *gx, float *gy, float *gz);
+
+/**
+ * Check if the move controller has support for calibration
+ *
+ * move ... a valid PSMove * instance
+ *
+ * Returns nonzero if calibration is supported, zero otherwise.
+ **/
+ADDAPI int
+ADDCALL psmove_has_calibration(PSMove *move);
+
+/**
+ * Dump the calibration information to stdout (for debugging)
+ *
+ * move ... a valid PSMove * instance
+ **/
+ADDAPI void
+ADDCALL psmove_dump_calibration(PSMove *move);
 
 /**
  * Same as PSMove_get_accelerometer(), but for the magnetometer.

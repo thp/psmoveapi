@@ -38,9 +38,6 @@ extern "C" {
 #include "psmove.h"
 
 
-struct _PSMoveCalibration;
-typedef struct _PSMoveCalibration PSMoveCalibration;
-
 
 /**
  * Create a new calibration object for a given controller
@@ -63,21 +60,6 @@ ADDCALL psmove_calibration_new(PSMove *move);
  **/
 ADDAPI int
 ADDCALL psmove_calibration_supported(PSMoveCalibration *calibration);
-
-/**
- * (DEPRECATED) Map raw sensor values to calibrated values.
- *
- * calibration ... a valid PSMoveCalibration * instance.
- * input ... pointer to a n-array containing raw values.
- * output ... pointer to a n-array to store output values.
- * n ... 3 (accel only) or 6 (accel+gyro)
- *
- * Returns nonzero if calibration was successful, zero if no calibration
- * data is available (pair via USB to load calibration data).
- **/
-ADDAPI int
-ADDCALL psmove_calibration_map(PSMoveCalibration *calibration,
-        int *input, float *output, size_t n);
 
 /**
  * Map raw accelerometer values to g values

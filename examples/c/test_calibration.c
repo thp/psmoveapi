@@ -34,13 +34,11 @@
 #include <assert.h>
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 
 int
 main(int argc, char* argv[])
 {
     PSMove *move;
-    PSMoveCalibration *calibration;
 
     move = psmove_connect();
 
@@ -49,33 +47,26 @@ main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    calibration = psmove_calibration_new(move);
-    psmove_calibration_dump(calibration);
-
-    assert(psmove_calibration_supported(calibration));
+    assert(psmove_has_calibration(move));
 
     if (psmove_connection_type(move) == Conn_Bluetooth) {
-        int in[6];
-        float out[6];
+        float ax, ay, az, gx, gy, gz;
 
         while (1) {
             int res = psmove_poll(move);
             if (res) {
-                psmove_get_half_frame(move, Sensor_Accelerometer,
-                        Frame_FirstHalf, &in[0], &in[1], &in[2]);
-                psmove_get_half_frame(move, Sensor_Gyroscope,
-                        Frame_FirstHalf, &in[3], &in[4], &in[5]);
+                psmove_get_accelerometer_frame(move, Frame_SecondHalf,
+                        &ax, &ay, &az);
+                psmove_get_gyroscope_frame(move, Frame_SecondHalf,
+                        &gx, &gy, &gz);
 
-                psmove_calibration_map(calibration, in, out, 6);
-
-                printf("A: %5.2f %5.2f %5.2f ", out[0], out[1], out[2]);
-                printf("G: %6.2f %6.2f %6.2f ", out[3], out[4], out[5]);
+                printf("A: %5.2f %5.2f %5.2f ", ax, ay, az);
+                printf("G: %6.2f %6.2f %6.2f ", gx, gy, gz);
                 printf("\n");
             }
         }
     }
 
-    psmove_calibration_free(calibration);
     psmove_disconnect(move);
 
     return EXIT_SUCCESS;
