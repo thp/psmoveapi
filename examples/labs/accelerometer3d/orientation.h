@@ -37,7 +37,6 @@
 #include <assert.h>
 
 #include "psmove.h"
-#include "psmove_orientation.h"
 
 class Orientation : public QThread
 {
@@ -54,23 +53,22 @@ class Orientation : public QThread
         void run()
         {
             PSMove *move;
-            PSMoveOrientation *orientation;
 
             QVector3D accelerometer;
             QQuaternion quaternion;
 
             assert((move = psmove_connect()) != NULL);
-            assert((orientation = psmove_orientation_new(move)) != NULL);
+            psmove_enable_orientation(move, 1);
+            assert(psmove_has_orientation(move));
 
             while (true) {
-                while (psmove_orientation_poll(orientation)) {
+                while (psmove_poll(move)) {
                     int buttons = psmove_get_buttons(move);
                     int trigger = psmove_get_trigger(move);
                     emit updateButtons(buttons, trigger);
 
                     if (buttons & Btn_MOVE) {
-                        psmove_orientation_set_quaternion(orientation,
-                                1., 0., 0., 0.);
+                        psmove_set_orientation(move, 1., 0., 0., 0.);
                     }
 
                     if (buttons & Btn_SQUARE) {
@@ -87,14 +85,13 @@ class Orientation : public QThread
                     psmove_update_leds(move);
 
                     float q0, q1, q2, q3;
-                    psmove_orientation_get_quaternion(orientation,
-                            &q0, &q1, &q2, &q3);
+                    psmove_get_orientation(move, &q0, &q1, &q2, &q3);
                     quaternion = QQuaternion(q0, q1, q2, q3);
                     emit updateQuaternion(quaternion);
                     //qDebug() << "updateQuaternion:" << quaternion;
 
                     float ax, ay, az;
-                    psmove_orientation_get_accelerometer(orientation,
+                    psmove_get_accelerometer_frame(move, Frame_SecondHalf,
                             &ax, &ay, &az);
                     accelerometer = QVector3D(ax, ay, az);
                     emit updateAccelerometer(accelerometer);
@@ -102,7 +99,6 @@ class Orientation : public QThread
                 }
             }
 
-            psmove_orientation_free(orientation);
             psmove_disconnect(move);
         }
 };

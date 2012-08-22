@@ -40,7 +40,6 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
-#include "psmove_orientation.h"
 
 extern "C" {
     void cvShowImage(const char *, void*);
@@ -74,20 +73,20 @@ class Orientation : public QThread
                 // Retry calibration until it works
             }
 
-            PSMoveOrientation *orientation = psmove_orientation_new(move);
+            psmove_enable_orientation(move, 1);
 
             while (!quit) {
-                while (psmove_orientation_poll(orientation)) {
+                while (psmove_poll(move)) {
                     if (psmove_get_buttons(move) & Btn_PS) {
                         quit = 1;
                         break;
                     }
 
                     if (psmove_get_buttons(move) & Btn_MOVE) {
-                        psmove_orientation_set_quaternion(orientation, 1., 0., 0., 0.);
+                        psmove_set_orientation(move, 1., 0., 0., 0.);
                     }
 
-                    psmove_orientation_get_quaternion(orientation, &q0, &q1, &q2, &q3);
+                    psmove_get_orientation(move, &q0, &q1, &q2, &q3);
 
                     float x, y, radius;
                     psmove_tracker_get_position(tracker, move, &x, &y, &radius);
@@ -109,7 +108,6 @@ class Orientation : public QThread
             }
 
             psmove_tracker_free(tracker);
-            psmove_orientation_free(orientation);
             psmove_disconnect(move);
             QApplication::quit();
         }

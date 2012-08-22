@@ -38,7 +38,6 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
-#include "psmove_orientation.h"
 
 struct ControllerState
 {
@@ -78,8 +77,6 @@ class MovetyTouch : public QThread
 
             PSMoveTracker *tracker = psmove_tracker_new();
             PSMove **moves = (PSMove**)calloc(count, sizeof(PSMove*));
-            PSMoveOrientation **orientations = (PSMoveOrientation**)calloc(count,
-                    sizeof(PSMoveOrientation*));
             ControllerState *states = (ControllerState*)calloc(count,
                     sizeof(ControllerState));
 
@@ -87,8 +84,8 @@ class MovetyTouch : public QThread
                 moves[i] = psmove_connect_by_id(i);
                 assert(moves[i] != NULL);
 
-                orientations[i] = psmove_orientation_new(moves[i]);
-                assert(orientations[i] != NULL);
+                psmove_enable_orientation(moves[i], 1);
+                assert(psmove_has_orientation(moves[i]));
 
                 while (psmove_tracker_enable(tracker, moves[i])
                         != Tracker_CALIBRATED) {
@@ -98,7 +95,7 @@ class MovetyTouch : public QThread
 
             while (true) {
                 for (i=0; i<count; i++) {
-                    while (psmove_orientation_poll(orientations[i]));
+                    while (psmove_poll(moves[i]));
 
                     if (psmove_get_buttons(moves[i]) & Btn_PS) {
                         QApplication::quit();
@@ -131,8 +128,7 @@ class MovetyTouch : public QThread
                     }
 
                     float q0, q1, q2, q3;
-                    psmove_orientation_get_quaternion(orientations[i],
-                            &q0, &q1, &q2, &q3);
+                    psmove_get_orientation(moves[i], &q0, &q1, &q2, &q3);
 
                     bool move_now = ((psmove_get_buttons(moves[i]) & Btn_MOVE) != 0);
 
@@ -143,8 +139,7 @@ class MovetyTouch : public QThread
 
                             q0 = 1.;
                             q1 = q2 = q3 = 0.;
-                            psmove_orientation_set_quaternion(orientations[i],
-                                    1., 0., 0., 0.);
+                            psmove_set_orientation(moves[i], 1., 0., 0., 0.);
 
                             emit startRotation(states[i].move_id, x, y,
                                     q0, q1, q2, q3);
@@ -177,7 +172,6 @@ class MovetyTouch : public QThread
             psmove_tracker_free(tracker);
 
             for (i=0; i<count; i++) {
-                psmove_orientation_free(orientations[i]);
                 psmove_disconnect(moves[i]);
             }
 
