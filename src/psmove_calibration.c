@@ -52,6 +52,15 @@ struct _PSMoveCalibration {
     int flags;
 
     char *filename;
+
+    /* Pre-calculated factors for accelerometer mapping */
+    float ax, ay, az;
+
+    /* Pre-calculated summands for accelerometer mapping */
+    float bx, by, bz;
+
+    /* Pre-calculated factors for gyroscope mapping */
+    float gx, gy, gz;
 };
 
 
@@ -270,6 +279,111 @@ psmove_calibration_new(PSMove *move)
         }
     }
 
+    /* Pre-calculate values used for mapping input */
+    if (psmove_calibration_supported(calibration)) {
+        /* Accelerometer reading (high/low) for each axis */
+        int axlow, axhigh, aylow, ayhigh, azlow, azhigh;
+        psmove_calibration_get_usb_accel_values(calibration,
+                &axlow, &axhigh, &aylow, &ayhigh, &azlow, &azhigh);
+
+        /**
+         *
+         * Calculation of accelermeter mapping (as factor of gravity, 1g):
+         *
+         *                2 * (raw - low)
+         *  calibrated = ----------------  - 1
+         *                 (high - low)
+         *
+         * with:
+         *
+         *  raw .... Raw sensor reading
+         *  low .... Raw reading at -1g
+         *  high ... Raw reading at +1g
+         *
+         * Now define:
+         *
+         *            2
+         *  f = --------------
+         *       (high - low)
+         *
+         * And combine constants:
+         *
+         *  c = - (f * low) - 1
+         *
+         * Then we get:
+         *
+         *  calibrated = f * raw + c
+         *
+         **/
+
+        /* Accelerometer factors "f" */
+        calibration->ax = 2.f / (float)(axhigh - axlow);
+        calibration->ay = 2.f / (float)(ayhigh - aylow);
+        calibration->az = 2.f / (float)(azhigh - azlow);
+
+        /* Accelerometer constants "c" */
+        calibration->bx = - (calibration->ax * (float)axlow) - 1.f;
+        calibration->by = - (calibration->ay * (float)aylow) - 1.f;
+        calibration->bz = - (calibration->az * (float)azlow) - 1.f;
+
+        /**
+         * Calculation of gyroscope mapping (in radiant per second):
+         *
+         *                 raw
+         *  calibrated = -------- * 2 PI
+         *                rpm60
+         *
+         *           60 * rpm80
+         *  rpm60 = ------------
+         *               80
+         *
+         * with:
+         *
+         *  raw ..... Raw sensor reading
+         *  rpm80 ... Sensor reading at 80 RPM (from calibration blob)
+         *  rpm60 ... Sensor reading at 60 RPM (1 rotation per second)
+         *
+         * Or combined:
+         *
+         *                80 * raw * 2 PI
+         *  calibrated = -----------------
+         *                  60 * rpm80
+         *
+         * Now define:
+         *
+         *       2 * PI * 80
+         *  f = -------------
+         *        60 * rpm80
+         *
+         * Then we get:
+         *
+         *  calibrated = f * raw
+         *
+         **/
+
+        int gx80, gy80, gz80;
+        psmove_calibration_get_usb_gyro_values(calibration,
+                &gx80, &gy80, &gz80);
+
+        float factor = (2.f * M_PI * 80.f) / 60.f;
+        calibration->gx = factor / (float)gx80;
+        calibration->gy = factor / (float)gy80;
+        calibration->gz = factor / (float)gz80;
+    } else {
+        /* No calibration data - pass-through input data */
+        calibration->ax = 1.f;
+        calibration->ay = 1.f;
+        calibration->az = 1.f;
+
+        calibration->bx = 0.f;
+        calibration->by = 0.f;
+        calibration->bz = 0.f;
+
+        calibration->gx = 1.f;
+        calibration->gy = 1.f;
+        calibration->gz = 1.f;
+    }
+
     return calibration;
 }
 
@@ -313,53 +427,19 @@ psmove_calibration_map(PSMoveCalibration *calibration,
     psmove_return_val_if_fail(calibration != NULL, 0);
     psmove_return_val_if_fail(input != NULL, 0);
     psmove_return_val_if_fail(output != NULL, 0);
-    psmove_return_val_if_fail(n == 3 || n == 6 || n == 9, 0);
+    psmove_return_val_if_fail(n == 3 || n == 6, 0);
 
-    int i;
+    output[0] = (float)(input[0]) * calibration->ax + calibration->bx;
+    output[1] = (float)(input[1]) * calibration->ay + calibration->by;
+    output[2] = (float)(input[2]) * calibration->az + calibration->bz;
 
-    if (psmove_calibration_supported(calibration)) {
-        for (i=0; i<3; i++) {
-            int axlow, axhigh, aylow, ayhigh, azlow, azhigh;
-            psmove_calibration_get_usb_accel_values(calibration,
-                    &axlow, &axhigh, &aylow, &ayhigh, &azlow, &azhigh);
-
-            /* axlow maps to -1, axhigh maps to +1 */
-            output[0] = -1. + (float)(input[0] - axlow) /
-                              (float)(axhigh - axlow)*2.f;
-            output[1] = -1. + (float)(input[1] - aylow) /
-                              (float)(ayhigh - aylow)*2.f;
-            output[2] = -1. + (float)(input[2] - azlow) /
-                              (float)(azhigh - azlow)*2.f;
-        }
-
-        if (n == 6 || n == 9) {
-            /* Constant factor to convert 80 rot/min to 1 rad/s */
-            float CONVERT_80RPM_TO_RADPS = (2.f * M_PI) * 80.f / 60.f;
-
-            int gx80, gy80, gz80;
-            psmove_calibration_get_usb_gyro_values(calibration,
-                    &gx80, &gy80, &gz80);
-            output[3] = (float)input[3] / (float)gx80 * CONVERT_80RPM_TO_RADPS;
-            output[4] = (float)input[4] / (float)gy80 * CONVERT_80RPM_TO_RADPS;
-            output[5] = (float)input[5] / (float)gz80 * CONVERT_80RPM_TO_RADPS;
-        }
-
-        if (n == 9) {
-            /* Magnetometer values are always reported as-is for now */
-            for (i=6; i<9; i++) {
-                output[i] = (float)input[i];
-            }
-        }
-
-        return 1;
+    if (n == 6) {
+        output[3] = (float)input[3] * calibration->gx;
+        output[4] = (float)input[4] * calibration->gy;
+        output[5] = (float)input[5] * calibration->gz;
     }
 
-    for (i=0; i<n; i++) {
-        /* No calibration - just raw values copied */
-        output[i] = (float)input[i];
-    }
-
-    return 0;
+    return psmove_calibration_supported(calibration);
 }
 
 int

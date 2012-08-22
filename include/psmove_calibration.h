@@ -70,7 +70,7 @@ ADDCALL psmove_calibration_supported(PSMoveCalibration *calibration);
  * calibration ... a valid PSMoveCalibration * instance.
  * input ... pointer to a n-array containing raw values.
  * output ... pointer to a n-array to store output values.
- * n ... 3 (accel only), 6 (accel+gyro) or 9 (accel+gyro+magnetometer)
+ * n ... 3 (accel only) or 6 (accel+gyro)
  *
  * Returns nonzero if calibration was successful, zero if no calibration
  * data is available (pair via USB to load calibration data).
