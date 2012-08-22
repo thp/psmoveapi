@@ -429,17 +429,53 @@ psmove_calibration_map(PSMoveCalibration *calibration,
     psmove_return_val_if_fail(output != NULL, 0);
     psmove_return_val_if_fail(n == 3 || n == 6, 0);
 
-    output[0] = (float)(input[0]) * calibration->ax + calibration->bx;
-    output[1] = (float)(input[1]) * calibration->ay + calibration->by;
-    output[2] = (float)(input[2]) * calibration->az + calibration->bz;
+    psmove_calibration_map_accelerometer(calibration, input,
+            output, output+1, output+2);
 
     if (n == 6) {
-        output[3] = (float)input[3] * calibration->gx;
-        output[4] = (float)input[4] * calibration->gy;
-        output[5] = (float)input[5] * calibration->gz;
+        psmove_calibration_map_gyroscope(calibration, input+3,
+                output+3, output+4, output+5);
     }
 
     return psmove_calibration_supported(calibration);
+}
+
+void
+psmove_calibration_map_accelerometer(PSMoveCalibration *calibration,
+        int *raw_input, float *ax, float *ay, float *az)
+{
+    psmove_return_if_fail(calibration != NULL);
+    psmove_return_if_fail(raw_input != NULL);
+
+    if (ax) {
+        *ax = (float)raw_input[0] * calibration->ax + calibration->bx;
+    }
+    if (ay) {
+        *ay = (float)raw_input[1] * calibration->ay + calibration->by;
+    }
+    if (az) {
+        *az = (float)raw_input[2] * calibration->az + calibration->bz;
+    }
+}
+
+void
+psmove_calibration_map_gyroscope(PSMoveCalibration *calibration,
+        int *raw_input, float *gx, float *gy, float *gz)
+{
+    psmove_return_if_fail(calibration != NULL);
+    psmove_return_if_fail(raw_input != NULL);
+
+    if (gx) {
+        *gx = (float)raw_input[0] * calibration->gx;
+    }
+
+    if (gy) {
+        *gy = (float)raw_input[1] * calibration->gy;
+    }
+
+    if (gz) {
+        *gz = (float)raw_input[2] * calibration->gz;
+    }
 }
 
 int

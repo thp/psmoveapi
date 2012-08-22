@@ -65,7 +65,7 @@ ADDAPI int
 ADDCALL psmove_calibration_supported(PSMoveCalibration *calibration);
 
 /**
- * Map raw sensor values to calibrated values.
+ * (DEPRECATED) Map raw sensor values to calibrated values.
  *
  * calibration ... a valid PSMoveCalibration * instance.
  * input ... pointer to a n-array containing raw values.
@@ -78,6 +78,32 @@ ADDCALL psmove_calibration_supported(PSMoveCalibration *calibration);
 ADDAPI int
 ADDCALL psmove_calibration_map(PSMoveCalibration *calibration,
         int *input, float *output, size_t n);
+
+/**
+ * Map raw accelerometer values to g values
+ *
+ * calibration ... a valid PSMoveCalibration * instance.
+ * input ... pointer to a int[3] containing raw values.
+ * ax ... pointer to a float that holds the X component of the result or NULL
+ * ay ... pointer to a float that holds the Y component of the result or NULL
+ * az ... pointer to a float that holds the Z component of the result or NULL
+ **/
+ADDAPI void
+ADDCALL psmove_calibration_map_accelerometer(PSMoveCalibration *calibration,
+        int *raw_input, float *ax, float *ay, float *az);
+
+/**
+ * Map raw gyroscope values to g values
+ *
+ * calibration ... a valid PSMoveCalibration * instance.
+ * input ... pointer to a int[3] containing raw values.
+ * ax ... pointer to a float that holds the X component of the result or NULL
+ * ay ... pointer to a float that holds the Y component of the result or NULL
+ * az ... pointer to a float that holds the Z component of the result or NULL
+ **/
+ADDAPI void
+ADDCALL psmove_calibration_map_gyroscope(PSMoveCalibration *calibration,
+        int *raw_input, float *gx, float *gy, float *gz);
 
 /**
  * Dump calibration information to stdout.
