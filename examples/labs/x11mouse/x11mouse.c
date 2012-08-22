@@ -33,7 +33,6 @@
 #include <unistd.h>
 
 #include "psmove.h"
-#include "psmove_calibration.h"
 
 #include "xdo.h"
 
@@ -66,12 +65,7 @@ main(int argc, char *argv[])
         BAILOUT("Cannot connect to move controller.");
     }
 
-    PSMoveCalibration *calibration = psmove_calibration_new(move);
-    if (!calibration) {
-        BAILOUT("Cannot instantiate calibration.");
-    }
-
-    if (!psmove_calibration_supported(calibration)) {
+    if (!psmove_has_calibration(move)) {
         BAILOUT("Calibration data not found. Pair using USB first.");
     }
 
@@ -85,8 +79,7 @@ main(int argc, char *argv[])
 
     while (1) {
         while (psmove_poll(move)) {
-            int input[6] = { 0, 0, 0, 0, 0, 0 };
-            float output[6];
+            float gx, gy, gz;
 
             int buttons = psmove_get_buttons(move);
             unsigned int pressed, released;
@@ -130,11 +123,10 @@ main(int argc, char *argv[])
 
             old_buttons = buttons;
 
-            psmove_get_gyroscope(move, &input[3], &input[4], &input[5]);
-            psmove_calibration_map(calibration, input, output, 6);
+            psmove_get_gyroscope_frame(move, Frame_SecondHalf, &gx, &gy, &gz);
 
-            int dx = SCALE(-output[5]);
-            int dy = SCALE(-output[3]);
+            int dx = SCALE(-gz);
+            int dy = SCALE(-gx);
 
             if ((dx || dy) && !position_locked) {
                 xdo_mousemove_relative(xdo, dx, dy);
@@ -147,7 +139,6 @@ main(int argc, char *argv[])
 
     xdo_free(xdo);
 
-    psmove_calibration_free(calibration);
     psmove_disconnect(move);
 
     return 0;
