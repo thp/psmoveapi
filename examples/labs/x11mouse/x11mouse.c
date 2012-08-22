@@ -89,8 +89,8 @@ main(int argc, char *argv[])
             float output[6];
 
             int buttons = psmove_get_buttons(move);
-            int pressed = (buttons ^ old_buttons) & buttons;
-            int released = (buttons ^ old_buttons) & old_buttons;
+            unsigned int pressed, released;
+            psmove_get_button_events(move, &pressed, &released);
 
             /**
              * Default button mapping:

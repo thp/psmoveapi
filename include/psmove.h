@@ -342,6 +342,22 @@ ADDCALL psmove_poll(PSMove *move);
 ADDAPI unsigned int
 ADDCALL psmove_get_buttons(PSMove *move);
 
+
+/**
+ * Get new button events since the last call to this fuction.
+ *
+ * move ...... A valid PSMove * instance
+ * pressed ... Pointer for storing a bitfield of new press events (or NULL)
+ * released .. Pointer for storing a bitfield of new release events (or NULL)
+ *
+ * Must be called after PSMove_poll() to get the latest states. It should
+ * only be called at one location in your application. This is a shortcut
+ * for storing and comparing the result of psmove_get_buttons() manually.
+ **/
+ADDAPI void
+ADDCALL psmove_get_button_events(PSMove *move, unsigned int *pressed,
+        unsigned int *released);
+
 /**
  * Get the battery level of the PS Move. You need to call
  * PSMove_poll() to read new data from the controller first.

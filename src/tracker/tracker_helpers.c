@@ -217,25 +217,6 @@ CvScalar th_hsv2bgr_alt(float hue) {
 	return cvScalar(rgb[2], rgb[1], rgb[0], 0);
 }
 
-int th_move_button(PSMove* move, int button) {
-	int pressed;
-
-	psmove_poll(move);
-	pressed = psmove_get_buttons(move);
-	return pressed & button;
-
-}
-void th_wait_move_button(PSMove* move, int button) {
-	int pressed;
-	while (1) {
-		psmove_poll(move);
-		pressed = psmove_get_buttons(move);
-		if (pressed & button)
-			break;
-		usleep(10000);
-	}
-}
-
 void th_wait_esc() {
 	while (1) {
 		//If ESC key pressed

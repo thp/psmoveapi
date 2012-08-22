@@ -83,8 +83,6 @@ CvScalar th_brg2hsv(CvScalar bgr);
 // waits until the uses presses ESC (only works if a windo is visible)
 void th_wait_esc();
 void th_wait(char c);
-void th_wait_move_button(PSMove* move, int button);
-int th_move_button(PSMove* move, int button);
 
 void th_equalize_image(IplImage* img);
 int th_file_exists(const char* file);

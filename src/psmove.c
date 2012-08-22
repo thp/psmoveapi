@@ -211,6 +211,9 @@ struct _PSMove {
     /* Milliseconds timestamp of last LEDs update (psmove_util_get_ticks) */
     long last_leds_update;
 
+    /* Previous values of buttons (psmove_get_button_events) */
+    int last_buttons;
+
 #ifdef PSMOVE_USE_PTHREADS
     /* Write thread for updating LEDs in the background */
     pthread_t led_write_thread;
@@ -1050,6 +1053,25 @@ psmove_get_buttons(PSMove *move)
             (move->input.buttons1 << 8) |
             ((move->input.buttons3 & 0x01) << 16) |
             ((move->input.buttons4 & 0xF0) << 13));
+}
+
+void
+psmove_get_button_events(PSMove *move, unsigned int *pressed,
+        unsigned int *released)
+{
+    psmove_return_if_fail(move != NULL);
+
+    unsigned int buttons = psmove_get_buttons(move);
+
+    if (pressed) {
+        *pressed = buttons & ~(move->last_buttons);
+    }
+
+    if (released) {
+        *released = move->last_buttons & ~buttons;
+    }
+
+    move->last_buttons = buttons;
 }
 
 unsigned char

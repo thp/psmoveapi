@@ -244,8 +244,8 @@ PSMoveQt::onTimeout()
 
         buttons = psmove_get_buttons(_move);
         if (buttons != _buttons) {
-            int pressed = (buttons & ~_buttons);
-            int released = (_buttons & ~buttons);
+            unsigned int pressed, released;
+            psmove_get_button_events(_move, &pressed, &released);
 
             for (int i=1; i<=PSMoveQt::T; i <<= 1) {
                 if (pressed & i) {
