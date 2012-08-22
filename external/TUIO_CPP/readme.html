@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+<h1>TUIO C++ Reference Implementation and Demo Applications</h1>
+
+<p>
+Copyright (c) 2005-2009 <a href="http://modin.yuri.at/">Martin Kaltenbrunner</a>. 
+This software is part of <a target="new" href="http://reactivision.sourceforge.net/">reacTIVision</a>, an open source fiducial tracking and multi-touch framework based on 
+computer vision. For further information on the TUIO protocol and framework, please visit <a target="new" href="http://www.tuio.org/">TUIO.org</a>
+</p>
+
+<h2>Demo Applications:</h2>
+
+<p>
+This package contains two demo applications which are able
+to receive TUIO messages from any TUIO enabled multitouch or object tracking application.
+</p>
+<ul>
+<li><b>TuioDump</b>: prints the TUIO events directly to the console
+<li><b>TuioDemo</b>: graphically displays the object and cursor states on the screen
+<li><b>SimpleSimulator</b>: a simple TUIO simulator that demonstrates the use of the TuioServer class 
+</ul>
+<p>
+You can use these TUIO client and server demo applications for debugging purposes,
+and using them as a starting point for the development of you own open source
+C++ applications implementing the TUIO protocol.
+</p>
+<p>
+Pressing F1 will toggle FullScreen mode within the TuioDemo,
+pressing ESC or closing the Window will end the application.
+Hitting the V key will print the received TUIO events to the console.
+</p>
+<p>
+Dragging the mouse will generate TUIO cursor events within the SimpleSimulator. 
+Pressing the SHIFT key while clicking, will produce "sticky" cursors.
+Hitting the V key will print the generated TUIO events to the console.
+</p>
+<p>
+Keep in mind to make your graphics scalable for the varying
+screen and window resolutions. A reasonable TUIO application
+will run in fullscreen mode, although the windowed mode might
+be useful for debugging purposes or working with the Simulator.
+</p>
+
+<h2>Application Programming Interface:</h2>
+
+<p>
+First you need to create an instance of <b>TuioClient</b>. This class
+is listening to TUIO messages on the specified port and generates
+higher level messages based on the object events. The method <b>connect(true)</b>
+will start the TuioClient in a blocking mode, simply calling <b>connect()</b>
+will start the TuioClient in the background. Call <b>disconnect()</b> in
+order to stop listening to incoming TUIO messages.
+</p>
+<p>
+Your application needs to implement the <b>TuioListener</b> interface,
+and has to be added to the TuioClient in order to receive TUIO callback messages.
+</p>
+
+<p>
+A TuioListener needs to implement the following methods:
+
+<ul>
+<li><b>addTuioObject(TuioObject *tobj)</b>
+this is called when an object becomes visible
+<li><b>removeTuioObject(TuioObject *tobj)</b>
+an object was removed from the table
+<li><b>updateTuioObject(TuioObject *tobj)</b>
+an object was moved on the table surface
+<li><b>addTuioCursor(TuioCursor *tcur)</b>
+this is called when a new cursor is detected
+<li><b>removeTuioCursor(TuioCursor *tcur)</b>
+a cursor was removed from the table
+<li><b>updateTuioCursor(TuioCursor *tcur)</b>
+a cursor was moving on the table surface
+<li><b>refresh(TuioTime bundleTime)</b>
+this method is called after each bundle,
+use it to repaint your screen for example
+</ul>
+</p>
+
+<p>
+Typically you will need just the following code to start with:
+
+<pre>
+MyTuioListener listener; // defines a TuioListener
+TuioClient client(port); // creates the TuioClient
+client.addTuioListener(&amp;listener); // registers the TuioListener
+client.connect(); // starts the TuioClient
+</pre>
+</p>
+
+<p>
+Each object or cursor is identified with aunique session ID, that is maintained
+over its lifetime. Additionally each object carries fiducial ID that corresponds
+to its attached fiducial marker number. The finger ID of the cursor object is always
+a number in the range of all currently detected cursor blobs.
+</p>
+<p>
+The <b>TuioObject</b> and <b>TuioCursor</b> references are updated automatically by the TuioClient
+and are always referencing the same instance over the object lifetime.
+All the TuioObject and TuioCursor attributes are encapsulated and can be
+accessed with methods such as <b>getX()</b>, <b>getY()</b> and <b>getAngle()</b> and so on.
+TuioObject and TuioCursor also have some additional convenience methods
+for the calculation of distances and angles between objects. The <b>getPath()</b>
+method returns a Vector of TuioPoint representing the movement path of the object.
+</p>
+<p>
+Alternatively the TuioClient class contains some methods for the polling
+of the current object and cursor state. There are methods which return
+either a list or individual object and cursor objects. The TuioObject and
+TuioCursor classes have been added as a container which also can be used
+by external classes.
+</p>
+
+<p>
+<ul>
+<li><b>getTuioObjects()</b> returns a Vector&lt;TuioObject*&gt; of all currently present TuioObjects
+<li><b>getTuioCursors()</b>  returns a Vector&lt;TuioObject*&gt; of all currently present TuioCursors
+<li><b>getTuioObject(long s_id)</b>  returns a TuioObject* or NULL depending on its presence
+<li><b>getTuioCursor(long s_id)</b>  returns a TuioCursor* or NULL depending on its presence
+</ul>
+</p>
+
+<h2>Building the Examples:</h2>
+<p>
+This package includes project files for Visual Studio .NET and XCode as well as a simple Linux Makefile for building the example applications.
+The Win32 project already include the necessary libraries, to build the GUI example for Mac OS X and Linux make sure you have the SDL, 
+OpenGL and GLUT libraries and headers installed on your system.
+</p>
+
+<h2>License:</h2>
+<p>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+</p>
+<p>
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+GNU General Public License for more details.
+</p>
+<p>
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA02111-1307USA
+</p>
+
+<h2>References:</h2>
+
+<p>
+This package uses the <a target="new" href="http://www.audiomulch.com/~rossb/code/oscpack/">oscpack</a> OpenSound Control library, 
+and the <a target="new" href="http://www.libsdl.org/">SDL</a> graphics library.
+</p>
+
+</body>
+</html>
