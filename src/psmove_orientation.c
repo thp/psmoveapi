@@ -91,13 +91,12 @@ psmove_orientation_new(PSMove *move)
 }
 
 
-int
-psmove_orientation_poll(PSMoveOrientation *orientation)
+void
+psmove_orientation_update(PSMoveOrientation *orientation)
 {
-    psmove_return_val_if_fail(orientation != NULL, 0);
+    psmove_return_if_fail(orientation != NULL);
 
     int frame;
-    int seq;
 
     long now = psmove_util_get_ticks();
     if (now - orientation->sample_freq_measure_start >= 1000) {
@@ -113,51 +112,45 @@ psmove_orientation_poll(PSMoveOrientation *orientation)
         orientation->sample_freq_measure_count = 0;
     }
 
-    seq = psmove_poll(orientation->move);
+    /* We get 2 measurements per call to psmove_poll() */
+    orientation->sample_freq_measure_count += 2;
 
-    if (seq) {
-        /* We get 2 measurements per call to psmove_poll() */
-        orientation->sample_freq_measure_count += 2;
+    psmove_get_magnetometer(orientation->move,
+            &orientation->input[6],
+            &orientation->input[7],
+            &orientation->input[8]);
 
-        psmove_get_magnetometer(orientation->move,
-                &orientation->input[6],
-                &orientation->input[7],
-                &orientation->input[8]);
+    for (frame=0; frame<2; frame++) {
+        psmove_get_accelerometer_frame(orientation->move, frame,
+                &orientation->output[0],
+                &orientation->output[1],
+                &orientation->output[2]);
 
-        for (frame=0; frame<2; frame++) {
-            psmove_get_accelerometer_frame(orientation->move, frame,
-                    &orientation->output[0],
-                    &orientation->output[1],
-                    &orientation->output[2]);
+        psmove_get_gyroscope_frame(orientation->move, frame,
+                &orientation->output[3],
+                &orientation->output[4],
+                &orientation->output[5]);
 
-            psmove_get_gyroscope_frame(orientation->move, frame,
-                    &orientation->output[3],
-                    &orientation->output[4],
-                    &orientation->output[5]);
+        MadgwickAHRSupdate(orientation->quaternion,
+                orientation->sample_freq,
 
-            MadgwickAHRSupdate(orientation->quaternion,
-                    orientation->sample_freq,
+                -orientation->output[0],
+                orientation->output[1],
+                orientation->output[2],
 
-                    -orientation->output[0],
-                    orientation->output[1],
-                    orientation->output[2],
+                orientation->output[3],
+                orientation->output[5],
+                -orientation->output[4],
 
-                    orientation->output[3],
-                    orientation->output[5],
-                    -orientation->output[4],
-
-                    /* Magnetometer orientation disabled for now */
-                    0, 0, 0
+                /* Magnetometer orientation disabled for now */
+                0, 0, 0
 #if 0
-                    orientation->output[6],
-                    orientation->output[8],
-                    orientation->output[7]
+                orientation->output[6],
+                orientation->output[8],
+                orientation->output[7]
 #endif
-            );
-        }
+        );
     }
-
-    return seq;
 }
 
 void

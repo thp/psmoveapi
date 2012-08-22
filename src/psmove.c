@@ -30,6 +30,7 @@
 #include "psmove.h"
 #include "psmove_private.h"
 #include "psmove_calibration.h"
+#include "psmove_orientation.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -215,8 +216,11 @@ struct _PSMove {
     /* Previous values of buttons (psmove_get_button_events) */
     int last_buttons;
 
-    /* Calibration object */
     PSMoveCalibration *calibration;
+    PSMoveOrientation *orientation;
+
+    /* Is orientation tracking currently enabled? */
+    int orientation_enabled;
 
 #ifdef PSMOVE_USE_PTHREADS
     /* Write thread for updating LEDs in the background */
@@ -588,6 +592,7 @@ psmove_connect_by_id(int id)
     hid_free_enumeration(devs);
 
     move->calibration = psmove_calibration_new(move);
+    move->orientation = psmove_orientation_new(move);
 
     return move;
 }
@@ -1044,6 +1049,11 @@ psmove_poll(PSMove *move)
                     oldseq, seq);
         }
 #endif
+
+        if (move->orientation_enabled) {
+            psmove_orientation_update(move->orientation);
+        }
+
         return 1 + seq;
     }
 
@@ -1255,6 +1265,45 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
     }
 }
 
+
+void
+psmove_enable_orientation(PSMove *move, int enabled)
+{
+    psmove_return_if_fail(move != NULL);
+
+    move->orientation_enabled = (enabled != 0);
+}
+
+int
+psmove_has_orientation(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+    psmove_return_val_if_fail(move->orientation != NULL, 0);
+
+    return move->orientation_enabled;
+}
+
+void
+psmove_get_orientation(PSMove *move,
+        float *q0, float *q1, float *q2, float *q3)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(move->orientation != NULL);
+
+    psmove_orientation_get_quaternion(move->orientation, q0, q1, q2, q3);
+}
+
+void
+psmove_set_orientation(PSMove *move,
+        float q0, float q1, float q2, float q3)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(move->orientation != NULL);
+
+    psmove_orientation_set_quaternion(move->orientation, q0, q1, q2, q3);
+}
+
+
 void
 psmove_disconnect(PSMove *move)
 {
@@ -1278,6 +1327,10 @@ psmove_disconnect(PSMove *move)
         case PSMove_MOVED:
             // XXX: Close connection?
             break;
+    }
+
+    if (move->orientation) {
+        psmove_orientation_free(move->orientation);
     }
 
     if (move->calibration) {

@@ -45,8 +45,8 @@ typedef struct _PSMoveOrientation PSMoveOrientation;
 ADDAPI PSMoveOrientation *
 ADDCALL psmove_orientation_new(PSMove *move);
 
-ADDAPI int
-ADDCALL psmove_orientation_poll(PSMoveOrientation *orientation);
+ADDAPI void
+ADDCALL psmove_orientation_update(PSMoveOrientation *orientation);
 
 ADDAPI void
 ADDCALL psmove_orientation_get_quaternion(PSMoveOrientation *orientation,

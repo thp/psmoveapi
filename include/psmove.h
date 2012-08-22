@@ -480,6 +480,51 @@ ADDCALL psmove_dump_calibration(PSMove *move);
 ADDAPI void
 ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
 
+
+/**
+ * Enable or disable orientation tracking
+ *
+ * move ...... a valid PSMove * instance
+ * enabled ... 1 to enable orientation tracking, 0 to disable
+ **/
+ADDAPI void
+ADDCALL psmove_enable_orientation(PSMove *move, int enabled);
+
+/**
+ * Check of orientation tracking is enabled and available
+ *
+ * move ... a valid PSMove * instance
+ *
+ * Returns nonzero if orientation tracking is enabled, zero otherwise
+ **/
+ADDAPI int
+ADDCALL psmove_has_orientation(PSMove *move);
+
+/**
+ * Get the current orientation as quaternion
+ *
+ * move ............. a valid PSMove * instance
+ * q0, q1, q2, q3 ... pointers to store the quaternion result
+ *
+ * Make sure to call psmove_poll() regularly. This only works if
+ * orientation tracking has been enabled previously (using the function
+ * psmove_enable_orientation()).
+ **/
+ADDAPI void
+ADDCALL psmove_get_orientation(PSMove *move,
+        float *q0, float *q1, float *q2, float *q3);
+
+/**
+ * (Re-)Set the current orientation quaternion
+ *
+ * move ............. a valid PSMove * instance
+ * q0, q1, q2, q3 ... the quaternion to (re-)set the orientation to
+ **/
+ADDAPI void
+ADDCALL psmove_set_orientation(PSMove *move,
+        float q0, float q1, float q2, float q3);
+
+
 /**
  * Disconnect from the PS Move and free resources
  **/
