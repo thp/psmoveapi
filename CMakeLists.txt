@@ -215,6 +215,16 @@ if(PSMOVE_BUILD_EXAMPLES)
         add_executable(${EXAMPLE} examples/c/${EXAMPLE}.c)
         target_link_libraries(${EXAMPLE} psmoveapi)
     endforeach()
+
+    if(PSMOVE_BUILD_TRACKER)
+        # You have to run "make -C external/TUIO_CPP static" to build the static
+        # library for your platform before the tuio_server can be built here
+        include_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP/TUIO)
+        include_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP/oscpack)
+        link_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP)
+        add_executable(tuio_server examples/c/tuio_server.cpp)
+        target_link_libraries(tuio_server psmoveapi psmoveapi_tracker TUIO)
+    endif()
 endif()
 
 
@@ -229,16 +239,6 @@ if(PSMOVE_BUILD_TESTS)
         add_executable(test_tracker examples/c/test_tracker.c)
         target_link_libraries(test_tracker psmoveapi psmoveapi_tracker)
     endif()
-endif()
-
-if(PSMOVE_HAVE_TRACKER)
-    # You have to run "make -C external/TUIO_CPP static" to build the static
-    # library for your platform before the tuio_server can be built here
-    include_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP/TUIO)
-    include_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP/oscpack)
-    link_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP)
-    add_executable(tuio_server examples/c/tuio_server.cpp)
-    target_link_libraries(tuio_server psmoveapi TUIO)
 endif()
 
 
