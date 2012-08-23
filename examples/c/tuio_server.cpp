@@ -193,7 +193,7 @@ main(int argc, const char **argv) {
             bool pressed = (psmove_get_buttons(moves[i]) & Btn_T);
 
             if (psmove_tracker_get_status(tracker, moves[i]) ==
-                    Tracker_CALIBRATED_AND_FOUND) {
+                    Tracker_TRACKING) {
                 float x, y, r;
                 psmove_tracker_get_position(tracker, moves[i],
                         &x, &y, &r);
