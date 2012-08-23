@@ -52,14 +52,12 @@ extern "C" {
 struct _PSMoveTracker;
 typedef struct _PSMoveTracker PSMoveTracker;
 
-/* Status of the tracker */
+/*! Status of the tracker */
 enum PSMoveTracker_Status {
-    Tracker_UNCALIBRATED,
-    Tracker_CALIBRATING,
-    Tracker_CALIBRATION_ERROR,
-    Tracker_CALIBRATED,
-    Tracker_CALIBRATED_AND_FOUND,
-    Tracker_CALIBRATED_AND_NOT_FOUND,
+    Tracker_NOT_CALIBRATED, /*!< Controller not registered with tracker */
+    Tracker_CALIBRATION_ERROR, /*!< Calibration failed (check lighting, visibility) */
+    Tracker_CALIBRATED, /*!< Color calibration successful, not currently tracking */
+    Tracker_TRACKING, /*!< Calibrated and successfully tracked in the camera */
 };
 
 /**

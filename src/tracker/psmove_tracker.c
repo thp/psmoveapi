@@ -676,11 +676,11 @@ enum PSMoveTracker_Status psmove_tracker_get_status(PSMoveTracker *tracker, PSMo
 	TrackedController* tc = tracked_controller_find(tracker->controllers, move);
 	if (tc) {
 		if (tc->is_tracked)
-			return Tracker_CALIBRATED_AND_FOUND;
+			return Tracker_TRACKING;
 		else
-			return Tracker_CALIBRATED_AND_NOT_FOUND;
+			return Tracker_CALIBRATED;
 	} else {
-		return Tracker_UNCALIBRATED;
+		return Tracker_NOT_CALIBRATED;
 	}
 }
 
