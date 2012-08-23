@@ -15,5 +15,5 @@ HEADERS += orientation.h
 DEPENDPATH += ../../../include
 INCLUDEPATH += ../../../include
 
-LIBS += -L../../../build/ -lpsmoveapi -lopencv_highgui
+LIBS += -L../../../build/ -lpsmoveapi -lpsmoveapi_tracker -lopencv_highgui
 

@@ -27,15 +27,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifdef WIN32
 
 #include <stdio.h>
 
-#include "../../external/iniparser/iniparser.h"
-
 #include "psmove_tracker.h"
-#include "camera_control.h"
-#include "camera_control_private.h"
+
+#include "../../../external/iniparser/iniparser.h"
+
+#include "../camera_control.h"
+#include "../camera_control_private.h"
 
 void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
 #if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && defined(PSMOVE_USE_PSEYE)
@@ -189,4 +189,3 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 #endif
 }
 
-#endif /* WIN32 - at the beginning of this file */

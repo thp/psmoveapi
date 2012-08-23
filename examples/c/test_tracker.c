@@ -30,10 +30,6 @@
 
 #include <stdio.h>
 
-#include "psmove.h"
-
-#if defined(PSMOVE_HAVE_TRACKER)
-
 #include <time.h>
 #include <unistd.h>
 #include <assert.h>
@@ -106,12 +102,3 @@ int main(int arg, char** args) {
     return 0;
 }
 
-#else /* PSMOVE_HAVE_TRACKER */
-
-int main()
-{
-    printf("PS Move API compiled without Tracker support.\n");
-    return 1;
-}
-
-#endif

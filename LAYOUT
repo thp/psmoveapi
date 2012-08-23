@@ -20,8 +20,9 @@ examples - Applications and utilities
     examples/qt - Example applications using the Qt bindings (psmoveapiqt)
 
 src - Source code for the C library
-    src/platform - Platform-specific code
+    src/platform - Platform-specific code for the main library
     src/tracker - Code for the vision based tracker
+    src/tracker/platform - Platform-specific code for the tracker
     src/daemon - Code for the PS Move API Daemon protocol (client/server)
     src/utils - Essential utilities (Daemon, Pairing, ...)
 

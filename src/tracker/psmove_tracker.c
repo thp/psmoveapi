@@ -27,10 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#include "psmove_config.h"
-
-#if defined(PSMOVE_HAVE_TRACKER)
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -40,13 +36,13 @@
 #include "opencv2/imgproc/imgproc_c.h"
 
 #include "psmove_tracker.h"
-#include "psmove_private.h"
+#include "../psmove_private.h"
 
-#include "tracker/camera_control.h"
-#include "tracker/tracker_helpers.h"
-#include "tracker/tracked_controller.h"
-#include "tracker/tracked_color.h"
-#include "tracker/tracker_trace.h"
+#include "camera_control.h"
+#include "tracker_helpers.h"
+#include "tracked_controller.h"
+#include "tracked_color.h"
+#include "tracker_trace.h"
 
 #ifdef __linux
 #  include "platform/psmove_linuxsupport.h"
@@ -1306,4 +1302,3 @@ psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tr
         return (contourBest != NULL);
 }
 
-#endif /* defined(PSMOVE_HAVE_TRACKER) */

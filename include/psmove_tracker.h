@@ -37,8 +37,6 @@
 extern "C" {
 #endif
 
-#if defined(PSMOVE_HAVE_TRACKER)
-
 /* Defines the range of x/y values for the position getting, etc.. */
 #define PSMOVE_TRACKER_POSITION_X_MAX 640
 #define PSMOVE_TRACKER_POSITION_Y_MAX 480
@@ -227,8 +225,6 @@ ADDCALL psmove_tracker_get_position(PSMoveTracker *tracker,
  **/
 ADDAPI void
 ADDCALL psmove_tracker_free(PSMoveTracker *tracker);
-
-#endif /* defined(PSMOVE_HAVE_TRACKER) */
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,4 @@
-
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
@@ -27,21 +26,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef PSMOVE_LINUXSUPPORT_H
-#define PSMOVE_LINUXSUPPORT_H
+#include "../camera_control.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdio.h>
 
-/**
- * Helper function to return the index of a camera device that
- **/
-int
-linux_find_pseye();
-
-#ifdef __cplusplus
+void
+camera_control_set_parameters(CameraControl* cc,
+        int autoE, int autoG, int autoWB,
+        int exposure, int gain,
+        int wbRed, int wbGreen, int wbBlue,
+        int contrast, int brightness)
+{
+    /* TODO: Implement for Mac OS X */
+    fprintf(stderr, "<noimpl> camera_control_set_parameters\n");
 }
-#endif
 
-#endif
+void
+camera_control_backup_system_settings(CameraControl* cc,
+        const char* file)
+{
+    /* TODO: Implement for Mac OS X */
+    fprintf(stderr, "<noimpl> camera_control_backup_system_settings\n");
+}
+
+void camera_control_restore_system_settings(CameraControl* cc,
+        const char* file)
+{
+    /* TODO: Implement for Mac OS X */
+    fprintf(stderr, "<noimpl> camera_control_restore_system_settings\n");
+}
+

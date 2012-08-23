@@ -11,8 +11,13 @@ set(PSMOVEAPI_PATCH_VERSION "0")
 set(PSMOVEAPI_VERSION "${PSMOVEAPI_MAJOR_VERSION}.${PSMOVEAPI_MINOR_VERSION}.${PSMOVEAPI_PATCH_VERSION}")
 set(PSMOVEAPI_VERSION_SONAME "${PSMOVEAPI_MAJOR_VERSION}")
 
-set(PSMOVE_REQUIRED_LIBS)
+set(PSMOVEAPI_REQUIRED_LIBS)
 set(PSMOVEAPI_PLATFORM_SRC)
+
+set(PSMOVEAPI_TRACKER_REQUIRED_LIBS)
+set(PSMOVEAPI_TRACKER_PLATFORM_SRC)
+
+set(PSMOVEAPI_INSTALL_TARGETS)
 
 # Put any other libraries that you might need in here
 link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libs)
@@ -54,31 +59,22 @@ else()
     set(INFO_USE_DEBUG "No")
 endif()
 
+# Linker commands to put into the .pc file (when installing)
+set(PSMOVEAPI_PKGCONFIG_LIBS "-lpsmoveapi")
 
 # Tracker support
 if(PSMOVE_BUILD_TRACKER)
     FIND_PACKAGE(OpenCV QUIET)
     if(OpenCV_FOUND)
-        list(APPEND PSMOVE_REQUIRED_LIBS ${OpenCV_LIBS})
-
-        file(GLOB PSMOVEAPI_TRACKER_SRC
-            "${PSMOVEAPI_SOURCE_DIR}/src/tracker/*.c"
-            "${PSMOVEAPI_SOURCE_DIR}/external/iniparser/*.c"
-        )
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${OpenCV_LIBS})
 
         set(INFO_BUILD_TRACKER "Yes")
-        set(PSMOVE_HAVE_TRACKER ON)
+        set(PSMOVEAPI_PKGCONFIG_LIBS "${PSMOVEAPI_PKGCONFIG_LIBS} -lpsmoveapi_tracker")
     else()
-        set(PSMOVEAPI_TRACKER_SRC "")
-
         set(INFO_BUILD_TRACKER "No (OpenCV not found)")
-        set(PSMOVE_HAVE_TRACKER OFF)
     endif()
 else()
-    set(PSMOVEAPI_TRACKER_SRC "")
-
     set(INFO_BUILD_TRACKER "No (disabled)")
-    set(PSMOVE_HAVE_TRACKER OFF)
 endif()
 
 set(INFO_USE_CL_EYE_SDK "No (Windows only)")
@@ -87,15 +83,19 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(IOKIT IOKit)
     find_library(COREFOUNDATION CoreFoundation)
     find_library(IOBLUETOOTH IOBluetooth)
-    list(APPEND PSMOVE_REQUIRED_LIBS ${IOKIT})
-    list(APPEND PSMOVE_REQUIRED_LIBS ${COREFOUNDATION})
-    list(APPEND PSMOVE_REQUIRED_LIBS ${IOBLUETOOTH})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${IOKIT})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${COREFOUNDATION})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${IOBLUETOOTH})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/mac/hid.c)
+
     list(APPEND PSMOVEAPI_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_osxsupport.m)
+
+    list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+        ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_macosx.c)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    list(APPEND PSMOVE_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32)
 
     IF(PSMOVE_USE_CL_EYE_SDK)
         find_path(CL_EYE_SDK_PATH Bin/CLEyeMulticam.dll
@@ -103,7 +103,7 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "C:/Program Files (x86)/Code Laboratories/CL-Eye Platform SDK")
         IF(CL_EYE_SDK_PATH)
             add_definitions(-DCAMERA_CONTROL_USE_CL_DRIVER)
-            list(APPEND PSMOVE_REQUIRED_LIBS CLEyeMulticam)
+            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS CLEyeMulticam)
             file(COPY ${CL_EYE_SDK_PATH}/Bin/CLEyeMulticam.dll
                 DESTINATION ${PSMOVEAPI_SOURCE_DIR}/external/libs)
             set(INFO_USE_CL_EYE_SDK "Yes")
@@ -117,29 +117,39 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     ENDIF()
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/windows/hid.c)
+
+    list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+        ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_win32.c)
 ELSE()
     # Linux
     find_package(PkgConfig REQUIRED)
     find_package(Threads REQUIRED)
-    list(APPEND PSMOVE_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
     pkg_check_modules(UDEV REQUIRED libudev)
     include_directories(${UDEV_INCLUDE_DIRS})
-    list(APPEND PSMOVE_REQUIRED_LIBS ${UDEV_LIBRARIES})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
     pkg_check_modules(BLUEZ REQUIRED bluez)
     include_directories(${BLUEZ_INCLUDE_DIRS})
-    list(APPEND PSMOVE_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/linux/hid.c)
-    list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_linuxsupport.c)
+
+    list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+        ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/psmove_linuxsupport.c
+        ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_linux.c)
 ENDIF()
 
 include_directories(${PSMOVEAPI_SOURCE_DIR}/include)
 
 file(GLOB PSMOVEAPI_MOVED_SRC
     "${PSMOVEAPI_SOURCE_DIR}/src/daemon/*.c"
+)
+
+file(GLOB PSMOVEAPI_TRACKER_SRC
+    "${PSMOVEAPI_SOURCE_DIR}/src/tracker/*.c"
+    "${PSMOVEAPI_SOURCE_DIR}/external/iniparser/*.c"
 )
 
 file(GLOB PSMOVEAPI_SRC
@@ -154,26 +164,44 @@ set(PSMOVEAPI_ALGORITHM_SRC
     ${PSMOVEAPI_SOURCE_DIR}/external/MadgwickAHRS/MadgwickAHRS.c
 )
 
-set(PSMOVE_SRC
-    ${HIDAPI_SRC}
-    ${PSMOVEAPI_SRC}
-    ${PSMOVEAPI_TRACKER_SRC}
-    ${PSMOVEAPI_MOVED_SRC}
-    ${PSMOVEAPI_PLATFORM_SRC}
-    ${PSMOVEAPI_ALGORITHM_SRC}
-)
-
 # Shared library
 
-add_library(psmoveapi SHARED ${PSMOVE_SRC})
-target_link_libraries(psmoveapi ${PSMOVE_REQUIRED_LIBS})
-set_target_properties(psmoveapi PROPERTIES VERSION ${PSMOVEAPI_VERSION} SOVERSION ${PSMOVEAPI_VERSION_SONAME})
-set_target_properties(psmoveapi PROPERTIES COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
+add_library(psmoveapi SHARED
+    ${HIDAPI_SRC}
+    ${PSMOVEAPI_SRC}
+    ${PSMOVEAPI_MOVED_SRC}
+    ${PSMOVEAPI_PLATFORM_SRC}
+    ${PSMOVEAPI_ALGORITHM_SRC})
+target_link_libraries(psmoveapi
+    ${PSMOVEAPI_REQUIRED_LIBS})
+set_target_properties(psmoveapi PROPERTIES
+    VERSION ${PSMOVEAPI_VERSION}
+    SOVERSION ${PSMOVEAPI_VERSION_SONAME})
+set_target_properties(psmoveapi PROPERTIES
+    COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
+list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi)
+
+if(PSMOVE_BUILD_TRACKER)
+    add_library(psmoveapi_tracker SHARED
+        ${PSMOVEAPI_TRACKER_SRC}
+        ${PSMOVEAPI_TRACKER_PLATFORM_SRC})
+    target_link_libraries(psmoveapi_tracker
+        psmoveapi
+        ${PSMOVEAPI_REQUIRED_LIBS}
+        ${PSMOVEAPI_TRACKER_REQUIRED_LIBS})
+    set_target_properties(psmoveapi_tracker PROPERTIES
+        VERSION ${PSMOVEAPI_VERSION}
+        SOVERSION ${PSMOVEAPI_VERSION_SONAME})
+    set_target_properties(psmoveapi_tracker PROPERTIES
+        COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
+    list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi_tracker)
+endif()
 
 # Essential utilities
 foreach(UTILITY moved psmovepair)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
     target_link_libraries(${UTILITY} psmoveapi)
+    list(APPEND PSMOVEAPI_INSTALL_TARGETS ${UTILITY})
 endforeach()
 
 
@@ -188,10 +216,15 @@ endif()
 
 # C test programs
 if(PSMOVE_BUILD_TESTS)
-    foreach(TESTNAME led_update read_performance calibration tracker)
+    foreach(TESTNAME led_update read_performance calibration)
         add_executable(test_${TESTNAME} examples/c/test_${TESTNAME}.c)
         target_link_libraries(test_${TESTNAME} psmoveapi)
     endforeach(TESTNAME)
+
+    if(PSMOVE_BUILD_TRACKER)
+        add_executable(test_tracker examples/c/test_tracker.c)
+        target_link_libraries(test_tracker psmoveapi psmoveapi_tracker)
+    endif()
 endif()
 
 
@@ -262,7 +295,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
     DESTINATION lib/pkgconfig)
 
-install(TARGETS moved psmovepair psmoveapi
+install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
 )
@@ -300,7 +333,7 @@ endmacro()
 message("")
 message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
-message("    Tracker module:   " ${INFO_BUILD_TRACKER})
+message("    Tracker library:  " ${INFO_BUILD_TRACKER})
 message("")
 message("  Language bindings")
 message("    Python:           " ${INFO_BUILD_PYTHON_BINDINGS})
