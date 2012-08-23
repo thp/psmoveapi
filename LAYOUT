@@ -32,6 +32,7 @@ external - Code from external sources (see README for details)
     external/hidapi - Alan Ott's cross-platform HID API
     external/iniparser - Nicolas Devillard's iniparser library
     external/MadgwickAHRS - Madgwick's orientation algorithm
+    external/TUIO_CPP - TUIO Protocol reference implementation
 
 debian - Packaging files for Debian GNU/Linux
 
