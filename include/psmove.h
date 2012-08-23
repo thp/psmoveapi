@@ -36,8 +36,6 @@ extern "C" {
 
 #include "psmove_config.h"
 
-#include <stdlib.h>
-
 #ifdef _WIN32
 #  define ADDCALL __cdecl
 #  ifdef BUILDING_SHARED_LIBRARY

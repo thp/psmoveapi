@@ -32,6 +32,7 @@
 #include "psmove_private.h"
 #include "psmove_calibration.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
