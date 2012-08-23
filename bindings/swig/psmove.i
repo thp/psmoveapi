@@ -129,7 +129,12 @@ void reinit();
     }
 
     const char *get_serial() {
-        return psmove_get_serial($self);
+        static char *result = NULL;
+        if (result != NULL) {
+            free(result);
+        }
+        result = psmove_get_serial($self);
+        return result;
     }
 
     int is_remote() {

@@ -249,7 +249,7 @@ psmove_calibration_new(PSMove *move)
         _psmove_read_btaddrs(move, NULL, &addr);
         serial = _psmove_btaddr_to_string(addr);
     } else {
-        serial = strdup(psmove_get_serial(move));
+        serial = psmove_get_serial(move);
     }
 
     for (i=0; i<strlen(serial); i++) {

@@ -48,344 +48,769 @@ extern "C" {
 #  define ADDCALL
 #endif
 
+/*! Connection type for controllers.
+ * Controllers can be connected via USB or via Bluetooth. The USB connection is
+ * required when you want to pair the controller and for saving the calibration
+ * blob. The Bluetooth connection is required when you want to read buttons and
+ * calibration values. LED and rumble settings can be done with both Bluetooth
+ * and USB.
+ *
+ * Used by psmove_connection_type().
+ **/
 enum PSMove_Connection_Type {
-    Conn_Bluetooth,
-    Conn_USB,
-    Conn_Unknown,
+    Conn_Bluetooth, /*!< The controller is connected via Bluetooth */
+    Conn_USB, /*!< The controller is connected via USB */
+    Conn_Unknown, /*!< Unknown connection type / other error */
 };
 
+/*! Button flags.
+ * The values of each button when pressed. The values returned
+ * by the button-related functions return an integer. You can
+ * use the logical-and operator (&) to check if a button is
+ * pressed (in case of psmove_get_buttons()) or if a button
+ * state has changed (in case of psmove_get_button_events()).
+ *
+ * Used by psmove_get_buttons() and psmove_get_button_events().
+ **/
 enum PSMove_Button {
+    Btn_TRIANGLE = 1 << 0x04, /*!< Green triangle */
+    Btn_CIRCLE = 1 << 0x05, /*!< Red circle */
+    Btn_CROSS = 1 << 0x06, /*!< Blue cross */
+    Btn_SQUARE = 1 << 0x07, /*!< Pink square */
+
+    Btn_SELECT = 1 << 0x08, /*!< Select button, left side */
+    Btn_START = 1 << 0x0B, /*!< Start button, right side */
+
+    Btn_MOVE = 1 << 0x13, /*!< Move button, big front button */
+    Btn_T = 1 << 0x14, /*!< Trigger, on the back */
+    Btn_PS = 1 << 0x10, /*!< PS button, front center */
+
+#if 0
+    /* Not used for now - only on Sixaxis/DS3 or nav controller */
     Btn_L2 = 1 << 0x00,
     Btn_R2 = 1 << 0x01,
     Btn_L1 = 1 << 0x02,
     Btn_R1 = 1 << 0x03,
-    Btn_TRIANGLE = 1 << 0x04,
-    Btn_CIRCLE = 1 << 0x05,
-    Btn_CROSS = 1 << 0x06,
-    Btn_SQUARE = 1 << 0x07,
-    Btn_SELECT = 1 << 0x08,
     Btn_L3 = 1 << 0x09,
     Btn_R3 = 1 << 0x0A,
-    Btn_START = 1 << 0x0B,
     Btn_UP = 1 << 0x0C,
     Btn_RIGHT = 1 << 0x0D,
     Btn_DOWN = 1 << 0x0E,
     Btn_LEFT = 1 << 0x0F,
-    Btn_PS = 1 << 0x10,
-
-    Btn_MOVE = 1 << 0x13,
-    Btn_T = 1 << 0x14,
+#endif
 };
 
+
+/*! Frame of an input report.
+ * Each input report sent by the PS Move Controller contains two readings for
+ * the accelerometer and the gyroscope. The first one is the older one, and the
+ * second one is the most recent one. If you need 120 Hz updates, you can
+ * process both frames for each update. If you only need the latest reading,
+ * use the second frame and ignore the first frame.
+ *
+ * Used by psmove_get_accelerometer_frame() and psmove_get_gyroscope_frame().
+ **/
 enum PSMove_Frame {
-    Frame_FirstHalf = 0,
-    Frame_SecondHalf,
+    Frame_FirstHalf = 0, /*!< The older frame */
+    Frame_SecondHalf, /*!< The most recent frame */
 };
 
+/*! Battery charge level.
+ * Charge level of the battery. Charging is indicated when the controller is
+ * connected via USB, or when the controller is sitting in the charging dock.
+ * In all other cases (Bluetooth, not in charging dock), the charge level is
+ * indicated.
+ *
+ * Used by psmove_get_battery().
+ **/
 enum PSMove_Battery_Level {
-    Batt_MIN = 0x00,
-    Batt_MAX = 0x05,
-    Batt_CHARGING = 0xEE,
+    Batt_MIN = 0x00, /*!< Battery is almost empty (< 20%) */
+    Batt_20Percent = 0x01, /*!< Battery has at least 20% remaining */
+    Batt_40Percent = 0x02, /*!< Battery has at least 40% remaining */
+    Batt_60Percent = 0x03, /*!< Battery has at least 60% remaining */
+    Batt_80Percent = 0x04, /*!< Battery has at least 80% remaining */
+    Batt_MAX = 0x05, /*!< Battery is fully charged */
+    Batt_CHARGING = 0xEE, /*!< Battery is currently being charged */
 };
 
-/* Return values for psmove_update_leds */
+/*! LED update result, returned by psmove_update_leds() */
 enum PSMove_Update_Result {
-    Update_Failed = 0,
-    Update_Success,
-    Update_Ignored,
+    Update_Failed = 0, /*!< Could not update LEDs */
+    Update_Success, /*!< LEDs successfully updated */
+    Update_Ignored, /*!< LEDs don't need updating, see psmove_set_rate_limiting() */
 };
 
+/*! Boolean type. Use them instead of 0 and 1 to improve code readability. */
 enum PSMove_Bool {
-    PSMove_False = 0,
-    PSMove_True = 1,
+    PSMove_False = 0, /*!< False, Failure, Disabled (depending on context) */
+    PSMove_True = 1, /*!< True, Success, Enabled (depending on context) */
 };
 
-/* Opaque data type for the PS Move internal data */
 struct _PSMove;
-typedef struct _PSMove PSMove;
+typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
+                                    Obtained via psmove_connect_by_id() */
 
 /**
- * Get the number of currently-connected PS Move controllers
+ * \brief Get the number of available controllers
+ *
+ * \return Number of controllers available (USB + Bluetooth + Remote)
  **/
 ADDAPI int
 ADDCALL psmove_count_connected();
 
 /**
- * Connect to the default PS Move controller
- * Returns: A newly-allocated PSMove structure or NULL on error
+ * \brief Connect to the default PS Move controller
+ *
+ * This is a convenience function, having the same effect as:
+ *
+ * \code psmove_connect_by_id(0) \endcode
+ *
+ * \return A new \ref PSMove handle, or \c NULL on error
  **/
 ADDAPI PSMove *
 ADDCALL psmove_connect();
 
 /**
- * Connect to the PS Move controller id (zero-based index)
- * Returns: A newly-allocated PSMove structure or NULL on error
+ * \brief Connect to a specific PS Move controller
+ *
+ * This will connect to a controller based on its index. The controllers
+ * available are usually:
+ *
+ *  1. The locally-connected controllers (USB, Bluetooth)
+ *  2. The remotely-connected controllers (exported via \c moved)
+ *
+ * The order of controllers can be different on each application start,
+ * so use psmove_get_serial() to identify the controllers if more than
+ * one is connected, and you need some fixed ordering. The global ordering
+ * (first local controllers, then remote controllers) is fixed, and will
+ * be guaranteed by the library.
+ *
+ * \param id Zero-based index of the controller to connect to
+ *           (0 .. psmove_count_connected() - 1)
+ *
+ * \return A new \ref PSMove handle, or \c NULL on error
  **/
 ADDAPI PSMove *
 ADDCALL psmove_connect_by_id(int id);
 
 /**
- * Determine the connection type of the controllerj
- * Returns: An enum PSMove_Connection_Type value
+ * \brief Get the connection type of a PS Move controller
+ *
+ * For now, controllers connected via USB can't use psmove_poll() and
+ * all related features (sensor and button reading, etc..). Because of
+ * this, you might want to check if the controllers are connected via
+ * Bluetooth before using psmove_poll() and friends.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref Conn_Bluetooth if the controller is connected via Bluetooth
+ * \return \ref Conn_USB if the controller is connected via USB
+ * \return \ref Conn_Unknown on error
  **/
 ADDAPI enum PSMove_Connection_Type
 ADDCALL psmove_connection_type(PSMove *move);
 
 /**
- * Check if the controller handle is a remote (moved) connection.
+ * \brief Check if the controller is remote (\c moved) or local.
  *
- * Returns:
- *   PSMove_False if the controller is local (USB/Bluetooth)
- *   PSMove_True if it's remote (moved)
+ * This can be used to determine to which machine the controller is
+ * connected to, and can be helpful in debugging, or if you need to
+ * handle remote controllers differently from local controllers.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref PSMove_False if the controller is connected locally
+ * \return \ref PSMove_True if the controller is connected remotely
  **/
 ADDAPI enum PSMove_Bool
 ADDCALL psmove_is_remote(PSMove *move);
 
 /**
- * Get the serial number of the controller.
+ * \brief Get the serial number (Bluetooth MAC address) of a controller.
  *
- * This is only defined for Bluetooth controllers, and contains
- * the Bluetooth Mac address of the controller as a string, e.g.
- * "aa:bb:cc:dd:ee:ff".
+ * The serial number is usually the Bluetooth MAC address of a
+ * PS Move controller. This can be used to identify different
+ * controllers when multiple controllers are connected, and is
+ * especially helpful if your application needs to identify
+ * controllers or guarantee a special ordering.
  *
- * The serial number is owned by the move handle - the caller MUST NOT
- * free the returned string. It will be freed on psmove_disconnect().
+ * The resulting value has the format:
+ *
+ * \code "aa:bb:cc:dd:ee:ff" \endcode
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return The serial number of the controller. The caller must
+ *         free() the result when it is not needed anymore.
  **/
-ADDAPI const char*
+ADDAPI char *
 ADDCALL psmove_get_serial(PSMove *move);
 
 /**
- * Set the Host Bluetooth address of the PS Move to this
- * computer's Bluetooth address. Only works via USB.
+ * \brief Pair a controller connected via USB with the computer.
  *
- * Implemented for Linux (Bluez), Mac OS X and the default
- * Windows 7 Microsoft Bluetooth stack only.
+ * This function assumes that psmove_connection_type() returns
+ * \ref Conn_USB for the given controller. This will set the
+ * target Bluetooth host address of the controller to this
+ * computer's default Bluetooth adapter address. This function
+ * has been implemented and tested with the following operating
+ * systems and Bluetooth stacks:
  *
- * Windows note: Doesn't work with 3rd party stacks like Bluesoleil.
- * In this case, you can use psmove_pair_custom() (see below).
+ *  * Linux 2.6 (Bluez)
+ *  * Mac OS X >= 10.6
+ *  * Windows 7 (Microsoft Bluetooth stack)
+ *
+ * \attention On Windows, this function does not work with 3rd
+ * party stacks like Bluesoleil. Use psmove_pair_custom() and
+ * supply the Bluetooth host adapter address manually. It is
+ * recommended to only use the Microsoft Bluetooth stack for
+ * Windows with the PS Move API to avoid problems.
+ *
+ * If your computer doesn't have USB host mode (e.g. because it
+ * is a mobile device), you can use psmove_pair_custom() on a
+ * different computer and specify the Bluetooth address of the
+ * mobile device instead. For most use cases, you can use the
+ * \c psmovepair command-line utility.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref PSMove_True if the pairing was successful
+ * \return \ref PSMove_False if the pairing failed
  **/
 ADDAPI enum PSMove_Bool
 ADDCALL psmove_pair(PSMove *move);
 
 /**
- * Set the Host Bluetooth address of the PS Move to the
- * Bluetooth address given by btaddr_string (which should
- * contain a string in the format "AA:BB:CC:DD:EE:FF").
+ * \brief Pair a controller connected via USB to a specific address.
  *
- * Will return nonzero on success, zero on error.
+ * This function behaves the same as psmove_pair(), but allows you to
+ * specify a custom Bluetooth host address.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param btaddr_string The host address in the format \c "aa:bb:cc:dd:ee:ff"
+ *
+ * \return \ref PSMove_True if the pairing was successful
+ * \return \ref PSMove_False if the pairing failed
  **/
 ADDAPI enum PSMove_Bool
 ADDCALL psmove_pair_custom(PSMove *move, const char *btaddr_string);
 
 /**
- * Enable or disable LED update rate limiting
+ * \brief Enable or disable LED update rate limiting.
  *
- * If enabled is 1, then psmove_update_leds will ignore extraneous updates
- * if the update rate is too high. If enabled is 0, all LED updates will be
- * sent (when the LED or rumble value has changed), which might worsen the
- * performance of reading sensor values, especially on Linux.
+ * If LED update rate limiting is enabled, psmove_update_leds() will make
+ * ignore extraneous updates (and return \ref Update_Ignored) if the update
+ * rate is too high, or if the color hasn't changed and the timeout has not
+ * been hit.
+ *
+ * By default, rate limiting is enabled.
+ *
+ * \warning If rate limiting is disabled, the read performance might
+ *          be decreased, especially on Linux.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param enabled \ref PSMove_True to enable rate limiting,
+ *                \ref PSMove_False to disable
  **/
 ADDAPI void
 ADDCALL psmove_set_rate_limiting(PSMove *move, enum PSMove_Bool enabled);
 
 /**
- * Set the LEDs of the PS Move controller. You need to
- * call PSMove_update_leds() to send the update to the
- * controller.
+ * \brief Set the RGB LEDs on the PS Move controller.
+ *
+ * This sets the RGB values of the LEDs on the Move controller. Usage examples:
+ *
+ * \code
+ *    psmove_set_leds(move, 255, 255, 255);  // white
+ *    psmove_set_leds(move, 255, 0, 0);      // red
+ *    psmove_set_leds(move, 0, 0, 0);        // black (off)
+ * \endcode
+ *
+ * This function will only update the library-internal state of the controller.
+ * To really update the LEDs (write the changes out to the controller), you
+ * have to call psmove_update_leds() after calling this function.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param r The red value (0..255)
+ * \param g The green value (0..255)
+ * \param b The blue value (0..255)
  **/
 ADDAPI void
 ADDCALL psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
         unsigned char b);
 
 /**
- * Set the rumble value of the PS Move controller. You
- * need to call PSMove_update_leds() to send the update
- * to the controller.
+ * \brief Set the rumble intensity of the PS Move controller.
+ *
+ * This sets the rumble (vibration motor) intensity of the
+ * Move controller. Usage example:
+ *
+ * \code
+ *   psmove_set_rumble(move, 255);  // strong rumble
+ *   psmove_set_rumble(move, 128);  // medium rumble
+ *   psmove_set_rumble(move, 0);    // rumble off
+ * \endcode
+ *
+ * This function will only update the library-internal state of the controller.
+ * To really update the rumble intensity (write the changes out to the
+ * controller), you have to call psmove_update_leds() (the rumble value is sent
+ * together with the LED updates, that's why you have to call it even for
+ * rumble updates) after calling this function.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param rumble The rumble intensity (0..255)
  **/
 ADDAPI void
 ADDCALL psmove_set_rumble(PSMove *move, unsigned char rumble);
 
 /**
- * Re-send the LED and Rumble status bits. This needs to
- * be done regularly to keep the LEDs and rumble turned on.
+ * \brief Send LED and rumble values to the controller.
  *
- * Return values:
- *   Update_Success ........ success
- *   Update_Ignored ........ ignored (LEDs/rumble unchanged)
- *   Update_Failed (= 0) ... error
+ * This writes the LED and rumble changes to the controller. You have to call
+ * this function regularly, or the controller will switch off the LEDs and
+ * rumble automatically (after about 4-5 seconds). When rate limiting is
+ * enabled, you can just call this function in your main loop, and the LEDs
+ * will stay on properly (with extraneous updates being ignored to not flood
+ * the controller with updates).
+ *
+ * When rate limiting (see psmove_set_rate_limiting()) is disabled, you have
+ * to make sure to not call this function not more often then e.g. every
+ * 80 ms to avoid flooding the controller with updates.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref Update_Success on success
+ * \return \ref Update_Ignored if the change was ignored (see psmove_set_rate_limiting())
+ * \return \ref Update_Failed (= \c 0) on error
  **/
 ADDAPI enum PSMove_Update_Result
 ADDCALL psmove_update_leds(PSMove *move);
 
 /**
- * Polls the PS Move for new sensor/button data.
- * Returns a positive number (sequence number + 1) if new data is
- * available or zero if no data is available.
+ * \brief Read new sensor/button data from the controller.
+ *
+ * For most sensor and button functions, you have to call this function
+ * to read new updates from the controller.
+ *
+ * How to detect dropped frames:
+ *
+ * \code
+ *     int seq_old = 0;
+ *     while (1) {
+ *         int seq = psmove_poll(move);
+ *         if ((seq_old > 0) && ((seq_old % 16) != (seq - 1))) {
+ *             // dropped frames
+ *         }
+ *         seq_old = seq;
+ *     }
+ * \endcode
+ *
+ * In practice, you usually use this function in a main loop and guard
+ * all your sensor/button updating functions with it:
+ *
+ * \code
+ *     while (1) {
+ *         if (psmove_poll(move)) {
+ *             unsigned int pressed, released;
+ *             psmove_get_button_events(move, &pressed, &released);
+ *             // process button events
+ *         }
+ *
+ *         // update the application state
+ *         // draw the current frame
+ *     }
+ * \endcode
+ *
+ * \return a positive sequence number (1..16) if new data is
+ *         available
+ * \return \c 0 if no (new) data is available or an error occurred
+ *
+ * \param move A valid \ref PSMove handle
  **/
 ADDAPI int
 ADDCALL psmove_poll(PSMove *move);
 
 /**
- * Get the current status of the PS Move buttons. You need to call
- * PSMove_poll() to read new data from the controller first.
+ * \brief Get the current button states from the controller.
+ *
+ * The status of the buttons is described as a bitfield, with a bit
+ * in the result being \c 1 when the corresponding \ref PSMove_Button
+ * is pressed.
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * Example usage:
+ *
+ * \code
+ *     if (psmove_poll(move)) {
+ *         unsigned int buttons = psmove_get_buttons(move);
+ *         if (buttons & Btn_PS) {
+ *             printf("The PS button is currently pressed.\n");
+ *         }
+ *     }
+ * \endcode
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return A bit field of \ref PSMove_Button states
  **/
 ADDAPI unsigned int
 ADDCALL psmove_get_buttons(PSMove *move);
 
 
 /**
- * Get new button events since the last call to this fuction.
+ * \brief Get new button events since the last call to this fuction.
  *
- * move ...... A valid PSMove * instance
- * pressed ... Pointer for storing a bitfield of new press events (or NULL)
- * released .. Pointer for storing a bitfield of new release events (or NULL)
+ * This is an advanced version of psmove_get_buttons() that takes care
+ * of tracking the previous button states and comparing the previous
+ * states with the current states to generate two bitfields, which is
+ * usually more suitable for event-driven applications:
  *
- * Must be called after PSMove_poll() to get the latest states. It should
- * only be called at one location in your application. This is a shortcut
- * for storing and comparing the result of psmove_get_buttons() manually.
+ *  * \c pressed - all buttons that have been pressed since the last call
+ *  * \c released - all buttons that have been released since the last call
+ *
+ * Example usage:
+ *
+ * \code
+ *     if (psmove_poll(move)) {
+ *         unsigned int pressed, released;
+ *         psmove_get_button_events(move, &pressed, &releaed);
+ *
+ *         if (pressed & Btn_MOVE) {
+ *             printf("The Move button has been pressed now.\n");
+ *         } else if (released & Btn_MOVE) {
+ *             printf("The Move button has been released now.\n");
+ *         }
+ *     }
+ * \endcode
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param pressed Pointer to store a bitfield of new press events \c NULL
+ * \param released Pointer to store a bitfield of new release events \c NULL
  **/
 ADDAPI void
 ADDCALL psmove_get_button_events(PSMove *move, unsigned int *pressed,
         unsigned int *released);
 
 /**
- * Get the battery level of the PS Move. You need to call
- * PSMove_poll() to read new data from the controller first.
+ * \brief Get the battery charge level of the controller.
  *
- * Return value range: Batt_MIN..Batt_MAX
- * Charging (via USB): Batt_CHARGING
+ * This function retrieves the charge level of the controller or
+ * the charging state (if the controller is currently being charged).
+ *
+ * See \ref PSMove_Battery_Level for details on the result values.
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \return A \ref PSMove_Battery_Level (\ref Batt_CHARGING when charging)
  **/
-ADDAPI unsigned char
+ADDAPI enum PSMove_Battery_Level
 ADDCALL psmove_get_battery(PSMove *move);
 
 /**
- * Get the current temperature of the PS Move. You need to
- * call PSMove_poll() to read new data from the controller first.
+ * \brief Get the current raw temperature reading of the controller.
  *
- * Return value range: FIXME
+ * This gets the raw sensor value of the internal temperature sensor.
+ *
+ * \bug Right now, the value range of the temperature sensor is now
+ *      known, so you have to experiment with the values yourself.
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return The raw temperature sensor reading
  **/
 ADDAPI int
 ADDCALL psmove_get_temperature(PSMove *move);
 
 /**
- * Get the current value of the PS Move analog trigger. You need to
- * call PSMove_poll() to read new data from the controller first.
+ * \brief Get the value of the PS Move analog trigger.
+ *
+ * Get the current value of the PS Move analog trigger. The trigger
+ * is also exposed as digital button using psmove_get_buttons() in
+ * combination with \ref Btn_T.
+ *
+ * Usage example:
+ *
+ * \code
+ *     // Control the red LED brightness via the trigger
+ *     while (1) {
+ *         if (psmove_poll()) {
+ *             unsigned char value = psmove_get_trigger(move);
+ *             psmove_set_leds(move, value, 0, 0);
+ *             psmove_update_leds(move);
+ *         }
+ *     }
+ * \endcode
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return 0 if the trigger is not pressed
+ * \return 1-254 when the trigger is partially pressed
+ * \return 255 if the trigger is fully pressed
  **/
 ADDAPI unsigned char
 ADDCALL psmove_get_trigger(PSMove *move);
 
 /**
- * Get the current accelerometer readings from the PS Move. You need
- * to call PSMove_poll() to read new data from the controller first.
+ * \brief Get the raw accelerometer reading from the PS Move.
  *
- * ax, ay and az should be pointers to integer locations that you want
- * to have filled with values. If you don't care about one of these
- * values, simply pass NULL and the field will be ignored..
+ * This function reads the raw (uncalibrated) sensor values from
+ * the controller. To read calibrated sensor values, use
+ * psmove_get_accelerometer_frame().
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param ax Pointer to store the raw X axis reading, or \c NULL
+ * \param ay Pointer to store the raw Y axis reading, or \c NULL
+ * \param az Pointer to store the raw Z axis reading, or \c NULL
  **/
 ADDAPI void
 ADDCALL psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az);
 
 /**
- * Same as PSMove_get_accelerometer(), but for the gyroscope.
+ * \brief Get the raw gyroscope reading from the PS Move.
+ *
+ * This function reads the raw (uncalibrated) sensor values from
+ * the controller. To read calibrated sensor values, use
+ * psmove_get_gyroscope_frame().
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param gx Pointer to store the raw X axis reading, or \c NULL
+ * \param gy Pointer to store the raw Y axis reading, or \c NULL
+ * \param gz Pointer to store the raw Z axis reading, or \c NULL
  **/
 ADDAPI void
 ADDCALL psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz);
 
 /**
- * Same as PSMove_get_accelerometer(), but for the magnetometer.
+ * \brief Get the raw magnetometer reading from the PS Move.
+ *
+ * This function reads the raw sensor values from the controller,
+ * pointing to magnetic north.
+ *
  * The result value range is -2048..+2047. The magnetometer is located
  * roughly below the glowing orb - you can glitch the values with a
  * strong kitchen magnet by moving it around the bottom ring of the orb.
- *
  * You can detect if a magnet is nearby by checking if any two values
  * stay at zero for several frames.
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param mx Pointer to store the raw X axis reading, or \c NULL
+ * \param my Pointer to store the raw Y axis reading, or \c NULL
+ * \param mz Pointer to store the raw Z axis reading, or \c NULL
  **/
 ADDAPI void
 ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
 
 /**
- * Get the calibrated accelerometer values (in g)
+ * \brief Get the calibrated accelerometer values (in g) from the controller.
  *
- * move ......... a valid PSMove * instance
- * frame ........ Frame_FirstHalf or Frame_SecondHalf
- * ax, ay, az ... pointers for the result value (or NULL to ignore)
+ * Assuming that psmove_has_calibration() returns \ref PSMove_True, this
+ * function will give you the calibrated accelerometer values in g. To get
+ * the raw accelerometer readings, use psmove_get_accelerometer() instead.
  *
- * You need to call psmove_poll() first to read the data from the controller.
+ * Usage example:
+ *
+ * \code
+ *     if (psmove_poll(move)) {
+ *         float ay;
+ *         psmove_get_accelerometer_frame(move, Frame_SecondHalf,
+ *                 NULL, &ay, NULL);
+ *
+ *         if (ay > 0.5) {
+ *             printf("Controller is pointing up.\n");
+ *         } else if (ay < -0.5) {
+ *             printf("Controller is pointing down.\n");
+ *         }
+ *     }
+ * \endcode
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param frame \ref Frame_FirstHalf or \ref Frame_SecondHalf (see \ref PSMove_Frame)
+ * \param ax Pointer to store the X axis reading, or \c NULL
+ * \param ay Pointer to store the Y axis reading, or \c NULL
+ * \param az Pointer to store the Z axis reading, or \c NULL
  **/
 ADDAPI void
 ADDCALL psmove_get_accelerometer_frame(PSMove *move, enum PSMove_Frame frame,
         float *ax, float *ay, float *az);
 
 /**
- * Get the calibrated gyroscope values (in rad/s)
+ * \brief Get the calibrated gyroscope values (in rad/s) from the controller.
  *
- * move ......... a valid PSMove * instance
- * frame ........ Frame_FirstHalf or Frame_SecondHalf
- * ax, ay, az ... pointers for the result value (or NULL to ignore)
+ * Assuming that psmove_has_calibration() returns \ref PSMove_True, this
+ * function will give you the calibrated gyroscope values in rad/s. To get
+ * the raw gyroscope readings, use psmove_get_gyroscope() instead.
  *
- * You need to call psmove_poll() first to read the data from the controller.
+ * Usage example:
+ *
+ * \code
+ *     if (psmove_poll(move)) {
+ *         float gz;
+ *         psmove_get_gyroscope_frame(move, Frame_SecondHalf,
+ *                 NULL, NULL, &gz);
+ *
+ *         // Convert rad/s to RPM
+ *         gz = gz * 60 / (2*M_PI);
+ *
+ *         printf("Rotation: %.2f RPM\n", gz);
+ *     }
+ * \endcode
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param frame \ref Frame_FirstHalf or \ref Frame_SecondHalf (see \ref PSMove_Frame)
+ * \param gx Pointer to store the X axis reading, or \c NULL
+ * \param gy Pointer to store the Y axis reading, or \c NULL
+ * \param gz Pointer to store the Z axis reading, or \c NULL
  **/
 ADDAPI void
 ADDCALL psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
         float *gx, float *gy, float *gz);
 
 /**
- * Check if the move controller has support for calibration
+ * \brief Check if calibration is available on this controller.
  *
- * move ... a valid PSMove * instance
+ * For psmove_get_accelerometer_frame() and psmove_get_gyroscope_frame()
+ * to work, the calibration data has to be availble. This usually happens
+ * at pairing time via USB. The calibration files are stored in the PS
+ * Move API data directory (see psmove_util_get_data_dir()) and can be
+ * copied between machines (e.g. from the machine you do your pairing to
+ * the machine where you run the API on, which is especially important for
+ * mobile devices, where USB host mode might not be supported).
  *
- * Returns nonzero if calibration is supported, zero otherwise.
+ * If no calibration is available, the two functions returning calibrated
+ * values will return uncalibrated values. Also, the orientation features
+ * will not work without calibration.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref PSMove_True if calibration is supported, \ref PSMove_False otherwise
  **/
 ADDAPI enum PSMove_Bool
 ADDCALL psmove_has_calibration(PSMove *move);
 
 /**
- * Dump the calibration information to stdout (for debugging)
+ * \brief Dump the calibration information to stdout.
  *
- * move ... a valid PSMove * instance
+ * This is mostly useful for developers wanting to analyze the
+ * calibration data of a given PS Move controller for debugging
+ * or development purposes.
+ *
+ * The current calibration information (if available) will be printed to \c
+ * stdout, including an interpretation of raw values where available.
+ *
+ * \param move A valid \ref PSMove handle
  **/
 ADDAPI void
 ADDCALL psmove_dump_calibration(PSMove *move);
 
 /**
- * Enable or disable orientation tracking
+ * \brief Enable or disable orientation tracking.
  *
- * move ...... a valid PSMove * instance
- * enabled ... PSMove_True to enable orientation tracking,
- *             PSMove_False to disable
+ * This will enable orientation tracking and update the internal orientation
+ * quaternion (which can be retrieved using psmove_get_orientation()) when
+ * psmove_poll() is called.
+ *
+ * In addition to enabling the orientation tracking features, calibration data
+ * and an orientation algorithm (usually built-in) has to be used, too. You can
+ * use psmove_has_orientation() after enabling orientation tracking to check if
+ * orientation features can be used.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param enabled \ref PSMove_True to enable orientation tracking, \ref PSMove_False to disable
  **/
 ADDAPI void
 ADDCALL psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled);
 
 /**
- * Check of orientation tracking is enabled and available
+ * \brief Check if orientation tracking is available for this controller.
  *
- * move ... a valid PSMove * instance
+ * The orientation tracking feature depends on the availability of an
+ * orientation tracking algorithm (usually built-in) and the calibration
+ * data availability (as determined by psmove_has_calibration()). In addition
+ * to that (because orientation tracking is somewhat computationally
+ * intensive, especially on embedded systems), you have to enable the
+ * orientation tracking manually via psmove_enable_orientation()).
  *
- * Returns nonzero if orientation tracking is enabled, zero otherwise
+ * If this function returns \ref PSMove_False, the orientation features
+ * will not work - check for missing calibration data and make sure that
+ * you have called psmove_enable_orientation() first.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref PSMove_True if calibration is supported, \ref PSMove_False otherwise
  **/
 ADDAPI enum PSMove_Bool
 ADDCALL psmove_has_orientation(PSMove *move);
 
 /**
- * Get the current orientation as quaternion
+ * \brief Get the current orientation as quaternion.
  *
- * move ............. a valid PSMove * instance
- * q0, q1, q2, q3 ... pointers to store the quaternion result
+ * This will get the current 3D rotation of the PS Move controller as
+ * quaternion. You will have to call psmove_poll() regularly in order to have
+ * good quality orientation tracking.
  *
- * Make sure to call psmove_poll() regularly. This only works if
- * orientation tracking has been enabled previously (using the function
- * psmove_enable_orientation()).
+ * In order for the orientation tracking to work, you have to enable tracking
+ * first using psmove_enable_orientation().  In addition to enabling tracking,
+ * an orientation algorithm has to be present, and calibration data has to be
+ * available. You can use psmove_has_orientation() to check if all
+ * preconditions are fulfilled to do orientation tracking.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param q0 A pointer to store the first part of the orientation quaternion
+ * \param q1 A pointer to store the second part of the orientation quaternion
+ * \param q2 A pointer to store the third part of the orientation quaternion
+ * \param q3 A pointer to store the fourth part of the orientation quaternion
  **/
 ADDAPI void
 ADDCALL psmove_get_orientation(PSMove *move,
         float *q0, float *q1, float *q2, float *q3);
 
 /**
- * (Re-)Set the current orientation quaternion
+ * \brief (Re-)Set the current orientation quaternion.
  *
- * move ............. a valid PSMove * instance
- * q0, q1, q2, q3 ... the quaternion to (re-)set the orientation to
+ * This will set the current 3D rotation of the PS Move controller as
+ * quaternion. You can use this function to re-adjust the orientation of the
+ * controller when the orientation tracking becomes inaccurate.
+ *
+ * You can always use this function, even with orientation tracking enabled and
+ * also when orientation tracking is not available. It is also possible to
+ * "inject" a different orientation tracking algorithm by calling
+ * psmove_enable_orientation() with \ref PSMove_False and then always updating
+ * the orientation using this function instead of relying on the built-in
+ * orientation tracking algorithm.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param q0 The first part of the new orientation quaternion
+ * \param q1 The second part of the new orientation quaternion
+ * \param q2 The third part of the new orientation quaternion
+ * \param q3 The fourth part of the new orientation quaternion
  **/
 ADDAPI void
 ADDCALL psmove_set_orientation(PSMove *move,
@@ -393,42 +818,76 @@ ADDCALL psmove_set_orientation(PSMove *move,
 
 
 /**
- * Disconnect from the PS Move and free resources
+ * \brief Disconnect from the PS Move and release resources.
+ *
+ * This will disconnect from the controller and release any resources allocated
+ * for handling the controller. Please note that this does not disconnect the
+ * controller from the system (as the Bluetooth stack of the operating system
+ * usually keeps the HID connection alive), but will rather disconnect the
+ * application from the controller.
+ *
+ * To really disconnect the controller from your computer, you can either press
+ * the PS button for ~ 10 seconds or use the Bluetooth application of your
+ * operating system to disconnect the controller.
+ *
+ * \param move A valid \ref PSMove handle (which will be invalid after this call)
  **/
 ADDAPI void
 ADDCALL psmove_disconnect(PSMove *move);
 
 /**
- * Reinitialize the library. Required for detecting new and removed
- * controllers (at least on Mac OS X). Make sure to disconnect all
- * controllers (using psmove_disconnect) before calling this!
+ * \brief Reinitialize the library.
+ *
+ * Required for detecting new and removed controllers (at least on Mac OS X).
+ * Make sure to disconnect all controllers (using psmove_disconnect) before
+ * calling this, otherwise it won't work.
+ *
+ * You do not need to call this function at application startup.
+ *
+ * \bug It should be possible to auto-detect newly-connected controllers
+ *      without having to rely on this function.
  **/
 ADDAPI void
 ADDCALL psmove_reinit();
 
 /**
- * Utility function: Get milliseconds since first library use
+ * \brief Get milliseconds since first library use.
+ *
+ * This function is used throughout the library to take care of timing and
+ * measurement. It implements a cross-platform way of getting the current
+ * time, relative to library use.
+ *
+ * \return Time (in ms) since first library use.
  **/
 ADDAPI long
 ADDCALL psmove_util_get_ticks();
 
 /**
- * Utility function: Get local save directory for settings
+ * \brief Get local save directory for settings.
  *
- * The returned value is reserved in static memory. It must not be free()d.
+ * The local save directory is a PS Move API-specific directory where the
+ * library and its components will store files such as calibration data,
+ * tracker state and configuration files.
+ *
+ * \return The local save directory for settings.
+ *         The returned value is reserved in static memory - it must not be freed!
  **/
 ADDAPI const char *
 ADDCALL psmove_util_get_data_dir();
 
 /**
- * Utility function: Get filename in PS Move data directory
+ * \brief Get a filename path in the local save directory.
+ *
+ * This is a convenience function wrapping psmove_util_get_data_dir()
+ * and will give the absolute path of the given filename.
  *
  * The data directory will be created in case it doesn't exist yet.
- * Returns NULL if the data directory cannot be created.
  *
- * filename ... The basename of the file inside the data dir
+ * \param filename The basename of the file (e.g. \c myfile.txt)
  *
- * The returned value must be free()d after use.
+ * \return The absolute filename to the file. The caller must
+ *         free() the result when it is not needed anymore.
+ * \return On error, \c NULL is returned.
  **/
 ADDAPI char *
 ADDCALL psmove_util_get_file_path(const char *filename);

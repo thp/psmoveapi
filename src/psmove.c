@@ -737,12 +737,12 @@ _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
     return 1;
 }
 
-const char*
+char *
 psmove_get_serial(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, 0);
-    psmove_return_val_if_fail(move->serial_number != NULL, 0);
-    return move->serial_number;
+    psmove_return_val_if_fail(move != NULL, NULL);
+    psmove_return_val_if_fail(move->serial_number != NULL, NULL);
+    return strdup(move->serial_number);
 }
 
 int
@@ -1109,7 +1109,7 @@ psmove_get_button_events(PSMove *move, unsigned int *pressed,
     move->last_buttons = buttons;
 }
 
-unsigned char
+enum PSMove_Battery_Level
 psmove_get_battery(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
