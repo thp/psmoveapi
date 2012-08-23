@@ -29,6 +29,8 @@
 
 #include "moved.h"
 
+#include "../psmove_private.h"
+
 #define LOG(format, ...) fprintf(stderr, "moved:" format, __VA_ARGS__)
 
 
@@ -39,7 +41,7 @@ main(int argc, char *argv[])
     move_daemon *moved = moved_init(server);
 
     /* Never act as a client in "moved" mode */
-    psmove_disable_remote();
+    _psmove_disable_remote();
 
     int id, count=psmove_count_connected();
     LOG("%d devices connected\n", count);

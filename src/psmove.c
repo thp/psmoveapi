@@ -213,7 +213,7 @@ struct _PSMove {
     unsigned char leds_dirty;
 
     /* Nonzero if LED update rate limiting is enabled */
-    unsigned char leds_rate_limiting;
+    enum PSMove_Bool leds_rate_limiting;
 
     /* Milliseconds timestamp of last LEDs update (psmove_util_get_ticks) */
     long last_leds_update;
@@ -225,7 +225,7 @@ struct _PSMove {
     PSMoveOrientation *orientation;
 
     /* Is orientation tracking currently enabled? */
-    int orientation_enabled;
+    enum PSMove_Bool orientation_enabled;
 
 #ifdef PSMOVE_USE_PTHREADS
     /* Write thread for updating LEDs in the background */
@@ -337,18 +337,27 @@ void
 psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
         enum PSMove_Frame frame, int *x, int *y, int *z);
 
+/**
+ * Set the Host Bluetooth address that is used to connect via
+ * Bluetooth. You should set this to the local computer's
+ * Bluetooth address when connected via USB, then disconnect
+ * and press the PS button to connect the controller via BT.
+ **/
+int
+psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+
 
 /* Start implementation of the API */
 
 
 void
-psmove_disable_remote()
+_psmove_disable_remote()
 {
     psmove_remote_disabled = 1;
 }
 
 void
-psmove_disable_local()
+_psmove_disable_local()
 {
     psmove_local_disabled = 1;
 }
@@ -373,7 +382,7 @@ _psmove_read_data(PSMove *move, unsigned char *data, int length)
     memcpy(data+1, &(move->input), sizeof(move->input));
 }
 
-int
+enum PSMove_Bool
 psmove_is_remote(PSMove *move)
 {
     return move->type == PSMove_MOVED;
@@ -629,11 +638,10 @@ psmove_connect()
 }
 
 int
-psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller)
+_psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller)
 {
     unsigned char btg[PSMOVE_BTADDR_GET_SIZE];
     int res;
-    int i;
 
     psmove_return_val_if_fail(move != NULL, 0);
 
@@ -649,6 +657,7 @@ psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *
 
     if (res == sizeof(btg)) {
 #ifdef PSMOVE_DEBUG
+        int i;
         fprintf(stderr, "[PSMOVE] controller bt mac addr: ");
         for (i=6; i>=1; i--) {
             if (i != 6) putc(':', stderr);
@@ -680,21 +689,7 @@ psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *
 }
 
 int
-psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
-{
-    psmove_DEPRECATED("Use psmove_read_btaddrs() instead");
-    return psmove_read_btaddrs(move, addr, NULL);
-}
-
-int
-psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
-{
-    psmove_DEPRECATED("Use psmove_read_btaddrs() instead");
-    return psmove_read_btaddrs(move, NULL, addr);
-}
-
-int
-psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
+_psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
 {
     psmove_return_val_if_fail(move != NULL, 0);
     psmove_return_val_if_fail(dest != NULL, 0);
@@ -774,24 +769,23 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     return (res == sizeof(bts));
 }
 
-int
+enum PSMove_Bool
 psmove_pair(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
     PSMove_Data_BTAddr btaddr;
-    int i;
 
-    if (!psmove_read_btaddrs(move, &btaddr, NULL)) {
-        return 0;
+    if (!_psmove_read_btaddrs(move, &btaddr, NULL)) {
+        return PSMove_False;
     }
 
 
 #if defined(__APPLE__)
     char *btaddr_string = macosx_get_btaddr();
-    if (!psmove_btaddr_from_string(btaddr_string, &btaddr)) {
+    if (!_psmove_btaddr_from_string(btaddr_string, &btaddr)) {
         free(btaddr_string);
-        return 0;
+        return PSMove_False;
     }
     free(btaddr_string);
 #elif defined(__linux)
@@ -812,9 +806,10 @@ psmove_pair(PSMove *move)
         psmove_CRITICAL("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
         BluetoothFindRadioClose(hFind);
-        return 0;
+        return PSMove_False;
     }
 
+    int i;
     for (i=0; i<6; i++) {
         btaddr[i] = radioInfo.address.rgBytes[5-i];
     }
@@ -824,36 +819,36 @@ psmove_pair(PSMove *move)
 
 #else
     /* TODO: Implement for other OSes (if any?) */
-    return 0;
+    return PSMove_False;
 #endif
 
     if (!psmove_set_btaddr(move, &btaddr)) {
-        return 0;
+        return PSMove_False;
     }
 
-    return 1;
+    return PSMove_True;
 }
 
-int
+enum PSMove_Bool
 psmove_pair_custom(PSMove *move, const char *btaddr_string)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
     PSMove_Data_BTAddr btaddr;
 
-    if (!psmove_read_btaddrs(move, &btaddr, NULL)) {
-        return 0;
+    if (!_psmove_read_btaddrs(move, &btaddr, NULL)) {
+        return PSMove_False;
     }
 
-    if (!psmove_btaddr_from_string(btaddr_string, &btaddr)) {
-        return 0;
+    if (!_psmove_btaddr_from_string(btaddr_string, &btaddr)) {
+        return PSMove_False;
     }
 
     if (!psmove_set_btaddr(move, &btaddr)) {
-        return 0;
+        return PSMove_False;
     }
 
-    return 1;
+    return PSMove_True;
 }
 
 enum PSMove_Connection_Type
@@ -885,7 +880,7 @@ psmove_connection_type(PSMove *move)
 }
 
 int
-psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
+_psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
 {
     int i, value;
     PSMove_Data_BTAddr tmp = {0};
@@ -907,7 +902,7 @@ psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
 }
 
 char *
-psmove_btaddr_to_string(const PSMove_Data_BTAddr addr)
+_psmove_btaddr_to_string(const PSMove_Data_BTAddr addr)
 {
     int size = 18; /* strlen("aa:bb:cc:dd:ee:ff") + 1 */
     char *result = (char*)malloc(size);
@@ -953,7 +948,7 @@ psmove_set_rumble(PSMove *move, unsigned char rumble)
     move->leds_dirty = 1;
 }
 
-int
+enum PSMove_Update_Result
 psmove_update_leds(PSMove *move)
 {
     int res;
@@ -966,10 +961,10 @@ psmove_update_leds(PSMove *move)
     if (move->leds_rate_limiting &&
             move->leds_dirty && timediff_ms < PSMOVE_MIN_LED_UPDATE_WAIT_MS) {
         /* Rate limiting (too many updates) */
-        return PSMOVE_UPDATE_IGNORED;
+        return Update_Ignored;
     } else if (!move->leds_dirty && timediff_ms < PSMOVE_MAX_LED_INHIBIT_MS) {
         /* Unchanged LEDs value (no need to update yet) */
-        return PSMOVE_UPDATE_IGNORED;
+        return Update_Ignored;
     }
 
     move->leds_dirty = 0;
@@ -982,21 +977,21 @@ psmove_update_leds(PSMove *move)
             move->led_write_thread_write_queued = 1;
             pthread_cond_signal(&(move->led_write_new_data));
             pthread_mutex_unlock(&(move->led_write_mutex));
-            return PSMOVE_UPDATE_SUCCESS;
+            return Update_Success;
 #else
             res = hid_write(move->handle, (unsigned char*)(&(move->leds)),
                     sizeof(move->leds));
             if (res == sizeof(move->leds)) {
-                return PSMOVE_UPDATE_SUCCESS;
+                return Update_Success;
             } else {
-                return PSMOVE_UPDATE_FAILED;
+                return Update_Failed;
             }
 #endif
             break;
         case PSMove_MOVED:
             moved_client_send(move->client, MOVED_REQ_WRITE,
                     move->remote_id, (unsigned char*)(&move->leds));
-            return PSMOVE_UPDATE_SUCCESS; // XXX: Error handling
+            return Update_Success; // XXX: Error handling
             break;
         default:
             psmove_CRITICAL("Unknown device type");
@@ -1006,10 +1001,10 @@ psmove_update_leds(PSMove *move)
 }
 
 void
-psmove_set_rate_limiting(PSMove *move, unsigned char enabled)
+psmove_set_rate_limiting(PSMove *move, enum PSMove_Bool enabled)
 {
     psmove_return_if_fail(move != NULL);
-    move->leds_rate_limiting = (enabled != 0);
+    move->leds_rate_limiting = enabled;
 }
 
 int
@@ -1253,7 +1248,7 @@ psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
             gx, gy, gz);
 }
 
-int
+enum PSMove_Bool
 psmove_has_calibration(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
@@ -1291,14 +1286,14 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 
 
 void
-psmove_enable_orientation(PSMove *move, int enabled)
+psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled)
 {
     psmove_return_if_fail(move != NULL);
 
-    move->orientation_enabled = (enabled != 0);
+    move->orientation_enabled = enabled;
 }
 
-int
+enum PSMove_Bool
 psmove_has_orientation(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);

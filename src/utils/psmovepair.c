@@ -35,6 +35,7 @@
 #include <stdlib.h>
 
 #include "psmove.h"
+#include "../psmove_private.h"
 
 int main(int argc, char* argv[])
 {
@@ -45,7 +46,7 @@ int main(int argc, char* argv[])
     int custom_addr = 0;
 
     if (argc > 1) {
-        if (psmove_btaddr_from_string(argv[1], NULL)) {
+        if (_psmove_btaddr_from_string(argv[1], NULL)) {
             printf("Using user-supplied host address: %s\n", argv[1]);
         } else {
             printf("Cannot convert host address: %s\n", argv[1]);

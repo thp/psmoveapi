@@ -38,6 +38,9 @@ extern "C" {
 #include "psmove.h"
 
 
+struct _PSMoveCalibration;
+typedef struct _PSMoveCalibration PSMoveCalibration;
+
 
 /**
  * Create a new calibration object for a given controller

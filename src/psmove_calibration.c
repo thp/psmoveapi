@@ -245,8 +245,8 @@ psmove_calibration_new(PSMove *move)
     calibration->move = move;
 
     if (psmove_connection_type(move) == Conn_USB) {
-        psmove_read_btaddrs(move, NULL, &addr);
-        serial = psmove_btaddr_to_string(addr);
+        _psmove_read_btaddrs(move, NULL, &addr);
+        serial = _psmove_btaddr_to_string(addr);
     } else {
         serial = strdup(psmove_get_serial(move));
     }
@@ -395,7 +395,7 @@ psmove_calibration_read_from_usb(PSMoveCalibration *calibration)
     char *data;
     size_t size;
 
-    if (psmove_get_calibration_blob(calibration->move, &data, &size)) {
+    if (_psmove_get_calibration_blob(calibration->move, &data, &size)) {
         assert(size == PSMOVE_CALIBRATION_BLOB_SIZE);
         memcpy(calibration->usb_calibration, data, size);
         free(data);

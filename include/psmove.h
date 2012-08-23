@@ -91,73 +91,26 @@ enum PSMove_Battery_Level {
 };
 
 /* Return values for psmove_update_leds */
-#define PSMOVE_UPDATE_FAILED 0
-#define PSMOVE_UPDATE_SUCCESS 1
-#define PSMOVE_UPDATE_IGNORED 2
+enum PSMove_Update_Result {
+    Update_Failed = 0,
+    Update_Success,
+    Update_Ignored,
+};
 
-/* A Bluetooth address. */
-typedef unsigned char PSMove_Data_BTAddr[6];
+enum PSMove_Bool {
+    PSMove_False = 0,
+    PSMove_True = 1,
+};
 
 /* Opaque data type for the PS Move internal data */
 struct _PSMove;
 typedef struct _PSMove PSMove;
-
-struct _PSMoveCalibration;
-typedef struct _PSMoveCalibration PSMoveCalibration;
-
-/**
- * Disable the connection to remote servers
- *
- * This can only be called at the beginning, and will disable connections to
- * any remote "moved" servers.
- **/
-ADDAPI void
-ADDCALL psmove_disable_remote();
-
-/**
- * Disable local (hidapi-based) controllers
- *
- * This can only be called at the beginning, and will disable all local
- * controllers that are connected via hidapi.
- **/
-ADDAPI void
-ADDCALL psmove_disable_local();
-
-
-/**
- * [PRIVATE API] Write raw data blob to device
- **/
-ADDAPI void
-ADDCALL _psmove_write_data(PSMove *move, unsigned char *data, int length);
-
-
-/**
- * [PRIVATE API] Read raw data blob from device
- **/
-ADDAPI void
-ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
-
-
-/**
- * Reinitialize the library. Required for detecting new and removed
- * controllers (at least on Mac OS X). Make sure to disconnect all
- * controllers (using psmove_disconnect) before calling this!
- **/
-ADDAPI void
-ADDCALL psmove_reinit();
 
 /**
  * Get the number of currently-connected PS Move controllers
  **/
 ADDAPI int
 ADDCALL psmove_count_connected();
-
-/**
- * Connect to the PS Move controller id (zero-based index)
- * Returns: A newly-allocated PSMove structure or NULL on error
- **/
-ADDAPI PSMove *
-ADDCALL psmove_connect_by_id(int id);
 
 /**
  * Connect to the default PS Move controller
@@ -167,6 +120,13 @@ ADDAPI PSMove *
 ADDCALL psmove_connect();
 
 /**
+ * Connect to the PS Move controller id (zero-based index)
+ * Returns: A newly-allocated PSMove structure or NULL on error
+ **/
+ADDAPI PSMove *
+ADDCALL psmove_connect_by_id(int id);
+
+/**
  * Determine the connection type of the controllerj
  * Returns: An enum PSMove_Connection_Type value
  **/
@@ -174,61 +134,14 @@ ADDAPI enum PSMove_Connection_Type
 ADDCALL psmove_connection_type(PSMove *move);
 
 /**
- * Read a Bluetooth address from string and write its
- * internal representation into a PSMove_Data_BTAddr.
+ * Check if the controller handle is a remote (moved) connection.
  *
- * If dest is NULL, the data is not written (only verified).
- *
- * Will return nonzero on success, zero on error.
+ * Returns:
+ *   PSMove_False if the controller is local (USB/Bluetooth)
+ *   PSMove_True if it's remote (moved)
  **/
-ADDAPI int
-ADDCALL psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
-
-
-/**
- * Formats the contents of addr to a newly-allocated string and
- * returns it. The caller has to free() the return value.
- **/
-ADDAPI char *
-ADDCALL psmove_btaddr_to_string(const PSMove_Data_BTAddr addr);
-
-/**
- * Read the current Bluetooth addresses stored in the controller
- *
- * This only works via USB.
- *
- * If host is not NULL, the current host address will be stored there.
- * If controller is not NULL, the controller address will be stored there.
- **/
-ADDAPI int
-ADDCALL psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller);
-
-/**
- * Get the currently-set Host Bluetooth address that is used
- * to connect via Bluetooth when the PS button is pressed.
- *
- * DEPRECATED - use psmove_read_btaddrs(move, addr, NULL) instead
- **/
-ADDAPI int
-ADDCALL psmove_get_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
-
-/**
- * Get the Bluetooth Mac address of the connected controller.
- *
- * DEPRECATED - use psmove_read_btaddrs(move, NULL, addr) instead
- **/
-ADDAPI int
-ADDCALL psmove_controller_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
-
-/**
- * Get the calibration data from a connected USB controller.
- *
- * The pointer *dest will be set to a newly-allocated byte array
- * of a certain size (which will be saved in *size) and the caller
- * has to free this field with free()
- **/
-ADDAPI int
-ADDCALL psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size);
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_is_remote(PSMove *move);
 
 /**
  * Get the serial number of the controller.
@@ -244,23 +157,6 @@ ADDAPI const char*
 ADDCALL psmove_get_serial(PSMove *move);
 
 /**
- * Check if the controller handle is a remote (moved) connection.
- *
- * Return 0 if "move" is local (USB/Bluetooth), 1 if it's remote (moved)
- **/
-ADDAPI int
-ADDCALL psmove_is_remote(PSMove *move);
-
-/**
- * Set the Host Bluetooth address that is used to connect via
- * Bluetooth. You should set this to the local computer's
- * Bluetooth address when connected via USB, then disconnect
- * and press the PS button to connect the controller via BT.
- **/
-ADDAPI int
-ADDCALL psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
-
-/**
  * Set the Host Bluetooth address of the PS Move to this
  * computer's Bluetooth address. Only works via USB.
  *
@@ -269,10 +165,8 @@ ADDCALL psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
  *
  * Windows note: Doesn't work with 3rd party stacks like Bluesoleil.
  * In this case, you can use psmove_pair_custom() (see below).
- *
- * Will return nonzero on success, zero on error.
  **/
-ADDAPI int
+ADDAPI enum PSMove_Bool
 ADDCALL psmove_pair(PSMove *move);
 
 /**
@@ -282,8 +176,19 @@ ADDCALL psmove_pair(PSMove *move);
  *
  * Will return nonzero on success, zero on error.
  **/
-ADDAPI int
+ADDAPI enum PSMove_Bool
 ADDCALL psmove_pair_custom(PSMove *move, const char *btaddr_string);
+
+/**
+ * Enable or disable LED update rate limiting
+ *
+ * If enabled is 1, then psmove_update_leds will ignore extraneous updates
+ * if the update rate is too high. If enabled is 0, all LED updates will be
+ * sent (when the LED or rumble value has changed), which might worsen the
+ * performance of reading sensor values, especially on Linux.
+ **/
+ADDAPI void
+ADDCALL psmove_set_rate_limiting(PSMove *move, enum PSMove_Bool enabled);
 
 /**
  * Set the LEDs of the PS Move controller. You need to
@@ -307,23 +212,12 @@ ADDCALL psmove_set_rumble(PSMove *move, unsigned char rumble);
  * be done regularly to keep the LEDs and rumble turned on.
  *
  * Return values:
- *   PSMOVE_UPDATE_SUCCESS ........ success
- *   PSMOVE_UPDATE_IGNORED ........ ignored (LEDs/rumble unchanged)
- *   PSMOVE_UPDATE_FAILED (= 0) ... error
+ *   Update_Success ........ success
+ *   Update_Ignored ........ ignored (LEDs/rumble unchanged)
+ *   Update_Failed (= 0) ... error
  **/
-ADDAPI int
+ADDAPI enum PSMove_Update_Result
 ADDCALL psmove_update_leds(PSMove *move);
-
-/**
- * Enable or disable LED update rate limiting
- *
- * If enabled is 1, then psmove_update_leds will ignore extraneous updates
- * if the update rate is too high. If enabled is 0, all LED updates will be
- * sent (when the LED or rumble value has changed), which might worsen the
- * performance of reading sensor values, especially on Linux.
- **/
-ADDAPI void
-ADDCALL psmove_set_rate_limiting(PSMove *move, unsigned char enabled);
 
 /**
  * Polls the PS Move for new sensor/button data.
@@ -400,6 +294,18 @@ ADDAPI void
 ADDCALL psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz);
 
 /**
+ * Same as PSMove_get_accelerometer(), but for the magnetometer.
+ * The result value range is -2048..+2047. The magnetometer is located
+ * roughly below the glowing orb - you can glitch the values with a
+ * strong kitchen magnet by moving it around the bottom ring of the orb.
+ *
+ * You can detect if a magnet is nearby by checking if any two values
+ * stay at zero for several frames.
+ **/
+ADDAPI void
+ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
+
+/**
  * Get the calibrated accelerometer values (in g)
  *
  * move ......... a valid PSMove * instance
@@ -432,7 +338,7 @@ ADDCALL psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
  *
  * Returns nonzero if calibration is supported, zero otherwise.
  **/
-ADDAPI int
+ADDAPI enum PSMove_Bool
 ADDCALL psmove_has_calibration(PSMove *move);
 
 /**
@@ -444,26 +350,14 @@ ADDAPI void
 ADDCALL psmove_dump_calibration(PSMove *move);
 
 /**
- * Same as PSMove_get_accelerometer(), but for the magnetometer.
- * The result value range is -2048..+2047. The magnetometer is located
- * roughly below the glowing orb - you can glitch the values with a
- * strong kitchen magnet by moving it around the bottom ring of the orb.
- *
- * You can detect if a magnet is nearby by checking if any two values
- * stay at zero for several frames.
- **/
-ADDAPI void
-ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
-
-
-/**
  * Enable or disable orientation tracking
  *
  * move ...... a valid PSMove * instance
- * enabled ... 1 to enable orientation tracking, 0 to disable
+ * enabled ... PSMove_True to enable orientation tracking,
+ *             PSMove_False to disable
  **/
 ADDAPI void
-ADDCALL psmove_enable_orientation(PSMove *move, int enabled);
+ADDCALL psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled);
 
 /**
  * Check of orientation tracking is enabled and available
@@ -472,7 +366,7 @@ ADDCALL psmove_enable_orientation(PSMove *move, int enabled);
  *
  * Returns nonzero if orientation tracking is enabled, zero otherwise
  **/
-ADDAPI int
+ADDAPI enum PSMove_Bool
 ADDCALL psmove_has_orientation(PSMove *move);
 
 /**
@@ -505,6 +399,14 @@ ADDCALL psmove_set_orientation(PSMove *move,
  **/
 ADDAPI void
 ADDCALL psmove_disconnect(PSMove *move);
+
+/**
+ * Reinitialize the library. Required for detecting new and removed
+ * controllers (at least on Mac OS X). Make sure to disconnect all
+ * controllers (using psmove_disconnect) before calling this!
+ **/
+ADDAPI void
+ADDCALL psmove_reinit();
 
 /**
  * Utility function: Get milliseconds since first library use

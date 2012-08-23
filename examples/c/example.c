@@ -65,36 +65,6 @@ int main(int argc, char* argv[])
             break;
     }
 
-
-    if (ctype == Conn_USB) {
-        PSMove_Data_BTAddr addr;
-        psmove_read_btaddrs(move, &addr, NULL);
-        printf("Current BT Host: ");
-        for (i=0; i<6; i++) {
-            printf("%02x ", addr[i]);
-        }
-        printf("\n");
-
-#if 0
-        /* This is the easy method (pair to this host): */
-        if (psmove_pair(move)) {
-            printf("Paired. Press the PS Button now :)\n");
-        } else {
-            printf("psmove_pair() failed :/\n");
-        }
-
-        /* This is the advanced method: */
-
-        /* Example BT Address: 01:23:45:67:89:ab */
-        const PSMove_Data_BTAddr newhost = {
-            0x01, 0x23, 0x45, 0x67, 0x89, 0xab,
-        };
-        if (!psmove_set_btaddr(move, &newhost)) {
-            printf("Could not set BT address!\n");
-        }
-#endif
-    }
-
     for (i=0; i<10; i++) {
         psmove_set_leds(move, 0, 255*(i%3==0), 0);
         psmove_set_rumble(move, 255*(i%2));

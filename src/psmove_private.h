@@ -34,6 +34,8 @@
 extern "C" {
 #endif
 
+#include "psmove.h"
+
 #include <stdio.h>
 
     /**
@@ -66,6 +68,84 @@ extern "C" {
 
 /* Three blocks, minus 2x the header (2 bytes) for the 2nd and 3rd block */
 #define PSMOVE_CALIBRATION_BLOB_SIZE (PSMOVE_CALIBRATION_SIZE*3 - 2*2)
+
+
+/**
+ * [PRIVATE API] Write raw data blob to device
+ **/
+ADDAPI void
+ADDCALL _psmove_write_data(PSMove *move, unsigned char *data, int length);
+
+
+/**
+ * [PRIVATE API] Read raw data blob from device
+ **/
+ADDAPI void
+ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
+
+/**
+ * [PRIVATE API] Disable the connection to remote servers
+ *
+ * This can only be called at the beginning, and will disable connections to
+ * any remote "moved" servers.
+ **/
+ADDAPI void
+ADDCALL _psmove_disable_remote();
+
+/**
+ * [PRIVATE API] Disable local (hidapi-based) controllers
+ *
+ * This can only be called at the beginning, and will disable all local
+ * controllers that are connected via hidapi.
+ **/
+ADDAPI void
+ADDCALL _psmove_disable_local();
+
+/**
+ * [PRIVATE API] Get the calibration data from a connected USB controller.
+ *
+ * The pointer *dest will be set to a newly-allocated byte array
+ * of a certain size (which will be saved in *size) and the caller
+ * has to free this field with free()
+ **/
+ADDAPI int
+ADDCALL _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size);
+
+/* A Bluetooth address. */
+typedef unsigned char PSMove_Data_BTAddr[6];
+
+/**
+ * Read a Bluetooth address from string and write its
+ * internal representation into a PSMove_Data_BTAddr.
+ *
+ * If dest is NULL, the data is not written (only verified).
+ *
+ * Will return nonzero on success, zero on error.
+ **/
+ADDAPI int
+ADDCALL _psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
+
+
+/**
+ * Formats the contents of addr to a newly-allocated string and
+ * returns it. The caller has to free() the return value.
+ **/
+ADDAPI char *
+ADDCALL _psmove_btaddr_to_string(const PSMove_Data_BTAddr addr);
+
+/**
+ * Read the current Bluetooth addresses stored in the controller
+ *
+ * This only works via USB.
+ *
+ * If host is not NULL, the current host address will be stored there.
+ * If controller is not NULL, the controller address will be stored there.
+ **/
+ADDAPI int
+ADDCALL _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller);
+
+
+
 
 #ifdef __cplusplus
 }
