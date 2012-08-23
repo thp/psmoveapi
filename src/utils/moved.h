@@ -48,7 +48,7 @@
 #  include <fcntl.h>
 #endif
 
-#include "psmove_moved_protocol.h"
+#include "../daemon/psmove_moved_protocol.h"
 
 #include "psmove.h"
 

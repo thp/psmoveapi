@@ -110,6 +110,11 @@ enum PSMove_Device_Type {
     PSMove_MOVED = 0x02,
 };
 
+enum PSMove_Sensor {
+    Sensor_Accelerometer = 0,
+    Sensor_Gyroscope,
+};
+
 typedef struct {
     unsigned char type; /* message type, must be PSMove_Req_SetLEDs */
     unsigned char _zero; /* must be zero */

@@ -23,6 +23,7 @@ src - Source code for the C library
     src/platform - Platform-specific code
     src/tracker - Code for the vision based tracker
     src/daemon - Code for the PS Move API Daemon protocol (client/server)
+    src/utils - Essential utilities (Daemon, Pairing, ...)
 
 external - Code from external sources (see README for details)
     external/CLEye - Headers for using the CLEye SDK in Windows

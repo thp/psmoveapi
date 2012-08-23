@@ -288,7 +288,7 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, in
 PSMoveTracker *psmove_tracker_new() {
     int camera = 0;
 
-#ifdef __linux
+#if defined(__linux) && defined(PSMOVE_USE_PSEYE)
     /**
      * On Linux, we might have multiple cameras (e.g. most laptops have
      * built-in cameras), so we try looking for the one that is handled

@@ -79,11 +79,6 @@ enum PSMove_Button {
     Btn_T = 1 << 0x14,
 };
 
-enum PSMove_Sensor {
-    Sensor_Accelerometer = 0,
-    Sensor_Gyroscope,
-};
-
 enum PSMove_Frame {
     Frame_FirstHalf = 0,
     Frame_SecondHalf,
