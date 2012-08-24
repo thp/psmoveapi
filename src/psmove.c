@@ -985,9 +985,8 @@ psmove_update_leds(PSMove *move)
             pthread_mutex_unlock(&(move->led_write_mutex));
             return Update_Success;
 #else
-            int res = hid_write(move->handle, (unsigned char*)(&(move->leds)),
-                    sizeof(move->leds));
-            if (res == sizeof(move->leds)) {
+            if (hid_write(move->handle, (unsigned char*)(&(move->leds)),
+                    sizeof(move->leds)) == sizeof(move->leds)) {
                 return Update_Success;
             } else {
                 return Update_Failed;
@@ -995,16 +994,14 @@ psmove_update_leds(PSMove *move)
 #endif
             break;
         case PSMove_MOVED:
-            res = moved_client_send(move->client, MOVED_REQ_WRITE,
-                    move->remote_id, (unsigned char*)(&move->leds));
-
             /**
              * XXX: This only tells us that the sending went through, but
              * as we don't wait for a confirmation, the packet might still
              * not arrive at the target machine. As we usually send many
              * updates, a few dropped packets are normally no problem.
              **/
-            if (res) {
+            if (moved_client_send(move->client, MOVED_REQ_WRITE,
+                        move->remote_id, (unsigned char*)(&move->leds))) {
                 return Update_Success;
             } else {
                 return Update_Failed;
