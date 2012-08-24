@@ -26,6 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#include "tracker_trace.h"
+#ifdef PSMOVE_USE_TRACKER_TRACE
+
 #include <stdio.h>
 
 #ifdef WIN32
@@ -36,7 +39,6 @@
 #endif
 
 #include "psmove.h"
-#include "tracker_trace.h"
 #include "../tracker/tracker_helpers.h"
 
 typedef struct {
@@ -178,3 +180,4 @@ psmove_html_trace_put_color_var(const char* var, CvScalar color)
     psmove_html_trace_put_text_var(var, text);
 }
 
+#endif /* PSMOVE_USE_TRACKER_TRACE */

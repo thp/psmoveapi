@@ -48,6 +48,8 @@ option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
 # Make a debug build with helpful output for debugging / maintenance
 option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
 
+# Write debugging images for tracking calibration to home directory
+option(PSMOVE_USE_TRACKER_TRACE "Write tracker calibration images to disk" OFF)
 
 # Debugging output
 if(PSMOVE_USE_DEBUG)
@@ -345,6 +347,7 @@ message("")
 message("  Tracker")
 feature_use_info("PS Eye support:   " PSMOVE_USE_PSEYE)
 feature_use_info("Deinterlacing:    " PSMOVE_USE_DEINTERLACE)
+feature_use_info("HTML tracing:     " PSMOVE_USE_TRACKER_TRACE)
 message("    Use CL Eye SDK:   " ${INFO_USE_CL_EYE_SDK})
 message("")
 message("  Additional targets")

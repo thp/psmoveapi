@@ -29,19 +29,19 @@
 #ifndef TRACKER_TRACE_H_
 #define TRACKER_TRACE_H_
 
+#include "psmove_config.h"
+
 #include "opencv2/core/core_c.h"
 
-#define USE_TRACKER_TRACE
-
-#ifndef USE_TRACKER_TRACE
+#ifndef PSMOVE_USE_TRACKER_TRACE
 #    define psmove_html_trace_image(image, name, no_js_var)
 #    define psmove_html_trace_image_at(image, index, target)
 #    define psmove_html_trace_array_item(target, value)
 #    define psmove_html_trace_array_item_at(index, target, value)
 #    define psmove_html_trace_put_int_var(var, value)
-#    define psmove_html_trace_put_text_var(var, value)
 #    define psmove_html_trace_put_color_var(var, value)
-#    define psmove_html_trace_put_log_entry(text)
+#    define psmove_html_trace_put_text_var(var, value)
+#    define psmove_html_trace_put_log_entry(type, value)
 #    define psmove_html_trace_put_text(text)
 #    define psmove_html_trace_clear()
 #else
