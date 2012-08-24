@@ -1237,6 +1237,7 @@ psmove_tracker_estimate_circle_from_contour(CvSeq* cont, float *x, float *y, flo
 	CvPoint m2;
 	CvPoint * p1;
 	CvPoint * p2;
+        int found = 0;
 
 	int step = MAX(1,cont->total/20);
 
@@ -1251,12 +1252,15 @@ psmove_tracker_estimate_circle_from_contour(CvSeq* cont, float *x, float *y, flo
 				d = cd;
 				m1 = *p1;
 				m2 = *p2;
+                                found = 1;
 			}
 		}
 	}
 	// calculate center of that pair
-	*x = 0.5 * (m1.x + m2.x);
-	*y = 0.5 * (m1.y + m2.y);
+        if (found) {
+            *x = 0.5 * (m1.x + m2.x);
+            *y = 0.5 * (m1.y + m2.y);
+        }
 	// calcualte the radius
 	*radius = sqrt(d) / 2;
 }

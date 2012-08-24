@@ -125,6 +125,7 @@ ELSE()
     find_package(PkgConfig REQUIRED)
     find_package(Threads REQUIRED)
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS m)
 
     pkg_check_modules(UDEV REQUIRED libudev)
     include_directories(${UDEV_INCLUDE_DIRS})

@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <math.h>
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
@@ -52,8 +53,10 @@
 #ifdef __linux
 #  include <bluetooth/bluetooth.h>
 #  include <bluetooth/hci.h>
+#  include <bluetooth/hci_lib.h>
 #  include <sys/ioctl.h>
 #  include <linux/limits.h>
+#  define __USE_GNU
 #  include <pthread.h>
 #  include <unistd.h>
 #  define PSMOVE_USE_PTHREADS
@@ -294,7 +297,9 @@ _psmove_led_write_thread_proc(void *data)
             memcpy(&leds, &(move->leds), sizeof(leds));
             move->led_write_thread_write_queued = 0;
 
+#ifdef PSMOVE_DEBUG
             long started = psmove_util_get_ticks();
+#endif
 
 #if defined(__linux)
             /* Don't write padding bytes on Linux (makes it faster) */
@@ -314,6 +319,8 @@ _psmove_led_write_thread_proc(void *data)
             pthread_yield();
         } while (memcmp(&leds, &(move->leds), sizeof(leds)) != 0);
     }
+
+    return NULL;
 }
 
 #endif /* defined(PSMOVE_USE_PTHREADS) */
@@ -951,7 +958,6 @@ psmove_set_rumble(PSMove *move, unsigned char rumble)
 enum PSMove_Update_Result
 psmove_update_leds(PSMove *move)
 {
-    int res;
     long timediff_ms;
 
     psmove_return_val_if_fail(move != NULL, 0);
@@ -979,7 +985,7 @@ psmove_update_leds(PSMove *move)
             pthread_mutex_unlock(&(move->led_write_mutex));
             return Update_Success;
 #else
-            res = hid_write(move->handle, (unsigned char*)(&(move->leds)),
+            int res = hid_write(move->handle, (unsigned char*)(&(move->leds)),
                     sizeof(move->leds));
             if (res == sizeof(move->leds)) {
                 return Update_Success;

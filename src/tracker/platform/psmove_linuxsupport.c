@@ -38,7 +38,7 @@
 #include <sys/ioctl.h>
 #include <linux/limits.h>
 
-#include "../psmove_private.h"
+#include "../../psmove_private.h"
 
 int
 linux_find_pseye()
