@@ -59,7 +59,8 @@ moved_client_list_open()
             if (*end == '\n' || *end == '\r') {
                 *end = '\0';
             }
-            printf("using remote host (from remotes.txt): '%s'\n", hostname);
+            printf("Using remote host '%s' (from %s)\n",
+                    hostname, MOVED_HOSTS_LIST_FILE);
             result = moved_client_list_insert(result,
                     moved_client_create(hostname));
         }
