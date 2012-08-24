@@ -62,6 +62,15 @@ extern "C" {
 #define psmove_return_val_if_fail(expr, val) \
         {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
 
+/* Macro: Length of fixed-size array */
+#define ARRAY_LENGTH(x) (sizeof(x)/sizeof((x)[0]))
+
+/* RGB value struct used in the tracker */
+struct PSMove_RGBValue {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+};
 
 /* Buffer size for calibration data */
 #define PSMOVE_CALIBRATION_SIZE 49

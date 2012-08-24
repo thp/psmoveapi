@@ -31,6 +31,7 @@
 
 #include "opencv2/core/core_c.h"
 #include "psmove.h"
+#include "../psmove_private.h"
 
 struct _TrackedController;
 typedef struct _TrackedController TrackedController;
@@ -38,7 +39,9 @@ typedef struct _TrackedController TrackedController;
 struct _TrackedController {
 	PSMove* move;
 
-	CvScalar dColor;			// defined color
+        /* Assigned RGB color of the controller */
+        struct PSMove_RGBValue color;
+
 	CvScalar eFColor;			// first estimated color (BGR)
 	CvScalar eFColorHSV;		// first estimated color (HSV)
 	CvScalar eColor;			// estimated color (BGR)

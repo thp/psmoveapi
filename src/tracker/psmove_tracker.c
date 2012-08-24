@@ -41,7 +41,6 @@
 #include "camera_control.h"
 #include "tracker_helpers.h"
 #include "tracked_controller.h"
-#include "tracked_color.h"
 #include "tracker_trace.h"
 
 #ifdef __linux
@@ -97,7 +96,6 @@ struct _PSMoveTracker {
 	IplConvKernel* kCalib; // kernel used for morphological operations during calibration
 	CvScalar rHSV; // the range of the color filter
 	TrackedController* controllers; // a pointer to a linked list of connected controllers
-	PSMoveTrackingColor* available_colors; // a pointer to a linked list of available tracking colors
 	CvMemStorage* storage; // use to store the result of cvFindContour and cvHughCircles
         long duration; // duration of tracking operation, in ms
 
@@ -168,12 +166,14 @@ psmove_tracker_wait_for_frame(PSMoveTracker *tracker, IplImage **frame, int dela
  *
  * tracker - the tracker that contains the camera control
  * move    - the PSMove controller to use
- * r,g,b   - the RGB color to use to lit the sphere
+ * rgb     - the RGB color to use to lit the sphere
  * on	   - the pre-allocated image to store the captured image when the sphere is lit
  * diff    - the pre-allocated image to store the calculated diff-image
  * delay   - the time to wait before taking a picture (in microseconds)
  **/
-void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move, int r, int g, int b, IplImage* on, IplImage* diff, int delay);
+void
+psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move,
+        struct PSMove_RGBValue rgb, IplImage* on, IplImage* diff, int delay);
 
 /**
  * This function seths the rectangle of the ROI and assures that the itis always within the bounds
@@ -189,11 +189,6 @@ void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move, int r, int g,
  * cam_height - the height of the camera image
  **/
 void psmove_tracker_set_roi(PSMoveTracker* tracker, TrackedController* tc, int roi_x, int roi_y, int roi_width, int roi_height);
-
-/**
- * This function prepares the linked list of suitable colors, that can be used for tracking.
- */
-void psmove_tracker_prepare_colors(PSMoveTracker* tracker);
 
 /**
  * This function is just the internal implementation of "psmove_tracker_update"
@@ -266,6 +261,11 @@ psmove_tracker_estimate_circle_from_contour(CvSeq* cont, float *x, float *y, flo
 int
 psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tracker, CvPoint *center);
 
+int
+psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue color);
+
+enum PSMoveTracker_Status
+psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move, struct PSMove_RGBValue color);
 
 /*
  * This function reads old calibration color values and tries to track the controller with that color.
@@ -274,10 +274,11 @@ psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tr
  *
  * tracker     - (in) A valid PSMoveTracker
  * move  - (in) A valid PSMove controller
- * r,g,b - (in) The color the PSMove controller's sphere will be lit.
+ * rgb - (in) The color the PSMove controller's sphere will be lit.
  */
 
-int psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, int r, int g, int b);
+int
+psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct PSMove_RGBValue rgb);
 
 // -------- END: internal functions only
 
@@ -335,9 +336,6 @@ psmove_tracker_new_with_camera(int camera) {
 	tracker->color_t2 = COLOR_UPDATE_QUALITY_T2;
 	tracker->color_t3 = COLOR_UPDATE_QUALITY_T3;
 	tracker->color_update_rate = COLOR_UPDATE_RATE;
-	
-	// prepare available colors for tracking
-	psmove_tracker_prepare_colors(tracker);
 
 	// start the video capture device for tracking
 	tracker->cc = camera_control_new(camera);
@@ -389,25 +387,32 @@ psmove_tracker_new_with_camera(int camera) {
 	return tracker;
 }
 
-enum PSMoveTracker_Status psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move) {
-	// check if there is a free color, return on error immediately
-	PSMoveTrackingColor* color = tracker->available_colors;
-	while (color && color->is_used) {
-		color = color->next;
-	}
+enum PSMoveTracker_Status
+psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
+{
+    int i;
 
-	if (!color)
-		return Tracker_CALIBRATION_ERROR;
+    /* Preset colors - use them in ascending order if not used yet */
+    struct PSMove_RGBValue preset_colors[] = {
+        {0xFF, 0x00, 0xFF}, /* magenta */
+        {0x00, 0xFF, 0xFF}, /* cyan */
+        {0x00, 0x00, 0xFF}, /* blue */
+    };
 
-	// looks like there is a free color -> try to calibrate/enable the controller with that color
-	unsigned char r = color->r;
-	unsigned char g = color->g;
-	unsigned char b = color->b;
+    for (i=0; i<ARRAY_LENGTH(preset_colors); i++) {
+        if (!psmove_tracker_color_is_used(tracker, preset_colors[i])) {
+            return psmove_tracker_enable_with_color_internal(tracker,
+                    move, preset_colors[i]);
+        }
+    }
 
-	return psmove_tracker_enable_with_color(tracker, move, r, g, b);
+    /* No colors are available anymore */
+    return Tracker_CALIBRATION_ERROR;
 }
 
-int psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, int r, int g, int b) {	
+int
+psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct PSMove_RGBValue rgb)
+{
 	int result = 0;
 	// times to try to track the controller
 	int nTimes = 3;
@@ -415,7 +420,7 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, in
 	int delay = 100;
 
 	TrackedController* tc = tracked_controller_create();
-	tc->dColor = cvScalar(b, g, r, 0);
+        tc->color = rgb;
 
 	if (tracked_controller_load_color(tc)) {
 		result = 1;
@@ -426,9 +431,9 @@ int psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, in
 			for (d = 0; d < delay / 10; d++) {
 				usleep(1000 * 10);
 				psmove_set_leds(move,
-                                        r * DIMMING_FACTOR,
-                                        g * DIMMING_FACTOR,
-                                        b * DIMMING_FACTOR);
+                                        rgb.r * DIMMING_FACTOR,
+                                        rgb.g * DIMMING_FACTOR,
+                                        rgb.b * DIMMING_FACTOR);
 				psmove_update_leds(move);
 				psmove_tracker_update_image(tracker);
 			}
@@ -449,21 +454,27 @@ enum PSMoveTracker_Status
 psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char r, unsigned char g, unsigned char b)
 {
+    struct PSMove_RGBValue rgb = { r, g, b };
+    return psmove_tracker_enable_with_color_internal(tracker, move, rgb);
+}
+
+enum PSMoveTracker_Status
+psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
+        struct PSMove_RGBValue rgb)
+{
 	// check if the controller is already enabled!
 	if (tracked_controller_find(tracker->controllers, move))
 		return Tracker_CALIBRATED;
 
-	// check if the color is already in use, if not, mark it as used, return with a error if it is already used
-	PSMoveTrackingColor* tracked_color = tracked_color_find(tracker->available_colors, r, g, b);
-	if (!tracked_color || tracked_color->is_used)
-		return Tracker_CALIBRATION_ERROR;
+        if (psmove_tracker_color_is_used(tracker, rgb)) {
+            return Tracker_CALIBRATION_ERROR;
+        }
 
 	// try to track the controller with the old color, if it works we are done
-	if (psmove_tracker_old_color_is_tracked(tracker, move, r, g, b)) {
+	if (psmove_tracker_old_color_is_tracked(tracker, move, rgb)) {
 		TrackedController* itm = tracked_controller_insert(&tracker->controllers, move);
-		itm->dColor = cvScalar(b, g, r, 0);
+                itm->color = rgb;
 		tracked_controller_load_color(itm);
-		tracked_color->is_used = 1;
 		return Tracker_CALIBRATED;
 	}
 
@@ -482,13 +493,13 @@ psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
 		diffs[i] = cvCreateImage(cvGetSize(frame), frame->depth, 1);
 	}
 	// DEBUG log the assigned color
-	CvScalar assignedColor = cvScalar(b, g, r, 0);
+	CvScalar assignedColor = cvScalar(rgb.b, rgb.g, rgb.r, 0);
 	psmove_html_trace_put_color_var("assignedColor", assignedColor);
 
 	// for each blink
 	for (i = 0; i < BLINKS; i++) {
 		// create a diff image
-		psmove_tracker_get_diff(tracker, move, r, g, b, images[i], diffs[i], BLINK_DELAY);
+		psmove_tracker_get_diff(tracker, move, rgb, images[i], diffs[i], BLINK_DELAY);
 
 		// DEBUG log the diff image and the image with the lit sphere
 		psmove_html_trace_image_at(images[i], i, "originals");
@@ -629,16 +640,13 @@ psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
 	// insert to list of tracked controllers
 	TrackedController* itm = tracked_controller_insert(&tracker->controllers, move);
 	// set current color
-	itm->dColor = cvScalar(b, g, r, 0);
+        itm->color = rgb;
 	// set first estimated color
 	itm->eFColor = color;
 	itm->eFColorHSV = hsv_color;
 	// set current estimated color
 	itm->eColor = color;
 	itm->eColorHSV = hsv_color;
-
-	// set, that this color is in use
-	tracked_color->is_used = 1;
 
 	tracked_controller_save_colors(tracker->controllers);
 	return Tracker_CALIBRATED;
@@ -651,9 +659,9 @@ int psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move, unsigned char
 	TrackedController* tc = tracked_controller_find(tracker->controllers, move);
 	psmove_return_val_if_fail(tc != NULL, 0);
 
-	*r = tc->dColor.val[2] * DIMMING_FACTOR;
-	*g = tc->dColor.val[1] * DIMMING_FACTOR;
-	*b = tc->dColor.val[0] * DIMMING_FACTOR;
+	*r = tc->color.r * DIMMING_FACTOR;
+	*g = tc->color.g * DIMMING_FACTOR;
+	*b = tc->color.b * DIMMING_FACTOR;
 	return 1;
 }
 
@@ -662,14 +670,10 @@ void psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move) {
     psmove_return_if_fail(move != NULL);
 
 	TrackedController* tc = tracked_controller_find(tracker->controllers, move);
-	PSMoveTrackingColor* color = tracked_color_find(tracker->available_colors, tc->dColor.val[2], tc->dColor.val[1], tc->dColor.val[0]);
 	if (tc) {
 		tracked_controller_remove(&tracker->controllers, move);
 		tracked_controller_release(&tc, 0);
 	}
-	
-	if (color)
-		color->is_used = 0;
 }
 
 enum PSMoveTracker_Status psmove_tracker_get_status(PSMoveTracker *tracker, PSMove *move) {
@@ -991,7 +995,6 @@ void psmove_tracker_free(PSMoveTracker *tracker) {
 	}
 	cvReleaseStructuringElement(&tracker->kCalib);
 	tracked_controller_release(&tracker->controllers, 1);
-	tracked_color_release(&tracker->available_colors, 1);
 
     camera_control_delete(tracker->cc);
     free(tracker);
@@ -1057,14 +1060,16 @@ psmove_tracker_wait_for_frame(PSMoveTracker *tracker, IplImage **frame, int dela
     }
 }
 
-void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move, int r, int g, int b, IplImage* on, IplImage* diff, int delay) {
+void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move,
+        struct PSMove_RGBValue rgb, IplImage* on, IplImage* diff, int delay)
+{
 	// the time to wait for the controller to set the color up
 	IplImage* frame;
 	// switch the LEDs ON and wait for the sphere to be fully lit
-	r *= DIMMING_FACTOR;
-	g *= DIMMING_FACTOR;
-	b *= DIMMING_FACTOR;
-	psmove_set_leds(move, r, g, b);
+	rgb.r *= DIMMING_FACTOR;
+	rgb.g *= DIMMING_FACTOR;
+	rgb.b *= DIMMING_FACTOR;
+	psmove_set_leds(move, rgb.r, rgb.g, rgb.b);
 	psmove_update_leds(move);
 
 	// take the first frame (sphere lit)
@@ -1105,16 +1110,6 @@ void psmove_tracker_set_roi(PSMoveTracker* tracker, TrackedController* tc, int r
 		tc->roi_x = tracker->frame->width - roi_width;
 	if (tc->roi_y + roi_height > tracker->frame->height)
 		tc->roi_y = tracker->frame->height - roi_height;
-}
-
-void psmove_tracker_prepare_colors(PSMoveTracker* tracker) {
-	// create MAGENTA (good tracking)
-	tracked_color_insert(&tracker->available_colors, 0xff, 0, 0xff);
-	// create CYAN (fair tracking)
-	tracked_color_insert(&tracker->available_colors, 0, 0xff, 0xff);
-	// create BLUE (fair tracking)
-	tracked_color_insert(&tracker->available_colors, 0, 0, 0xff);
-
 }
 
 void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
@@ -1306,3 +1301,18 @@ psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tr
         return (contourBest != NULL);
 }
 
+int
+psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue color)
+{
+    psmove_return_val_if_fail(tracker != NULL, 1);
+    TrackedController *controller = tracker->controllers;
+
+    while (controller) {
+        if (memcmp(&controller->color, &color, sizeof(struct PSMove_RGBValue)) == 0) {
+            return 1;
+        }
+        controller = controller->next;
+    }
+
+    return 0;
+}
