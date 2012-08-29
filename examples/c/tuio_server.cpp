@@ -51,6 +51,8 @@
 #include <TuioCursor.h>
 #include <TuioTime.h>
 
+/* Read a maximum of 5 input reports per loop iteration */
+#define MAX_READS_PER_ITERATION 5
 
 int quit = 0;
 
@@ -131,6 +133,9 @@ main(int argc, const char **argv) {
     TUIO::TuioCursor *cursors[count];
     PSMove* moves[count];
 
+    tuio_server->enableFullUpdate();
+    //tuio_server->setVerbose(true);
+
     TUIO::TuioTime::initSession();
 
     PSMoveTracker* tracker = psmove_tracker_new();
@@ -189,7 +194,12 @@ main(int argc, const char **argv) {
             psmove_update_leds(moves[i]);
 
             // Read latest button states from the controller
-            while (psmove_poll(moves[i]) && !quit);
+            for (int i=0; i<MAX_READS_PER_ITERATION; i++) {
+                if (!psmove_poll(moves[i])) {
+                    break;
+                }
+            }
+
             bool pressed = (psmove_get_buttons(moves[i]) & Btn_T);
 
             if (psmove_tracker_get_status(tracker, moves[i]) ==
