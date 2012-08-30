@@ -101,6 +101,12 @@ struct _PSMoveTracker {
 	CvMemStorage* storage; // use to store the result of cvFindContour and cvHughCircles
         long duration; // duration of tracking operation, in ms
 
+        // size of "search" tiles when tracking is lost
+        int search_tile_width; // width of a single tile
+        int search_tile_height; // height of a single tile
+        int search_tiles_horizontal; // number of search tiles per row
+        int search_tiles_count; // number of search tiles
+
 	// internal variables
 	float cam_focal_length; // in (mm)
 	float cam_pixel_height; // in (µm)
@@ -269,9 +275,6 @@ psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue colo
 enum PSMoveTracker_Status
 psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move, struct PSMove_RGBValue color);
 
-void
-tracked_controller_setup_tiles(PSMoveTracker *tracker, TrackedController *tc);
-
 /*
  * This function reads old calibration color values and tries to track the controller with that color.
  * if it works, the function returns 1, 0 otherwise.
@@ -388,6 +391,42 @@ psmove_tracker_new_with_camera(int camera) {
 
         int w = size, h = size;
 
+    // We need to grab an image from the camera to determine the frame size
+    psmove_tracker_update_image(tracker);
+
+    tracker->search_tile_width = w;
+    tracker->search_tile_height = h;
+
+    tracker->search_tiles_horizontal = (tracker->frame->width +
+            tracker->search_tile_width - 1) / tracker->search_tile_width;
+    int search_tiles_vertical = (tracker->frame->height +
+            tracker->search_tile_height - 1) / tracker->search_tile_height;
+
+    tracker->search_tiles_count = tracker->search_tiles_horizontal *
+        search_tiles_vertical;
+
+    if (tracker->search_tiles_count % 2 == 0) {
+        /**
+         * search_tiles_count must be uneven, so that when picking every second
+         * tile, we still "visit" every tile after two scans when we wrap:
+         *
+         *  ABA
+         *  BAB
+         *  ABA -> OK, first run = A, second run = B
+         *
+         *  ABAB
+         *  ABAB -> NOT OK, first run = A, second run = A
+         *
+         * Incrementing the count will make the algorithm visit the lower right
+         * item twice, but will then cause the second run to visit 'B's.
+         *
+         * We pick every second tile, so that we only need half the time to
+         * sweep through the whole image (which usually means faster recovery).
+         **/
+        tracker->search_tiles_count++;
+    }
+
+
 	int i;
 	for (i = 0; i < ROIS; i++) {
 		tracker->roiI[i] = cvCreateImage(cvSize(w,h), frame->depth, 3);
@@ -413,7 +452,9 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
     struct PSMove_RGBValue preset_colors[] = {
         {0xFF, 0x00, 0xFF}, /* magenta */
         {0x00, 0xFF, 0xFF}, /* cyan */
+        {0xFF, 0xFF, 0xFF}, /* yellow */
         {0x00, 0x00, 0xFF}, /* blue */
+        {0x00, 0xFF, 0x00}, /* green */
     };
 
     for (i=0; i<ARRAY_LENGTH(preset_colors); i++) {
@@ -437,7 +478,6 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 	int delay = 100;
 
 	TrackedController* tc = tracked_controller_create();
-        tracked_controller_setup_tiles(tracker, tc);
         tc->color = rgb;
 
 	if (tracked_controller_load_color(tc)) {
@@ -475,25 +515,6 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 	return result;
 }
 
-void
-tracked_controller_setup_tiles(PSMoveTracker *tracker, TrackedController *tc)
-{
-    tc->tile_width = tracker->roiI[0]->width;
-    tc->tile_height = tracker->roiI[0]->height;
-
-    printf("tile width: %d, tile height: %d\n", tc->tile_width, tc->tile_height);
-    printf("frame width: %d, frame height: %d\n", tracker->frame->width, tracker->frame->height);
-
-    tc->search_tiles_horizontal = (tracker->frame->width + tc->tile_width - 1) / tc->tile_width;
-    int search_tiles_vertical = (tracker->frame->height + tc->tile_height - 1) / tc->tile_height;
-    printf("horizontal: %d, vertical: %d\n", tc->search_tiles_horizontal, search_tiles_vertical);
-    tc->search_tiles_count = tc->search_tiles_horizontal * search_tiles_vertical;
-    if (tc->search_tiles_count % 2 == 0) {
-        // make search_tiles_count uneven
-        tc->search_tiles_count++;
-    }
-}
-
 enum PSMoveTracker_Status
 psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char r, unsigned char g, unsigned char b)
@@ -520,10 +541,6 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 	// try to track the controller with the old color, if it works we are done
 	if (psmove_tracker_old_color_is_tracked(tracker, move, rgb)) {
 		TrackedController* tc = tracked_controller_insert(&tracker->controllers, move);
-
-                tracker->frame = frame;
-                tracked_controller_setup_tiles(tracker, tc);
-                tracker->frame = NULL;
 
                 tc->color = rgb;
 		tracked_controller_load_color(tc);
@@ -693,8 +710,6 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 
 	// insert to list of tracked controllers
 	TrackedController* itm = tracked_controller_insert(&tracker->controllers, move);
-
-        tracked_controller_setup_tiles(tracker, itm);
 
 	// set current color
         itm->color = rgb;
@@ -953,9 +968,12 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 			int ry;
 			// the sphere could not be found til a reasonable roi-level
 
-                        rx = tc->tile_width * (tc->search_tile % tc->search_tiles_horizontal);
-                        ry = tc->tile_height * (int)(tc->search_tile / tc->search_tiles_horizontal);
-			tc->search_tile = (tc->search_tile + 2) % tc->search_tiles_count;
+                        rx = tracker->search_tile_width * (tc->search_tile %
+                                tracker->search_tiles_horizontal);
+                        ry = tracker->search_tile_height * (int)(tc->search_tile /
+                                tracker->search_tiles_horizontal);
+                        tc->search_tile = ((tc->search_tile + 2) %
+                                tracker->search_tiles_count);
 
 			tc->roi_level=0;
 			psmove_tracker_set_roi(tracker, tc, rx, ry, tracker->roiI[tc->roi_level]->width, tracker->roiI[tc->roi_level]->height);

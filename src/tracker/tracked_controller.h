@@ -47,10 +47,6 @@ struct _TrackedController {
 	CvScalar eColor;			// estimated color (BGR)
 	CvScalar eColorHSV; 		// estimated color (HSV)
 
-        int tile_width, tile_height; // search tile width and height
-        int search_tiles_horizontal; // number of search tiles horizontal
-        int search_tiles_count;  // number of search tiles
-
 	int roi_x, roi_y;			// x/y - Coordinates of the ROI
 	int roi_level; 	 			// the current index for the level of ROI
 	float mx, my;				// x/y - Coordinates of center of mass of the blob
