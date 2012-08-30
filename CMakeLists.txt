@@ -34,6 +34,7 @@ option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 # Additional applications that can be used to test the library
 option(PSMOVE_BUILD_EXAMPLES "Build the C examples" ON)
 option(PSMOVE_BUILD_TESTS "Build the C tests" OFF)
+option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
 
 
 # Enable tweaks (e.g. registry settings on Windows, ...) for PS Eye
@@ -216,7 +217,7 @@ if(PSMOVE_BUILD_EXAMPLES)
         target_link_libraries(${EXAMPLE} psmoveapi)
     endforeach()
 
-    if(PSMOVE_BUILD_TRACKER)
+    if(PSMOVE_BUILD_TRACKER AND PSMOVE_BUILD_TUIO_SERVER)
         # You have to run "make -C external/TUIO_CPP static" to build the static
         # library for your platform before the tuio_server can be built here
         include_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP/TUIO)
@@ -363,5 +364,6 @@ message("")
 message("  Additional targets")
 feature_use_info("C example apps:   " PSMOVE_BUILD_EXAMPLES)
 feature_use_info("C test programs:  " PSMOVE_BUILD_TESTS)
+feature_use_info("C++ TUIO server:  " PSMOVE_BUILD_TUIO_SERVER)
 message("")
 
