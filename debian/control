@@ -1,7 +1,7 @@
 Source: psmoveapi
 Priority: extra
 Maintainer: Thomas Perl <m@thp.io>
-Build-Depends: debhelper (>= 7.0.50~), cmake, libqt4-dev
+Build-Depends: debhelper (>= 7.0.50~), cmake, libudev-dev, libbluetooth-dev, libv4l-dev, libopencv-dev
 Standards-Version: 3.8.4
 Section: libs
 Homepage: http://thp.io/2010/psmove/
