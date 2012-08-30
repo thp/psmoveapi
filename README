@@ -35,13 +35,6 @@ Environment variables:
 
    Example: export PSMOVE_TRACKER_FILENAME=demo.avi # Will play demo.avi
 
- PSMOVE_TRACKER_COLOR
-
-     If set, this is the color *in the camera picture* of the
-     tracked controller.
-
-   Example: export PSMOVE_TRACKER_COLOR=fda0fc
-
  PSMOVE_TRACKER_ROI_SIZE
 
      If set, this controls the size of the biggest (initial) ROI that will

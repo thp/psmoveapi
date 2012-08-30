@@ -50,9 +50,6 @@ extern "C" {
 /* Name of the environment variable used to choose a pre-recorded video */
 #define PSMOVE_TRACKER_FILENAME_ENV "PSMOVE_TRACKER_FILENAME"
 
-/* Name of the environment variable used to set the visible sphere color */
-#define PSMOVE_TRACKER_COLOR_ENV "PSMOVE_TRACKER_COLOR"
-
 /* Name of the environment variable used to set the biggest ROI size */
 #define PSMOVE_TRACKER_ROI_SIZE_ENV "PSMOVE_TRACKER_ROI_SIZE"
 
