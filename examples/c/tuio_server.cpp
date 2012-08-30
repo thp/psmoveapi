@@ -414,6 +414,7 @@ main(int argc, const char **argv) {
     }
 
     TUIO::TuioTime::initSession();
+    long timestamp = 0;
 
     PSMoveTracker* tracker = psmove_tracker_new();
 
@@ -453,7 +454,7 @@ main(int argc, const char **argv) {
 #endif
 
         if (tuio_server) {
-            tuio_server->initFrame(TUIO::TuioTime::getSessionTime());
+            tuio_server->initFrame(timestamp++);
         }
 
         psmove_tracker_update_image(tracker);
