@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
+#include <math.h>
 
 #include "opencv2/core/core_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
@@ -357,11 +358,9 @@ psmove_tracker_new_with_camera(int camera) {
 
 	// backup the systems settings, if not already backuped
 	char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
-	if (!th_file_exists(filename)) {
-            camera_control_backup_system_settings(tracker->cc, filename);
-    }
+        camera_control_backup_system_settings(tracker->cc, filename);
 	free(filename);
-	
+
 	// use static exposure
 	tracker->exposure = GOOD_EXPOSURE;
 	// use dynamic exposure (This function would enable a lighting condition specific exposure.)
@@ -585,9 +584,9 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 	psmove_tracker_biggest_contour(diffs[0], tracker->storage, &contourBest, &sizeBest);
 
 	// blank out the image and repaint the blob where the sphere is deemed to be
-	cvSet(mask, th_black, NULL);
+	cvSet(mask, TH_COLOR_BLACK, NULL);
 	if (contourBest)
-		cvDrawContours(mask, contourBest, th_white, th_white, -1, CV_FILLED, 8, cvPoint(0, 0));
+		cvDrawContours(mask, contourBest, TH_COLOR_WHITE, TH_COLOR_WHITE, -1, CV_FILLED, 8, cvPoint(0, 0));
 
 	cvClearMemStorage(tracker->storage);
 
@@ -615,10 +614,11 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 	}
 
 	int valid_countours = 0;
+
 	// calculate upper & lower bounds for the color filter
-	CvScalar min, max;
-	th_minus(hsv_color.val, tracker->rHSV.val, min.val, 3);
-	th_plus(hsv_color.val, tracker->rHSV.val, max.val, 3);
+        CvScalar min = th_scalar_sub(hsv_color, tracker->rHSV);
+        CvScalar max = th_scalar_add(hsv_color, tracker->rHSV);
+
 	// for each image (where the sphere was lit)
 
 	CvPoint firstPosition;
@@ -680,8 +680,10 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 	}
 
 	// CHECK if the size of the found contours are similar
-	double stdSizes = sqrt(th_var(sizes, BLINKS));
-	if (stdSizes >= (th_avg(sizes, BLINKS) / 100.0 * CALIB_SIZE_STD)) {
+        double sizeVariance, sizeAverage;
+        th_stats(sizes, BLINKS, &sizeVariance, &sizeAverage);
+
+	if (sqrt(sizeVariance) >= (sizeAverage / 100.0 * CALIB_SIZE_STD)) {
 		psmove_html_trace_put_log_entry("ERROR", "The spheres found differ too much in size.");
 		has_calibration_errors++;
 	}
@@ -760,9 +762,8 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 	int sphere_found = 0;
 
 	// calculate upper & lower bounds for the color filter
-	CvScalar min, max;
-	th_minus(tc->eColorHSV.val, tracker->rHSV.val, min.val, 3);
-	th_plus(tc->eColorHSV.val, tracker->rHSV.val, max.val, 3);
+	CvScalar min = th_scalar_sub(tc->eColorHSV, tracker->rHSV);
+        CvScalar max = th_scalar_add(tc->eColorHSV, tracker->rHSV);
 
 	// this is the tracking algorithm
 	while (1) {
@@ -807,8 +808,8 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 			CvRect br = cvBoundingRect(contourBest, 0);
 
 			// restore the biggest contour
-			cvSet(roi_m, th_black, NULL);
-			cvDrawContours(roi_m, contourBest, th_white, th_white, -1, CV_FILLED, 8, cvPoint(0, 0));
+			cvSet(roi_m, TH_COLOR_BLACK, NULL);
+			cvDrawContours(roi_m, contourBest, TH_COLOR_WHITE, TH_COLOR_WHITE, -1, CV_FILLED, 8, cvPoint(0, 0));
 			// calucalte image-moments
 			cvMoments(roi_m, &mu, 0);
 			// calucalte the mass center
@@ -840,7 +841,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 			if (tracker->tracker_adaptive_z) {
 				// a big distance between the old and new center of mass results in no smoothing
 				// a little one to strong smoothing
-				float diff = th_dist(oldMCenter, newMCenter);
+				float diff = sqrt(th_dist_squared(oldMCenter, newMCenter));
 				float f = MIN(diff / 7 + 0.15, 1);
 				// apply adaptive smoothing
 				tc->x = tc->x * (1 - f) + (x + tc->roi_x) * f;
@@ -853,7 +854,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 
 			// calculate the quality of the tracking
 			int pixelInBlob = cvCountNonZero(roi_m);
-			float pixelInResult = tc->r * tc->r * th_PI;
+			float pixelInResult = tc->r * tc->r * M_PI;
                         tc->q1 = 0;
                         tc->q2 = FLT_MAX;
                         tc->q3 = tc->r;
@@ -898,8 +899,9 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 				if (do_color_adaption && tc->q1 > tracker->color_t1 && tc->q2 < tracker->color_t2 && tc->q3 > tracker->color_t3) {
 					// calculate the new estimated color (adaptive color estimation)
 					CvScalar newColor = cvAvg(tracker->frame, roi_m);
-					th_plus(tc->eColor.val, newColor.val, tc->eColor.val, 3);
-					th_mul(tc->eColor.val, 0.5, tc->eColor.val, 3);
+
+                                        tc->eColor = th_scalar_mul(th_scalar_add(tc->eColor, newColor), 0.5);
+
 					tc->eColorHSV = th_brg2hsv(tc->eColor);
 					tc->last_color_update = now;
 					// CHECK if the current estimate is too far away from its original estimation
@@ -911,7 +913,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController* tc)
 				}
 
 				// update the future roi box
-				br.width = th_max(br.width, br.height) * 3;
+				br.width = MAX(br.width, br.height) * 3;
 				br.height = br.width;
 				// find a suitable ROI level
 				for (i = 0; i < ROIS; i++) {
@@ -1029,11 +1031,9 @@ void psmove_tracker_free(PSMoveTracker *tracker) {
 	tracked_controller_save_colors(tracker->controllers);
 
 	char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
-	if (th_file_exists(filename)) {
-            camera_control_restore_system_settings(tracker->cc, filename);
-    }
+        camera_control_restore_system_settings(tracker->cc, filename);
 	free(filename);
-	
+
 	cvReleaseMemStorage(&tracker->storage);
 	int i = 0;
 	for (; i < ROIS; i++) {
@@ -1069,7 +1069,7 @@ int psmove_tracker_adapt_to_light(PSMoveTracker *tracker, int lumMin, int expMin
 		// calculate the average color
 		CvScalar avgColor = cvAvg(frame, 0x0);
 		// calculate the average luminance (energy)
-		float avgLum = th_avg(avgColor.val, 3);
+		float avgLum = th_color_avg(avgColor);
 
 		printf("exp:%d: lum:%f\n", exp, avgLum);
 		// if the minimal luminance "limMin" has not been reached, increase the current exposure "exp"
@@ -1163,8 +1163,9 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 	CvPoint p;
 	IplImage* frame = psmove_tracker_get_image(tracker);
 
-	float textSmall = 0.8;
-	float textNormal = 1;
+        CvFont fontSmall = cvFont(0.8, 1);
+        CvFont fontNormal = cvFont(1, 1);
+
 	char text[256];
 	CvScalar c;
 	CvScalar avgC;
@@ -1174,16 +1175,16 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 
 	// general statistics
 	avgC = cvAvg(frame, 0x0);
-	avgLum = th_avg(avgC.val, 3);
-	cvRectangle(frame, cvPoint(0, 0), cvPoint(frame->width, 25), th_black, CV_FILLED, 8, 0);
+	avgLum = th_color_avg(avgC);
+	cvRectangle(frame, cvPoint(0, 0), cvPoint(frame->width, 25), TH_COLOR_BLACK, CV_FILLED, 8, 0);
 	sprintf(text, "fps:%.0f", tracker->debug_fps);
-	th_put_text(frame, text, cvPoint(10, 20), th_white, textNormal);
+	cvPutText(frame, text, cvPoint(10, 20), &fontNormal, TH_COLOR_WHITE);
         if (tracker->duration) {
             tracker->debug_fps = (0.85 * tracker->debug_fps + 0.15 *
                 (1000. / (double)tracker->duration));
         }
 	sprintf(text, "avg(lum):%.0f", avgLum);
-	th_put_text(frame, text, cvPoint(255, 20), th_white, textNormal);
+	cvPutText(frame, text, cvPoint(255, 20), &fontNormal, TH_COLOR_WHITE);
 
 	TrackedController* tc;
 	// draw all/one controller information to camera image
@@ -1197,31 +1198,31 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 			roi_h = tracker->roiI[tc->roi_level]->height;
 			c = tc->eColor;
 
-			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), th_white, 3, 8, 0);
-			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), th_red, 1, 8, 0);
-			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y - 45), cvPoint(tc->roi_x + roi_w, tc->roi_y - 5), th_black, CV_FILLED, 8, 0);
+			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 3, 8, 0);
+			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_RED, 1, 8, 0);
+			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y - 45), cvPoint(tc->roi_x + roi_w, tc->roi_y - 5), TH_COLOR_BLACK, CV_FILLED, 8, 0);
 
 			int vOff = 0;
 			if (roi_h == frame->height)
 				vOff = roi_h;
 			sprintf(text, "RGB:%x,%x,%x", (int) c.val[2], (int) c.val[1], (int) c.val[0]);
-			th_put_text(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 5), c, textSmall);
+			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 5), &fontSmall, c);
 
 			sprintf(text, "ROI:%dx%d", roi_w, roi_h);
-			th_put_text(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 15), c, textSmall);
+			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 15), &fontSmall, c);
 
 			double distance = psmove_tracker_calculate_distance(tracker, tc->r * 2);
 
 			sprintf(text, "radius: %.2f", tc->r);
-			th_put_text(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 35), c, textSmall);
+			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 35), &fontSmall, c);
 			sprintf(text, "dist: %.2fmm", distance);
-			th_put_text(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 25), c, textSmall);
+			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 25), &fontSmall, c);
 
-			cvCircle(frame, p, tc->r, th_white, 1, 8, 0);
+			cvCircle(frame, p, tc->r, TH_COLOR_WHITE, 1, 8, 0);
 		} else {
 			roi_w = tracker->roiI[tc->roi_level]->width;
 			roi_h = tracker->roiI[tc->roi_level]->height;
-			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), th_red, 3, 8, 0);
+			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_RED, 3, 8, 0);
                 }
 	}
 }
@@ -1318,9 +1319,8 @@ psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tr
     psmove_return_val_if_fail(tracker != NULL, 0);
     psmove_return_val_if_fail(center != NULL, 0);
 
-	CvScalar min, max;
-	th_minus(tc->eColorHSV.val, tracker->rHSV.val, min.val, 3);
-	th_plus(tc->eColorHSV.val, tracker->rHSV.val, max.val, 3);
+	CvScalar min = th_scalar_sub(tc->eColorHSV, tracker->rHSV);
+        CvScalar max = th_scalar_add(tc->eColorHSV, tracker->rHSV);
 
 	IplImage *roi_i = tracker->roiI[tc->roi_level];
 	IplImage *roi_m = tracker->roiM[tc->roi_level];
@@ -1336,8 +1336,8 @@ psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tr
 	CvSeq* contourBest = NULL;
 	psmove_tracker_biggest_contour(roi_m, tracker->storage, &contourBest, &sizeBest);
 	if (contourBest) {
-		cvSet(roi_m, th_black, NULL);
-		cvDrawContours(roi_m, contourBest, th_white, th_white, -1, CV_FILLED, 8, cvPoint(0, 0));
+		cvSet(roi_m, TH_COLOR_BLACK, NULL);
+		cvDrawContours(roi_m, contourBest, TH_COLOR_WHITE, TH_COLOR_WHITE, -1, CV_FILLED, 8, cvPoint(0, 0));
 		// calucalte image-moments to estimate the better ROI center
 		CvMoments mu;
 		cvMoments(roi_m, &mu, 0);

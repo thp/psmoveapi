@@ -29,7 +29,10 @@
 #include "tracker_trace.h"
 #ifdef PSMOVE_USE_TRACKER_TRACE
 
+#include "opencv2/highgui/highgui_c.h"
+
 #include <stdio.h>
+#include <time.h>
 
 #ifdef WIN32
 #	include <direct.h>
@@ -39,7 +42,6 @@
 #endif
 
 #include "psmove.h"
-#include "../tracker/tracker_helpers.h"
 
 typedef struct {
     FILE *fp;
@@ -108,7 +110,8 @@ psmove_html_trace_image_at(IplImage *image, int index, char* target)
     // write image to file sysxtem
     sprintf(img_name, "image_%d.jpg", tracker_trace.img_count);
     char *filename = psmove_util_get_file_path(img_name);
-    th_save_jpg(filename, image, 100);
+    int imgParams[] = { CV_IMWRITE_JPEG_QUALITY, 100, 0 };
+    cvSaveImage(filename, image, imgParams);
     free(filename);
 
     tracker_trace.img_count++;
@@ -124,7 +127,8 @@ psmove_html_trace_image(IplImage *image, char* var, int no_js_var)
     // write image to file sysxtem
     sprintf(img_name, "image_%s.jpg", var);
     char *filename = psmove_util_get_file_path(img_name);
-    th_save_jpg(filename, image, 100);
+    int imgParams[] = { CV_IMWRITE_JPEG_QUALITY, 100, 0 };
+    cvSaveImage(filename, image, imgParams);
     free(filename);
 
     // write image-name to java variable (if desired)

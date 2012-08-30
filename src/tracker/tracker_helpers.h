@@ -1,6 +1,7 @@
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
+ * Copyright (c) 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,60 +31,61 @@
 #define TRACKER_HELPERS_H
 
 #include "opencv2/core/core_c.h"
-#include "opencv2/highgui/highgui_c.h"
-#include <time.h>
 
 #include "psmove.h"
 
-#define th_odd(x) (((x)/2)*2+1)
-#define th_black cvScalarAll(0x0)
-#define th_white cvScalar(0xFF,0xFF,0xFF,0)
-#define th_green cvScalar(0,0xff,0,0)
-#define th_red cvScalar(0,0,0xff,0)
-#define th_blue cvScalar(0xff,0,0,0)
-#define th_yellow cvScalar(0,0xff,0xff,0)
-#define th_min(x,y) ((x)<(y)?(y):(x))
-#define th_max(x,y) ((x)<(y)?(x):(y))
-#define th_scalar_to_rgb_int(c)(((int)(c).val[2])<<16 && ((int)(c).val[1])<<8 && ((int)(c).val[0]))
-#define th_PI 3.14159265358979
-#define th_dist_squared(a,b) (pow((a).x-(b).x,2)+pow((a).y-(b).y,2))
-#define th_dist(a,b) (sqrt(pow((a).x-(b).x,2)+pow((a).y-(b).y,2)))
 
-#define th_esc_key 27
-#define th_space_key 32
+/* Color constants */
+#define TH_COLOR_BLACK cvScalar(0, 0, 0, 0)
+#define TH_COLOR_WHITE cvScalar(255, 255, 255, 0)
+#define TH_COLOR_RED cvScalar(0, 0, 255, 0)
 
-// some basic statistical functions on arrays
-double th_var(double* src, int len);
-double th_avg(double* src, int len);
-double th_magnitude(double* src, int len);
-void th_minus(double* l, double* r, double* result, int len);
-void th_plus(double* l, double* r, double* result, int len);
-void th_mul(double* array, double f, double* result, int len);
+/* Distance of 2 CvPoints, squared */
+#define th_dist_squared(a, b) (((a).x - (b).x) * \
+                               ((a).x - (b).x) + \
+                               ((a).y - (b).y) * \
+                               ((a).y - (b).y))
 
-// only creates the image/storage, if it does not already exist, or has different properties (size, depth, channels, blocksize ...)
-// returns (1: if image/storage is created) (0: if nothing has been done)
-int th_create_image(IplImage** img, CvSize s, int depth, int channels);
-int th_create_mem_storage(CvMemStorage** stor, int block_size);
-int th_create_hist(CvHistogram** hist, int dims, int* sizes, int type, float** ranges, int uniform);
+/**
+ * Variance and average of an array of doubles
+ *
+ * a ... An array of double values (IN)
+ * n ... The number of values in a
+ * variance ... Variance result (OUT)
+ * avg ... Average result (OUT)
+ **/
+void
+th_stats(double *a, int n, double *variance, double *avg);
 
-void th_put_text(IplImage* img, const char* text, CvPoint p, CvScalar color, float scale);
-IplImage* th_plot_hist(CvHistogram* hist, int bins, const char* windowName, CvScalar lineColor);
+/**
+ * Average over all 3 channels of a color
+ **/
+double
+th_color_avg(CvScalar a);
 
-// simly saves a CvArr* on the filesystem
-int th_save_jpg(const char* path, const CvArr* image, int quality);
-int th_save_jpgEx(const char* folder, const char* filename, int prefix, const CvArr* image, int quality);
+/**
+ * Sum of two CvScalar values
+ **/
+CvScalar
+th_scalar_add(CvScalar a, CvScalar b);
 
-// prints a array to system out ala {a,b,c...}
-void th_print_array(double* src, int len);
+/**
+ * Difference of two CvScalar values
+ **/
+CvScalar
+th_scalar_sub(CvScalar a, CvScalar b);
 
-// converts HSV color to a BGR color and back
-CvScalar th_hsv2bgr(CvScalar hsv);
-CvScalar th_brg2hsv(CvScalar bgr);
 
-// waits until the uses presses ESC (only works if a windo is visible)
-void th_wait_esc();
-void th_wait(char c);
+/**
+ * Scaled CvScalar by a constant factor
+ **/
+CvScalar
+th_scalar_mul(CvScalar a, double b);
 
-void th_equalize_image(IplImage* img);
-int th_file_exists(const char* file);
+/**
+ * Single-value colorspace conversion: BGR -> HSV
+ **/
+CvScalar
+th_brg2hsv(CvScalar bgr);
+
 #endif // TRACKER_HELPERS_H
