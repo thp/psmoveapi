@@ -55,9 +55,6 @@
 #include <TuioCursor.h>
 #include <TuioTime.h>
 
-/* Read a maximum of 5 input reports per loop iteration */
-#define MAX_READS_PER_ITERATION 5
-
 int quit = 0;
 
 const char *
@@ -480,11 +477,7 @@ main(int argc, const char **argv) {
             }
 
             // Read latest button states from the controller
-            for (int a=0; a<MAX_READS_PER_ITERATION; a++) {
-                if (!psmove_poll(moves[i])) {
-                    break;
-                }
-            }
+            while (psmove_poll(moves[i]));
 
             bool pressed = (psmove_get_buttons(moves[i]) & Btn_T);
 
