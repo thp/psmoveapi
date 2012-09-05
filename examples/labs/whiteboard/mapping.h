@@ -2,6 +2,7 @@
 #define MAPPING_H
 
 #include <QPointF>
+#include <QRect>
 
 #include <qmath.h>
 
@@ -9,14 +10,18 @@ class Mapping
 {
 public:
     Mapping()
-        : a(0, 0), b(1, 0), c(1, 1), d(0, 1), w(1), h(1)
+        : a(0, 0), b(1, 0), c(1, 1), d(0, 1),
+          m_rect(0, 0, 1, 1)
     {
     }
 
-    void setSize(float width, float height)
+    void setRect(QRect rect)
     {
-        w = width;
-        h = height;
+        m_rect = rect;
+    }
+
+    QRect rect() {
+        return m_rect;
     }
 
     void set(QPointF *m)
@@ -45,12 +50,14 @@ public:
 
         double v = (px - p1x) / (p2x - p1x);
 
-        return QPointF(u*w, v*h);
+        return QPointF(m_rect.x() + u*m_rect.width(),
+                       m_rect.y() + v*m_rect.height());
     }
 
 private:
     QPointF a, b, c, d;
     float w, h;
+    QRect m_rect;
 };
 
 #endif // MAPPING_H

@@ -6,7 +6,7 @@ SOURCES += main.cpp
 SOURCES += mainwindow.cpp
 HEADERS += mainwindow.h
 
-HEADERS += Mapping.h
+HEADERS += mapping.h
 
 INCLUDEPATH += ../../../include/
 LIBS += -L../../../build/ -lpsmoveapi -lpsmoveapi_tracker

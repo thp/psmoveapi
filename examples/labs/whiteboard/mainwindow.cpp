@@ -4,6 +4,8 @@
 #include <QPainter>
 #include <QMouseEvent>
 
+#define DEFAULT_BORDER 20
+
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent),
     m_mousePos(0, 0),
@@ -13,18 +15,21 @@ MainWindow::MainWindow(QWidget *parent) :
     m_move(psmove_connect()),
     m_tracker(psmove_tracker_new()),
     m_timer(),
-    m_path()
+    m_path(),
+    m_rect(rect()),
+    m_rectOffset(0)
 {
     m_points[0] = QPointF(1, 1);
     m_points[1] = QPointF(640, 0);
     m_points[2] = QPointF(640, 480);
     m_points[3] = QPointF(0, 480);
     m_mapping.set(m_points);
-    m_mapping.setSize(width(), height());
 
     setMouseTracking(true);
 
-    while (psmove_tracker_enable(m_tracker, m_move) != Tracker_CALIBRATED);
+    if (m_move) {
+        while (psmove_tracker_enable(m_tracker, m_move) != Tracker_CALIBRATED);
+    }
 
     QObject::connect(&m_timer, SIGNAL(timeout()),
                      this, SLOT(timeout()));
@@ -38,6 +43,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     painter.setPen(Qt::blue);
     painter.drawEllipse(m_mapping.map(m_mousePos), 5, 5);
+    painter.drawRect(m_mapping.rect());
 
     painter.setPen(Qt::red);
     painter.drawEllipse(m_mousePos.toPoint(), 5, 5);
@@ -50,21 +56,39 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    //m_mousePos = event->posF();
-    //update();
+    m_mousePos = event->posF();
+    update();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
-    m_mapping.setSize(width(), height());
+    m_rect = rect().adjusted(DEFAULT_BORDER, DEFAULT_BORDER,
+                             -DEFAULT_BORDER, -DEFAULT_BORDER);
+    syncRect();
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-    //m_points[m_pointsOffset] = event->posF();
-    //m_pointsOffset = (m_pointsOffset + 1) % 4;
-    //m_mapping.set(m_points);
-    //update();
+    switch (event->button()) {
+        case Qt::LeftButton:
+            m_points[m_pointsOffset] = event->posF();
+            m_pointsOffset = (m_pointsOffset + 1) % 4;
+            m_mapping.set(m_points);
+            break;
+        case Qt::RightButton:
+            if (m_rectOffset == 0) {
+                m_rect.setTopLeft(event->pos());
+            } else {
+                m_rect.setBottomRight(event->pos());
+            }
+            m_rectOffset = (m_rectOffset + 1) % 2;
+            syncRect();
+            break;
+        default:
+            break;
+    }
+
+    update();
 }
 
 MainWindow::~MainWindow()
@@ -115,4 +139,9 @@ void MainWindow::timeout()
         update();
     }
 
+}
+
+void MainWindow::syncRect()
+{
+    m_mapping.setRect(m_rect);
 }

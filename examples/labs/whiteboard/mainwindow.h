@@ -26,6 +26,9 @@ private slots:
     void timeout();
 
 private:
+    void syncRect();
+
+private:
     QPointF m_mousePos;
     Mapping m_mapping;
 
@@ -38,6 +41,9 @@ private:
     QTimer m_timer;
 
     QPainterPath m_path;
+
+    QRect m_rect;
+    int m_rectOffset;
 };
 
 #endif // MAINWINDOW_H
