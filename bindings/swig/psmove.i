@@ -3,6 +3,8 @@
 
 /* Java */
 %include "enums.swg"
+%include "typemaps.i"
+
 %javaconst(1);
 %rename PSMove_Button Button;
 %rename PSMove_Battery_Level BatteryLevel;
@@ -32,7 +34,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
