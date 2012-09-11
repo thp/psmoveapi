@@ -18,6 +18,13 @@ Advanced features:
  * Calibration: Reading of normalized/calibrated values
  * Orientation: Rotation tracking using gyro and accelerometer
 
+Minimal build dependencies on Ubuntu:
+
+  build-essential
+  cmake
+  libudev-dev
+  libbluetooth-dev
+
 
 Environment variables:
 
