@@ -749,6 +749,16 @@ psmove_get_serial(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, NULL);
     psmove_return_val_if_fail(move->serial_number != NULL, NULL);
+
+    if (strlen(move->serial_number) == 0) {
+        PSMove_Data_BTAddr btaddr;
+        if (!_psmove_read_btaddrs(move, NULL, &btaddr)) {
+            return NULL;
+        }
+
+        return _psmove_btaddr_to_string(btaddr);
+    }
+
     return strdup(move->serial_number);
 }
 

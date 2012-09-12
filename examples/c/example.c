@@ -52,6 +52,10 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    char *serial = psmove_get_serial(move);
+    printf("Serial: %s\n", serial);
+    free(serial);
+
     ctype = psmove_connection_type(move);
     switch (ctype) {
         case Conn_USB:
@@ -85,7 +89,7 @@ int main(int argc, char* argv[])
     psmove_set_rumble(move, 0);
     psmove_update_leds(move);
 
-    while (!(psmove_get_buttons(move) & Btn_PS)) {
+    while (ctype != Conn_USB && !(psmove_get_buttons(move) & Btn_PS)) {
         int res = psmove_poll(move);
         if (res) {
             if (psmove_get_buttons(move) & Btn_TRIANGLE) {

@@ -78,6 +78,9 @@ int main(int argc, char* argv[])
 
             if (result) {
                 printf("Pairing succeeded!\n");
+                char *serial = psmove_get_serial(move);
+                printf("Controller address: %s\n", serial);
+                free(serial);
             } else {
                 printf("Pairing failed.\n");
             }
