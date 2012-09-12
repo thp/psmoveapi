@@ -60,6 +60,7 @@
 #  include <pthread.h>
 #  include <unistd.h>
 #  define PSMOVE_USE_PTHREADS
+#  include "platform/psmove_linuxsupport.h"
 #endif
 
 #ifdef _WIN32
@@ -842,6 +843,13 @@ psmove_pair(PSMove *move)
     if (!psmove_set_btaddr(move, &btaddr)) {
         return PSMove_False;
     }
+
+#if defined(__linux)
+    /* Add entry to Bluez' bluetoothd state file */
+    char *addr = psmove_get_serial(move);
+    linux_bluez_register_psmove(addr);
+    free(addr);
+#endif
 
     return PSMove_True;
 }

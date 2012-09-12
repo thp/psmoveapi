@@ -141,6 +141,9 @@ ELSE()
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/linux/hid.c)
 
+    list(APPEND PSMOVEAPI_PLATFORM_SRC
+        ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_linuxsupport.c)
+
     list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/psmove_linuxsupport.c
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_linux.c)

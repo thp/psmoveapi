@@ -38,7 +38,7 @@ import math
 move = psmove.PSMove()
 
 while True:
-    if move.poll():
+    while move.poll():
         l = [abs(x) for x in (move.mx, move.my, move.mz) if x != 0]
 
         if len(l) != 3:
@@ -48,5 +48,5 @@ while True:
             print('proximity:', proximity)
             move.set_leds(0, int(proximity*255), 0)
 
-        move.update_leds()
+    move.update_leds()
 

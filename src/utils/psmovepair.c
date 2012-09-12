@@ -55,6 +55,18 @@ int main(int argc, char* argv[])
         custom_addr = 1;
     }
 
+#ifdef __linux
+    /**
+     * In order to be able to start/stop bluetoothd and to
+     * add new entries to the Bluez configuration files, we
+     * need to run as root (platform/psmove_linuxsupport.c)
+     **/
+    if (!custom_addr && geteuid() != 0) {
+        printf("This program must be run as root (or use sudo).\n");
+        return 1;
+    }
+#endif
+
     printf("Connected controllers: %d\n", count);
 
     for (i=0; i<count; i++) {
