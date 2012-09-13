@@ -1,0 +1,51 @@
+diff -ru VRUE2011/opentracker/CMakeLists.txt VRUE2011.thp/opentracker/CMakeLists.txt
+--- VRUE2011/opentracker/CMakeLists.txt 2010-09-24 15:29:56.000000000 +0200
++++ VRUE2011.thp/opentracker/CMakeLists.txt     2012-09-13 21:10:06.280507724 +0200
+@@ -116,6 +122,7 @@
+ option(OT_USE_PYTHON  "Build OT to compile support for Python." OFF)
+ option(OT_USE_OTQT  "Build OT  to compile support for the OTQt." OFF)
+ option(OT_USE_LASERPOINTER  "Build OT  to compile support for the laser pointer." OFF)
++option(OT_USE_PSMOVE  "Build OT with support for the PS Move API. Good stuff!" ON)
+
+
+ if(OT_PRESENCCIA_BUILD)
+diff -ru VRUE2011/opentracker/src/misc/OpenTracker.cxx VRUE2011.thp/opentracker/src/misc/OpenTracker.cxx
+--- VRUE2011/opentracker/src/misc/OpenTracker.cxx       2010-09-24 15:25:58.000000000 +0200
++++ VRUE2011.thp/opentracker/src/misc/OpenTracker.cxx   2012-09-13 21:22:33.188528292 +0200
+@@ -126,6 +126,7 @@
+ #include <OpenTracker/common/VirtualKeyModule.h>
+ //#include <OpenTracker/input/SpeechModule.h>               // DEPRECATED Mendez 20070606
+ #include <OpenTracker/input/P5GloveModule.h>
++#include <OpenTracker/input/PSMoveModule.h>
+ #include <OpenTracker/input/MulticastInputModule.h>
+ #include <OpenTracker/input/UbisenseModule.h>
+ #include <OpenTracker/input/OpenVideoModule.h>
+@@ -427,6 +428,10 @@
+         OT_REGISTER_MODULE(P5GloveModule, NULL);
+ #endif
+
++#ifdef USE_PSMOVE
++        OT_REGISTER_MODULE(PSMoveModule, NULL);
++#endif
++
+ #ifndef OT_NO_GPS_SUPPORT
+         OT_REGISTER_MODULE(GPSModule, NULL);
+ #endif
+diff -ru VRUE2011/opentracker/src/CMakeLists.txt VRUE2011.thp/opentracker/src/CMakeLists.txt
+--- VRUE2011/opentracker/src/CMakeLists.txt     2010-09-24 15:26:04.000000000 +0200
++++ VRUE2011.thp/opentracker/src/CMakeLists.txt 2012-09-13 21:17:45.284520364 +0200
+@@ -205,6 +204,14 @@
+   add_library(opentracker ${OPENTRACKER_HEADERS} ${OPENTRACKER_SOURCES})
+ endif(OT_USE_OTQT)
+
++if(OT_USE_PSMOVE)
++  add_definitions(-DUSE_PSMOVE)
++
++  pkg_check_modules(PSMOVEAPI REQUIRED psmoveapi)
++  include_directories(${PSMOVEAPI_INCLUDE_DIRS})
++  target_link_libraries(opentracker ${PSMOVEAPI_LIBRARIES})
++endif(OT_USE_PSMOVE)
++
+ target_link_libraries(opentracker ${ACE_LIBRARIES})
+
+ if(WIN32)

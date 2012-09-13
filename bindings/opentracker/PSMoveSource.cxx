@@ -99,14 +99,14 @@ namespace ot {
             event.getPosition() = position;
 
             // 3D orientation
-            float q[4];
-            psmove_get_orientation(move, &q[0], &q[1], &q[2], &q[3]);
+            float q0, q1, q2, q3;
+            psmove_get_orientation(move, &q0, &q1, &q2, &q3);
 
             std::vector<float> quaternion(4);
-            quaternion[0] = q[0];
-            quaternion[1] = q[1];
-            quaternion[2] = q[2];
-            quaternion[3] = q[3];
+            quaternion[0] = q0;
+            quaternion[1] = q1;
+            quaternion[2] = q2;
+            quaternion[3] = q3;
             event.getOrientation() = quaternion;
         }
 

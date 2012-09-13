@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE OpenTracker SYSTEM "opentracker.dtd">
+<OpenTracker>
+  <configuration>
+    <ConsoleConfig headerline="My Output" interval="1"/>
+    <PSMoveConfig />
+  </configuration>
+
+  <ConsoleSink comment="PSMove Controller" active="on">
+    <PSMoveSource controller="0"/>
+  </ConsoleSink>
+</OpenTracker>
