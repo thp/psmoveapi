@@ -29,6 +29,7 @@
 
 #include <IOBluetooth/objc/IOBluetoothHostController.h>
 #include "psmove_osxsupport.h"
+#include "../psmove_private.h"
 
 char *
 macosx_get_btaddr()
@@ -39,8 +40,11 @@ macosx_get_btaddr()
         [IOBluetoothHostController defaultController];
 
     NSString *addr = [controller addressAsString];
-    result = strdup([addr UTF8String]);
+    psmove_return_val_if_fail(addr != NULL, NULL);
 
-    return result;
+    result = [addr UTF8String];
+    psmove_return_val_if_fail(result != NULL, NULL);
+
+    return strdup(result);
 }
 
