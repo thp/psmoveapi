@@ -4,6 +4,7 @@ bindings - Language bindings
     bindings/qt - psmoveapiqt Library / Qt bindings
     bindings/glib - GObject Introspection bindings (Vala/GJS)
     bindings/swig - SWIG-based bindings (Python and Java)
+    bindings/opentracker - Module and input source for OpenTracker
 
 examples - Applications and utilities
     examples/c - Tests and core utilities using the C API
