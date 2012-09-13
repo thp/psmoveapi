@@ -313,6 +313,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
     DESTINATION lib/pkgconfig)
 
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/99-psmove.rules
+    DESTINATION /etc/udev/rules.d)
+
 install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
