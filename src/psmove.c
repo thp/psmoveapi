@@ -801,6 +801,10 @@ psmove_pair(PSMove *move)
 
 #if defined(__APPLE__)
     char *btaddr_string = macosx_get_btaddr();
+    if (btaddr_string == NULL) {
+        fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
+                "Make sure Bluetooth is turned on.\n");
+    }
     psmove_return_val_if_fail(btaddr_string != NULL, PSMove_False);
     if (!_psmove_btaddr_from_string(btaddr_string, &btaddr)) {
         free(btaddr_string);
