@@ -790,7 +790,7 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 enum PSMove_Bool
 psmove_pair(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, 0);
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
 
     PSMove_Data_BTAddr btaddr;
 
@@ -801,6 +801,7 @@ psmove_pair(PSMove *move)
 
 #if defined(__APPLE__)
     char *btaddr_string = macosx_get_btaddr();
+    psmove_return_val_if_fail(btaddr_string != NULL, PSMove_False);
     if (!_psmove_btaddr_from_string(btaddr_string, &btaddr)) {
         free(btaddr_string);
         return PSMove_False;
@@ -817,7 +818,7 @@ psmove_pair(PSMove *move)
     btfrp.dwSize = sizeof(BLUETOOTH_FIND_RADIO_PARAMS);
     hFind = BluetoothFindFirstRadio(&btfrp, &hRadio);
 
-    psmove_return_val_if_fail(hFind != NULL, 0);
+    psmove_return_val_if_fail(hFind != NULL, PSMove_False);
     radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
 
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
