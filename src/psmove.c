@@ -1461,9 +1461,9 @@ psmove_util_get_file_path(const char *filename)
     struct stat st;
     if (stat(parent, &st) != 0) {
 #ifdef _WIN32
-        psmove_return_val_if_fail(mkdir(parent) != 0, NULL);
+        psmove_return_val_if_fail(mkdir(parent) == 0, NULL);
 #else
-        psmove_return_val_if_fail(mkdir(parent, 0777) != 0, NULL);
+        psmove_return_val_if_fail(mkdir(parent, 0777) == 0, NULL);
 #endif
     }
 
