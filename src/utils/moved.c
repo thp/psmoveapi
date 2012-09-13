@@ -138,6 +138,23 @@ moved_server_handle_request(moved_server *server)
 
             send_response = 1;
             break;
+        case MOVED_REQ_SERIAL:
+            for each (dev, server->moved->devs) {
+                if (count == device_id) {
+                    break;
+                }
+                count++;
+            }
+
+            if (dev != NULL) {
+                char *serial = psmove_get_serial(dev->move);
+                memcpy(response, serial, strlen(serial)+1);
+                free(serial);
+            } else {
+                LOG("Cannot read from device %d.\n", device_id);
+            }
+            send_response = 1;
+            break;
         default:
             LOG("Unsupported call: %x - ignoring.\n", request_id);
             return;

@@ -571,8 +571,18 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
 
     /* Remember the serial number */
     move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
-    snprintf(move->serial_number, PSMOVE_MAX_SERIAL_LENGTH, "%s:%d",
-            client->hostname, remote_id);
+
+    if (moved_client_send(move->client, MOVED_REQ_SERIAL,
+                move->remote_id, NULL)) {
+        /* Retrieve the serial number from the remote host */
+        strncpy(move->serial_number, (char*)move->client->read_response_buf,
+                PSMOVE_MAX_SERIAL_LENGTH);
+    }
+
+    move->calibration = psmove_calibration_new(move);
+    // XXX: Copy calibration remotely if possible
+
+    move->orientation = psmove_orientation_new(move);
 
     /* Bookkeeping of open handles (for psmove_reinit) */
     psmove_num_open_handles++;
@@ -1366,14 +1376,16 @@ psmove_disconnect(PSMove *move)
     psmove_return_if_fail(move != NULL);
 
 #if defined(PSMOVE_USE_PTHREADS)
-    while (pthread_tryjoin_np(move->led_write_thread, NULL) != 0) {
-        pthread_mutex_lock(&(move->led_write_mutex));
-        pthread_cond_signal(&(move->led_write_new_data));
-        pthread_mutex_unlock(&(move->led_write_mutex));
-    }
+    if (move->type != PSMove_MOVED) {
+        while (pthread_tryjoin_np(move->led_write_thread, NULL) != 0) {
+            pthread_mutex_lock(&(move->led_write_mutex));
+            pthread_cond_signal(&(move->led_write_new_data));
+            pthread_mutex_unlock(&(move->led_write_mutex));
+        }
 
-    pthread_mutex_destroy(&(move->led_write_mutex));
-    pthread_cond_destroy(&(move->led_write_new_data));
+        pthread_mutex_destroy(&(move->led_write_mutex));
+        pthread_cond_destroy(&(move->led_write_new_data));
+    }
 #endif
 
     switch (move->type) {

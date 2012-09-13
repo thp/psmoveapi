@@ -167,6 +167,7 @@ moved_client_send(moved_client *client, char req, char id, const unsigned char *
                     return client->read_response_buf[0];
                     break;
                 case MOVED_REQ_READ:
+                case MOVED_REQ_SERIAL:
                     if (recv(client->socket, client->read_response_buf,
                                 sizeof(client->read_response_buf), 0) == -1) {
                         retry_count++;
