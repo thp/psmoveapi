@@ -412,6 +412,20 @@ PSMoveTracker *psmove_tracker_new() {
     return psmove_tracker_new_with_camera(camera);
 }
 
+void
+psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming)
+{
+    psmove_return_if_fail(tracker != NULL);
+    tracker->dimming_factor = dimming;
+}
+
+float
+psmove_tracker_get_dimming(PSMoveTracker *tracker)
+{
+    psmove_return_val_if_fail(tracker != NULL, 0);
+    return tracker->dimming_factor;
+}
+
 PSMoveTracker *
 psmove_tracker_new_with_camera(int camera) {
 	PSMoveTracker* tracker = (PSMoveTracker*) calloc(1, sizeof(PSMoveTracker));

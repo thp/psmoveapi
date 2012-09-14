@@ -102,6 +102,12 @@ ADDCALL psmove_tracker_new();
 ADDAPI PSMoveTracker *
 ADDCALL psmove_tracker_new_with_camera(int camera);
 
+ADDAPI void
+ADDCALL psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming);
+
+ADDAPI float
+ADDCALL psmove_tracker_get_dimming(PSMoveTracker *tracker);
+
 
 /**
  * Enable tracking for a given PSMove * instance
