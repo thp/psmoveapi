@@ -302,6 +302,7 @@ moved_dump_devices(move_daemon *moved)
         free(serial);
     }
 #endif
+    fflush(stdout);
 }
 
 int

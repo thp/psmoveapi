@@ -28,3 +28,7 @@ Here are some files that might be useful for users of the library:
  Debug files to display the debug information for the tracker that
  is saved to ~/.psmoveapi/. when debugging files are written there.
 
+ psmoveplug.py, psmoveplug_lcd2usb.c:
+ Basic files that you can use to create a PS Move "moved" plug computer,
+ using an (optional) LCD2USB display for showing the current status.
+
