@@ -83,6 +83,8 @@ main(int argc, char *argv[])
     /* Never act as a client in "moved" mode */
     _psmove_disable_remote();
 
+    moved_dump_devices(moved);
+
     int id, count = psmove_count_connected();
     for (id=0; id<count; id++) {
         moved_handle_connection(moved, NULL, NULL);
