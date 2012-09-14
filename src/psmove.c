@@ -79,10 +79,6 @@
 
 /* Begin private definitions */
 
-/* Vendor ID and Product ID of PS Move Controller */
-#define PSMOVE_VID 0x054c
-#define PSMOVE_PID 0x03d5
-
 /* Buffer size for writing LEDs and reading sensor data */
 #define PSMOVE_BUFFER_SIZE 49
 
@@ -213,6 +209,9 @@ struct _PSMove {
     /* Save location for the serial number */
     char *serial_number;
 
+    /* Device path of the controller */
+    char *device_path;
+
     /* Nonzero if the value of the LEDs or rumble has changed */
     unsigned char leds_dirty;
 
@@ -265,7 +264,7 @@ int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 
     if (ioctl(s, HCIGETDEVINFO, (void *) &di) == 0) {
         for (i=0; i<6; i++) {
-            btaddr[i] = di.bdaddr.b[5-i];
+            btaddr[i] = di.bdaddr.b[i];
         }
     }
 
@@ -523,6 +522,10 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
         wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
     }
 
+    if (path != NULL) {
+        move->device_path = strdup(path);
+    }
+
     /**
      * Normalize "aa-bb-cc-dd-ee-ff" (OS X format) into "aa:bb:cc:dd:ee:ff"
      * Also normalize "AA:BB:CC:DD:EE:FF" into "aa:bb:cc:dd:ee:ff" (lowercase)
@@ -551,7 +554,18 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     /* Bookkeeping of open handles (for psmove_reinit) */
     psmove_num_open_handles++;
 
+    move->calibration = psmove_calibration_new(move);
+    move->orientation = psmove_orientation_new(move);
+
     return move;
+}
+
+const char *
+_psmove_get_device_path(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, NULL);
+
+    return move->device_path;
 }
 
 PSMove *
@@ -642,9 +656,6 @@ psmove_connect_by_id(int id)
     }
     hid_free_enumeration(devs);
 
-    move->calibration = psmove_calibration_new(move);
-    move->orientation = psmove_orientation_new(move);
-
     return move;
 }
 
@@ -674,21 +685,13 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
     res = hid_get_feature_report(move->handle, btg, sizeof(btg));
 
     if (res == sizeof(btg)) {
-#ifdef PSMOVE_DEBUG
-        int i;
-        fprintf(stderr, "[PSMOVE] controller bt mac addr: ");
-        for (i=6; i>=1; i--) {
-            if (i != 6) putc(':', stderr);
-            fprintf(stderr, "%02x", btg[i]);
-        }
-        fprintf(stderr, "\n");
-#endif
         if (controller != NULL) {
             memcpy(*controller, btg+1, 6);
         }
 
 #ifdef PSMOVE_DEBUG
-        fprintf(stderr, "[PSMOVE] current host bt mac addr: ");
+        fprintf(stderr, "[PSMOVE] Current host: ");
+        int i;
         for (i=15; i>=10; i--) {
             if (i != 15) putc(':', stderr);
             fprintf(stderr, "%02x", btg[i]);
@@ -787,9 +790,9 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     memset(bts, 0, sizeof(bts));
     bts[0] = PSMove_Req_SetBTAddr;
 
-    /* Copy 6 bytes from addr into bts[1]..bts[6], reversed */
+    /* Copy 6 bytes from addr into bts[1]..bts[6] */
     for (i=0; i<6; i++) {
-        bts[1+5-i] = (*addr)[i];
+        bts[1+i] = (*addr)[i];
     }
 
     res = hid_send_feature_report(move->handle, bts, sizeof(bts));
@@ -803,8 +806,9 @@ psmove_pair(PSMove *move)
     psmove_return_val_if_fail(move != NULL, PSMove_False);
 
     PSMove_Data_BTAddr btaddr;
+    PSMove_Data_BTAddr current_host;
 
-    if (!_psmove_read_btaddrs(move, &btaddr, NULL)) {
+    if (!_psmove_read_btaddrs(move, &current_host, NULL)) {
         return PSMove_False;
     }
 
@@ -844,7 +848,7 @@ psmove_pair(PSMove *move)
 
     int i;
     for (i=0; i<6; i++) {
-        btaddr[i] = radioInfo.address.rgBytes[5-i];
+        btaddr[i] = radioInfo.address.rgBytes[i];
     }
 
     CloseHandle(hRadio);
@@ -855,8 +859,14 @@ psmove_pair(PSMove *move)
     return PSMove_False;
 #endif
 
-    if (!psmove_set_btaddr(move, &btaddr)) {
-        return PSMove_False;
+    if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
+        if (!psmove_set_btaddr(move, &btaddr)) {
+            return PSMove_False;
+        }
+#ifdef PSMOVE_DEBUG
+    } else {
+        fprintf(stderr, "[PSMOVE] Already paired.\n");
+#endif
     }
 
 #if defined(__linux)
@@ -875,8 +885,9 @@ psmove_pair_custom(PSMove *move, const char *btaddr_string)
     psmove_return_val_if_fail(move != NULL, 0);
 
     PSMove_Data_BTAddr btaddr;
+    PSMove_Data_BTAddr current_host;
 
-    if (!_psmove_read_btaddrs(move, &btaddr, NULL)) {
+    if (!_psmove_read_btaddrs(move, &current_host, NULL)) {
         return PSMove_False;
     }
 
@@ -884,8 +895,14 @@ psmove_pair_custom(PSMove *move, const char *btaddr_string)
         return PSMove_False;
     }
 
-    if (!psmove_set_btaddr(move, &btaddr)) {
-        return PSMove_False;
+    if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
+        if (!psmove_set_btaddr(move, &btaddr)) {
+            return PSMove_False;
+        }
+#ifdef PSMOVE_DEBUG
+    } else {
+        fprintf(stderr, "[PSMOVE] Already paired.\n");
+#endif
     }
 
     return PSMove_True;
@@ -931,7 +948,7 @@ _psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
     for (i=0; i<6; i++) {
         value = strtol(string + i*3, NULL, 16);
         psmove_return_val_if_fail(value >= 0x00 && value <= 0xFF, 0);
-        tmp[i] = value;
+        tmp[5-i] = value;
     }
 
     if (dest != NULL) {
@@ -1406,6 +1423,7 @@ psmove_disconnect(PSMove *move)
     }
 
     free(move->serial_number);
+    free(move->device_path);
     free(move);
 
     /* Bookkeeping of open handles (for psmove_reinit) */

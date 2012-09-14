@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <wchar.h>
 
 #ifdef _WIN32
 #  include <Winsock2.h>
@@ -56,19 +57,21 @@
 #define each(name,set) (name=set; name; name=name->next)
 
 typedef struct _psmove_dev {
-  PSMove *move;
+    PSMove *move;
+    int assigned_id;
 
-  unsigned char input[MOVED_SIZE_READ_RESPONSE];
-  unsigned char output[7];
+    unsigned char input[MOVED_SIZE_READ_RESPONSE];
+    unsigned char output[7];
 
-  int dirty_output;
+    int dirty_output;
 
-  struct _psmove_dev *next;
+    struct _psmove_dev *next;
 } psmove_dev;
 
 
 typedef struct _move_daemon {
     psmove_dev *devs;
+    int count;
 } move_daemon;
 
 
@@ -94,13 +97,13 @@ moved_server_destroy(moved_server *server);
 /* psmove_dev */
 
 psmove_dev *
-psmove_dev_create(int id);
+psmove_dev_create(move_daemon *moved, const char *path, const wchar_t *serial);
 
 void
 psmove_dev_set_output(psmove_dev *dev, const unsigned char *output);
 
 void
-psmove_dev_destroy(psmove_dev *dev);
+psmove_dev_destroy(move_daemon *moved, psmove_dev *dev);
 
 
 /* move_daemon */
@@ -109,10 +112,19 @@ move_daemon *
 moved_init();
 
 void
-moved_handle_connection(move_daemon *moved, int id);
+moved_handle_connection(move_daemon *moved, const char *path, const wchar_t *serial);
+
+void
+moved_handle_disconnect(move_daemon *moved, const char *path);
 
 void
 moved_write_reports(move_daemon *moved);
+
+void
+moved_dump_devices(move_daemon *moved);
+
+int
+moved_get_next_id(move_daemon *moved);
 
 void
 moved_destroy(move_daemon *moved);

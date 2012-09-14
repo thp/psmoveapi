@@ -37,6 +37,7 @@ extern "C" {
 #include "psmove.h"
 
 #include <stdio.h>
+#include <wchar.h>
 
     /**
      * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c
@@ -47,6 +48,10 @@ extern "C" {
      * All constants that need to be shared between psmove.c and other
      * implementation modules (psmove_*.c) should go here.
      **/
+
+/* Vendor ID and Product ID of PS Move Controller */
+#define PSMOVE_VID 0x054c
+#define PSMOVE_PID 0x03d5
 
 /* Macro: Print a warning message */
 #define psmove_WARNING(x, ...) \
@@ -113,6 +118,18 @@ ADDCALL _psmove_disable_remote();
  **/
 ADDAPI void
 ADDCALL _psmove_disable_local();
+
+/**
+ * [PRIVATE API] Internal device open function (hidraw, Linux / for moved)
+ **/
+ADDAPI PSMove *
+ADDCALL psmove_connect_internal(wchar_t *serial, char *path, int id);
+
+/**
+ * [PRIVATE API] Get device path of a controller (hidraw, Linux / for moved)
+ **/
+ADDAPI const char *
+ADDCALL _psmove_get_device_path(PSMove *move);
 
 /**
  * [PRIVATE API] Get the calibration data from a connected USB controller.

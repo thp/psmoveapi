@@ -31,7 +31,43 @@
 
 #include "../psmove_private.h"
 
-#define LOG(format, ...) fprintf(stderr, "moved:" format, __VA_ARGS__)
+
+
+/* For now, monitoring is only supported on Linux */
+#ifdef __linux
+
+#include "../daemon/moved_monitor.h"
+
+void
+on_monitor_update(enum MonitorEvent event,
+        enum MonitorEventDeviceType device_type,
+        const char *path, const wchar_t *serial,
+        void *user_data)
+{
+    moved_server *server = (moved_server*)user_data;
+    move_daemon *moved = server->moved;
+
+    if (event == EVENT_DEVICE_ADDED) {
+        if (device_type == EVENT_DEVICE_TYPE_USB) {
+            PSMove *move = psmove_connect_internal((wchar_t*)serial, (char*)path, -1);
+            if (psmove_pair(move)) {
+                // Indicate to the user that pairing was successful
+                psmove_set_leds(move, 0, 255, 0);
+                psmove_update_leds(move);
+            } else {
+                printf("Pairing failed for newly-connected USB device.\n");
+            }
+            psmove_disconnect(move);
+        }
+
+        moved_handle_connection(moved, path, serial);
+    } else if (event == EVENT_DEVICE_REMOVED) {
+        moved_handle_disconnect(moved, path);
+    }
+}
+
+#endif /* __linux */
+
 
 
 int
@@ -40,19 +76,50 @@ main(int argc, char *argv[])
     moved_server *server = moved_server_create();
     move_daemon *moved = moved_init(server);
 
+#ifdef __linux
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update, server);
+#endif
+
     /* Never act as a client in "moved" mode */
     _psmove_disable_remote();
 
-    int id, count=psmove_count_connected();
-    LOG("%d devices connected\n", count);
+    int id, count = psmove_count_connected();
     for (id=0; id<count; id++) {
-        moved_handle_connection(moved, id);
+        moved_handle_connection(moved, NULL, NULL);
     }
 
+#ifdef __linux
+    fd_set fds;
+    int server_fd = server->socket;
+    int monitor_fd = moved_monitor_get_fd(monitor);
+    int nfds = ((server_fd > monitor_fd)?(server_fd):(monitor_fd)) + 1;
+
+    FD_ZERO(&fds);
+    FD_SET(server_fd, &fds);
+    FD_SET(monitor_fd, &fds);
+#endif
+
     while (1) {
+#ifdef __linux
+        if (select(nfds, &fds, NULL, NULL, NULL)) {
+            if (FD_ISSET(monitor_fd, &fds)) {
+                moved_monitor_poll(monitor);
+            }
+
+            if (FD_ISSET(server_fd, &fds))  {
+                moved_server_handle_request(server);
+            }
+        }
+#else
         moved_server_handle_request(server);
+#endif
+
         moved_write_reports(moved);
     }
+
+#ifdef __linux
+    moved_monitor_free(monitor);
+#endif
 
     moved_server_destroy(server);
     moved_destroy(moved);
@@ -85,7 +152,6 @@ moved_server_handle_request(moved_server *server)
     unsigned int si_len = sizeof(si_other);
 
     psmove_dev *dev = NULL;
-    int count = 0;
     int send_response = 0;
 
     int request_id = -1, device_id = -1;
@@ -100,50 +166,44 @@ moved_server_handle_request(moved_server *server)
 
     switch (request_id) {
         case MOVED_REQ_COUNT_CONNECTED:
-            for each (dev, server->moved->devs) {
-                count++;
-            }
-            response[0] = count;
+            response[0] = server->moved->count;
 
             send_response = 1;
             break;
         case MOVED_REQ_WRITE:
             for each (dev, server->moved->devs) {
-                if (count == device_id) {
+                if (dev->assigned_id == device_id) {
                     break;
                 }
-                count++;
             }
 
             if (dev != NULL) {
                 psmove_dev_set_output(dev, request+2);
             } else {
-                LOG("Cannot write to device %d.\n", device_id);
+                printf("Cannot write to device %d.\n", device_id);
             }
             break;
         case MOVED_REQ_READ:
             for each (dev, server->moved->devs) {
-                if (count == device_id) {
+                if (dev->assigned_id == device_id) {
                     break;
                 }
-                count++;
             }
 
             if (dev != NULL) {
                 _psmove_read_data(dev->move, dev->input, sizeof(dev->input));
                 memcpy(response, dev->input, sizeof(dev->input));
             } else {
-                LOG("Cannot read from device %d.\n", device_id);
+                printf("Cannot read from device %d.\n", device_id);
             }
 
             send_response = 1;
             break;
         case MOVED_REQ_SERIAL:
             for each (dev, server->moved->devs) {
-                if (count == device_id) {
+                if (dev->assigned_id == device_id) {
                     break;
                 }
-                count++;
             }
 
             if (dev != NULL) {
@@ -151,12 +211,12 @@ moved_server_handle_request(moved_server *server)
                 memcpy(response, serial, strlen(serial)+1);
                 free(serial);
             } else {
-                LOG("Cannot read from device %d.\n", device_id);
+                printf("Cannot read from device %d.\n", device_id);
             }
             send_response = 1;
             break;
         default:
-            LOG("Unsupported call: %x - ignoring.\n", request_id);
+            printf("Unsupported call: %x - ignoring.\n", request_id);
             return;
     }
 
@@ -176,12 +236,19 @@ moved_server_destroy(moved_server *server)
 
 
 psmove_dev *
-psmove_dev_create(int id)
+psmove_dev_create(move_daemon *moved, const char *path, const wchar_t *serial)
 {
     psmove_dev *dev = calloc(1, sizeof(psmove_dev));
     assert(dev != NULL);
 
-    dev->move = psmove_connect_by_id(id);
+    if (path != NULL) {
+        dev->move = psmove_connect_internal((wchar_t*)serial, (char*)path, moved->count);
+    } else {
+        dev->move = psmove_connect_by_id(moved->count);
+    }
+    dev->assigned_id = moved_get_next_id(moved);
+    moved->count++;
+
     psmove_set_rate_limiting(dev->move, 0);
     return dev;
 }
@@ -194,10 +261,12 @@ psmove_dev_set_output(psmove_dev *dev, const unsigned char *output)
 }
 
 void
-psmove_dev_destroy(psmove_dev *dev)
+psmove_dev_destroy(move_daemon *moved, psmove_dev *dev)
 {
     psmove_disconnect(dev->move);
     free(dev);
+
+    moved->count--;
 }
 
 
@@ -210,15 +279,74 @@ moved_init(moved_server *server)
 }
 
 void
-moved_handle_connection(move_daemon *moved, int id)
+moved_handle_connection(move_daemon *moved, const char *path, const wchar_t *serial)
 {
-    psmove_dev *dev = psmove_dev_create(id);
+    psmove_dev *dev = psmove_dev_create(moved, path, serial);
     dev->next = moved->devs;
     moved->devs = dev;
 
-    LOG("New device %d\n", id);
+    moved_dump_devices(moved);
 }
 
+void
+moved_dump_devices(move_daemon *moved)
+{
+    printf("%d connected\n", moved->count);
+#ifdef PSMOVE_DEBUG
+    psmove_dev *dev;
+    for each(dev, moved->devs) {
+        char *serial = psmove_get_serial(dev->move);
+        printf("Device %d: %s\n", dev->assigned_id, serial);
+        free(serial);
+    }
+#endif
+}
+
+int
+moved_get_next_id(move_daemon *moved)
+{
+    int next_id = 0;
+    int available = 0;
+
+    while (!available) {
+        available = 1;
+
+        psmove_dev *dev;
+        for each(dev, moved->devs) {
+            if (dev->assigned_id == next_id) {
+                available = 0;
+                next_id++;
+            }
+        }
+    }
+
+    return next_id;
+}
+
+void
+moved_handle_disconnect(move_daemon *moved, const char *path)
+{
+    psmove_dev *prev = NULL;
+
+    psmove_dev *dev;
+    for each(dev, moved->devs) {
+        const char *dev_path = _psmove_get_device_path(dev->move);
+        if (strcmp(path, dev_path) == 0) {
+            if (prev != NULL) {
+                prev->next = dev->next;
+            } else {
+                moved->devs = dev->next;
+            }
+
+            psmove_dev_destroy(moved, dev);
+            break;
+        }
+
+        prev = dev;
+    }
+
+    moved_dump_devices(moved);
+}
 
 void
 moved_write_reports(move_daemon *moved)
@@ -239,7 +367,7 @@ moved_destroy(move_daemon *moved)
 {
     while (moved->devs != NULL) {
         psmove_dev *next_dev = moved->devs->next;
-        psmove_dev_destroy(moved->devs);
+        psmove_dev_destroy(moved, moved->devs);
         moved->devs = next_dev;
     }
     free(moved);
