@@ -95,14 +95,14 @@ main(int argc, char *argv[])
     int server_fd = server->socket;
     int monitor_fd = moved_monitor_get_fd(monitor);
     int nfds = ((server_fd > monitor_fd)?(server_fd):(monitor_fd)) + 1;
-
-    FD_ZERO(&fds);
-    FD_SET(server_fd, &fds);
-    FD_SET(monitor_fd, &fds);
 #endif
 
     while (1) {
 #ifdef __linux
+        FD_ZERO(&fds);
+        FD_SET(server_fd, &fds);
+        FD_SET(monitor_fd, &fds);
+
         if (select(nfds, &fds, NULL, NULL, NULL)) {
             if (FD_ISSET(monitor_fd, &fds)) {
                 moved_monitor_poll(monitor);

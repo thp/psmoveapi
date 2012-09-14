@@ -166,6 +166,7 @@ moved_monitor_free(moved_monitor *monitor)
 {
     psmove_return_if_fail(monitor != NULL);
 
+    udev_monitor_filter_remove(monitor->udev_monitor);
     udev_monitor_unref(monitor->udev_monitor);
     udev_unref(monitor->udev_handle);
 
