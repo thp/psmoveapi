@@ -95,7 +95,7 @@ _moved_monitor_handle_device(moved_monitor *monitor, struct udev_device *dev)
 
         if (parse_uevent_info(uevent, &bus_type, &vendor_id, &product_id,
                     &serial_number_utf8, &product_name_utf8)) {
-            wchar_t serial_number = utf8_to_wchar_t(serial_number_utf8);
+            wchar_t *serial_number = utf8_to_wchar_t(serial_number_utf8);
 
             if (vendor_id == PSMOVE_VID && product_id == PSMOVE_PID) {
                 if (bus_type == BUS_BLUETOOTH) {
