@@ -174,8 +174,8 @@ write_entry_list(const char *filename, struct entry_list_t *list)
 }
 
 int
-add_entry_to_file(const char *base, const char *filename,
-        const char *addr, const char *entry)
+process_file_entry(const char *base, const char *filename,
+        const char *addr, const char *entry, int write_file)
 {
     int errors = 0;
     // base + '/' + filename + '\0'
@@ -188,12 +188,30 @@ add_entry_to_file(const char *base, const char *filename,
 
     entries = read_entry_list(fn);
     if (set_entry_list(&entries, addr, entry)) {
-        errors += write_entry_list(fn, entries);
+        if (write_file) {
+            errors += write_entry_list(fn, entries);
+        } else {
+            errors += 1;
+        }
     }
     free_entry_list(entries);
 
     free(fn);
     return errors;
+}
+
+int
+check_entry_in_file(const char *base, const char *filename,
+        const char *addr, const char *entry)
+{
+    return process_file_entry(base, filename, addr, entry, 0);
+}
+
+int
+write_entry_to_file(const char *base, const char *filename,
+        const char *addr, const char *entry)
+{
+    return process_file_entry(base, filename, addr, entry, 1);
 }
 
 char *
@@ -229,6 +247,26 @@ normalize_addr(const char *addr)
     return result;
 }
 
+
+typedef int (*for_all_entries_func)(const char *base, const char *filename,
+        const char *addr, const char *entry);
+
+int
+for_all_entries(for_all_entries_func func, const char *base, const char *addr)
+{
+    int errors = 0;
+
+    errors += func(base, "classes", addr, CLASSES_ENTRY);
+    errors += func(base, "did", addr, DID_ENTRY);
+    errors += func(base, "features", addr, FEATURES_ENTRY);
+    errors += func(base, "names", addr, NAMES_ENTRY);
+    errors += func(base, "profiles", addr, PROFILES_ENTRY);
+    errors += func(base, "sdp", addr, SDP_ENTRY);
+    errors += func(base, "trusts", addr, TRUSTS_ENTRY);
+
+    return errors;
+}
+
 int
 linux_bluez_register_psmove(char *addr)
 {
@@ -246,28 +284,30 @@ linux_bluez_register_psmove(char *addr)
         return 0;
     }
 
-    // FIXME: This is Ubuntu-specific
-    if (system("service bluetooth stop") != 0) {
-        printf("Automatic stopping of bluetoothd failed.\n"
-               "You might have to stop it manually before pairing.\n");
+    // First, let's check if the entries are already okay..
+    errors = for_all_entries(check_entry_in_file, base, addr);
+
+    if (errors) {
+        // In this case, we have missing or invalid values and need to update
+        // the Bluetooth configuration files and restart Bluez' bluetoothd
+
+        // FIXME: This is Ubuntu-specific
+        if (system("service bluetooth stop") != 0) {
+            printf("Automatic stopping of bluetoothd failed.\n"
+                   "You might have to stop it manually before pairing.\n");
+        }
+
+        errors = for_all_entries(write_entry_to_file, base, addr);
+
+        // FIXME: This is Ubuntu-specific
+        if (system("service bluetooth start") != 0) {
+            printf("Automatic starting of bluetoothd failed.\n"
+                   "You might have to start it manually after pairing.\n");
+        }
+
+        free(base);
+        free(addr);
     }
-
-    errors += add_entry_to_file(base, "classes", addr, CLASSES_ENTRY);
-    errors += add_entry_to_file(base, "did", addr, DID_ENTRY);
-    errors += add_entry_to_file(base, "features", addr, FEATURES_ENTRY);
-    errors += add_entry_to_file(base, "names", addr, NAMES_ENTRY);
-    errors += add_entry_to_file(base, "profiles", addr, PROFILES_ENTRY);
-    errors += add_entry_to_file(base, "sdp", addr, SDP_ENTRY);
-    errors += add_entry_to_file(base, "trusts", addr, TRUSTS_ENTRY);
-
-    // FIXME: This is Ubuntu-specific
-    if (system("service bluetooth start") != 0) {
-        printf("Automatic starting of bluetoothd failed.\n"
-               "You might have to start it manually after pairing.\n");
-    }
-
-    free(base);
-    free(addr);
 
     return (errors == 0);
 }
