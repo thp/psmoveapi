@@ -206,6 +206,21 @@ if(PSMOVE_BUILD_TRACKER)
     list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi_tracker)
 endif()
 
+# Static library
+	add_library(psmoveapi_static STATIC
+	    ${HIDAPI_SRC}
+	    ${PSMOVEAPI_SRC}
+	    ${PSMOVEAPI_MOVED_SRC}
+	    ${PSMOVEAPI_PLATFORM_SRC}
+	    ${PSMOVEAPI_ALGORITHM_SRC})
+	target_link_libraries(psmoveapi_static
+	    ${PSMOVEAPI_REQUIRED_LIBS})
+	set_target_properties(psmoveapi_static PROPERTIES
+	    VERSION ${PSMOVEAPI_VERSION}
+	    SOVERSION ${PSMOVEAPI_VERSION_SONAME})
+	#set_target_properties(psmoveapi_static PROPERTIES
+	#    COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
+
 # Essential utilities
 foreach(UTILITY moved psmovepair)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
@@ -247,7 +262,7 @@ if(PSMOVE_BUILD_TESTS)
 endif()
 
 
-# Language bindings (Python and Java)
+# Language bindings (Python, Java and Processing)
 find_package(SWIG QUIET)
 if(SWIG_FOUND)
     include(${SWIG_USE_FILE})
@@ -278,12 +293,16 @@ if(SWIG_FOUND)
             set(CMAKE_SWIG_FLAGS -package ${PSMOVEAPI_JAVA_PKG})
             include_directories(${JNI_INCLUDE_DIRS})
             swig_add_module(psmove_java java bindings/swig/psmove.i)
-            swig_link_libraries(psmove_java psmoveapi ${JNI_LIBRARIES})
+			#swig_link_libraries(psmove_java psmoveapi ${JNI_LIBRARIES})
+	        swig_link_libraries(psmove_java psmoveapi_static ${JNI_LIBRARIES})
             set(INFO_BUILD_JAVA_BINDINGS "Yes")
 
             add_custom_target(psmoveapi.jar ALL
-                COMMAND mkdir -p ${PSMOVEAPI_JAVA_PKG_DIR}
-                COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR} || true
+                #COMMAND mkdir -p ${PSMOVEAPI_JAVA_PKG_DIR}
+                #COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR} || true
+	            COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
+				COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/copyjava.cmake ${CMAKE_CURRENT_BINARY_DIR}/copyjava.cmake
+	            COMMAND ${CMAKE_COMMAND} -P copyjava.cmake
                 COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
                 COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -295,6 +314,14 @@ if(SWIG_FOUND)
 		IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 			set(PSMOVEAPI_LIB_PLATFORM "macosx")
 			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.jnilib")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
+		ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+			set(PSMOVEAPI_LIB_PLATFORM "windows")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.dll")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair.exe")
+		ELSE() # Linux 
+			set(PSMOVEAPI_LIB_PLATFORM "linux")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.so")
 			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
 		ENDIF()
 
@@ -321,7 +348,7 @@ if(SWIG_FOUND)
 			COMMAND jar cfM psmove_processing.zip processing 
 
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			COMMENT "Building and packacing Processing library"
+			COMMENT "Building and packaging Processing library"
 			
 		)
 		
