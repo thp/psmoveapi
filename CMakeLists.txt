@@ -218,7 +218,6 @@ endif()
 	set_target_properties(psmoveapi_static PROPERTIES
 	    VERSION ${PSMOVEAPI_VERSION}
 	    SOVERSION ${PSMOVEAPI_VERSION_SONAME})
-	#set_target_properties(psmoveapi_static PROPERTIES
 	#    COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
 
 # Essential utilities
