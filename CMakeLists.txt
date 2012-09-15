@@ -218,7 +218,6 @@ endif()
 	set_target_properties(psmoveapi_static PROPERTIES
 	    VERSION ${PSMOVEAPI_VERSION}
 	    SOVERSION ${PSMOVEAPI_VERSION_SONAME})
-	#    COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
 
 # Essential utilities
 foreach(UTILITY moved psmovepair)
@@ -386,6 +385,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h.in
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
     DESTINATION lib/pkgconfig)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/99-psmove.rules  	
+    DESTINATION /etc/udev/rules.d)
 
 install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
     RUNTIME DESTINATION bin
