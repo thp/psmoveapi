@@ -50,3 +50,11 @@ TUIO Reference Implementation
 by Martin Kaltenbrunner
 from http://www.tuio.org/?software
 
+
+tinyxml2
+========
+
+C++ XML parser / writer
+by Lee Thomason
+from http://www.grinninglizard.com/tinyxml2/
+
