@@ -1,6 +1,3 @@
 [submodule "external/hidapi"]
 	path = external/hidapi
 	url = git://github.com/signal11/hidapi.git
-[submodule "external/tinyxml2"]
-	path = external/tinyxml2
-	url = git://github.com/leethomason/tinyxml2.git

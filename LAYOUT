@@ -35,7 +35,6 @@ external - Code from external sources (see README for details)
     external/iniparser - Nicolas Devillard's iniparser library
     external/MadgwickAHRS - Madgwick's orientation algorithm
     external/TUIO_CPP - TUIO Protocol reference implementation
-    external/tinyxml2 - Lee Thomason's Tiny XML parsing library
 
 debian - Packaging files for Debian GNU/Linux
 
