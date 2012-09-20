@@ -297,9 +297,7 @@ _psmove_led_write_thread_proc(void *data)
             memcpy(&leds, &(move->leds), sizeof(leds));
             move->led_write_thread_write_queued = 0;
 
-#ifdef PSMOVE_DEBUG
             long started = psmove_util_get_ticks();
-#endif
 
 #if defined(__linux)
             /* Don't write padding bytes on Linux (makes it faster) */
@@ -310,11 +308,9 @@ _psmove_led_write_thread_proc(void *data)
                     sizeof(leds));
 #endif
 
-#ifdef PSMOVE_DEBUG
-            fprintf(stderr, "hid_write(%d) = %ld ms\n",
+            psmove_DEBUG("hid_write(%d) = %ld ms\n",
                     move->id,
                     psmove_util_get_ticks() - started);
-#endif
 
             pthread_yield();
         } while (memcmp(&leds, &(move->leds), sizeof(leds)) != 0);
@@ -689,15 +685,10 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
             memcpy(*controller, btg+1, 6);
         }
 
-#ifdef PSMOVE_DEBUG
-        fprintf(stderr, "[PSMOVE] Current host: ");
-        int i;
-        for (i=15; i>=10; i--) {
-            if (i != 15) putc(':', stderr);
-            fprintf(stderr, "%02x", btg[i]);
-        }
-        fprintf(stderr, "\n");
-#endif
+        char *current_host = _psmove_btaddr_to_string(btg+10);
+        psmove_DEBUG("Current host: %s\n", current_host);
+        free(current_host);
+
         if (host != NULL) {
             memcpy(*host, btg+10, 6);
         }
@@ -863,18 +854,23 @@ psmove_pair(PSMove *move)
         if (!psmove_set_btaddr(move, &btaddr)) {
             return PSMove_False;
         }
-#ifdef PSMOVE_DEBUG
     } else {
-        fprintf(stderr, "[PSMOVE] Already paired.\n");
-#endif
+        psmove_DEBUG("Already paired.\n");
     }
+
+    char *addr = psmove_get_serial(move);
 
 #if defined(__linux)
     /* Add entry to Bluez' bluetoothd state file */
-    char *addr = psmove_get_serial(move);
     linux_bluez_register_psmove(addr);
-    free(addr);
 #endif
+
+#if defined(__APPLE__)
+    /* Add entry to the com.apple.Bluetooth.plist file */
+    macosx_blued_register_psmove(addr);
+#endif
+
+    free(addr);
 
     return PSMove_True;
 }
@@ -899,10 +895,8 @@ psmove_pair_custom(PSMove *move, const char *btaddr_string)
         if (!psmove_set_btaddr(move, &btaddr)) {
             return PSMove_False;
         }
-#ifdef PSMOVE_DEBUG
     } else {
-        fprintf(stderr, "[PSMOVE] Already paired.\n");
-#endif
+        psmove_DEBUG("Already paired.\n");
     }
 
     return PSMove_True;
@@ -1078,10 +1072,8 @@ psmove_poll(PSMove *move)
 
     psmove_return_val_if_fail(move != NULL, 0);
 
-#ifdef PSMOVE_DEBUG
     /* store old sequence number before reading */
     int oldseq = (move->input.buttons4 & 0x0F);
-#endif
 
     switch (move->type) {
         case PSMove_HIDAPI:
@@ -1126,12 +1118,10 @@ psmove_poll(PSMove *move)
          * consumers to utilize the data
          **/
         int seq = (move->input.buttons4 & 0x0F);
-#ifdef PSMOVE_DEBUG
         if (seq != ((oldseq + 1) % 16)) {
-            fprintf(stderr, "[PSMOVE] Warning: Dropped frames (seq %d -> %d)\n",
+            psmove_DEBUG("Warning: Dropped frames (seq %d -> %d)\n",
                     oldseq, seq);
         }
-#endif
 
         if (move->orientation_enabled) {
             psmove_orientation_update(move->orientation);
@@ -1531,5 +1521,46 @@ psmove_util_get_env_string(const char *name)
     }
 
     return NULL;
+}
+
+char *
+_psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
+{
+    int count = strlen(addr);
+
+    if (count != 17) {
+        psmove_WARNING("Invalid address: '%s'\n", addr);
+        return NULL;
+    }
+
+    char *result = malloc(count + 1);
+    int i;
+
+    for (i=0; i<strlen(addr); i++) {
+        if (addr[i] >= 'A' && addr[i] <= 'F' && i % 3 != 2) {
+            if (lowercase) {
+                result[i] = tolower(addr[i]);
+            } else {
+                result[i] = addr[i];
+            }
+        } else if (addr[i] >= '0' && addr[i] <= '9' && i % 3 != 2) {
+            result[i] = addr[i];
+        } else if (addr[i] >= 'a' && addr[i] <= 'f' && i % 3 != 2) {
+            if (lowercase) {
+                result[i] = addr[i];
+            } else {
+                result[i] = toupper(addr[i]);
+            }
+        } else if ((addr[i] == ':' || addr[i] == '-') && i % 3 == 2) {
+            result[i] = separator;
+        } else {
+            psmove_WARNING("Invalid character at pos %d: '%c'\n", i, addr[i]);
+            free(result);
+            return NULL;
+        }
+    }
+
+    result[count] = '\0';
+    return result;
 }
 

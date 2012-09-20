@@ -64,9 +64,7 @@ psmove_orientation_new(PSMove *move)
     psmove_return_val_if_fail(move != NULL, NULL);
 
     if (!psmove_has_calibration(move)) {
-#ifdef PSMOVE_DEBUG
-        fprintf(stderr, "[PSMOVE] Can't create orientation - no calibration!\n");
-#endif
+        psmove_DEBUG("Can't create orientation - no calibration!\n");
         return NULL;
     }
 
@@ -102,10 +100,7 @@ psmove_orientation_update(PSMoveOrientation *orientation)
     if (now - orientation->sample_freq_measure_start >= 1000) {
         float measured = ((float)orientation->sample_freq_measure_count) /
             ((float)(now-orientation->sample_freq_measure_start))*1000.;
-
-#ifdef PSMOVE_DEBUG
-        printf("[PSMOVE] Measured sample_freq: %f\n", measured);
-#endif
+        psmove_DEBUG("Measured sample_freq: %f\n", measured);
 
         orientation->sample_freq = measured;
         orientation->sample_freq_measure_start = now;

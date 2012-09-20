@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
         }
 
         if (psmove_connection_type(move) != Conn_Bluetooth) {
-            printf("PSMove #%d connected via USB. ", i+1);
+            printf("PSMove #%d connected via USB.\n", i+1);
             int result = 0;
 
             if (custom_addr) {
@@ -89,12 +89,12 @@ int main(int argc, char* argv[])
             }
 
             if (result) {
-                printf("Pairing succeeded!\n");
+                printf("Pairing of #%d succeeded!\n", i+1);
                 char *serial = psmove_get_serial(move);
                 printf("Controller address: %s\n", serial);
                 free(serial);
             } else {
-                printf("Pairing failed.\n");
+                printf("Pairing of #%d failed.\n", i+1);
             }
 
             if (psmove_has_calibration(move)) {

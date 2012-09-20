@@ -33,6 +33,8 @@
 #include "../external/iniparser/dictionary.h"
 #include "../external/iniparser/iniparser.h"
 
+#include "../psmove_private.h"
+
 #include <stdio.h>
 
 #include "camera_control_private.h"
@@ -83,10 +85,7 @@ camera_control_new(int cameraID)
         char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
 
         if (video) {
-#ifdef PSMOVE_DEBUG
-            fprintf(stderr, "[PSMOVE] Using '%s' as video input.\n",
-                    video);
-#endif
+            psmove_DEBUG("Using '%s' as video input.\n", video);
             cc->capture = cvCaptureFromFile(video);
             free(video);
         } else {
@@ -156,17 +155,9 @@ camera_control_query_frame(CameraControl* cc)
 
     result = cc->frame3ch;
 #else
-
-#ifdef PSMOVE_DEBUG
     long start = psmove_util_get_ticks();
-#endif
-
     result = cvQueryFrame(cc->capture);
-
-#ifdef PSMOVE_DEBUG
-    printf("cvQueryFrame: %ld ms\n", psmove_util_get_ticks() - start);
-#endif
-
+    psmove_DEBUG("cvQueryFrame: %ld ms\n", psmove_util_get_ticks() - start);
 #endif
 
 #if defined(PSMOVE_USE_DEINTERLACE)

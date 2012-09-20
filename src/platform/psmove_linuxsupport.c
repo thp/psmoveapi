@@ -214,40 +214,6 @@ write_entry_to_file(const char *base, const char *filename,
     return process_file_entry(base, filename, addr, entry, 1);
 }
 
-char *
-normalize_addr(const char *addr)
-{
-    int count = strlen(addr);
-
-    if (count != 17) {
-        printf("Invalid address: '%s'\n", addr);
-        return NULL;
-    }
-
-    char *result = malloc(count + 1);
-    int i;
-
-    for (i=0; i<strlen(addr); i++) {
-        if (addr[i] >= 'A' && addr[i] <= 'F' && i % 3 != 2) {
-            result[i] = addr[i];
-        } else if (addr[i] >= '0' && addr[i] <= '9' && i % 3 != 2) {
-            result[i] = addr[i];
-        } else if (addr[i] >= 'a' && addr[i] <= 'f' && i % 3 != 2) {
-            result[i] = toupper(addr[i]);
-        } else if ((addr[i] == ':' || addr[i] == '-') && i % 3 == 2) {
-            result[i] = ':';
-        } else {
-            printf("Invalid character at pos %d: '%c'\n", i, addr[i]);
-            free(result);
-            return NULL;
-        }
-    }
-
-    result[count] = '\0';
-    return result;
-}
-
-
 typedef int (*for_all_entries_func)(const char *base, const char *filename,
         const char *addr, const char *entry);
 
@@ -272,7 +238,7 @@ linux_bluez_register_psmove(char *addr)
 {
     int errors = 0;
 
-    addr = normalize_addr(addr);
+    addr = _psmove_normalize_btaddr(addr, 0, ':');
     if (addr == NULL) {
         printf("Cannot parse bluetooth address!\n");
         return 0;

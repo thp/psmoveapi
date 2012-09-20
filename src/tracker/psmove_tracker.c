@@ -402,11 +402,9 @@ PSMoveTracker *psmove_tracker_new() {
 
     int camera_env = psmove_util_get_env_int(PSMOVE_TRACKER_CAMERA_ENV);
     if (camera_env != -1) {
-#ifdef PSMOVE_DEBUG
         camera = camera_env;
-        fprintf(stderr, "[PSMOVE] Using camera %d (%s is set)\n",
-                camera, PSMOVE_TRACKER_CAMERA_ENV);
-#endif
+        psmove_DEBUG("Using camera %d (%s is set)\n", camera,
+                PSMOVE_TRACKER_CAMERA_ENV);
     }
 
     return psmove_tracker_new_with_camera(camera);
@@ -435,9 +433,7 @@ psmove_tracker_new_with_camera(int camera) {
     int dimming_env = psmove_util_get_env_int(PSMOVE_TRACKER_DIMMING_ENV);
     if (dimming_env != -1) {
         dimming_env = MIN(100, MAX(1, dimming_env));
-#ifdef PSMOVE_DEBUG
-        fprintf(stderr, "[PSMOVE] Dimming factor: %d %%\n", dimming_env);
-#endif
+        psmove_DEBUG("Dimming factor: %d %%\n", dimming_env);
         tracker->dimming_factor = (float)dimming_env * .01;
     } else {
         tracker->dimming_factor = 1.;
@@ -510,9 +506,7 @@ psmove_tracker_new_with_camera(int camera) {
         if (size == -1) {
             size = MIN(frame->width/2, frame->height/2);
         } else {
-#ifdef PSMOVE_DEBUG
-            fprintf(stderr, "[PSMOVE] Using ROI size: %d\n", size);
-#endif
+            psmove_DEBUG("Using ROI size: %d\n", size);
         }
 
         int w = size, h = size;

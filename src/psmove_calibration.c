@@ -272,9 +272,7 @@ psmove_calibration_new(PSMove *move)
     psmove_calibration_load(calibration);
     if (!psmove_calibration_supported(calibration)) {
         if (psmove_connection_type(move) == Conn_USB) {
-#ifdef PSMOVE_DEBUG
-            fprintf(stderr, "[PSMOVE] Storing calibration from USB\n");
-#endif
+            psmove_DEBUG("Storing calibration from USB\n");
             psmove_calibration_read_from_usb(calibration);
             psmove_calibration_save(calibration);
         }

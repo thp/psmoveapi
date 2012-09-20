@@ -66,9 +66,7 @@ linux_find_pseye()
                     &capability) == 0, -1);
 
         if (strcmp((const char*)(capability.driver), "ov534") == 0) {
-#ifdef PSMOVE_DEBUG
-            fprintf(stderr, "[PSMOVE] Detected PSEye (ov534): %s\n", filename);
-#endif
+            psmove_DEBUG("Detected PSEye (ov534): %s\n", filename);
             result = i;
             break;
         }

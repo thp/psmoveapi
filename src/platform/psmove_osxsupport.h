@@ -39,6 +39,9 @@ extern "C" {
 char *
 macosx_get_btaddr();
 
+int
+macosx_blued_register_psmove(char *addr);
+
 #ifdef __cplusplus
 }
 #endif

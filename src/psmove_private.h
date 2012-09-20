@@ -53,17 +53,32 @@ extern "C" {
 #define PSMOVE_VID 0x054c
 #define PSMOVE_PID 0x03d5
 
-/* Macro: Print a warning message */
-#define psmove_WARNING(x, ...) \
-        {fprintf(stderr, "[PSMOVE] " x, __VA_ARGS__);}
+#define psmove_PRINTF(section, msg, ...) \
+        fprintf(stderr, "[" section "] " msg, ## __VA_ARGS__)
+
+/* Macro: Debugging output */
+#ifdef PSMOVE_DEBUG
+#    define psmove_DEBUG(msg, ...) \
+            psmove_PRINTF("PSMOVE DEBUG", msg, ## __VA_ARGS__)
+#else
+#    define psmove_DEBUG(msg, ...)
+#endif
+
+/* Macro: Warning message */
+#define psmove_WARNING(msg, ...) \
+        psmove_PRINTF("PSMOVE WARNING", msg, ## __VA_ARGS__)
 
 /* Macro: Print a critical message if an assertion fails */
 #define psmove_CRITICAL(x) \
-        {fprintf(stderr, "[PSMOVE] Assertion fail in %s: %s\n", __func__, x);}
+        psmove_PRINTF("PSMOVE CRITICAL", \
+                "Assertion fail in %s: %s\n", \
+                __func__, x)
 
 /* Macro: Deprecated functions */
 #define psmove_DEPRECATED(x) \
-        {fprintf(stderr, "[PSMOVE] %s is deprecated: %s\n", __func__, x);}
+        psmove_PRINTF("PSMOVE DEPRECATED", \
+                "%s is deprecated: %s\n", \
+                __func__, x)
 
 /* Macros: Return immediately if an assertion fails + log */
 #define psmove_return_if_fail(expr) \
@@ -162,6 +177,18 @@ ADDCALL _psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
  **/
 ADDAPI char *
 ADDCALL _psmove_btaddr_to_string(const PSMove_Data_BTAddr addr);
+
+/**
+ * Normalize a Bluetooth address given a specific format
+ *
+ * lowercase ... Make all characters lowercase if nonzero
+ * separator ... The separator character (usually ':' or '-')
+ *
+ * The return value must be free()d by the caller.
+ **/
+ADDAPI char *
+ADDCALL _psmove_normalize_btaddr(const char *addr, int lowercase, char separator);
+
 
 /**
  * Read the current Bluetooth addresses stored in the controller
