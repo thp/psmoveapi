@@ -115,6 +115,8 @@ int main(int argc, char* argv[])
 
             if (battery == Batt_CHARGING) {
                 printf("battery charging\n");
+            } else if (battery == Batt_CHARGING_DONE) {
+                printf("battery fully charged (on charger)\n");
             } else if (battery >= Batt_MIN && battery <= Batt_MAX) {
                 printf("battery level: %d / %d\n", battery, Batt_MAX);
             } else {

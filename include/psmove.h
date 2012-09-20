@@ -129,8 +129,9 @@ enum PSMove_Battery_Level {
     Batt_40Percent = 0x02, /*!< Battery has at least 40% remaining */
     Batt_60Percent = 0x03, /*!< Battery has at least 60% remaining */
     Batt_80Percent = 0x04, /*!< Battery has at least 80% remaining */
-    Batt_MAX = 0x05, /*!< Battery is fully charged */
+    Batt_MAX = 0x05, /*!< Battery is fully charged (not on charger) */
     Batt_CHARGING = 0xEE, /*!< Battery is currently being charged */
+    Batt_CHARGING_DONE = 0xEF, /*!< Battery is fully charged (on charger) */
 };
 
 /*! LED update result, returned by psmove_update_leds() */
