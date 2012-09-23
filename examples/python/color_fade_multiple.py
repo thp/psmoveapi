@@ -1,7 +1,7 @@
 
 #
 # PS Move API - An interface for the PS Move Motion Controller
-# Copyright (c) 2011 Thomas Perl <m@thp.io>
+# Copyright (c) 2011-2012 Thomas Perl <m@thp.io>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,36 +27,44 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'build'))
 
 import time
+import math
 import psmove
 
-if psmove.count_connected() < 2:
-    print('This examples requires at least 2 controllers.')
-    sys.exit(1)
-
-a = psmove.PSMove(0)
-b = psmove.PSMove(1)
 moves = [psmove.PSMove(x) for x in range(psmove.count_connected())]
 
-i = 0
+colors = [
+   (255, 0, 0),
+   (0, 255, 0),
+   (0, 0, 255),
+   (0, 255, 255),
+   (255, 0, 255),
+   (255, 255, 0),
+]
+
+brightness = 1.
+wait_time = 3.
+current = 0
+
+def mix(a, b):
+    def mix_component(idx):
+        return int(brightness*(a[idx]*(1.-x) + b[idx]*float(x)))
+    return map(mix_component, range(3))
+
+x = 0.
 while True:
     for move in moves:
-        move.set_leds(0, 0, 0)
-
-    if i % 12 in (1, 3, 5):
-        for x in range(0, len(moves), 2):
-            moves[x].set_leds(255, 0, 0)
-    elif i % 12 in (7, 9, 11):
-        for x in range(1, len(moves), 2):
-            moves[x].set_leds(0, 0, 255)
-
-    for move in moves:
+        move.set_leds(*mix(colors[current], colors[(current+1)%len(colors)]))
         move.update_leds()
-
-    time.sleep(.05)
-    i += 1
+    time.sleep(.01)
+    x += .001
+    if x >= 1.:
+        x -= 1.
+        current += 1
+        current %= len(colors)
 
