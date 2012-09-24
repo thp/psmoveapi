@@ -32,6 +32,8 @@
 
 #include <IOBluetooth/objc/IOBluetoothHostController.h>
 
+#import <Foundation/NSAutoreleasePool.h>
+
 /* Location for the plist file that we want to modify */
 #define OSX_BT_CONFIG_PATH "/Library/Preferences/com.apple.Bluetooth"
 
@@ -66,6 +68,7 @@ macosx_bluetooth_set_powered(int powered)
 char *
 macosx_get_btaddr()
 {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     const char *result;
 
     macosx_bluetooth_set_powered(1);
@@ -79,6 +82,7 @@ macosx_get_btaddr()
     result = [addr UTF8String];
     psmove_return_val_if_fail(result != NULL, NULL);
 
+    [pool release];
     return strdup(result);
 }
 
@@ -142,17 +146,20 @@ macosx_blued_is_paired(char *btaddr)
 int
 macosx_blued_register_psmove(char *addr)
 {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    int result = 1;
     char cmd[1024];
     char *btaddr = _psmove_normalize_btaddr(addr, 1, '-');
 
     if (macosx_blued_is_paired(btaddr)) {
         OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr);
-        return 1;
+        goto end;
     }
 
     if (!macosx_bluetooth_set_powered(0)) {
         OSXPAIR_DEBUG("Cannot shutdown Bluetooth.\n");
-        return 0;
+        result = 0;
+        goto end;
     }
 
     int i = 0;
@@ -174,6 +181,9 @@ macosx_blued_register_psmove(char *addr)
     macosx_bluetooth_set_powered(1);
     free(btaddr);
 
-    return 1;
+end:
+    [pool release];
+
+    return result;
 }
 
