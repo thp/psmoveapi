@@ -24,7 +24,8 @@ link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libs)
 
 # Language bindings
 option(PSMOVE_BUILD_QT_BINDINGS "Build the Qt bindings" OFF)
-option(PSMOVE_BUILD_JAVA_BINDINGS "Build the Java bindings" OFF)
+option(PSMOVE_BUILD_JAVA_BINDINGS "Build the Java bindings" ON)
+option(PSMOVE_BUILD_PROCESSING_BINDINGS "Build the Processing bindings" ON)
 option(PSMOVE_BUILD_PYTHON_BINDINGS "Build the Python bindings" ON)
 
 
@@ -95,6 +96,9 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/mac/hid.c)
 
+	# Build Universal Binaries for OS X
+	set(CMAKE_OSX_ARCHITECTURES "i386;x86_64")
+
     list(APPEND PSMOVEAPI_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_osxsupport.m)
 
@@ -142,9 +146,6 @@ ELSE()
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/linux/hid.c)
-
-    list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_linuxsupport.c)
 
     list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/psmove_linuxsupport.c
@@ -207,6 +208,19 @@ if(PSMOVE_BUILD_TRACKER)
     list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi_tracker)
 endif()
 
+# Static library
+	add_library(psmoveapi_static STATIC
+	    ${HIDAPI_SRC}
+	    ${PSMOVEAPI_SRC}
+	    ${PSMOVEAPI_MOVED_SRC}
+	    ${PSMOVEAPI_PLATFORM_SRC}
+	    ${PSMOVEAPI_ALGORITHM_SRC})
+	target_link_libraries(psmoveapi_static
+	    ${PSMOVEAPI_REQUIRED_LIBS})
+	set_target_properties(psmoveapi_static PROPERTIES
+	    VERSION ${PSMOVEAPI_VERSION}
+	    SOVERSION ${PSMOVEAPI_VERSION_SONAME})
+
 # Essential utilities
 foreach(UTILITY moved psmovepair)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
@@ -248,7 +262,7 @@ if(PSMOVE_BUILD_TESTS)
 endif()
 
 
-# Language bindings (Python and Java)
+# Language bindings (Python, Java and Processing)
 find_package(SWIG QUIET)
 if(SWIG_FOUND)
     include(${SWIG_USE_FILE})
@@ -279,17 +293,76 @@ if(SWIG_FOUND)
             set(CMAKE_SWIG_FLAGS -package ${PSMOVEAPI_JAVA_PKG})
             include_directories(${JNI_INCLUDE_DIRS})
             swig_add_module(psmove_java java bindings/swig/psmove.i)
-            swig_link_libraries(psmove_java psmoveapi ${JNI_LIBRARIES})
+			#swig_link_libraries(psmove_java psmoveapi ${JNI_LIBRARIES})
+	        swig_link_libraries(psmove_java psmoveapi_static ${JNI_LIBRARIES})
             set(INFO_BUILD_JAVA_BINDINGS "Yes")
 
             add_custom_target(psmoveapi.jar ALL
-                COMMAND mkdir -p ${PSMOVEAPI_JAVA_PKG_DIR}
-                COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR} || true
+                #COMMAND mkdir -p ${PSMOVEAPI_JAVA_PKG_DIR}
+                #COMMAND mv *.java ${PSMOVEAPI_JAVA_PKG_DIR} || true
+	            COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
+				COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/copyjava.cmake ${CMAKE_CURRENT_BINARY_DIR}/copyjava.cmake
+	            COMMAND ${CMAKE_COMMAND} -P copyjava.cmake
                 COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
                 COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Java bindings JAR archive"
             )
+		set(PSMOVEAPI_PROCESSING_DIR "processing/libraries/psmove")
+		set(PROCESSING_LIB_DIR "${PSMOVEAPI_PROCESSING_DIR}/library")
+
+		IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+			set(PSMOVEAPI_LIB_PLATFORM "macosx")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.jnilib")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
+		ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+			set(PSMOVEAPI_LIB_PLATFORM "windows")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.dll")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair.exe")
+		ELSE() # Linux 
+			set(PSMOVEAPI_LIB_PLATFORM "linux")
+			set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.so")
+			set(PSMOVEAPI_PAIRING_TOOL_NAME "psmovepair")
+		ENDIF()
+
+		if(PSMOVE_BUILD_PROCESSING_BINDINGS)
+		add_custom_target(processing_lib ALL
+			# Create Folder Structure
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/examples
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/linux
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/macosx
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/library/windows
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/linux
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/macosx
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_PROCESSING_DIR}/tools/windows
+
+			# Copy java library, native library, pairing tool, and example app into folder structure
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.jar ${PSMOVEAPI_PROCESSING_DIR}/library/psmove.jar
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_NATIVE_LIB} ${PSMOVEAPI_PROCESSING_DIR}/library/${PSMOVEAPI_LIB_PLATFORM}/${PSMOVEAPI_NATIVE_LIB}
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${PSMOVEAPI_PAIRING_TOOL_NAME} ${PSMOVEAPI_PROCESSING_DIR}/tools/${PSMOVEAPI_LIB_PLATFORM}/${PSMOVEAPI_PAIRING_TOOL_NAME}
+			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/processing/libraries/psmove/examples/psmove ${PSMOVEAPI_PROCESSING_DIR}/examples/psmove
+
+			# Cross-platform zipping :) 	
+			COMMAND jar cfM psmove_processing.zip processing 
+
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			COMMENT "Building and packaging Processing library"
+			
+		)
+		
+			# Ensure building targets in the correct order 
+			# (native lib->java lib->processing lib)
+			add_dependencies(psmoveapi.jar psmove_java)
+			add_dependencies(processing_lib psmoveapi.jar)
+			add_dependencies(processing_lib psmovepair)
+		
+		set(INFO_BUILD_PROCESSING_BINDINGS "Yes")
+		else()
+		set(INFO_BUILD_PROCESSING_BINDINGS "No (disabled)")
+		endif()
+        
         else()
             set(INFO_BUILD_JAVA_BINDINGS "No (JNI not found)")
         endif()
@@ -315,12 +388,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
     DESTINATION lib/pkgconfig)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/99-psmove.rules
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/99-psmove.rules  	
     DESTINATION /etc/udev/rules.d)
 
 install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib
 )
 
 install(FILES ${PSMOVEAPI_HEADERS} DESTINATION include/psmoveapi)
@@ -361,6 +435,7 @@ message("")
 message("  Language bindings")
 message("    Python:           " ${INFO_BUILD_PYTHON_BINDINGS})
 message("    Java:             " ${INFO_BUILD_JAVA_BINDINGS})
+message("    Processing:       " ${INFO_BUILD_PROCESSING_BINDINGS})
 message("    Qt:               " ${INFO_BUILD_QT_BINDINGS})
 message("")
 message("  Tracker")
