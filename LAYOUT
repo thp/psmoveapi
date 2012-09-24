@@ -20,6 +20,9 @@ examples - Applications and utilities
         examples/labs/x11mouse - Use the PS Move as a mouse under X11
     examples/python - Examples and utilities using the Python bindings
     examples/qt - Example applications using the Qt bindings (psmoveapiqt)
+    examples/processing - Examples for Processing
+        examples/processing/trigger_brightness - Single controller example
+        examples/processing/two_controllers - Example how to use 2 controllers
 
 src - Source code for the C library
     src/platform - Platform-specific code for the main library
