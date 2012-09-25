@@ -1,11 +1,15 @@
 
+#include "../psmove_private.h"
 #include "psmove_linuxsupport.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glob.h>
 #include <ctype.h>
+#include <sys/stat.h>
+
+#define LINUXPAIR_DEBUG(msg, ...) \
+        psmove_PRINTF("PAIRING LINUX", msg, ## __VA_ARGS__)
 
 
 #define CLASSES_ENTRY " 0x002508"
@@ -35,27 +39,6 @@
 #define TRUSTS_ENTRY " [all]"
 
 #define BLUEZ_CONFIG_DIR "/var/lib/bluetooth/"
-
-char *
-get_bluez_config_base_path()
-{
-    char *result = NULL;
-    glob_t g;
-
-    if (glob(BLUEZ_CONFIG_DIR "*", 0, NULL, &g) != 0) {
-        printf("Warning: could not find state directory\n");
-        return NULL;
-    }
-
-    if (g.gl_pathc == 1) {
-        result = strdup(g.gl_pathv[0]);
-    } else {
-        printf("Need exactly one BT adapter, found %d\n", g.gl_pathc);
-    }
-
-    globfree(&g);
-    return result;
-}
 
 
 struct entry_list_t {
@@ -158,7 +141,7 @@ write_entry_list(const char *filename, struct entry_list_t *list)
 
     FILE *fp = fopen(filename, "w");
     if (fp == NULL) {
-        printf("Can't open file for writing: '%s'\n", filename);
+        LINUXPAIR_DEBUG("Can't open file for writing: '%s'\n", filename);
         return 1;
     }
 
@@ -234,24 +217,38 @@ for_all_entries(for_all_entries_func func, const char *base, const char *addr)
 }
 
 int
-linux_bluez_register_psmove(char *addr)
+linux_bluez_register_psmove(char *addr, char *host)
 {
     int errors = 0;
 
-    addr = _psmove_normalize_btaddr(addr, 0, ':');
-    if (addr == NULL) {
-        printf("Cannot parse bluetooth address!\n");
-        return 0;
+    char *controller_addr = _psmove_normalize_btaddr(addr, 0, ':');
+    char *host_addr = _psmove_normalize_btaddr(host, 0, ':');
+
+    if (controller_addr == NULL) {
+        LINUXPAIR_DEBUG("Cannot parse controller address: '%s'\n", addr);
+        errors++;
+        goto cleanup;
     }
 
-    char *base = get_bluez_config_base_path();
-    if (base == NULL) {
-        printf("Can't find Bluetooth directory in '" BLUEZ_CONFIG_DIR "'\n");
-        return 0;
+    if (host_addr == NULL) {
+        LINUXPAIR_DEBUG("Cannot parse host address: '%s'\n", host);
+        errors++;
+        goto cleanup;
+    }
+
+    char *base = malloc(strlen(BLUEZ_CONFIG_DIR) + strlen(host_addr) + 1);
+    strcpy(base, BLUEZ_CONFIG_DIR);
+    strcat(base, host_addr);
+
+    struct stat st;
+    if (stat(base, &st) != 0 || !S_ISDIR(st.st_mode)) {
+        LINUXPAIR_DEBUG("Not a directory: %s\n", base);
+        errors++;
+        goto cleanup;
     }
 
     // First, let's check if the entries are already okay..
-    errors = for_all_entries(check_entry_in_file, base, addr);
+    errors = for_all_entries(check_entry_in_file, base, controller_addr);
 
     if (errors) {
         // In this case, we have missing or invalid values and need to update
@@ -259,21 +256,23 @@ linux_bluez_register_psmove(char *addr)
 
         // FIXME: This is Ubuntu-specific
         if (system("service bluetooth stop") != 0) {
-            printf("Automatic stopping of bluetoothd failed.\n"
+            LINUXPAIR_DEBUG("Automatic stopping of bluetoothd failed.\n"
                    "You might have to stop it manually before pairing.\n");
         }
 
-        errors = for_all_entries(write_entry_to_file, base, addr);
+        errors = for_all_entries(write_entry_to_file, base, controller_addr);
 
         // FIXME: This is Ubuntu-specific
         if (system("service bluetooth start") != 0) {
-            printf("Automatic starting of bluetoothd failed.\n"
+            LINUXPAIR_DEBUG("Automatic starting of bluetoothd failed.\n"
                    "You might have to start it manually after pairing.\n");
         }
-
-        free(base);
-        free(addr);
     }
+
+cleanup:
+    free(base);
+    free(host_addr);
+    free(controller_addr);
 
     return (errors == 0);
 }

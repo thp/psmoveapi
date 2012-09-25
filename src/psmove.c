@@ -859,10 +859,11 @@ psmove_pair(PSMove *move)
     }
 
     char *addr = psmove_get_serial(move);
+    char *host = _psmove_btaddr_to_string(btaddr);
 
 #if defined(__linux)
     /* Add entry to Bluez' bluetoothd state file */
-    linux_bluez_register_psmove(addr);
+    linux_bluez_register_psmove(addr, host);
 #endif
 
 #if defined(__APPLE__)
@@ -871,6 +872,7 @@ psmove_pair(PSMove *move)
 #endif
 
     free(addr);
+    free(host);
 
     return PSMove_True;
 }
