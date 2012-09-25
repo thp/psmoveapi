@@ -243,6 +243,13 @@ if(PSMOVE_BUILD_EXAMPLES)
         add_executable(tuio_server examples/c/tuio_server.cpp)
         target_link_libraries(tuio_server psmoveapi psmoveapi_tracker TUIO)
     endif()
+
+    if(PSMOVE_BUILD_TRACKER)
+        foreach(EXAMPLE distance_calibration)
+            add_executable(${EXAMPLE} examples/c/${EXAMPLE}.c)
+            target_link_libraries(${EXAMPLE} psmoveapi psmoveapi_tracker)
+        endforeach()
+    endif()
 endif()
 
 
