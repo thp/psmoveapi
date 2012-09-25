@@ -53,7 +53,7 @@
 #define GOOD_EXPOSURE 2051			// a very low exposure that was found to be good for tracking
 #define ROIS 4                   	// the number of levels of regions of interest (roi)
 #define BLINKS 4                 	// number of diff images to create during calibration
-#define BLINK_DELAY 50             	// number of milliseconds to wait between a blink
+#define BLINK_DELAY 100             	// number of milliseconds to wait between a blink
 #define CALIB_MIN_SIZE 50		 	// minimum size of the estimated glowing sphere during calibration process (in pixel)
 #define CALIB_SIZE_STD 10	     	// maximum standard deviation (in %) of the glowing spheres found during calibration process
 #define CALIB_MAX_DIST 30		 	// maximum displacement of the separate found blobs
@@ -575,8 +575,8 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
     struct PSMove_RGBValue preset_colors[] = {
         {0xFF, 0x00, 0xFF}, /* magenta */
         {0x00, 0xFF, 0xFF}, /* cyan */
-        {0xFF, 0xFF, 0xFF}, /* yellow */
         {0x00, 0x00, 0xFF}, /* blue */
+        {0xFF, 0xFF, 0x00}, /* yellow */
         {0x00, 0xFF, 0x00}, /* green */
     };
 
