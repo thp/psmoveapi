@@ -41,15 +41,61 @@
 
 
 /*
- * Implemented in hidapi.
- *
  * The caller is responsible for free()ing the (newly-allocated) character
  * strings pointed to by serial_number_utf8 and product_name_utf8 after use.
  */
 int
 parse_uevent_info(const char *uevent, int *bus_type,
         unsigned short *vendor_id, unsigned short *product_id,
-        char **serial_number_utf8, char **product_name_utf8);
+        char **serial_number_utf8, char **product_name_utf8)
+{
+    char *tmp = strdup(uevent);
+    char *saveptr = NULL;
+    char *line;
+    char *key;
+    char *value;
+
+    int found_id = 0;
+    int found_serial = 0;
+    int found_name = 0;
+
+    line = strtok_r(tmp, "\n", &saveptr);
+    while (line != NULL) {
+        /* line: "KEY=value" */
+        key = line;
+        value = strchr(line, '=');
+        if (!value) {
+            goto next_line;
+        }
+        *value = '\0';
+        value++;
+
+        if (strcmp(key, "HID_ID") == 0) {
+            /**
+             *        type vendor   product
+             * HID_ID=0003:000005AC:00008242
+             **/
+            int ret = sscanf(value, "%x:%hx:%hx", bus_type, vendor_id, product_id);
+            if (ret == 3) {
+                found_id = 1;
+            }
+        } else if (strcmp(key, "HID_NAME") == 0) {
+            /* The caller has to free the product name */
+            *product_name_utf8 = strdup(value);
+            found_name = 1;
+        } else if (strcmp(key, "HID_UNIQ") == 0) {
+            /* The caller has to free the serial number */
+            *serial_number_utf8 = strdup(value);
+            found_serial = 1;
+        }
+
+next_line:
+        line = strtok_r(NULL, "\n", &saveptr);
+    }
+
+    free(tmp);
+    return (found_id && found_name && found_serial);
+}
 
 /**
  * Copied from hidapi
