@@ -14,6 +14,8 @@ $(TARGET): $(OBJS)
 clean:
 	rm -f $(TARGET) $(OBJS)
 
-.PHONY: all clean
+distclean: clean
+
+.PHONY: all clean distclean
 .DEFAULT: all
 
