@@ -69,8 +69,10 @@
 #  include <BluetoothAPIs.h>
 #  define PATH_MAX MAX_PATH
 #  define ENV_USER_HOME "APPDATA"
+#  define PATH_SEP "\\"
 #else
 #  define ENV_USER_HOME "HOME"
+#  define PATH_SEP "/"
 #endif
 
 #include "daemon/moved_client.h"
@@ -478,7 +480,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
 #ifdef _WIN32
     /* Windows Quirk: USB devices have "0" as serial, BT devices their addr */
-    if (wcslen(serial) > 1) {
+    if (serial != NULL && wcslen(serial) > 1) {
         move->is_bluetooth = 1;
     }
     /* Windows Quirk: Use path instead of serial number by ignoring serial */
@@ -1468,7 +1470,7 @@ psmove_util_get_data_dir()
 
     if (strlen(dir) == 0) {
         strncpy(dir, getenv(ENV_USER_HOME), sizeof(dir));
-        strncat(dir, "/.psmoveapi/", sizeof(dir));
+        strncat(dir, PATH_SEP ".psmoveapi", sizeof(dir));
     }
 
     return dir;
@@ -1489,8 +1491,9 @@ psmove_util_get_file_path(const char *filename)
 #endif
     }
 
-    result = malloc(strlen(parent) + strlen(filename) + 1);
+    result = malloc(strlen(parent) + 1 + strlen(filename) + 1);
     strcpy(result, parent);
+    strcat(result, PATH_SEP);
     strcat(result, filename);
 
     return result;

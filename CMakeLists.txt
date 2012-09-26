@@ -107,6 +107,9 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
 
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
+    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
+
     IF(PSMOVE_USE_CL_EYE_SDK)
         find_path(CL_EYE_SDK_PATH Bin/CLEyeMulticam.dll
             HINTS "C:/Program Files/Code Laboratories/CL-Eye Platform SDK"
@@ -202,6 +205,8 @@ list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi)
 
 add_library(psmoveapi_static STATIC ${PSMOVEAPI_LIBRARY_SRC})
 target_link_libraries(psmoveapi_static ${PSMOVEAPI_REQUIRED_LIBS})
+set_target_properties(psmoveapi_static PROPERTIES
+    COMPILE_FLAGS -DBUILDING_STATIC_LIBRARY)
 
 if(PSMOVE_BUILD_TRACKER)
     add_library(psmoveapi_tracker SHARED
@@ -223,6 +228,8 @@ endif()
 foreach(UTILITY moved psmovepair)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
     target_link_libraries(${UTILITY} psmoveapi_static)
+    set_target_properties(${UTILITY} PROPERTIES
+        COMPILE_FLAGS -DUSING_STATIC_LIBRARY)
     list(APPEND PSMOVEAPI_INSTALL_TARGETS ${UTILITY})
 endforeach()
 
@@ -281,6 +288,8 @@ if(SWIG_FOUND)
             include_directories(${PYTHON_INCLUDE_PATH})
             swig_add_module(psmove python bindings/swig/psmove.i)
             swig_link_libraries(psmove psmoveapi_static ${PYTHON_LIBRARIES})
+            set_target_properties(_psmove PROPERTIES
+                COMPILE_FLAGS -DUSING_STATIC_LIBRARY)
             set(INFO_BUILD_PYTHON_BINDINGS "Yes")
         else()
             set(INFO_BUILD_PYTHON_BINDINGS "No (libpython not found)")
@@ -299,6 +308,8 @@ if(SWIG_FOUND)
             include_directories(${JNI_INCLUDE_DIRS})
             swig_add_module(psmove_java java bindings/swig/psmove.i)
             swig_link_libraries(psmove_java psmoveapi_static ${JNI_LIBRARIES})
+            set_target_properties(psmove_java PROPERTIES
+                COMPILE_FLAGS -DUSING_STATIC_LIBRARY)
             set(INFO_BUILD_JAVA_BINDINGS "Yes")
 
             add_custom_target(psmoveapi.jar ALL

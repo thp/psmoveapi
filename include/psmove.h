@@ -38,9 +38,13 @@ extern "C" {
 
 #ifdef _WIN32
 #  define ADDCALL __cdecl
-#  ifdef BUILDING_SHARED_LIBRARY
+#  if defined(BUILDING_STATIC_LIBRARY)
+#    define ADDAPI
+#  elif defined(USING_STATIC_LIBRARY)
+#    define ADDAPI
+#  elif defined(BUILDING_SHARED_LIBRARY)
 #    define ADDAPI __declspec(dllexport)
-#  else
+#  else /* using shared library */
 #    define ADDAPI __declspec(dllimport)
 #  endif
 #else
