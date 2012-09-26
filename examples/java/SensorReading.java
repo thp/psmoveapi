@@ -33,6 +33,8 @@ public class SensorReading {
     public static void main(String [] args) {
         PSMove move = new PSMove();
 
+        System.out.println("PS Move Serial: " + move.get_serial());
+
         float [] ax = { 0.f };
         float [] ay = { 0.f };
         float [] az = { 0.f };
