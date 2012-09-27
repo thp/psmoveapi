@@ -16,6 +16,9 @@ export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build-win32/install
 # For parallel builds
 MAKE_ARGS=-j4
 
+# Take version from Debian package info
+PSMOVEAPI_VERSION=$(dpkg-parsechangelog | grep ^Version: | cut -d' ' -f2-)
+
 # Git revision identifier
 PSMOVEAPI_REVISION=$(git show-ref --hash=8 HEAD)
 
@@ -76,9 +79,10 @@ cp include/*.h dist/include/
 cd $PSMOVEAPI_CHECKOUT
 
 # Zip it up
-PACKAGE_NAME=psmoveapi-$(date +%F)_win32
+PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}_win32
 rm -rf $PACKAGE_NAME
 mv dist $PACKAGE_NAME
-zip -r ${PACKAGE_NAME}_${PSMOVEAPI_REVISION}.zip $PACKAGE_NAME
+mkdir -p upload
+zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
 rm -rf $PACKAGE_NAME
 

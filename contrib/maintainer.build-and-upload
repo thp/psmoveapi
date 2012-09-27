@@ -1,0 +1,20 @@
+#!/bin/bash -e -x
+#
+# Build and upload binary / source package snapshots
+# Thomas Perl <m@thp.io>; 2012-09-27
+#
+
+if [ ! -f CMakeLists.txt ]; then
+    echo "You must run this in the PS Move API source root directory."
+    exit 1
+fi
+
+(
+echo "Build started: $(date)"
+time bash -e -x contrib/cross-compile-mingw64
+time bash -e -x contrib/build-deb-snapshot
+echo "Build finished: $(date)"
+) 2>&1 | tee upload/build-log.$(date +%F_%H-%M).txt
+
+rsync -rpPav upload/* s:pub/tmp/psmoveapi-builds/
+
