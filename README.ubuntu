@@ -1,0 +1,57 @@
+
+Building PS Move API in Ubuntu Linux
+====================================
+
+These instructions have been tested and verified for Ubuntu 12.04 LTS.
+
+The commands are entered into the Terminal (use Ctrl+Alt+T to open one).
+
+We assume that you are going to clone the repository into ~/src/psmoveapi/
+
+
+1. Upgrade your system to the latest packages
+
+   sudo apt-get update
+   sudo apt-get dist-upgrade
+
+2. Install Git
+
+   sudo apt-get install git
+
+3. Clone the PS Move API Repository
+
+   mkdir -p ~/src/
+   cd ~/src/
+   git clone git://github.com/thp/psmoveapi.git
+   cd psmoveapi
+   git submodule init
+   git submodule update
+
+4. Install the build-dependencies
+
+   sudo apt-get install build-essential cmake libudev-dev libbluetooth-dev \
+           libv4l-dev libopencv-dev
+
+5.a Build the API (as Debian package) and install it
+
+   cd ~/src/psmoveapi/
+   dpkg-buildpackage -rfakeroot
+   sudo dpkg -i ../*psmoveapi*.deb
+
+5.b Build the API (standalone - if you want to make changes)
+
+   cd ~/src/psmoveapi/
+   mkdir build
+   cd build
+   cmake ..
+   make -j4
+
+
+For questions, please read the archives of the PS Move Mailing List. If you
+cannot find an answer to your question in the archives, send an e-mail:
+
+   https://lists.ims.tuwien.ac.at/mailman/listinfo/psmove
+
+
+Thomas Perl, 2012-09-27
+
