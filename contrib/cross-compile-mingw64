@@ -5,7 +5,7 @@
 #
 # Dependencies (Ubuntu/Debian):
 #
-#     sudo apt-get install mingw-w64 mingw-w64-dev
+#     sudo apt-get install mingw-w64 g++-mingw-w64
 #
 
 export PSMOVEAPI_CHECKOUT=$(pwd)
