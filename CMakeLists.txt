@@ -34,7 +34,7 @@ option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 
 # Additional applications that can be used to test the library
 option(PSMOVE_BUILD_EXAMPLES "Build the C examples" ON)
-option(PSMOVE_BUILD_TESTS "Build the C tests" OFF)
+option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
 option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
 
 
