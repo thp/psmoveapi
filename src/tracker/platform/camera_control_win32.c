@@ -181,11 +181,12 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
             cvReleaseCapture(&cc->capture);
         }
 
+	int width, height;
+	get_metrics(&width, &height);
+
 	cc->capture = cvCaptureFromCAM(cc->cameraID);
-	cvSetCaptureProperty(cc->capture,
-                CV_CAP_PROP_FRAME_WIDTH, PSMOVE_TRACKER_POSITION_X_MAX);
-	cvSetCaptureProperty(cc->capture,
-                CV_CAP_PROP_FRAME_HEIGHT, PSMOVE_TRACKER_POSITION_Y_MAX);
+	cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_WIDTH, width);
+	cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_HEIGHT, height);
 #endif
 }
 

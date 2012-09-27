@@ -63,3 +63,6 @@ struct _CameraControl {
 };
 
 #endif
+
+void
+get_metrics(int *width, int *height);
