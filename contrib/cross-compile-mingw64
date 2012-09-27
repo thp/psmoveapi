@@ -1,0 +1,75 @@
+#!/bin/bash -x -e
+#
+# Script to cross compile PS Move API for Windows on a Linux host
+# Thomas Perl <m@thp.io>; 2012-09-27
+#
+# Dependencies (Ubuntu/Debian):
+#
+#     sudo apt-get install mingw-w64 mingw-w64-dev
+#
+
+export PSMOVEAPI_CHECKOUT=$(pwd)
+export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/contrib/toolchain-mingw64.cmake
+export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv-win32/opencv
+export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build-win32/install
+
+if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
+    echo "ERROR: You have to run this script in the PS Move API source root."
+    exit 1
+fi
+
+# Build OpenCV
+if [ ! -d $OPENCV_INSTALL_DIR ]; then
+    mkdir -p opencv-win32
+    cd opencv-win32
+    if [ ! -d opencv ]; then
+        git clone git://code.opencv.org/opencv.git
+    fi
+    cd opencv
+    rm -rf build-win32
+    mkdir -p build-win32
+    cd build-win32
+    cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
+    make
+    make install
+fi
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Build PS Move API
+rm -rf build-win32
+mkdir build-win32
+cd build-win32
+cmake -DPSMOVE_USE_LOCAL_OPENCV=ON \
+      -DPSMOVE_BUILD_TRACKER=OFF \
+      -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
+make
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Packaging
+rm -rf dist
+mkdir -p dist/bin
+cp build-win32/*.exe dist/bin/
+cp build-win32/libpsmoveapi.dll dist/bin/
+cp build-win32/libpsmoveapi_tracker.dll dist/bin/
+cp $OPENCV_INSTALL_DIR/bin/libopencv_core249.dll dist/bin/
+cp $OPENCV_INSTALL_DIR/bin/libopencv_highgui249.dll dist/bin/
+cp $OPENCV_INSTALL_DIR/bin/libopencv_imgproc249.dll dist/bin/
+mkdir -p dist/lib
+cp build-win32/libpsmoveapi.dll.a dist/lib/
+cp build-win32/libpsmoveapi_tracker.dll.a dist/lib/
+cp $OPENCV_INSTALL_DIR/lib/libopencv_core249.dll.a dist/lib/
+cp $OPENCV_INSTALL_DIR/lib/libopencv_highgui249.dll.a dist/lib/
+cp $OPENCV_INSTALL_DIR/lib/libopencv_imgproc249.dll.a dist/lib/
+mkdir -p dist/include
+cp include/*.h dist/include/
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Zip it up
+PACKAGE_NAME=psmoveapi-$(date +%F)_win32
+rm -rf $PACKAGE_NAME
+mv dist $PACKAGE_NAME
+zip -r $PACKAGE_NAME.zip $PACKAGE_NAME
+

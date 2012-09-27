@@ -65,9 +65,11 @@
 
 #ifdef _WIN32
 #  include <windows.h>
-#  include <Bthsdpdef.h>
-#  include <BluetoothAPIs.h>
+#  include <bthsdpdef.h>
+#  include <bluetoothapis.h>
+#ifndef PATH_MAX
 #  define PATH_MAX MAX_PATH
+#endif
 #  define ENV_USER_HOME "APPDATA"
 #  define PATH_SEP "\\"
 #else

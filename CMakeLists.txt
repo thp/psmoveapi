@@ -107,8 +107,20 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
 
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
-    link_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
+    option(PSMOVE_USE_LOCAL_OPENCV "OpenCV (contrib/cross-compile-mingw64)" OFF)
+    if (PSMOVE_USE_LOCAL_OPENCV)
+        # Force tracker build with a locally-built opencv library installation
+        set(OPENCV_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv-win32/opencv/build-win32/install)
+        link_directories(${OPENCV_INSTALL_DIR}/lib)
+        include_directories(${OPENCV_INSTALL_DIR}/include)
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
+            opencv_core249.dll opencv_highgui249 opencv_imgproc249)
+        set(PSMOVE_BUILD_TRACKER ON)
+        set(INFO_BUILD_TRACKER "Yes (mingw64-cross-compile)")
+    else()
+        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
+        link_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
+    endif()
 
     IF(PSMOVE_USE_CL_EYE_SDK)
         find_path(CL_EYE_SDK_PATH Bin/CLEyeMulticam.dll
