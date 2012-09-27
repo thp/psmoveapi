@@ -13,6 +13,12 @@ export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/contrib/toolchain-mingw64.cmake
 export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv-win32/opencv
 export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build-win32/install
 
+# For parallel builds
+MAKE_ARGS=-j4
+
+# Git revision identifier
+PSMOVEAPI_REVISION=$(git show-ref --hash=8 HEAD)
+
 if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     echo "ERROR: You have to run this script in the PS Move API source root."
     exit 1
@@ -30,7 +36,7 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
     mkdir -p build-win32
     cd build-win32
     cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
-    make
+    make ${MAKE_ARGS}
     make install
 fi
 
@@ -43,13 +49,15 @@ cd build-win32
 cmake -DPSMOVE_USE_LOCAL_OPENCV=ON \
       -DPSMOVE_BUILD_TRACKER=OFF \
       -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
-make
+make ${MAKE_ARGS}
 
 cd $PSMOVEAPI_CHECKOUT
 
 # Packaging
 rm -rf dist
 mkdir -p dist/bin
+echo $PSMOVEAPI_REVISION >dist/revision.txt
+cp README COPYING dist/
 cp build-win32/*.exe dist/bin/
 cp build-win32/libpsmoveapi.dll dist/bin/
 cp build-win32/libpsmoveapi_tracker.dll dist/bin/
@@ -71,5 +79,6 @@ cd $PSMOVEAPI_CHECKOUT
 PACKAGE_NAME=psmoveapi-$(date +%F)_win32
 rm -rf $PACKAGE_NAME
 mv dist $PACKAGE_NAME
-zip -r $PACKAGE_NAME.zip $PACKAGE_NAME
+zip -r ${PACKAGE_NAME}_${PSMOVEAPI_REVISION}.zip $PACKAGE_NAME
+rm -rf $PACKAGE_NAME
 
