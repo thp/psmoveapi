@@ -1,0 +1,27 @@
+#!/bin/bash -x -e
+#
+# Script to build documentation snapshots of PS Move API
+# Thomas Perl <m@thp.io>; 2012-09-28
+#
+
+export PSMOVEAPI_CHECKOUT=$(pwd)
+
+# Take version from Debian package info (manual parsing...)
+PSMOVEAPI_VERSION=$(grep -m 1 -o "psmoveapi (.*)" debian/changelog |
+                    sed -e 's/psmoveapi (\(.*\))/\1/')
+
+# Git revision identifier
+PSMOVEAPI_REVISION=$(git show-ref --head --hash=8 HEAD)
+
+if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
+    echo "ERROR: You have to run this script in the PS Move API source root."
+    exit 1
+fi
+
+cd $PSMOVEAPI_CHECKOUT
+
+rm -rf html
+doxygen
+mkdir -p upload
+mv html upload/${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
+
