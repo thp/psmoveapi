@@ -10,8 +10,8 @@
 
 export PSMOVEAPI_CHECKOUT=$(pwd)
 export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/contrib/toolchain-mingw64.cmake
-export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv-win32/opencv
-export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build-win32/install
+export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv
+export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 
 # For parallel builds
 MAKE_ARGS=-j4
@@ -29,15 +29,13 @@ fi
 
 # Build OpenCV
 if [ ! -d $OPENCV_INSTALL_DIR ]; then
-    mkdir -p opencv-win32
-    cd opencv-win32
     if [ ! -d opencv ]; then
         git clone git://code.opencv.org/opencv.git
     fi
     cd opencv
-    rm -rf build-win32
-    mkdir -p build-win32
-    cd build-win32
+    rm -rf build
+    mkdir -p build
+    cd build
     cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
     make ${MAKE_ARGS}
     make install
@@ -46,9 +44,9 @@ fi
 cd $PSMOVEAPI_CHECKOUT
 
 # Build PS Move API
-rm -rf build-win32
-mkdir build-win32
-cd build-win32
+rm -rf build
+mkdir build
+cd build
 cmake -DPSMOVE_USE_LOCAL_OPENCV=ON \
       -DPSMOVE_BUILD_TRACKER=OFF \
       -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
@@ -61,18 +59,12 @@ rm -rf dist
 mkdir -p dist/bin
 echo $PSMOVEAPI_REVISION >dist/revision.txt
 cp README COPYING dist/
-cp build-win32/*.exe dist/bin/
-cp build-win32/libpsmoveapi.dll dist/bin/
-cp build-win32/libpsmoveapi_tracker.dll dist/bin/
+cp build/*.exe dist/bin/
+cp build/libpsmoveapi.dll dist/bin/
+cp build/libpsmoveapi_tracker.dll dist/bin/
 cp $OPENCV_INSTALL_DIR/bin/libopencv_core249.dll dist/bin/
 cp $OPENCV_INSTALL_DIR/bin/libopencv_highgui249.dll dist/bin/
 cp $OPENCV_INSTALL_DIR/bin/libopencv_imgproc249.dll dist/bin/
-mkdir -p dist/lib
-cp build-win32/libpsmoveapi.dll.a dist/lib/
-cp build-win32/libpsmoveapi_tracker.dll.a dist/lib/
-cp $OPENCV_INSTALL_DIR/lib/libopencv_core249.dll.a dist/lib/
-cp $OPENCV_INSTALL_DIR/lib/libopencv_highgui249.dll.a dist/lib/
-cp $OPENCV_INSTALL_DIR/lib/libopencv_imgproc249.dll.a dist/lib/
 mkdir -p dist/include
 cp include/*.h dist/include/
 

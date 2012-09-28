@@ -20,7 +20,7 @@ DEB_PACKAGE=${DEB_NAME}_${DEB_VERSION}
 
 TARGET_VERSION=${DEB_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
 
-IGNORE_DIRECTORIES="-Ibuild -Iupload -Ibuild-win32 -Iopencv-win32 -I.git"
+IGNORE_DIRECTORIES="-Ibuild -Iupload -Iopencv -I.git"
 
 cd $PSMOVEAPI_CHECKOUT
 rm -rf deb_tmp

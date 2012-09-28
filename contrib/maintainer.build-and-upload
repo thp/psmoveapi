@@ -9,6 +9,8 @@ if [ ! -f CMakeLists.txt ]; then
     exit 1
 fi
 
+mkdir -p upload
+
 (
 echo "Build started: $(date)"
 time bash -e -x contrib/cross-compile-mingw64
