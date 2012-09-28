@@ -1,0 +1,92 @@
+#!/bin/bash -x -e
+#
+# Script to build Mac OS X binary snapshots of PS Move API
+# Thomas Perl <m@thp.io>; 2012-09-28
+#
+
+export PSMOVEAPI_CHECKOUT=$(pwd)
+export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv
+export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
+
+# For parallel builds
+MAKE_ARGS=-j4
+
+# Take version from Debian package info (manual parsing...)
+PSMOVEAPI_VERSION=$(grep -m 1 -o "psmoveapi (.*)" debian/changelog |
+                    sed -e 's/psmoveapi (\(.*\))/\1/')
+
+# Git revision identifier
+PSMOVEAPI_REVISION=$(git show-ref --head --hash=8 HEAD)
+
+if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
+    echo "ERROR: You have to run this script in the PS Move API source root."
+    exit 1
+fi
+
+# Build OpenCV
+if [ ! -d $OPENCV_INSTALL_DIR ]; then
+    if [ ! -d opencv ]; then
+        git clone git://code.opencv.org/opencv.git
+    fi
+    cd opencv
+    rm -rf build
+    mkdir -p build
+    cd build
+    cmake -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_PERF_TESTS=OFF \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_DOCS=OFF \
+          -DBUILD_opencv_flann=OFF \
+          -DBUILD_opencv_features2d=OFF \
+          -DBUILD_opencv_objdetect=OFF \
+          -DBUILD_opencv_photo=OFF \
+          -DBUILD_opencv_ts=OFF \
+          -DBUILD_opencv_ml=OFF \
+          -DBUILD_opencv_video=OFF \
+          -DWITH_OPENEXR=OFF \
+          -DWITH_FFMPEG=OFF \
+          -DWITH_JASPER=OFF \
+          -DWITH_TIFF=OFF \
+          -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" \
+          -DCMAKE_INSTALL_PREFIX=$(pwd)/install ..
+    make ${MAKE_ARGS}
+    make install
+fi
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Build PS Move API
+PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}/
+rm -rf build
+mkdir build
+cd build
+cmake -DPSMOVE_USE_LOCAL_OPENCV=ON \
+      -DPSMOVE_BUILD_TRACKER=OFF \
+      -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
+      -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
+      -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
+make ${MAKE_ARGS}
+mkdir tmp
+DESTDIR=$(pwd)/tmp make install
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Packaging
+rm -rf dist
+mkdir -p dist
+echo $PSMOVEAPI_REVISION >dist/revision.txt
+cp -rpv build/tmp/* dist/
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Tar it up
+PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}_osx108
+rm -rf $PACKAGE_NAME
+mv dist $PACKAGE_NAME
+mkdir -p upload
+tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
+rm -rf $PACKAGE_NAME
+
+# Copy the Processing bindings
+cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
+

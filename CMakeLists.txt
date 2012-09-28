@@ -82,6 +82,37 @@ else()
     set(INFO_BUILD_TRACKER "No (disabled)")
 endif()
 
+# Option to statically link OpenCV instead of using the system-wide install
+option(PSMOVE_USE_LOCAL_OPENCV "Use locally-built OpenCV (static linking)" OFF)
+if (PSMOVE_USE_LOCAL_OPENCV)
+    # Force tracker build with a locally-built opencv library installation
+    set(OPENCV_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv/build/install)
+    link_directories(${OPENCV_INSTALL_DIR}/lib)
+    link_directories(${OPENCV_INSTALL_DIR}/../3rdparty/lib)
+    include_directories(${OPENCV_INSTALL_DIR}/include)
+    set(PSMOVE_BUILD_TRACKER ON)
+    set(INFO_BUILD_TRACKER "Yes (with local OpenCV)")
+
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        find_library(AVFOUNDATION AVFoundation)
+        find_library(QUARTZCORE QuartzCore)
+        find_library(APPKIT AppKit)
+        find_library(QTKIT QTKit)
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
+            opencv_core opencv_highgui opencv_imgproc
+            libjpeg libpng zlib stdc++
+            ${AVFOUNDATION}
+            ${QUARTZCORE}
+            ${APPKIT}
+            ${QTKIT})
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
+            opencv_core249 opencv_highgui249 opencv_imgproc249)
+    else()
+        # XXX: OpenCV dependencies for Linux
+    endif()
+endif()
+
 set(INFO_USE_CL_EYE_SDK "No (Windows only)")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -107,17 +138,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
 
-    option(PSMOVE_USE_LOCAL_OPENCV "OpenCV (contrib/cross-compile-mingw64)" OFF)
-    if (PSMOVE_USE_LOCAL_OPENCV)
-        # Force tracker build with a locally-built opencv library installation
-        set(OPENCV_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv-win32/opencv/build-win32/install)
-        link_directories(${OPENCV_INSTALL_DIR}/lib)
-        include_directories(${OPENCV_INSTALL_DIR}/include)
-        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-            opencv_core249.dll opencv_highgui249 opencv_imgproc249)
-        set(PSMOVE_BUILD_TRACKER ON)
-        set(INFO_BUILD_TRACKER "Yes (mingw64-cross-compile)")
-    else()
+    if (NOT CMAKE_TOOLCHAIN_FILE)
+        # Only include these if we are NOT cross-compiling on Linux
         include_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
         link_directories(${CMAKE_CURRENT_SOURCE_DIR}/external/mingw-w64-headers)
     endif()
@@ -234,6 +256,16 @@ if(PSMOVE_BUILD_TRACKER)
     set_target_properties(psmoveapi_tracker PROPERTIES
         COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
     list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi_tracker)
+
+    add_library(psmoveapi_tracker_static STATIC
+        ${PSMOVEAPI_TRACKER_SRC}
+        ${PSMOVEAPI_TRACKER_PLATFORM_SRC})
+    target_link_libraries(psmoveapi_tracker_static
+        psmoveapi_static
+        ${PSMOVEAPI_REQUIRED_LIBS}
+        ${PSMOVEAPI_TRACKER_REQUIRED_LIBS})
+    set_target_properties(psmoveapi_tracker_static PROPERTIES
+        COMPILE_FLAGS -DBUILDING_STATIC_LIBRARY)
 endif()
 
 # Essential utilities
@@ -370,7 +402,7 @@ if(SWIG_FOUND)
                     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/examples/processing ${PSMOVEAPI_PROCESSING_DIR}/examples/
 
                     # Cross-platform zipping :)
-                    COMMAND jar cfM psmove_processing.zip processing
+                    COMMAND jar cfM psmove_processing_${PSMOVEAPI_LIB_PLATFORM}.zip processing
 
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                     COMMENT "Building and packaging Processing library"
@@ -414,8 +446,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h.in
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
     DESTINATION lib/pkgconfig)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/99-psmove.rules
-    DESTINATION /etc/udev/rules.d)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Only install the udev configuration file on Linux
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/contrib/99-psmove.rules
+        DESTINATION /etc/udev/rules.d)
+endif()
 
 install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
     RUNTIME DESTINATION bin
