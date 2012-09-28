@@ -144,12 +144,42 @@ macosx_blued_is_paired(char *btaddr)
 }
 
 int
+macosx_get_minor_version()
+{
+    char tmp[1024];
+    int major, minor, patch;
+    FILE *fp;
+
+    fp = popen("sw_vers -productVersion", "r");
+    psmove_return_val_if_fail(fp != NULL, -1);
+    psmove_return_val_if_fail(fgets(tmp, sizeof(tmp), fp) != NULL, -1);
+    pclose(fp);
+
+    psmove_return_val_if_fail(sscanf(tmp, "%d.%d.%d",
+                &major, &minor, &patch) == 3, -1);
+
+    return minor;
+}
+
+int
 macosx_blued_register_psmove(char *addr)
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     int result = 1;
     char cmd[1024];
     char *btaddr = _psmove_normalize_btaddr(addr, 1, '-');
+
+    int minor_version = macosx_get_minor_version();
+    if (minor_version == -1) {
+        OSXPAIR_DEBUG("Cannot detect Mac OS X version.\n");
+        result = 0;
+        goto end;
+    } else if (minor_version < 7) {
+        OSXPAIR_DEBUG("No need to add entry for OS X before 10.7.\n");
+        goto end;
+    } else {
+        OSXPAIR_DEBUG("Detected: Mac OS X 10.%d\n", minor_version);
+    }
 
     if (macosx_blued_is_paired(btaddr)) {
         OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr);
