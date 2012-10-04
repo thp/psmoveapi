@@ -35,7 +35,7 @@ option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 # Additional applications that can be used to test the library
 option(PSMOVE_BUILD_EXAMPLES "Build the C examples" ON)
 option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
-option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
+option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" ON)
 
 
 # Enable tweaks (e.g. registry settings on Windows, ...) for PS Eye
@@ -286,13 +286,26 @@ if(PSMOVE_BUILD_EXAMPLES)
     endforeach()
 
     if(PSMOVE_BUILD_TRACKER AND PSMOVE_BUILD_TUIO_SERVER)
-        # You have to run "make -C external/TUIO_CPP static" to build the static
-        # library for your platform before the tuio_server can be built here
         include_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP/TUIO)
         include_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP/oscpack)
-        link_directories(${PSMOVEAPI_SOURCE_DIR}/external/TUIO_CPP)
-        add_executable(tuio_server examples/c/tuio_server.cpp)
-        target_link_libraries(tuio_server psmoveapi psmoveapi_tracker TUIO)
+        add_executable(tuio_server examples/c/tuio_server.cpp
+            external/TUIO_CPP/TUIO/TuioClient.cpp
+            external/TUIO_CPP/TUIO/TuioServer.cpp
+            external/TUIO_CPP/TUIO/TuioTime.cpp
+            external/TUIO_CPP/oscpack/osc/OscTypes.cpp
+            external/TUIO_CPP/oscpack/osc/OscOutboundPacketStream.cpp
+            external/TUIO_CPP/oscpack/osc/OscReceivedElements.cpp
+            external/TUIO_CPP/oscpack/osc/OscPrintReceivedElements.cpp
+            external/TUIO_CPP/oscpack/ip/posix/NetworkingUtils.cpp
+            external/TUIO_CPP/oscpack/ip/posix/UdpSocket.cpp
+            external/TUIO_CPP/oscpack/ip/win32/NetworkingUtils.cpp
+            external/TUIO_CPP/oscpack/ip/win32/UdpSocket.cpp)
+        set_target_properties(tuio_server PROPERTIES
+            COMPILE_FLAGS -DOSC_HOST_LITTLE_ENDIAN)
+        target_link_libraries(tuio_server psmoveapi psmoveapi_tracker)
+    else()
+        # Disable the TUIO Server if we don't build the tracker
+        set(PSMOVE_BUILD_TUIO_SERVER OFF)
     endif()
 
     if(PSMOVE_BUILD_TRACKER)

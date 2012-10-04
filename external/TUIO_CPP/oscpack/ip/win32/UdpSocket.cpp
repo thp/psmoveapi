@@ -27,6 +27,9 @@
 	CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 	WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#ifdef WIN32
+
 #include "ip/UdpSocket.h"
 
 #include <winsock2.h>   // this must come first to prevent errors with MSVC7
@@ -521,3 +524,4 @@ void SocketReceiveMultiplexer::AsynchronousBreak()
 	impl_->AsynchronousBreak();
 }
 
+#endif /* WIN32 */
