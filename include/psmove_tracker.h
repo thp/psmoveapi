@@ -147,6 +147,22 @@ ADDCALL psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
 
 
 /**
+ * Disable tracking for a given PSMove * instance
+ *
+ * If the PSMove * instance was never enabled, this function
+ * does nothing. Otherwise it removes the instance from the
+ * tracker and stops tracking the controller.
+ *
+ * At this point, the user program can set the LEDs again.
+ * The library will set (and update) the LEDs to black in
+ * this function if the PSMove * instance is valid.
+ **/
+ADDAPI void
+ADDCALL psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move);
+
+
+
+/**
  * Get the current sphere color of a given controller
  *
  * r, g, b - Pointers to output destinations or NULL to ignore
@@ -166,22 +182,6 @@ ADDAPI int
 ADDCALL psmove_tracker_set_camera_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char r, unsigned char g, unsigned char b);
 
-
-/**
- * Disable tracking for a given PSMove * instance
- *
- * If the PSMove * instance was never enabled, this function
- * does nothing. Otherwise it removes the instance from the
- * tracker and stops tracking the controller.
- *
- * At this point, the user program can set the LEDs again.
- * The library will set (and update) the LEDs to black in
- * this function if the PSMove * instance is valid.
- **/
-ADDAPI void
-ADDCALL psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move);
-
-
 /**
  * Query the calibration status of a PSMove controller.
  *
@@ -192,6 +192,16 @@ ADDCALL psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move);
  **/
 ADDAPI enum PSMoveTracker_Status
 ADDCALL psmove_tracker_get_status(PSMoveTracker *tracker, PSMove *move);
+
+/**
+ * Grabs internally a new image from the camera.
+ * Should always be called before "psmove_tracker_update".
+ *
+ * tracker - A valid PSMoveTracker * instance
+ *
+ **/
+ADDAPI void
+ADDCALL psmove_tracker_update_image(PSMoveTracker *tracker);
 
 
 /**
@@ -216,16 +226,6 @@ ADDCALL psmove_tracker_update(PSMoveTracker *tracker, PSMove *move);
  **/
 ADDAPI void*
 ADDCALL psmove_tracker_get_image(PSMoveTracker *tracker);
-
-/**
- * Grabs internally a new image from the camera.
- * Should always be called before "psmove_tracker_update".
- *
- * tracker - A valid PSMoveTracker * instance
- *
- **/
-ADDAPI void
-ADDCALL psmove_tracker_update_image(PSMoveTracker *tracker);
 
 /**
  * Get the currently-tracked low-level position of the controllers

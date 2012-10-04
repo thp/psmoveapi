@@ -62,12 +62,20 @@
 
 
 #include "psmove.h"
+#include "psmove_tracker.h"
 
 %}
 
-%include "psmove.h"
+%include "psmove_config.h"
 
+%include "psmove.h"
 typedef struct {} PSMove;
+
+#ifdef PSMOVE_BUILD_TRACKER
+%include "psmove_tracker.h"
+typedef struct {} PSMoveTracker;
+#endif /* PSMOVE_BUILD_TRACKER */
+
 
 int count_connected();
 
@@ -170,6 +178,84 @@ void reinit();
 }
 
 
+#ifdef PSMOVE_BUILD_TRACKER
+
+%extend PSMoveTracker {
+    /* Dimming factor */
+    float dimming;
+
+    PSMoveTracker() {
+        return psmove_tracker_new();
+    }
+
+    PSMoveTracker(int camera) {
+        return psmove_tracker_new_with_camera(camera);
+    }
+
+    int enable(PSMove *move) {
+        return psmove_tracker_enable($self, move);
+    }
+
+    int enable_with_color(PSMove *move, int r, int g, int b) {
+        return psmove_tracker_enable_with_color($self, move, r, g, b);
+    }
+
+    void
+    disable(PSMove *move) {
+        psmove_tracker_disable($self, move);
+    }
+
+    void get_color(PSMove *move, unsigned char *OUTPUT,
+        unsigned char *OUTPUT, unsigned char *OUTPUT);
+
+    void get_camera_color(PSMove *move, unsigned char *OUTPUT,
+            unsigned char *OUTPUT, unsigned char *OUTPUT);
+
+    int set_camera_color(PSMove *move, unsigned char r,
+            unsigned char g, unsigned char b) {
+        return psmove_tracker_set_camera_color($self, move, r, g, b);
+    }
+
+    void enable_deinterlace(int enabled) {
+        psmove_tracker_enable_deinterlace($self,
+            enabled?PSMove_True:PSMove_False);
+    }
+
+    int get_status(PSMove *move) {
+        return psmove_tracker_get_status($self, move);
+    }
+
+    void update_image() {
+        return psmove_tracker_update_image($self);
+    }
+
+    int update() {
+        return psmove_tracker_update($self, NULL);
+    }
+
+    int update(PSMove *move) {
+        return psmove_tracker_update($self, move);
+    }
+
+    void *get_image() {
+        // FIXME!
+        return psmove_tracker_get_image($self);
+    }
+
+    void get_position(PSMove *move, float *OUTPUT,
+            float *OUTPUT, float *OUTPUT);
+
+    void get_size(int *OUTPUT, int *OUTPUT);
+
+    ~PSMoveTracker() {
+        psmove_tracker_free($self);
+    }
+
+}
+
+#endif /* PSMOVE_BUILD_TRACKER */
+
+
 %{
 
 void
@@ -262,6 +348,50 @@ void reinit()
 {
     return psmove_reinit();
 }
+
+#ifdef PSMOVE_BUILD_TRACKER
+
+float
+PSMoveTracker_dimming_get(PSMoveTracker *tracker)
+{
+    return psmove_tracker_get_dimming(tracker);
+}
+
+void
+PSMoveTracker_dimming_set(PSMoveTracker *tracker, float dimming)
+{
+    psmove_tracker_set_dimming(tracker, dimming);
+}
+
+void
+PSMoveTracker_get_color(PSMoveTracker *tracker, PSMove *move,
+    unsigned char *r, unsigned char *g, unsigned char *b)
+{
+    psmove_tracker_get_color(tracker, move, r, g, b);
+}
+
+void
+PSMoveTracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
+    unsigned char *r, unsigned char *g, unsigned char *b)
+{
+    psmove_tracker_get_camera_color(tracker, move, r, g, b);
+}
+
+void
+PSMoveTracker_get_position(PSMoveTracker *tracker, PSMove *move,
+    float *x, float *y, float *radius)
+{
+    psmove_tracker_get_position(tracker, move, x, y, radius);
+}
+
+void
+PSMoveTracker_get_size(PSMoveTracker *tracker, int *width, int *height)
+{
+    return psmove_tracker_get_size(tracker, width, height);
+}
+
+
+#endif /* PSMOVE_BUILD_TRACKER */
 
 %}
 
