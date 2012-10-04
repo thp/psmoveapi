@@ -35,14 +35,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#ifdef _WIN32
+#  include <Winsock2.h>
+#  include <Ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#endif
 
-#if 0
+
 #include "opencv2/core/core_c.h"
 #include "opencv2/highgui/highgui_c.h"
-#endif
+
 
 #include "psmove.h"
 #include "psmove_tracker.h"
@@ -54,6 +59,12 @@
 #include <TuioServer.h>
 #include <TuioCursor.h>
 #include <TuioTime.h>
+
+/* Read a maximum of 5 input reports per loop iteration */
+#define MAX_READS_PER_ITERATION 5
+
+/* Maximum line length of a single TCPEventSender line */
+#define MAX_TCP_EVENT_LINE_LENGTH 1024
 
 int quit = 0;
 
@@ -67,7 +78,7 @@ const char *
 default_tcp_target = "127.0.0.1";
 
 const int
-default_tcp_port = 9999;
+default_tcp_port = 0;
 
 
 class TcpEventSender
@@ -80,11 +91,13 @@ class TcpEventSender
      *
      * Known events:
      *
+     *     hello - Application startup (no [controller-id] or args)
      *     trigger - Trigger value updated
      *     press - Button was pressed
      *     release - Button was released
      *     state - Tracking state update
      *     pos - Position update (only sent when TUIO is disabled)
+     *     bye - Application shutdown (no [controller-id] or args)
      *
      * trigger events:
      *
@@ -132,6 +145,7 @@ class TcpEventSender
      *
      * Example session transcript:
      *
+     *     hello
      *     state 0 found
      *     pos 0 0.51658 0.55999
      *     pos 0 0.51607 0.55951
@@ -164,6 +178,7 @@ class TcpEventSender
      *     release 0 move
      *     trigger 0 13
      *     trigger 0 0
+     *     bye
      *
      **/
 
@@ -175,10 +190,10 @@ class TcpEventSender
         void updatePosition(int id, float x, float y);
         void updateFound(int id, bool found);
 
-        inline void flush() { fflush(m_socket); }
+        void flush();
 
     private:
-        FILE *m_socket;
+        int m_socket;
 
         struct {
             int buttons;
@@ -191,8 +206,26 @@ class TcpEventSender
         const char *buttonName(int button);
 };
 
+#define SOCKET_PRINTF(sock, ...) { \
+    char *tmp = (char*)malloc(MAX_TCP_EVENT_LINE_LENGTH+2); \
+    sprintf(tmp, __VA_ARGS__); \
+    send(sock, tmp, strlen(tmp), 0); \
+    free(tmp); \
+}
+
 TcpEventSender::TcpEventSender(const char *target, int port)
 {
+#ifdef _WIN32
+    /* "wsa" = Windows Sockets API, not a misspelling of "was" */
+    static int wsa_initialized = 0;
+
+    if (!wsa_initialized) {
+        WSADATA wsa_data;
+        assert(WSAStartup(MAKEWORD(1, 1), &wsa_data) == 0);
+        wsa_initialized = 1;
+    }
+#endif
+
     memset(m_state, 0, sizeof(m_state));
 
     int sock;
@@ -209,12 +242,14 @@ TcpEventSender::TcpEventSender(const char *target, int port)
 
     assert(connect(sock, (const struct sockaddr*)&addr, sizeof(addr)) == 0);
 
-    m_socket = fdopen(sock, "w");
+    m_socket = sock;
+    SOCKET_PRINTF(m_socket, "hello\n");
 }
 
 TcpEventSender::~TcpEventSender()
 {
-    fclose(m_socket);
+    SOCKET_PRINTF(m_socket, "bye\n");
+    close(m_socket);
 }
 
 void
@@ -229,11 +264,11 @@ TcpEventSender::updateController(int id, int buttons, int trigger)
         int value = 1;
         while (pressed || released) {
             if (pressed & value) {
-                fprintf(m_socket, "press %d %s\n", id, buttonName(value));
+                SOCKET_PRINTF(m_socket, "press %d %s\n", id, buttonName(value));
                 pressed &= ~value;
             }
             if (released & value) {
-                fprintf(m_socket, "release %d %s\n", id, buttonName(value));
+                SOCKET_PRINTF(m_socket, "release %d %s\n", id, buttonName(value));
                 released &= ~value;
             }
             value <<= 1;
@@ -243,7 +278,7 @@ TcpEventSender::updateController(int id, int buttons, int trigger)
     }
 
     if (m_state[id].trigger != trigger) {
-        fprintf(m_socket, "trigger %d %d\n", id, trigger);
+        //SOCKET_PRINTF(m_socket, "trigger %d %d\n", id, trigger);
         m_state[id].trigger = trigger;
     }
 }
@@ -253,7 +288,7 @@ void
 TcpEventSender::updatePosition(int id, float x, float y)
 {
     if ((m_state[id].x != x) || (m_state[id].y != y)) {
-        fprintf(m_socket, "pos %d %.05f %.05f\n", id, x, y);
+        SOCKET_PRINTF(m_socket, "pos %d %.05f %.05f\n", id, x, y);
 
         m_state[id].x = x;
         m_state[id].y = y;
@@ -264,9 +299,15 @@ void
 TcpEventSender::updateFound(int id, bool found)
 {
     if (m_state[id].found != found) {
-        fprintf(m_socket, "state %d %s\n", id, found?"found":"lost");
+        SOCKET_PRINTF(m_socket, "state %d %s\n", id, found?"found":"lost");
         m_state[id].found = found;
     }
+}
+
+void
+TcpEventSender::flush()
+{
+    // ...
 }
 
 const char *
@@ -312,6 +353,30 @@ usage(const char *progname, const char *error_message=NULL)
     }
 }
 
+#ifndef WIN32
+int
+kbhit()
+{
+    struct timeval tv;
+    fd_set read_fd;
+
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    FD_ZERO(&read_fd);
+    FD_SET(0, &read_fd);
+
+    if (select(1, &read_fd, NULL, NULL, &tv) == -1) {
+        return 0;
+    }
+
+    if (FD_ISSET(0, &read_fd)) {
+        return 1;
+    }
+
+    return 0;
+}
+#endif
+
 
 void
 parse_args(int argc, const char **argv,
@@ -348,6 +413,28 @@ parse_args(int argc, const char **argv,
         // Use default hostname + port (no arguments)
     } else {
         usage(argv[0], "Wrong number of arguments");
+    }
+}
+
+typedef struct {
+    IplImage *frame;
+    unsigned char b, g, r;
+} SharedMouseData;
+
+
+void
+on_mouse(int event, int x, int y, int flags, void *param)
+{
+    SharedMouseData *shared = (SharedMouseData*)param;
+    IplImage *img = shared->frame;
+
+    if (event == CV_EVENT_LBUTTONDOWN) {
+        shared->b = ((uchar *)(img->imageData + y*img->widthStep))[x*img->nChannels];
+        shared->g = ((uchar *)(img->imageData + y*img->widthStep))[x*img->nChannels+1];
+        shared->r = ((uchar *)(img->imageData + y*img->widthStep))[x*img->nChannels+2];
+        printf("\ncolor value: #%02x%02x%02x\n> ",
+                shared->r, shared->g, shared->b);
+        fflush(stdout);
     }
 }
 
@@ -411,18 +498,21 @@ main(int argc, const char **argv) {
     }
 
     TUIO::TuioTime::initSession();
-    long timestamp = 0;
 
     PSMoveTracker* tracker = psmove_tracker_new();
 
     unsigned char r, g, b;
     int width, height;
+    bool show_debug_window = false;
+    bool did_show_debug_window_once = false;
 
     for (int i=0; i<count; i++) {
         moves[i] = psmove_connect_by_id(i);
         assert(moves[i] != NULL);
 
-        cursors[i] = NULL;
+        if (tuio_server) {
+            cursors[i] = NULL;
+        }
 
         printf("Calibrating controller %d: ", i+1);
         fflush(stdout);
@@ -436,19 +526,65 @@ main(int argc, const char **argv) {
         printf("OK\n");
     }
 
+    SharedMouseData mouse_data;
+    mouse_data.frame = NULL;
+    psmove_tracker_get_camera_color(tracker, moves[0],
+            &(mouse_data.r), &(mouse_data.g), &(mouse_data.b));
+
     psmove_tracker_get_size(tracker, &width, &height);
 
+    printf("Valid commands:\n");
+    printf("\n");
+    printf("  quit ........ Quits the program\n");
+    printf("  debug ....... Starts updating the debug window\n");
+    printf("  stopdebug ... Stops updating the debug window\n");
+    printf("  dimming ..... Sets the dimming factor (e.g. dimming 10)\n");
+    printf("  env ......... Print environment for current settings\n");
+    printf("\n> ");
+    fflush(stdout);
+
+    long timestamp=0;
     while (!quit) {
-#ifdef _WIN32
-        /* Allow program abortion using the Enter/Return key */
+        /* Allow entering commands using the Enter/Return key */
         if (kbhit()) {
-            int ch = getch();
-            if (ch == 10 || ch == 13) {
-                quit = 1;
-                break;
+            char s[2048];
+            memset(s, 0, sizeof(s));
+            if (fgets(s, sizeof(s), stdin) != NULL) {
+                // strip trailing newline
+                if (s[strlen(s)-1] == '\n') {
+                    s[strlen(s)-1] = '\0';
+                }
+
+                if (strcmp(s, "quit") == 0) {
+                    quit = 1;
+                    break;
+                } else if (strcmp(s, "debug") == 0) {
+                    cvNamedWindow("debug");
+                    cvSetMouseCallback("debug", on_mouse, &mouse_data);
+                    show_debug_window = true;
+                    did_show_debug_window_once = true;
+                } else if (strcmp(s, "stopdebug") == 0) {
+                    show_debug_window = false;
+                } else if (memcmp(s, "dimming ", 8) == 0) {
+                    int dimming = 100;
+                    sscanf(s, "dimming %d\n", &dimming);
+                    if (dimming < 1) dimming = 1;
+                    if (dimming > 100) dimming = 100;
+                    psmove_tracker_set_dimming(tracker, .01*dimming);
+                    printf("setting dimming factor to %d\n", dimming);
+                } else if (strcmp(s, "env") == 0) {
+                    printf("PSMOVE_TRACKER_DIMMING=%d\n",
+                            (int)(100 * psmove_tracker_get_dimming(tracker)));
+                    printf("PSMOVE_TRACKER_COLOR=%02x%02x%02x\n",
+                            mouse_data.r, mouse_data.g, mouse_data.b);
+                } else {
+                    printf("Invalid command: '%s'\n", s);
+                }
+
+                printf("> ");
+                fflush(stdout);
             }
         }
-#endif
 
         if (tuio_server) {
             tuio_server->initFrame(timestamp++);
@@ -457,13 +593,19 @@ main(int argc, const char **argv) {
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, NULL);
 
-#if 0
-        void *frame = psmove_tracker_get_image(tracker);
-        if (frame) {
-            cvShowImage("live camera feed", frame);
+        if (show_debug_window) {
+            IplImage *frame = (IplImage*)psmove_tracker_get_image(tracker);
+            mouse_data.frame = frame;
+            if (frame) {
+                cvShowImage("debug", frame);
+                cvWaitKey(1);
+            }
+        } else if (did_show_debug_window_once) {
+            // have to pull events to handle window close
+            cvWaitKey(1);
         }
-#endif
 
+        float x, y;
         for (int i=0; i<count; i++) {
             psmove_tracker_get_color(tracker, moves[i], &r, &g, &b);
             psmove_set_rumble(moves[i], 0);
@@ -477,7 +619,11 @@ main(int argc, const char **argv) {
             }
 
             // Read latest button states from the controller
-            while (psmove_poll(moves[i]));
+            for (int a=0; a<MAX_READS_PER_ITERATION; a++) {
+                if (!psmove_poll(moves[i])) {
+                    break;
+                }
+            }
 
             bool pressed = (psmove_get_buttons(moves[i]) & Btn_T);
 
@@ -490,9 +636,8 @@ main(int argc, const char **argv) {
             }
 
             if (status == Tracker_TRACKING) {
-                float x, y, r;
                 psmove_tracker_get_position(tracker, moves[i],
-                        &x, &y, &r);
+                        &x, &y, NULL);
 
                 /* Radius (r) is not used here for now ... */
 
@@ -505,20 +650,6 @@ main(int argc, const char **argv) {
                     event_sender->updatePosition(i, x, y);
                 }
 
-                if (tuio_server) {
-                    if (pressed) {
-                        if (cursors[i]) {
-                            tuio_server->updateTuioCursor(cursors[i], x, y);
-                        } else {
-                            cursors[i] = tuio_server->addTuioCursor(x, y);
-                        }
-                    } else {
-                        if (cursors[i]) {
-                            tuio_server->removeTuioCursor(cursors[i]);
-                            cursors[i] = NULL;
-                        }
-                    }
-                }
             } else if (pressed) {
                 /**
                  * The user presses the button, but the controller is not
@@ -526,6 +657,23 @@ main(int argc, const char **argv) {
                  **/
                 psmove_set_rumble(moves[i], 100);
                 psmove_update_leds(moves[i]);
+            }
+
+            if (tuio_server) {
+                if (pressed) {
+                    if (!cursors[i]) {
+                        cursors[i] = tuio_server->addTuioCursor(x, y);
+                    }
+                } else {
+                    if (cursors[i]) {
+                        tuio_server->removeTuioCursor(cursors[i]);
+                        cursors[i] = NULL;
+                    }
+                }
+
+                if (cursors[i]) {
+                    tuio_server->updateTuioCursor(cursors[i], x, y);
+                }
             }
         }
 

@@ -919,6 +919,27 @@ psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move,
     return 0;
 }
 
+int
+psmove_tracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
+        unsigned char *r, unsigned char *g, unsigned char *b)
+{
+    psmove_return_val_if_fail(tracker != NULL, 0);
+    psmove_return_val_if_fail(move != NULL, 0);
+
+    TrackedController *tc = psmove_tracker_find_controller(tracker, move);
+
+    if (tc) {
+        *r = tc->eColor.val[0];
+        *g = tc->eColor.val[1];
+        *b = tc->eColor.val[2];
+
+        return 1;
+    }
+
+    return 0;
+}
+
+
 void
 psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move)
 {

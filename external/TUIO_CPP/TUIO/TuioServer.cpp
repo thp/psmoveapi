@@ -24,6 +24,8 @@
 using namespace TUIO;
 using namespace osc;
 
+#include <unistd.h>
+
 #ifndef WIN32
 static void* ThreadFunc( void* obj )
 #else
