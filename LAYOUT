@@ -23,6 +23,8 @@ examples - Applications and utilities
     examples/processing - Examples for Processing
         examples/processing/trigger_brightness - Single controller example
         examples/processing/two_controllers - Example how to use 2 controllers
+    examples/java - Examples using the Java bindings
+    examples/csharp - Examples using the C# bindings
 
 src - Source code for the C library
     src/platform - Platform-specific code for the main library

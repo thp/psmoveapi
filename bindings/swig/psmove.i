@@ -13,6 +13,18 @@
 %rename PSMoveTracker_Status Status;
 %module psmoveapi
 
+#elif defined (SWIGCSHARP)
+
+/* C# */
+%include "typemaps.i"
+
+%rename PSMove_Button Button;
+%rename PSMove_Battery_Level BatteryLevel;
+%rename PSMove_Connection_Type ConnectionType;
+%rename PSMove_Frame Frame;
+%rename PSMoveTracker_Status Status;
+%module psmoveapi_csharp
+
 #else
 
 /* Python et al. */

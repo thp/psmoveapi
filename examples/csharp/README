@@ -1,0 +1,26 @@
+
+These are the C# examples for PS Move API. These examples
+assume that you have built the PS Move API in ../../build/
+with the option PSMOVE_BUILD_CSHARP_BINDINGS enabled.
+
+To build all examples, type:
+
+   make
+
+To run examples, type:
+
+   mono LEDs.exe
+   mono Tracker.exe
+
+To create your own example, just copy one of the existing examples:
+
+   cp Tracker.cs MyApp.cs
+   $EDITOR MyApp.cs
+   make MyApp.exe
+   mono MyApp.exe
+
+
+To cleanup, use:
+
+   make clean
+
