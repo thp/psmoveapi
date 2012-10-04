@@ -57,14 +57,6 @@ Environment variables:
    Example: export PSMOVE_TRACKER_WIDTH=1280
             export PSMOVE_TRACKER_HEIGHT=720
 
- PSMOVE_TRACKER_DIMMING
-
-     If set, this controls the dimming factor (1-100) of the RGB LED. Use in
-     situations where you can't control the exposure of the camera image.
-
-   Example: export PSMOVE_TRACKER_DIMMING=10
-
-
 
 
  |- Windows notes ----------- -- -  -

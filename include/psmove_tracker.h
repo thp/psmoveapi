@@ -57,9 +57,6 @@ extern "C" {
 #define PSMOVE_TRACKER_WIDTH_ENV "PSMOVE_TRACKER_WIDTH"
 #define PSMOVE_TRACKER_HEIGHT_ENV "PSMOVE_TRACKER_HEIGHT"
 
-/* Name of the environment variable for the dimming factor */
-#define PSMOVE_TRACKER_DIMMING_ENV "PSMOVE_TRACKER_DIMMING"
-
 
 /* Opaque data structure, defined only in psmove_tracker.c */
 struct _PSMoveTracker;

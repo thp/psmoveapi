@@ -441,15 +441,7 @@ psmove_tracker_new_with_camera(int camera) {
 	tracker->rHSV = cvScalar(COLOR_FILTER_RANGE_H, COLOR_FILTER_RANGE_S, COLOR_FILTER_RANGE_V, 0);
 	tracker->storage = cvCreateMemStorage(0);
 
-    int dimming_env = psmove_util_get_env_int(PSMOVE_TRACKER_DIMMING_ENV);
-    if (dimming_env != -1) {
-        dimming_env = MIN(100, MAX(1, dimming_env));
-        psmove_DEBUG("Dimming factor: %d %%\n", dimming_env);
-        tracker->dimming_factor = (float)dimming_env * .01;
-    } else {
         tracker->dimming_factor = 1.;
-    }
-
 	tracker->cam_focal_length = CAMERA_FOCAL_LENGTH;
 	tracker->cam_pixel_height = CAMERA_PIXEL_HEIGHT;
 	tracker->ps_move_diameter = PS_MOVE_DIAMETER;
