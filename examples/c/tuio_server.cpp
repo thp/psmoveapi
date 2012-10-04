@@ -419,6 +419,7 @@ parse_args(int argc, const char **argv,
 typedef struct {
     IplImage *frame;
     unsigned char b, g, r;
+    bool dirty;
 } SharedMouseData;
 
 
@@ -432,6 +433,7 @@ on_mouse(int event, int x, int y, int flags, void *param)
         shared->b = ((uchar *)(img->imageData + y*img->widthStep))[x*img->nChannels];
         shared->g = ((uchar *)(img->imageData + y*img->widthStep))[x*img->nChannels+1];
         shared->r = ((uchar *)(img->imageData + y*img->widthStep))[x*img->nChannels+2];
+        shared->dirty = true;
         printf("\ncolor value: #%02x%02x%02x\n> ",
                 shared->r, shared->g, shared->b);
         fflush(stdout);
@@ -528,6 +530,7 @@ main(int argc, const char **argv) {
 
     SharedMouseData mouse_data;
     mouse_data.frame = NULL;
+    mouse_data.dirty = false;
     psmove_tracker_get_camera_color(tracker, moves[0],
             &(mouse_data.r), &(mouse_data.g), &(mouse_data.b));
 
@@ -539,7 +542,6 @@ main(int argc, const char **argv) {
     printf("  debug ....... Starts updating the debug window\n");
     printf("  stopdebug ... Stops updating the debug window\n");
     printf("  dimming ..... Sets the dimming factor (e.g. dimming 10)\n");
-    printf("  env ......... Print environment for current settings\n");
     printf("\n> ");
     fflush(stdout);
 
@@ -555,7 +557,9 @@ main(int argc, const char **argv) {
                     s[strlen(s)-1] = '\0';
                 }
 
-                if (strcmp(s, "quit") == 0) {
+                if (strlen(s) == 0) {
+                    // Do nothing
+                } else if (strcmp(s, "quit") == 0) {
                     quit = 1;
                     break;
                 } else if (strcmp(s, "debug") == 0) {
@@ -572,11 +576,6 @@ main(int argc, const char **argv) {
                     if (dimming > 100) dimming = 100;
                     psmove_tracker_set_dimming(tracker, .01*dimming);
                     printf("setting dimming factor to %d\n", dimming);
-                } else if (strcmp(s, "env") == 0) {
-                    printf("PSMOVE_TRACKER_DIMMING=%d\n",
-                            (int)(100 * psmove_tracker_get_dimming(tracker)));
-                    printf("PSMOVE_TRACKER_COLOR=%02x%02x%02x\n",
-                            mouse_data.r, mouse_data.g, mouse_data.b);
                 } else {
                     printf("Invalid command: '%s'\n", s);
                 }
@@ -584,6 +583,12 @@ main(int argc, const char **argv) {
                 printf("> ");
                 fflush(stdout);
             }
+        }
+
+        if (mouse_data.dirty) {
+            psmove_tracker_set_camera_color(tracker, moves[0],
+                    mouse_data.b, mouse_data.g, mouse_data.r);
+            mouse_data.dirty = false;
         }
 
         if (tuio_server) {

@@ -939,6 +939,32 @@ psmove_tracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
     return 0;
 }
 
+void
+psmove_tracker_set_camera_color(PSMoveTracker *tracker, PSMove *move,
+        unsigned char r, unsigned char g, unsigned char b)
+{
+    psmove_return_if_fail(tracker != NULL);
+    psmove_return_if_fail(move != NULL);
+
+    TrackedController *tc = psmove_tracker_find_controller(tracker, move);
+
+    if (tc) {
+        /* Update the current color */
+        tc->eColor.val[0] = r;
+        tc->eColor.val[1] = g;
+        tc->eColor.val[2] = b;
+        tc->eColorHSV = th_brg2hsv(tc->eColor);
+
+        /* Update the "first" color (to avoid re-adaption to old color) */
+        tc->eFColor = tc->eColor;
+        tc->eFColorHSV = tc->eColorHSV;
+
+        return 1;
+    }
+
+    return 0;
+}
+
 
 void
 psmove_tracker_disable(PSMoveTracker *tracker, PSMove *move)

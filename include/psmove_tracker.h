@@ -162,6 +162,10 @@ ADDAPI int
 ADDCALL psmove_tracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char *r, unsigned char *g, unsigned char *b);
 
+ADDAPI void
+ADDCALL psmove_tracker_set_camera_color(PSMoveTracker *tracker, PSMove *move,
+        unsigned char r, unsigned char g, unsigned char b);
+
 
 /**
  * Disable tracking for a given PSMove * instance
