@@ -26,37 +26,25 @@ Get and install
 4. Init and update the submodules
 	git submodule init
 	git submodule update
-	
-4. Copy blue-tooth headers and library to your MinGW installation
-	:: e.g. MinGW installed at C:\MinGW\
-	:: e.g. your cloned repository is at D:\dev\psmoveapi
-	
-	copy D:\dev\psmoveapi\external\mingw-w64-headers\*.h  C:\MinGW\include
-	copy D:\dev\psmoveapi\external\mingw-w64-headers\*.a  C:\MinGW\lib
 
 5.  make OpenCV known to your system and the cmake toolchain
 	set OpenCV_DIR=<the path where you extracted opencv>
 	set PATH=%PATH%;%OpenCV_DIR%\build\bin
 
-
-    # You can manually specify the OpenCV libs in CMakeLists.txt, too:
-
-        list(APPEND PSMOVE_REQUIRED_LIBS
-                opencv_highgui242 opencv_core242 opencv_imgproc242)
-        include_directories(${PSMOVEAPI_SOURCE_DIR}/../opencv/include)
-        link_directories(${PSMOVEAPI_SOURCE_DIR}/../opencv/lib)
-
+    You can also build opencv in a folder "opencv" inside the
+    source directory (opencv/build/install) and then use the
+    CMake option "PSMOVE_USE_LOCAL_OPENCV" to link against
+    OpenCV statically from this checkout / build directory.
 
 7. prepare a new build with cmake for the psmoveapi
-	:: 
 	mkdir build
 	cd build
 	:: only with OpenCV Camera access
 	cmake .. -G "MinGW Makefiles"
 	:: additionally with Code Laboratories PS Eye SDK
 	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=ON
-	
+
 8. finally build
 	mingw32-make
-	
+
 9. start one of the desired test applications
