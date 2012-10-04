@@ -104,7 +104,9 @@ if (PSMOVE_USE_LOCAL_OPENCV)
             ${QTKIT})
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-            opencv_core249 opencv_highgui249 opencv_imgproc249)
+            opencv_highgui249 opencv_imgproc249 opencv_core249
+            libjpeg libpng zlib stdc++
+            vfw32 comctl32)
     else()
         # XXX: OpenCV dependencies for Linux
     endif()
@@ -134,6 +136,11 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_macosx.c)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
+
+    # http://stackoverflow.com/questions/4702732/the-program-cant-start-because-libgcc-s-dw2-1-dll-is-missing
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+    set(CMAKE_STATIC_LIBRARY_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -static -static-libgcc -static-libstdc++")
 
     if (NOT CMAKE_TOOLCHAIN_FILE)
         # Only include these if we are NOT cross-compiling on Linux

@@ -36,7 +36,23 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
     rm -rf build
     mkdir -p build
     cd build
-    cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
+    cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_PERF_TESTS=OFF \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_DOCS=OFF \
+          -DBUILD_opencv_flann=OFF \
+          -DBUILD_opencv_features2d=OFF \
+          -DBUILD_opencv_objdetect=OFF \
+          -DBUILD_opencv_photo=OFF \
+          -DBUILD_opencv_ts=OFF \
+          -DBUILD_opencv_ml=OFF \
+          -DBUILD_opencv_video=OFF \
+          -DWITH_OPENEXR=OFF \
+          -DWITH_FFMPEG=OFF \
+          -DWITH_JASPER=OFF \
+          -DWITH_TIFF=OFF \
+          ..
     make ${MAKE_ARGS}
     make install
 fi
@@ -62,9 +78,6 @@ cp README COPYING dist/
 cp build/*.exe dist/bin/
 cp build/libpsmoveapi.dll dist/bin/
 cp build/libpsmoveapi_tracker.dll dist/bin/
-cp $OPENCV_INSTALL_DIR/bin/libopencv_core249.dll dist/bin/
-cp $OPENCV_INSTALL_DIR/bin/libopencv_highgui249.dll dist/bin/
-cp $OPENCV_INSTALL_DIR/bin/libopencv_imgproc249.dll dist/bin/
 mkdir -p dist/include
 cp include/*.h dist/include/
 
