@@ -10,6 +10,7 @@
 %rename PSMove_Battery_Level BatteryLevel;
 %rename PSMove_Connection_Type ConnectionType;
 %rename PSMove_Frame Frame;
+%rename PSMoveTracker_Status Status;
 %module psmoveapi
 
 #else
@@ -192,11 +193,12 @@ void reinit();
         return psmove_tracker_new_with_camera(camera);
     }
 
-    int enable(PSMove *move) {
+    enum PSMoveTracker_Status enable(PSMove *move) {
         return psmove_tracker_enable($self, move);
     }
 
-    int enable_with_color(PSMove *move, int r, int g, int b) {
+    enum PSMoveTracker_Status enable_with_color(PSMove *move,
+            int r, int g, int b) {
         return psmove_tracker_enable_with_color($self, move, r, g, b);
     }
 
@@ -221,7 +223,7 @@ void reinit();
             enabled?PSMove_True:PSMove_False);
     }
 
-    int get_status(PSMove *move) {
+    enum PSMoveTracker_Status get_status(PSMove *move) {
         return psmove_tracker_get_status($self, move);
     }
 

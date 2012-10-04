@@ -59,8 +59,10 @@ extern "C" {
 
 
 /* Opaque data structure, defined only in psmove_tracker.c */
+#ifndef SWIG
 struct _PSMoveTracker;
 typedef struct _PSMoveTracker PSMoveTracker;
+#endif
 
 /*! Status of the tracker */
 enum PSMoveTracker_Status {

@@ -151,9 +151,11 @@ enum PSMove_Bool {
     PSMove_True = 1, /*!< True, Success, Enabled (depending on context) */
 };
 
+#ifndef SWIG
 struct _PSMove;
 typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
                                     Obtained via psmove_connect_by_id() */
+#endif
 
 /**
  * \brief Get the number of available controllers

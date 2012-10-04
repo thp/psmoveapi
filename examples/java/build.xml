@@ -1,0 +1,30 @@
+<project name="PSMoveExamples" default="compile" basedir=".">
+    <description>PS Move API Java Examples</description>
+
+    <property name="src" location="."/>
+    <property name="build" location="build"/>
+    <path id="classpath">
+        <pathelement location="build"/>
+        <pathelement location="../../build/psmoveapi.jar"/>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build}"/>
+    </target>
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src}" destdir="${build}" includeantruntime="false" classpathref="classpath"/>
+    </target>
+
+    <target name="run-tracker" depends="compile">
+        <java classname="Tracker" classpathref="classpath"/>
+    </target>
+
+    <target name="run-sensorreading" depends="compile">
+        <java classname="SensorReading" classpathref="classpath"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${build}"/>
+    </target>
+</project>
