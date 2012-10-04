@@ -41,9 +41,6 @@ option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" ON)
 # Enable tweaks (e.g. registry settings on Windows, ...) for PS Eye
 option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
 
-# Build with support for deinterlacing interlaced HD video input
-option(PSMOVE_USE_DEINTERLACE "Deinterlace input video (for HD inputs)" OFF)
-
 # Use the CL Eye SDK to interface with the PS Eye camera (Windows only)
 option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
 
@@ -514,7 +511,6 @@ message("    Qt:               " ${INFO_BUILD_QT_BINDINGS})
 message("")
 message("  Tracker")
 feature_use_info("PS Eye support:   " PSMOVE_USE_PSEYE)
-feature_use_info("Deinterlacing:    " PSMOVE_USE_DEINTERLACE)
 feature_use_info("HTML tracing:     " PSMOVE_USE_TRACKER_TRACE)
 message("    Use CL Eye SDK:   " ${INFO_USE_CL_EYE_SDK})
 message("")

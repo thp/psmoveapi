@@ -508,6 +508,8 @@ main(int argc, const char **argv) {
     bool show_debug_window = false;
     bool did_show_debug_window_once = false;
 
+    enum PSMove_Bool deinterlacing = PSMove_True;
+
     for (int i=0; i<count; i++) {
         moves[i] = psmove_connect_by_id(i);
         assert(moves[i] != NULL);
@@ -534,6 +536,7 @@ main(int argc, const char **argv) {
     psmove_tracker_get_camera_color(tracker, moves[0],
             &(mouse_data.r), &(mouse_data.g), &(mouse_data.b));
 
+    psmove_tracker_enable_deinterlace(tracker, deinterlacing);
     psmove_tracker_get_size(tracker, &width, &height);
 
     printf("Valid commands:\n");
@@ -541,6 +544,7 @@ main(int argc, const char **argv) {
     printf("  quit ........ Quits the program\n");
     printf("  debug ....... Starts updating the debug window\n");
     printf("  stopdebug ... Stops updating the debug window\n");
+    printf("  deinterlace . Toggle video deinterlacing\n");
     printf("  dimming ..... Sets the dimming factor (e.g. dimming 10)\n");
     printf("\n> ");
     fflush(stdout);
@@ -576,6 +580,11 @@ main(int argc, const char **argv) {
                     if (dimming > 100) dimming = 100;
                     psmove_tracker_set_dimming(tracker, .01*dimming);
                     printf("setting dimming factor to %d\n", dimming);
+                } else if (strcmp(s, "deinterlace") == 0) {
+                    deinterlacing = (deinterlacing==PSMove_True)?
+                        PSMove_False:PSMove_True;
+                    psmove_tracker_enable_deinterlace(tracker,
+                            deinterlacing);
                 } else {
                     printf("Invalid command: '%s'\n", s);
                 }

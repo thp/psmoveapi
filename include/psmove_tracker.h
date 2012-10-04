@@ -108,6 +108,9 @@ ADDCALL psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming);
 ADDAPI float
 ADDCALL psmove_tracker_get_dimming(PSMoveTracker *tracker);
 
+ADDAPI void
+ADDCALL psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
+        enum PSMove_Bool enabled);
 
 /**
  * Enable tracking for a given PSMove * instance
@@ -162,7 +165,7 @@ ADDAPI int
 ADDCALL psmove_tracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char *r, unsigned char *g, unsigned char *b);
 
-ADDAPI void
+ADDAPI int
 ADDCALL psmove_tracker_set_camera_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char r, unsigned char g, unsigned char b);
 

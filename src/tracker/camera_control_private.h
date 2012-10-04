@@ -60,6 +60,8 @@ struct _CameraControl {
 
 	IplImage* mapx;
 	IplImage* mapy;
+
+        enum PSMove_Bool deinterlace;
 };
 
 #endif

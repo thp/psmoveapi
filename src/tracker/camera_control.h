@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+#include "psmove.h"
 #include "opencv2/core/core_c.h"
 
 struct _CameraControl;
@@ -44,6 +45,10 @@ camera_control_new(int cameraID);
 void
 camera_control_read_calibration(CameraControl* cc,
         char* intrinsicsFile, char* distortionFile);
+
+void
+camera_control_set_deinterlace(CameraControl *cc,
+        enum PSMove_Bool enabled);
 
 IplImage *
 camera_control_query_frame(CameraControl* cc);

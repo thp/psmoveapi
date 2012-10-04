@@ -424,6 +424,17 @@ psmove_tracker_get_dimming(PSMoveTracker *tracker)
     return tracker->dimming_factor;
 }
 
+void
+psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
+        enum PSMove_Bool enabled)
+{
+    psmove_return_if_fail(tracker != NULL);
+    psmove_return_if_fail(tracker->cc != NULL);
+
+    camera_control_set_deinterlace(tracker->cc, enabled);
+}
+
+
 PSMoveTracker *
 psmove_tracker_new_with_camera(int camera) {
 	PSMoveTracker* tracker = (PSMoveTracker*) calloc(1, sizeof(PSMoveTracker));
@@ -939,12 +950,12 @@ psmove_tracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
     return 0;
 }
 
-void
+int
 psmove_tracker_set_camera_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char r, unsigned char g, unsigned char b)
 {
-    psmove_return_if_fail(tracker != NULL);
-    psmove_return_if_fail(move != NULL);
+    psmove_return_val_if_fail(tracker != NULL, 0);
+    psmove_return_val_if_fail(move != NULL, 0);
 
     TrackedController *tc = psmove_tracker_find_controller(tracker, move);
 
