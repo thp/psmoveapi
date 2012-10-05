@@ -63,8 +63,8 @@ _xdo_update_point(xdo_t *xdo, int x, int y) {
     y += xdo->screen_rect.size.height - xdo->mouse.y;
 
     // Coordinates need clipping to avoid strange "jumping" behavior
-    xdo->point.x = MAX(1, MIN(xdo->screen_rect.size.width, x));
-    xdo->point.y = MAX(1, MIN(xdo->screen_rect.size.height, y));
+    xdo->point.x = MAX(1, MIN(xdo->screen_rect.size.width - 1, x));
+    xdo->point.y = MAX(1, MIN(xdo->screen_rect.size.height - 1, y));
 }
 
 void
