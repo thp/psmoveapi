@@ -5,7 +5,7 @@ EXAMPLES := $(patsubst %.cs,%.exe,$(EXAMPLES_SRC))
 
 BINDINGS_SRC := $(wildcard ../../build/*.cs)
 
-CSC ?= mono-csc
+CSC ?= mcs
 
 all: $(EXAMPLES)
 
