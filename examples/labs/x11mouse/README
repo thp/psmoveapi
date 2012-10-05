@@ -1,10 +1,14 @@
 
-This application can simulate mouse movement and clicks under X11.
+This application can simulate mouse movement and clicks under Linux (X11) and
+Mac OS X.
 
 See the source code for button mappings.
 
 Requirements:
 
    - PS Move API built in "../../../build/" or installed system-wide
-   - libxdo-dev (from www.semicomplete.com/blog/projects/xdotool/)
+   - Linux only: libxdo-dev (www.semicomplete.com/blog/projects/xdotool/)
+
+On Mac OS X, a custom xdo-compatible implementation will be used that utilizes
+native OS X APIs to move the mouse cursor. You do not need libxdo on OS X.
 

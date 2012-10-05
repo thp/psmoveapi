@@ -34,7 +34,11 @@
 
 #include "psmove.h"
 
-#include "xdo.h"
+#ifdef __APPLE__
+#  include "xdo_osx.h"
+#else
+#  include "xdo.h"
+#endif
 
 /* Scaling factor to convert gyro values to relative pixel coordinates */
 #define SCALE(v) (14*v)
