@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "opencv2/core/core_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
@@ -88,6 +89,9 @@
 #define DISTORTION_XML "distortion.xml"
 
 #define COLOR_MAPPING_DAT "colormapping.dat"
+
+/* Only re-use color mappings "younger" than 2 hours */
+#define COLOR_MAPPING_MAX_AGE (2*60*60)
 
 /**
  * Syntactic sugar - iterate over all valid controllers of a tracker
@@ -473,9 +477,23 @@ psmove_tracker_new_with_camera(int camera) {
         camera_control_backup_system_settings(tracker->cc, filename);
 	free(filename);
 
-        // try to load color mapping data
+#ifndef __APPLE__
+        // try to load color mapping data (not on Mac OS X for now, because the
+        // automatic white balance means we get different colors every time)
         filename = psmove_util_get_file_path(COLOR_MAPPING_DAT);
-        FILE *fp = fopen(filename, "rb");
+        FILE *fp = NULL;
+        time_t now = time(NULL);
+        struct stat st;
+        memset(&st, 0, sizeof(st));
+
+        if (stat(filename, &st) == 0 && now != (time_t)-1) {
+            if (st.st_mtime >= (now - COLOR_MAPPING_MAX_AGE)) {
+                fp = fopen(filename, "rb");
+            } else {
+                printf("%s is too old - not restoring colors.\n", filename);
+            }
+        }
+
         if (fp) {
             if (!fread(&(tracker->color_mapping),
                         sizeof(struct ColorMappingRingBuffer),
@@ -488,6 +506,7 @@ psmove_tracker_new_with_camera(int camera) {
             fclose(fp);
         }
         free(filename);
+#endif
 
 	// use static exposure
 	tracker->exposure = GOOD_EXPOSURE;
