@@ -1,4 +1,5 @@
-/**
+
+ /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
@@ -26,30 +27,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#include "../camera_control.h"
 
-#include "psmove_osxsupport.h"
+#ifndef PSMOVE_TRACKER_OSXSUPPORT_H
+#define PSMOVE_TRACKER_OSXSUPPORT_H
 
-void
-camera_control_set_parameters(CameraControl* cc,
-        int autoE, int autoG, int autoWB,
-        int exposure, int gain,
-        int wbRed, int wbGreen, int wbBlue,
-        int contrast, int brightness)
-{
-    macosx_camera_set_exposure_lock(1);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int
+macosx_camera_set_exposure_lock(int locked);
+
+#ifdef __cplusplus
 }
+#endif
 
-void
-camera_control_backup_system_settings(CameraControl* cc,
-        const char* file)
-{
-    // Do nothing
-}
-
-void camera_control_restore_system_settings(CameraControl* cc,
-        const char* file)
-{
-    // Do nothing
-}
-
+#endif

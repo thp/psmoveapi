@@ -92,14 +92,12 @@ if (PSMOVE_USE_LOCAL_OPENCV)
     set(INFO_BUILD_TRACKER "Yes (with local OpenCV)")
 
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        find_library(AVFOUNDATION AVFoundation)
         find_library(QUARTZCORE QuartzCore)
         find_library(APPKIT AppKit)
         find_library(QTKIT QTKit)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
             opencv_core opencv_highgui opencv_imgproc
             libjpeg libpng zlib stdc++
-            ${AVFOUNDATION}
             ${QUARTZCORE}
             ${APPKIT}
             ${QTKIT})
@@ -125,6 +123,9 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${COREFOUNDATION})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${IOBLUETOOTH})
 
+    find_library(AVFOUNDATION AVFoundation)
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${AVFOUNDATION})
+
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/mac/hid.c)
 
     # Build Universal Binaries for OS X
@@ -134,6 +135,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_osxsupport.m)
 
     list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+        ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/psmove_osxsupport.m
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_macosx.c)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
