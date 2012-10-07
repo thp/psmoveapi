@@ -57,7 +57,7 @@ if(PSMOVE_USE_DEBUG)
     add_definitions(-g -O0 -Wall)
     set(INFO_USE_DEBUG "Yes")
 else()
-    add_definitions(-O2 -Wall)
+    add_definitions(-O2 -Wall -Wno-unused)
     set(INFO_USE_DEBUG "No")
 endif()
 
