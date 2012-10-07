@@ -99,7 +99,7 @@ class Orientation : public QThread
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
 
-                cvShowImage("asdf", psmove_tracker_get_image(tracker));
+                cvShowImage("asdf", psmove_tracker_get_frame(tracker));
 
                 unsigned char r, g, b;
                 psmove_tracker_get_color(tracker, move, &r, &g, &b);

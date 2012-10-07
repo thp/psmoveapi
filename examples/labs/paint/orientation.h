@@ -153,7 +153,7 @@ class Orientation : public QThread
 
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
-                emit newimage(psmove_tracker_get_image(tracker));
+                emit newimage(psmove_tracker_get_frame(tracker));
             }
 
             psmove_tracker_free(tracker);

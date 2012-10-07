@@ -57,6 +57,11 @@ extern "C" {
 #define PSMOVE_TRACKER_WIDTH_ENV "PSMOVE_TRACKER_WIDTH"
 #define PSMOVE_TRACKER_HEIGHT_ENV "PSMOVE_TRACKER_HEIGHT"
 
+typedef struct {
+    void *data;
+    int width;
+    int height;
+} PSMoveTrackerRGBImage;
 
 /* Opaque data structure, defined only in psmove_tracker.c */
 #ifndef SWIG
@@ -227,6 +232,9 @@ ADDCALL psmove_tracker_update(PSMoveTracker *tracker, PSMove *move);
  *          XXX: Define the return value type (IplImage* internally)
  **/
 ADDAPI void*
+ADDCALL psmove_tracker_get_frame(PSMoveTracker *tracker);
+
+ADDAPI PSMoveTrackerRGBImage
 ADDCALL psmove_tracker_get_image(PSMoveTracker *tracker);
 
 /**

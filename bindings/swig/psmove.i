@@ -4,6 +4,7 @@
 /* Java */
 %include "enums.swg"
 %include "typemaps.i"
+%include "various.i"
 
 %javaconst(1);
 %rename PSMove_Button Button;
@@ -29,6 +30,8 @@
 
 /* Python et al. */
 %module psmove
+
+%include "cdata.i"
 
 #endif /* defined(SWIGJAVA) */
 
@@ -193,6 +196,17 @@ void reinit();
 
 #ifdef PSMOVE_BUILD_TRACKER
 
+%extend PSMoveTrackerRGBImage {
+    const int size;
+
+#ifdef SWIGJAVA
+    /* Get bytes into a byte[] array in Java (must be big enough!) */
+    void get_bytes(char *BYTE) {
+        memcpy(BYTE, $self->data, 3 * $self->width * $self->height);
+    }
+#endif
+}
+
 %extend PSMoveTracker {
     /* Dimming factor */
     float dimming;
@@ -251,8 +265,7 @@ void reinit();
         return psmove_tracker_update($self, move);
     }
 
-    void *get_image() {
-        // FIXME!
+    PSMoveTrackerRGBImage get_image() {
         return psmove_tracker_get_image($self);
     }
 
@@ -364,6 +377,12 @@ void reinit()
 }
 
 #ifdef PSMOVE_BUILD_TRACKER
+
+int
+PSMoveTrackerRGBImage_size_get(PSMoveTrackerRGBImage *image)
+{
+    return 3 * image->width * image->height;
+}
 
 float
 PSMoveTracker_dimming_get(PSMoveTracker *tracker)

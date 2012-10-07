@@ -162,6 +162,7 @@ struct ColorMappingRingBuffer {
 struct _PSMoveTracker {
 	CameraControl* cc;
 	IplImage* frame; // the current frame of the camera
+        IplImage *frame_rgb; // the frame as tightly packed RGB data
 	int exposure; // the exposure to use
 	IplImage* roiI[ROIS]; // array of images for each level of roi (colored)
 	IplImage* roiM[ROIS]; // array of images for each level of roi (greyscale)
@@ -1026,8 +1027,29 @@ psmove_tracker_get_status(PSMoveTracker *tracker, PSMove *move)
 }
 
 void*
-psmove_tracker_get_image(PSMoveTracker *tracker) {
+psmove_tracker_get_frame(PSMoveTracker *tracker) {
 	return tracker->frame;
+}
+
+PSMoveTrackerRGBImage
+psmove_tracker_get_image(PSMoveTracker *tracker)
+{
+    PSMoveTrackerRGBImage result = { NULL, 0, 0 };
+
+    if (tracker != NULL) {
+        result.width = tracker->frame->width;
+        result.height = tracker->frame->height;
+
+        if (tracker->frame_rgb == NULL) {
+            tracker->frame_rgb = cvCreateImage(cvSize(result.width, result.height),
+                    IPL_DEPTH_8U, 3);
+        }
+
+        cvCvtColor(tracker->frame, tracker->frame_rgb, CV_BGR2RGB);
+        result.data = tracker->frame_rgb->imageData;
+    }
+
+    return result;
 }
 
 void psmove_tracker_update_image(PSMoveTracker *tracker) {
@@ -1320,6 +1342,10 @@ psmove_tracker_free(PSMoveTracker *tracker)
 {
     psmove_return_if_fail(tracker != NULL);
 
+    if (tracker->frame_rgb != NULL) {
+        cvReleaseImage(&tracker->frame_rgb);
+    }
+
     char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
     camera_control_restore_system_settings(tracker->cc, filename);
     free(filename);
@@ -1471,7 +1497,7 @@ void psmove_tracker_set_roi(PSMoveTracker* tracker, TrackedController* tc, int r
 
 void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 	CvPoint p;
-	IplImage* frame = psmove_tracker_get_image(tracker);
+	IplImage* frame = tracker->frame;
 
         CvFont fontSmall = cvFont(0.8, 1);
         CvFont fontNormal = cvFont(1, 1);

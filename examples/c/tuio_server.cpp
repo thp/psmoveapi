@@ -608,7 +608,7 @@ main(int argc, const char **argv) {
         psmove_tracker_update(tracker, NULL);
 
         if (show_debug_window) {
-            IplImage *frame = (IplImage*)psmove_tracker_get_image(tracker);
+            IplImage *frame = (IplImage*)psmove_tracker_get_frame(tracker);
             mouse_data.frame = frame;
             if (frame) {
                 cvShowImage("debug", frame);

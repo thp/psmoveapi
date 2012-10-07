@@ -123,7 +123,7 @@ int main(int arg, char** args) {
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, NULL);
 
-        frame = psmove_tracker_get_image(tracker);
+        frame = psmove_tracker_get_frame(tracker);
         if (frame) {
             cvShowImage("live camera feed", frame);
         }

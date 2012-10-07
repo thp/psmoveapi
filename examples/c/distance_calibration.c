@@ -87,7 +87,7 @@ main(int arg, char** args)
         psmove_tracker_update(tracker, NULL);
         printf("Distance: %.2f cm\n", distance);
 
-        void *frame = psmove_tracker_get_image(tracker);
+        void *frame = psmove_tracker_get_frame(tracker);
         cvShowImage("Camera", frame);
 
         unsigned char r, g, b;
