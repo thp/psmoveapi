@@ -132,6 +132,7 @@ struct _TrackedController {
 
     int is_tracked;				// 1 if tracked 0 otherwise
     long last_color_update;	// the timestamp when the last color adaption has been performed
+    enum PSMove_Bool auto_update_leds;
 };
 
 typedef struct _TrackedController TrackedController;
@@ -416,6 +417,30 @@ PSMoveTracker *psmove_tracker_new() {
 }
 
 void
+psmove_tracker_set_auto_update_leds(PSMoveTracker *tracker, PSMove *move,
+        enum PSMove_Bool auto_update_leds)
+{
+    psmove_return_if_fail(tracker != NULL);
+    psmove_return_if_fail(move != NULL);
+    TrackedController *tc = psmove_tracker_find_controller(tracker, move);
+    psmove_return_if_fail(tc != NULL);
+    tc->auto_update_leds = auto_update_leds;
+}
+
+
+enum PSMove_Bool
+psmove_tracker_get_auto_update_leds(PSMoveTracker *tracker, PSMove *move)
+{
+    psmove_return_val_if_fail(tracker != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+
+    TrackedController *tc = psmove_tracker_find_controller(tracker, move);
+    psmove_return_val_if_fail(tc != NULL, PSMove_False);
+    return tc->auto_update_leds;
+}
+
+
+void
 psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming)
 {
     psmove_return_if_fail(tracker != NULL);
@@ -631,6 +656,7 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 
     tc->move = move;
     tc->color = rgb;
+    tc->auto_update_leds = PSMove_True;
 
     tc->eColor = tc->eFColor = color;
     tc->eColorHSV = tc->eFColorHSV = th_brg2hsv(tc->eFColor);
@@ -914,6 +940,7 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
 
         tc->move = move;
         tc->color = rgb;
+        tc->auto_update_leds = PSMove_True;
 
         psmove_tracker_remember_color(tracker, rgb, color);
 	tc->eColor = tc->eFColor = color;
@@ -1053,7 +1080,8 @@ psmove_tracker_get_image(PSMoveTracker *tracker)
 }
 
 void psmove_tracker_update_image(PSMoveTracker *tracker) {
-	tracker->frame = camera_control_query_frame(tracker->cc);
+    psmove_return_if_fail(tracker != NULL);
+    tracker->frame = camera_control_query_frame(tracker->cc);
 }
 
 int
@@ -1062,6 +1090,13 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
         float x, y;
 	int i = 0;
 	int sphere_found = 0;
+
+        if (tc->auto_update_leds) {
+            unsigned char r, g, b;
+            psmove_tracker_get_color(tracker, tc->move, &r, &g, &b);
+            psmove_set_leds(tc->move, r, g, b);
+            psmove_update_leds(tc->move);
+        }
 
 	// calculate upper & lower bounds for the color filter
 	CvScalar min = th_scalar_sub(tc->eColorHSV, tracker->rHSV);

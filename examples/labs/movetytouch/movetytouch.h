@@ -160,13 +160,6 @@ class MovetyTouch : public QThread
 
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
-
-                for (i=0; i<count; i++) {
-                    unsigned char r, g, b;
-                    psmove_tracker_get_color(tracker, moves[i], &r, &g, &b);
-                    psmove_set_leds(moves[i], r, g, b);
-                    psmove_update_leds(moves[i]);
-                }
             }
 
             psmove_tracker_free(tracker);

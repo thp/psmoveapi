@@ -22,14 +22,7 @@ void setup() {
 void draw() {
     tracker.update_image();
     tracker.update();
-    
-    short r[] = new short[1];
-    short g[] = new short[1];
-    short b[] = new short[1];
-    tracker.get_color(move, r, g, b);
-    move.set_leds(r[0], g[0], b[0]);
-    move.update_leds();
-    
+
     PSMoveTrackerRGBImage image = tracker.get_image();
     if (pixels == null) {
           pixels = new byte[image.getSize()];

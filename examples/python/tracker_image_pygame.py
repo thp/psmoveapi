@@ -75,11 +75,6 @@ while True:
     display.blit(surface, (0, 0))
     pygame.display.flip()
 
-    # Need to set the LEDs of the controller regulary
-    r, g, b = tracker.get_color(move)
-    move.set_leds(r, g, b)
-    move.update_leds()
-
     # Check the tracking status
     status = tracker.get_status(move)
     if status == psmove.Tracker_TRACKING:

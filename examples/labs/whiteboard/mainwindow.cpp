@@ -99,11 +99,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::timeout()
 {
-    unsigned char r, g, b;
-    psmove_tracker_get_color(m_tracker, m_move, &r, &g, &b);
-    psmove_set_leds(m_move, r, g, b);
-    psmove_update_leds(m_move);
-
     psmove_tracker_update_image(m_tracker);
     psmove_tracker_update(m_tracker, m_move);
 

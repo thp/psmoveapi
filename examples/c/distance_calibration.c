@@ -90,11 +90,6 @@ main(int arg, char** args)
         void *frame = psmove_tracker_get_frame(tracker);
         cvShowImage("Camera", frame);
 
-        unsigned char r, g, b;
-        psmove_tracker_get_color(tracker, move, &r, &g, &b);
-        psmove_set_leds(move, r, g, b);
-        psmove_update_leds(move);
-
         float x, y, radius;
         psmove_tracker_get_position(tracker, move, &x, &y, &radius);
 

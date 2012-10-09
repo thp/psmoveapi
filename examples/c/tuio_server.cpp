@@ -503,7 +503,6 @@ main(int argc, const char **argv) {
 
     PSMoveTracker* tracker = psmove_tracker_new();
 
-    unsigned char r, g, b;
     int width, height;
     bool show_debug_window = false;
     bool did_show_debug_window_once = false;
@@ -621,9 +620,7 @@ main(int argc, const char **argv) {
 
         float x, y;
         for (int i=0; i<count; i++) {
-            psmove_tracker_get_color(tracker, moves[i], &r, &g, &b);
             psmove_set_rumble(moves[i], 0);
-            psmove_set_leds(moves[i], r, g, b);
             psmove_update_leds(moves[i]);
 
             if (event_sender) {

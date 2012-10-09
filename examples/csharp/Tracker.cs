@@ -16,11 +16,12 @@ public class Tracker {
             /* Track controllers in the camera picture */
             tracker.update();
 
-            /* Update the LEDs so they don't turn dark */
+            /* Optional and not required by default
             byte r, g, b;
             tracker.get_color(move, out r, out g, out b);
             move.set_leds(r, g, b);
             move.update_leds();
+            */
 
             /* If we're tracking, output the position */
             if (tracker.get_status(move) == Status.Tracker_TRACKING) {

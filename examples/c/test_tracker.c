@@ -69,7 +69,6 @@ int main(int arg, char** args) {
     }
 
     void *frame;
-    unsigned char r, g, b;
     int result;
 
     for (i=0; i<count; i++) {
@@ -110,8 +109,11 @@ int main(int arg, char** args) {
             fflush(stdout);
             result = psmove_tracker_enable(tracker, controllers[i]);
 
+            enum PSMove_Bool auto_update_leds =
+                psmove_tracker_get_auto_update_leds(tracker, controllers[i]);
             if (result == Tracker_CALIBRATED) {
-                printf("OK\n");
+                printf("OK, auto_update_leds is %s\n",
+                        (auto_update_leds == PSMove_True)?"enabled":"disabled");
                 break;
             } else {
                 printf("ERROR - retrying\n");
@@ -129,9 +131,12 @@ int main(int arg, char** args) {
         }
 
         for (i=0; i<count; i++) {
+            /* Optional and not required by default (see auto_update_leds above)
+            unsigned char r, g, b;
             psmove_tracker_get_color(tracker, controllers[i], &r, &g, &b);
             psmove_set_leds(controllers[i], r, g, b);
             psmove_update_leds(controllers[i]);
+            */
 
             float x, y, r;
             psmove_tracker_get_position(tracker, controllers[i], &x, &y, &r);

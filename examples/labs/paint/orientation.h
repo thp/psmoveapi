@@ -142,15 +142,6 @@ class Orientation : public QThread
                     }
                 } while (again);
 
-                for (i=0; i<count; i++) {
-                    PSMove *move = moves[i];
-
-                    unsigned char r, g, b;
-                    psmove_tracker_get_color(tracker, move, &r, &g, &b);
-                    psmove_set_leds(move, r, g, b);
-                    psmove_update_leds(move);
-                }
-
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
                 emit newimage(psmove_tracker_get_frame(tracker));

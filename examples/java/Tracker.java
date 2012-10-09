@@ -43,12 +43,14 @@ public class Tracker {
             tracker.update_image();
             tracker.update();
 
+            /* Optional and not required by default
             short [] r = {0};
             short [] g = {0};
             short [] b = {0};
             tracker.get_color(move, r, g, b);
             move.set_leds(r[0], g[0], b[0]);
             move.update_leds();
+            */
 
             if (tracker.get_status(move) == Status.Tracker_TRACKING) {
                 float [] x = { 0.f };

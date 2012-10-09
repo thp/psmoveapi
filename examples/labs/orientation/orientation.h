@@ -100,11 +100,6 @@ class Orientation : public QThread
                 psmove_tracker_update(tracker, NULL);
 
                 cvShowImage("asdf", psmove_tracker_get_frame(tracker));
-
-                unsigned char r, g, b;
-                psmove_tracker_get_color(tracker, move, &r, &g, &b);
-                psmove_set_leds(move, r, g, b);
-                psmove_update_leds(move);
             }
 
             psmove_tracker_free(tracker);

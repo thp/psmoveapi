@@ -75,12 +75,6 @@ namespace ot {
              * so we don't need to call them here
              **/
 
-            // Update the LEDs of the controller to keep it lit
-            unsigned char r, g, b;
-            psmove_tracker_get_color(tracker, move, &r, &g, &b);
-            psmove_set_leds(move, r, g, b);
-            psmove_update_leds(move);
-
             // Read the latest input reports from the controller
             while (psmove_poll(move));
 

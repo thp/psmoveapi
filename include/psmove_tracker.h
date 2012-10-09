@@ -107,6 +107,13 @@ ADDAPI PSMoveTracker *
 ADDCALL psmove_tracker_new_with_camera(int camera);
 
 ADDAPI void
+ADDCALL psmove_tracker_set_auto_update_leds(PSMoveTracker *tracker, PSMove *move,
+        enum PSMove_Bool auto_update_leds);
+
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_tracker_get_auto_update_leds(PSMoveTracker *tracker, PSMove *move);
+
+ADDAPI void
 ADDCALL psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming);
 
 ADDAPI float

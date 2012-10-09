@@ -233,6 +233,14 @@ void reinit();
         psmove_tracker_disable($self, move);
     }
 
+    void set_auto_update_leds(PSMove *move, int auto_update_leds) {
+        psmove_tracker_set_auto_update_leds($self, move, auto_update_leds);
+    }
+
+    int get_auto_update_leds(PSMove *move) {
+        return psmove_tracker_get_auto_update_leds($self, move);
+    }
+
     void get_color(PSMove *move, unsigned char *OUTPUT,
         unsigned char *OUTPUT, unsigned char *OUTPUT);
 

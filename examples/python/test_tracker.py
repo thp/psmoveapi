@@ -43,6 +43,9 @@ while result != psmove.Tracker_CALIBRATED:
     print 'Trying to calibrate...'
     result = tracker.enable(move)
 
+auto_update_leds = tracker.get_auto_update_leds(move)
+print 'Auto-update LEDs is', ('enabled' if auto_update_leds else 'disabled')
+
 # Loop and update the controller
 while True:
     # Get the latest input report from the controller
@@ -53,10 +56,10 @@ while True:
     # Update all tracked controllers
     tracker.update()
 
-    # Need to set the LEDs of the controller regulary
-    r, g, b = tracker.get_color(move)
-    move.set_leds(r, g, b)
-    move.update_leds()
+    # Optional and not required by default (see auto_update_leds above)
+    #r, g, b = tracker.get_color(move)
+    #move.set_leds(r, g, b)
+    #move.update_leds()
 
     # Check the tracking status
     status = tracker.get_status(move)
