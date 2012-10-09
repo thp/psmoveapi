@@ -340,6 +340,15 @@ if(PSMOVE_BUILD_TESTS)
     if(PSMOVE_BUILD_TRACKER)
         add_executable(test_tracker examples/c/test_tracker.c)
         target_link_libraries(test_tracker psmoveapi psmoveapi_tracker)
+
+        add_executable(test_opengl examples/c/test_opengl.cpp)
+        target_link_libraries(test_opengl psmoveapi psmoveapi_tracker GL glut SDL)
+
+        add_executable(test_opengl2 examples/c/test_opengl2.cpp)
+        target_link_libraries(test_opengl2 psmoveapi psmoveapi_tracker GL glut SDL)
+
+        add_executable(test_opengl3 examples/c/test_opengl3.cpp)
+        target_link_libraries(test_opengl3 psmoveapi psmoveapi_tracker GL glut SDL)
     endif()
 endif()
 
