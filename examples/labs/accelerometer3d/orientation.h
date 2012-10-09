@@ -68,7 +68,7 @@ class Orientation : public QThread
                     emit updateButtons(buttons, trigger);
 
                     if (buttons & Btn_MOVE) {
-                        psmove_set_orientation(move, 1., 0., 0., 0.);
+                        psmove_reset_orientation(move);
                     }
 
                     if (buttons & Btn_SQUARE) {

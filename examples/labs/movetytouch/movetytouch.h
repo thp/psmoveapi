@@ -139,7 +139,7 @@ class MovetyTouch : public QThread
 
                             q0 = 1.;
                             q1 = q2 = q3 = 0.;
-                            psmove_set_orientation(moves[i], 1., 0., 0., 0.);
+                            psmove_reset_orientation(moves[i]);
 
                             emit startRotation(states[i].move_id, x, y,
                                     q0, q1, q2, q3);

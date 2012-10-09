@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "psmove.h"
 #include "psmove_private.h"
@@ -43,7 +44,6 @@ struct _PSMoveOrientation {
     PSMove *move;
 
     /* 9 values = 3x accelerometer + 3x gyroscope + 3x magnetometer */
-    int input[9];
     float output[9];
 
     /* Current sampling frequency */
@@ -55,6 +55,9 @@ struct _PSMoveOrientation {
 
     /* Output value as quaternion */
     float quaternion[4];
+
+    /* Quaternion measured when controller points towards camera */
+    float reset_quaternion[4];
 };
 
 
@@ -80,10 +83,10 @@ psmove_orientation_new(PSMove *move)
     orientation->sample_freq_measure_count = 0;
 
     /* Initial quaternion */
-    orientation->quaternion[0] = 1;
-    orientation->quaternion[1] = 0;
-    orientation->quaternion[2] = 0;
-    orientation->quaternion[3] = 0;
+    orientation->quaternion[0] = 1.f;
+    orientation->quaternion[1] = 0.f;
+    orientation->quaternion[2] = 0.f;
+    orientation->quaternion[3] = 0.f;
 
     return orientation;
 }
@@ -110,10 +113,15 @@ psmove_orientation_update(PSMoveOrientation *orientation)
     /* We get 2 measurements per call to psmove_poll() */
     orientation->sample_freq_measure_count += 2;
 
-    psmove_get_magnetometer(orientation->move,
-            &orientation->input[6],
-            &orientation->input[7],
-            &orientation->input[8]);
+    psmove_get_magnetometer_vector(orientation->move,
+            &orientation->output[6],
+            &orientation->output[7],
+            &orientation->output[8]);
+
+    float q0 = orientation->quaternion[0];
+    float q1 = orientation->quaternion[1];
+    float q2 = orientation->quaternion[2];
+    float q3 = orientation->quaternion[3];
 
     for (frame=0; frame<2; frame++) {
         psmove_get_accelerometer_frame(orientation->move, frame,
@@ -129,22 +137,32 @@ psmove_orientation_update(PSMoveOrientation *orientation)
         MadgwickAHRSupdate(orientation->quaternion,
                 orientation->sample_freq,
 
-                -orientation->output[0],
-                orientation->output[1],
+                /* Accelerometer */
+                orientation->output[0],
                 orientation->output[2],
+                -orientation->output[1],
 
+                /* Gyroscope */
                 orientation->output[3],
                 orientation->output[5],
                 -orientation->output[4],
 
-                /* Magnetometer orientation disabled for now */
-                0, 0, 0
-#if 0
+                /* Magnetometer */
                 orientation->output[6],
                 orientation->output[8],
                 orientation->output[7]
-#endif
         );
+
+        if (isnan(orientation->quaternion[0]) ||
+            isnan(orientation->quaternion[1]) ||
+            isnan(orientation->quaternion[2]) ||
+            isnan(orientation->quaternion[3])) {
+            psmove_DEBUG("Orientation is NaN!");
+            orientation->quaternion[0] = q0;
+            orientation->quaternion[1] = q1;
+            orientation->quaternion[2] = q2;
+            orientation->quaternion[3] = q3;
+        }
     }
 }
 
@@ -154,33 +172,70 @@ psmove_orientation_get_quaternion(PSMoveOrientation *orientation,
 {
     psmove_return_if_fail(orientation != NULL);
 
+    /* first factor (reset quaternion) */
+    float a_s = orientation->reset_quaternion[0];
+    float a_x = orientation->reset_quaternion[1];
+    float a_y = orientation->reset_quaternion[2];
+    float a_z = orientation->reset_quaternion[3];
+
+    /* second factor (quaternion) */
+    float b_s = orientation->quaternion[0];
+    float b_x = orientation->quaternion[1];
+    float b_y = orientation->quaternion[2];
+    float b_z = orientation->quaternion[3];
+
+    /**
+     * Quaternion multiplication:
+     * http://lxr.kde.org/source/qt/src/gui/math3d/qquaternion.h#198
+     **/
+    float ww = (a_z + a_x) * (b_x + b_y);
+    float yy = (a_s - a_y) * (b_s + b_z);
+    float zz = (a_s + a_y) * (b_s - b_z);
+    float xx = ww + yy + zz;
+    float qq = .5f * (xx + (a_z - a_x) * (b_x - b_y));
+
+    /* Result */
+    float r_s = qq - ww + (a_z - a_y) * (b_y - b_z);
+    float r_x = qq - xx + (a_x + a_s) * (b_x + b_s);
+    float r_y = qq - yy + (a_s - a_x) * (b_y + b_z);
+    float r_z = qq - zz + (a_z + a_y) * (b_s - b_x);
+
     if (q0) {
-        *q0 = orientation->quaternion[0];
+        *q0 = r_s;
     }
 
     if (q1) {
-        *q1 = orientation->quaternion[1];
+        *q1 = r_x;
     }
 
     if (q2) {
-        *q2 = orientation->quaternion[2];
+        *q2 = r_y;
     }
 
     if (q3) {
-        *q3 = orientation->quaternion[3];
+        *q3 = r_z;
     }
 }
 
 void
-psmove_orientation_set_quaternion(PSMoveOrientation *orientation,
-        float q0, float q1, float q2, float q3)
+psmove_orientation_reset_quaternion(PSMoveOrientation *orientation)
 {
     psmove_return_if_fail(orientation != NULL);
+    float q0 = orientation->quaternion[0];
+    float q1 = orientation->quaternion[1];
+    float q2 = orientation->quaternion[2];
+    float q3 = orientation->quaternion[3];
 
-    orientation->quaternion[0] = q0;
-    orientation->quaternion[1] = q1;
-    orientation->quaternion[2] = q2;
-    orientation->quaternion[3] = q3;
+    /**
+     * Normalize and conjugate in one step:
+     *  - Normalize via the length
+     *  - Conjugate using (scalar, x, y, z) -> (scalar, -x, -y, -z)
+     **/
+    double length = sqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3);
+    orientation->reset_quaternion[0] = q0 / length;
+    orientation->reset_quaternion[1] = -q1 / length;
+    orientation->reset_quaternion[2] = -q2 / length;
+    orientation->reset_quaternion[3] = -q3 / length;
 }
 
 void

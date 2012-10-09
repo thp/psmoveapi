@@ -42,6 +42,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <limits.h>
 
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
@@ -192,6 +193,12 @@ typedef struct {
     unsigned char _padding[PSMOVE_BUFFER_SIZE-44]; /* unknown */
 } PSMove_Data_Input;
 
+typedef struct {
+    int x;
+    int y;
+    int z;
+} PSMove_3AxisVector;
+
 struct _PSMove {
     /* Device type (hidapi-based or moved-based */
     enum PSMove_Device_Type type;
@@ -233,6 +240,10 @@ struct _PSMove {
 
     /* Is orientation tracking currently enabled? */
     enum PSMove_Bool orientation_enabled;
+
+    /* Minimum and maximum magnetometer values observed this session */
+    PSMove_3AxisVector magnetometer_min;
+    PSMove_3AxisVector magnetometer_max;
 
 #ifdef PSMOVE_USE_PTHREADS
     /* Write thread for updating LEDs in the background */
@@ -477,6 +488,14 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_HIDAPI;
 
+    /* Initialize session-based magnetometer calibration data */
+    move->magnetometer_min.x =
+        move->magnetometer_min.y =
+        move->magnetometer_min.z = INT_MAX;
+    move->magnetometer_max.x =
+        move->magnetometer_max.y =
+        move->magnetometer_max.z = INT_MIN;
+
     /* Make sure the first LEDs update will go through (+ init get_ticks) */
     move->last_leds_update = psmove_util_get_ticks() - PSMOVE_MAX_LED_INHIBIT_MS;
 
@@ -573,6 +592,14 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_MOVED;
+
+    /* Initialize session-based magnetometer calibration data */
+    move->magnetometer_min.x =
+        move->magnetometer_min.y =
+        move->magnetometer_min.z = INT_MAX;
+    move->magnetometer_max.x =
+        move->magnetometer_max.y =
+        move->magnetometer_max.z = INT_MIN;
 
     move->client = client;
     move->remote_id = remote_id;
@@ -1308,6 +1335,53 @@ psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
             gx, gy, gz);
 }
 
+void
+psmove_get_magnetometer_vector(PSMove *move,
+        float *mx, float *my, float *mz)
+{
+    PSMove_3AxisVector raw;
+
+    psmove_return_if_fail(move != NULL);
+
+    psmove_get_magnetometer(move, &raw.x, &raw.y, &raw.z);
+
+    /* Update minimum values */
+    if (raw.x < move->magnetometer_min.x) {
+        move->magnetometer_min.x = raw.x;
+    }
+    if (raw.y < move->magnetometer_min.y) {
+        move->magnetometer_min.y = raw.y;
+    }
+    if (raw.z < move->magnetometer_min.z) {
+        move->magnetometer_min.z = raw.z;
+    }
+
+    /* Update maximum values */
+    if (raw.x > move->magnetometer_max.x) {
+        move->magnetometer_max.x = raw.x;
+    }
+    if (raw.y > move->magnetometer_max.y) {
+        move->magnetometer_max.y = raw.y;
+    }
+    if (raw.z > move->magnetometer_max.z) {
+        move->magnetometer_max.z = raw.z;
+    }
+
+    /* Map [min..max] to [-1..+1] */
+    if (mx) {
+        *mx = -1.f + 2.f * (float)(raw.x - move->magnetometer_min.x) /
+            (float)(move->magnetometer_max.x - move->magnetometer_min.x);
+    }
+    if (my) {
+        *my = -1.f + 2.f * (float)(raw.y - move->magnetometer_min.y) /
+            (float)(move->magnetometer_max.y - move->magnetometer_min.y);
+    }
+    if (mz) {
+        *mz = -1.f + 2.f * (float)(raw.z - move->magnetometer_min.z) /
+            (float)(move->magnetometer_max.z - move->magnetometer_min.z);
+    }
+}
+
 enum PSMove_Bool
 psmove_has_calibration(PSMove *move)
 {
@@ -1373,13 +1447,12 @@ psmove_get_orientation(PSMove *move,
 }
 
 void
-psmove_set_orientation(PSMove *move,
-        float q0, float q1, float q2, float q3)
+psmove_reset_orientation(PSMove *move)
 {
     psmove_return_if_fail(move != NULL);
     psmove_return_if_fail(move->orientation != NULL);
 
-    psmove_orientation_set_quaternion(move->orientation, q0, q1, q2, q3);
+    psmove_orientation_reset_quaternion(move->orientation);
 }
 
 

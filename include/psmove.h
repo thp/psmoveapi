@@ -634,7 +634,7 @@ ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
  *
  * Assuming that psmove_has_calibration() returns \ref PSMove_True, this
  * function will give you the calibrated accelerometer values in g. To get
- * the raw accelerometer readings, use psmove_get_accelerometer() instead.
+ * the raw accelerometer readings, use psmove_get_accelerometer().
  *
  * Usage example:
  *
@@ -670,7 +670,7 @@ ADDCALL psmove_get_accelerometer_frame(PSMove *move, enum PSMove_Frame frame,
  *
  * Assuming that psmove_has_calibration() returns \ref PSMove_True, this
  * function will give you the calibrated gyroscope values in rad/s. To get
- * the raw gyroscope readings, use psmove_get_gyroscope() instead.
+ * the raw gyroscope readings, use psmove_get_gyroscope().
  *
  * Usage example:
  *
@@ -699,6 +699,27 @@ ADDCALL psmove_get_accelerometer_frame(PSMove *move, enum PSMove_Frame frame,
 ADDAPI void
 ADDCALL psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
         float *gx, float *gy, float *gz);
+
+/**
+ * \brief Get the normalized magnetometer vector from the controller.
+ *
+ * The normalized magnetometer vector is a three-axis vector where each
+ * component is in the range [-1,+1], including both endpoints. The range
+ * will be dynamically determined based on the highest (and lowest) value
+ * observed during runtime. To get the raw magnetometer readings, use
+ * psmove_get_magnetometer().
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param mx Pointer to store the X axis reading, or \c NULL
+ * \param my Pointer to store the Y axis reading, or \c NULL
+ * \param mz Pointer to store the Z axis reading, or \c NULL
+ **/
+ADDAPI void
+ADDCALL psmove_get_magnetometer_vector(PSMove *move,
+        float *mx, float *my, float *mz);
 
 /**
  * \brief Check if calibration is available on this controller.
@@ -800,28 +821,16 @@ ADDCALL psmove_get_orientation(PSMove *move,
         float *q0, float *q1, float *q2, float *q3);
 
 /**
- * \brief (Re-)Set the current orientation quaternion.
+ * \brief Reset the current orientation quaternion.
  *
  * This will set the current 3D rotation of the PS Move controller as
  * quaternion. You can use this function to re-adjust the orientation of the
- * controller when the orientation tracking becomes inaccurate.
- *
- * You can always use this function, even with orientation tracking enabled and
- * also when orientation tracking is not available. It is also possible to
- * "inject" a different orientation tracking algorithm by calling
- * psmove_enable_orientation() with \ref PSMove_False and then always updating
- * the orientation using this function instead of relying on the built-in
- * orientation tracking algorithm.
+ * controller when it points towards the camera.
  *
  * \param move A valid \ref PSMove handle
- * \param q0 The first part of the new orientation quaternion
- * \param q1 The second part of the new orientation quaternion
- * \param q2 The third part of the new orientation quaternion
- * \param q3 The fourth part of the new orientation quaternion
  **/
 ADDAPI void
-ADDCALL psmove_set_orientation(PSMove *move,
-        float q0, float q1, float q2, float q3);
+ADDCALL psmove_reset_orientation(PSMove *move);
 
 
 /**

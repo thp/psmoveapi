@@ -83,7 +83,7 @@ class Orientation : public QThread
                     }
 
                     if (psmove_get_buttons(move) & Btn_MOVE) {
-                        psmove_set_orientation(move, 1., 0., 0., 0.);
+                        psmove_reset_orientation(move);
                     }
 
                     psmove_get_orientation(move, &q0, &q1, &q2, &q3);
