@@ -59,6 +59,10 @@ ADDAPI float *
 ADDCALL psmove_fusion_get_modelview_matrix(PSMoveFusion *fusion, PSMove *move);
 
 ADDAPI void
+ADDCALL psmove_fusion_get_position(PSMoveFusion *fusion, PSMove *move,
+        float *x, float *y, float *z);
+
+ADDAPI void
 ADDCALL psmove_fusion_free(PSMoveFusion *fusion);
 
 #ifdef __cplusplus

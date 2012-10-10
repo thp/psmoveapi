@@ -92,32 +92,47 @@ psmove_fusion_get_modelview_matrix(PSMoveFusion *fusion, PSMove *move)
     psmove_get_orientation(move, &q0, &q1, &q2, &q3);
     glm::quat quaternion(q3, q2, q1, q0);
 
-    float x, y, r;
-    psmove_tracker_get_position(fusion->tracker, move, &x, &y, &r);
+    float x, y, z;
+    psmove_fusion_get_position(fusion, move, &x, &y, &z);
 
-    float winX = (float)x;
-    float winY = fusion->height - (float)y;
+    fusion->modelview = glm::translate(glm::mat4(),
+            glm::vec3(x, y, z)) * glm::mat4_cast(quaternion);
+
+    return glm::value_ptr(fusion->modelview);
+}
+
+void
+psmove_fusion_get_position(PSMoveFusion *fusion, PSMove *move,
+        float *x, float *y, float *z)
+{
+    psmove_return_if_fail(fusion != NULL);
+    psmove_return_if_fail(move != NULL);
+
+    float camX, camY, camR;
+    psmove_tracker_get_position(fusion->tracker, move, &camX, &camY, &camR);
+
+    float winX = (float)camX;
+    float winY = fusion->height - (float)camY;
     float winZ = .5; /* start value for binary search */
 
-    float targetWidth = 2.*r;
+    float targetWidth = 2.*camR;
 
     glm::vec3 obj;
-    fusion->modelview = glm::mat4();
 
     /* Binary search for the best distance based on the current projection */
     float step = .25;
     while (step > PSMOVE_FUSION_STEP_EPSILON) {
         /* Calculate center position of sphere */
         obj = glm::unProject(glm::vec3(winX, winY, winZ),
-                fusion->modelview, fusion->projection, fusion->viewport);
+                glm::mat4(), fusion->projection, fusion->viewport);
 
         /* Project left edge center of sphere */
         glm::vec3 left = glm::project(glm::vec3(obj.x - .5, obj.y, obj.z),
-                fusion->modelview, fusion->projection, fusion->viewport);
+                glm::mat4(), fusion->projection, fusion->viewport);
 
         /* Project right edge center of sphere */
         glm::vec3 right = glm::project(glm::vec3(obj.x + .5, obj.y, obj.z),
-                fusion->modelview, fusion->projection, fusion->viewport);
+                glm::mat4(), fusion->projection, fusion->viewport);
 
         float width = (right.x - left.x);
         if (width > targetWidth) {
@@ -133,9 +148,17 @@ psmove_fusion_get_modelview_matrix(PSMoveFusion *fusion, PSMove *move)
         step *= .5;
     }
 
-    fusion->modelview = glm::translate(glm::mat4(), obj) * glm::mat4_cast(quaternion);
+    if (x != NULL) {
+        *x = obj.x;
+    }
 
-    return glm::value_ptr(fusion->modelview);
+    if (y != NULL) {
+        *y = obj.y;
+    }
+
+    if (z != NULL) {
+        *z = obj.z;
+    }
 }
 
 void
