@@ -50,3 +50,11 @@ TUIO Reference Implementation
 by Martin Kaltenbrunner
 from http://www.tuio.org/?software
 
+
+glm
+===
+
+A C++ mathematics library for graphics programming
+by G-Truc Creation
+from http://glm.g-truc.net/
+

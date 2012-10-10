@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 2.6)
 project(PSMOVEAPI)
 
 include_directories(${PSMOVEAPI_SOURCE_DIR}/external/hidapi/hidapi)
+include_directories(${PSMOVEAPI_SOURCE_DIR}/external/glm)
 
 set(PSMOVEAPI_MAJOR_VERSION "2")
 set(PSMOVEAPI_MINOR_VERSION "0")
@@ -207,6 +208,7 @@ file(GLOB PSMOVEAPI_MOVED_SRC
 
 file(GLOB PSMOVEAPI_TRACKER_SRC
     "${PSMOVEAPI_SOURCE_DIR}/src/tracker/*.c"
+    "${PSMOVEAPI_SOURCE_DIR}/src/tracker/*.cpp"
     "${PSMOVEAPI_SOURCE_DIR}/external/iniparser/*.c"
 )
 
