@@ -482,7 +482,7 @@ ADDCALL psmove_get_buttons(PSMove *move);
  * \code
  *     if (psmove_poll(move)) {
  *         unsigned int pressed, released;
- *         psmove_get_button_events(move, &pressed, &releaed);
+ *         psmove_get_button_events(move, &pressed, &released);
  *
  *         if (pressed & Btn_MOVE) {
  *             printf("The Move button has been pressed now.\n");
