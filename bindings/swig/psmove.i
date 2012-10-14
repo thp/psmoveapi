@@ -175,6 +175,8 @@ void reinit();
         return psmove_get_buttons($self);
     }
 
+    void get_button_events(unsigned int *OUTPUT, unsigned int *OUTPUT);
+
     int get_battery() {
         return psmove_get_battery($self);
     }
@@ -303,6 +305,13 @@ void
 PSMove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
     float *x, float *y, float *z) {
     psmove_get_gyroscope_frame(move, frame, x, y, z);
+}
+
+void
+PSMove_get_button_events(PSMove *move,
+    unsigned int *pressed, unsigned int *released)
+{
+    psmove_get_button_events(move, pressed, released);
 }
 
 int
