@@ -123,6 +123,13 @@ ADDAPI void
 ADDCALL psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
         enum PSMove_Bool enabled);
 
+ADDAPI void
+ADDCALL psmove_tracker_set_mirror(PSMoveTracker *tracker,
+        enum PSMove_Bool enabled);
+
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_tracker_get_mirror(PSMoveTracker *tracker);
+
 /**
  * Enable tracking for a given PSMove * instance
  *

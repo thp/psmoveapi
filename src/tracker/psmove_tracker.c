@@ -212,6 +212,7 @@ struct _PSMoveTracker {
 	// internal variables (debug)
 	float debug_fps; // the current FPS achieved by "psmove_tracker_update"
 
+        enum PSMove_Bool mirror; // mirror camera image horizontally
 };
 
 // -------- START: internal functions only
@@ -464,6 +465,22 @@ psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
     camera_control_set_deinterlace(tracker->cc, enabled);
 }
 
+void
+psmove_tracker_set_mirror(PSMoveTracker *tracker,
+        enum PSMove_Bool enabled)
+{
+    psmove_return_if_fail(tracker != NULL);
+
+    tracker->mirror = enabled;
+}
+
+enum PSMove_Bool
+psmove_tracker_get_mirror(PSMoveTracker *tracker)
+{
+    psmove_return_val_if_fail(tracker != NULL, PSMove_False);
+
+    return tracker->mirror;
+}
 
 PSMoveTracker *
 psmove_tracker_new_with_camera(int camera) {
@@ -1082,6 +1099,17 @@ psmove_tracker_get_image(PSMoveTracker *tracker)
 void psmove_tracker_update_image(PSMoveTracker *tracker) {
     psmove_return_if_fail(tracker != NULL);
     tracker->frame = camera_control_query_frame(tracker->cc);
+    if (tracker->mirror) {
+        /**
+         * Mirror image on the X axis (works for me with the PS Eye on Linux,
+         * although the OpenCV docs say the third parameter should be 0 for X
+         * axis mirroring)
+         *
+         * See also:
+         * http://cv-kolaric.blogspot.com/2007/07/effects-of-cvflip.html
+         **/
+        cvFlip(tracker->frame, NULL, 1);
+    }
 }
 
 int
