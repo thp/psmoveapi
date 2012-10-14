@@ -37,6 +37,9 @@ public class Tracker {
         PSMoveTracker tracker = new PSMoveTracker();
         PSMove move = new PSMove();
 
+        // Mirror the camera image
+        tracker.set_mirror(1);
+
         while (tracker.enable(move) != Status.Tracker_CALIBRATED);
 
         while (true) {

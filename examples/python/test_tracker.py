@@ -37,6 +37,9 @@ import psmove
 tracker = psmove.PSMoveTracker()
 move = psmove.PSMove()
 
+# Mirror the camera image
+tracker.set_mirror(True)
+
 # Calibrate the controller with the tracker
 result = -1
 while result != psmove.Tracker_CALIBRATED:

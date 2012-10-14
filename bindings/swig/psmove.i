@@ -259,6 +259,15 @@ void reinit();
             enabled?PSMove_True:PSMove_False);
     }
 
+    void set_mirror(int enabled) {
+        psmove_tracker_set_mirror($self,
+            enabled?PSMove_True:PSMove_False);
+    }
+
+    int get_mirror() {
+        return psmove_tracker_get_mirror($self);
+    }
+
     enum PSMoveTracker_Status get_status(PSMove *move) {
         return psmove_tracker_get_status($self, move);
     }
