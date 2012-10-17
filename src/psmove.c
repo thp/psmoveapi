@@ -1438,7 +1438,7 @@ psmove_has_orientation(PSMove *move)
 
 void
 psmove_get_orientation(PSMove *move,
-        float *x, float *y, float *z, float *w)
+        float *w, float *x, float *y, float *z)
 {
     psmove_return_if_fail(move != NULL);
     psmove_return_if_fail(move->orientation != NULL);

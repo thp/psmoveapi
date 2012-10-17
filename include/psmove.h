@@ -818,7 +818,7 @@ ADDCALL psmove_has_orientation(PSMove *move);
  **/
 ADDAPI void
 ADDCALL psmove_get_orientation(PSMove *move,
-        float *x, float *y, float *z, float *w);
+        float *w, float *x, float *y, float *z);
 
 /**
  * \brief Reset the current orientation quaternion.
