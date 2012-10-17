@@ -1438,12 +1438,12 @@ psmove_has_orientation(PSMove *move)
 
 void
 psmove_get_orientation(PSMove *move,
-        float *q0, float *q1, float *q2, float *q3)
+        float *x, float *y, float *z, float *w)
 {
     psmove_return_if_fail(move != NULL);
     psmove_return_if_fail(move->orientation != NULL);
 
-    psmove_orientation_get_quaternion(move->orientation, q0, q1, q2, q3);
+    psmove_orientation_get_quaternion(move->orientation, w ,x ,y, z);
 }
 
 void
