@@ -811,10 +811,10 @@ ADDCALL psmove_has_orientation(PSMove *move);
  * preconditions are fulfilled to do orientation tracking.
  *
  * \param move A valid \ref PSMove handle
- * \param q0 A pointer to store the first part of the orientation quaternion
- * \param q1 A pointer to store the second part of the orientation quaternion
- * \param q2 A pointer to store the third part of the orientation quaternion
- * \param q3 A pointer to store the fourth part of the orientation quaternion
+ * \param w A pointer to store the w part of the orientation quaternion
+ * \param x A pointer to store the x part of the orientation quaternion
+ * \param y A pointer to store the y part of the orientation quaternion
+ * \param z A pointer to store the z part of the orientation quaternion
  **/
 ADDAPI void
 ADDCALL psmove_get_orientation(PSMove *move,
