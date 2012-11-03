@@ -49,17 +49,16 @@ macosx_bluetooth_set_powered(int powered)
 {
     // Inspired by blueutil from Frederik Seiffert <ego@frederikseiffert.de>
     int state = IOBluetoothPreferenceGetControllerPowerState();
-    if (powered != state) {
-        OSXPAIR_DEBUG("Switching Bluetooth %s...\n", powered?"on":"off");
-        IOBluetoothPreferenceSetControllerPowerState(powered);
 
-        // Wait a bit for Bluetooth to be (de-)activated
-        usleep(1000000);
+    OSXPAIR_DEBUG("Switching Bluetooth %s...\n", powered?"on":"off");
+    IOBluetoothPreferenceSetControllerPowerState(powered);
 
-        if (IOBluetoothPreferenceGetControllerPowerState() != powered) {
-            // Happened to me once while Bluetooth devices were connected
-            return 0;
-        }
+    // Wait a bit for Bluetooth to be (de-)activated
+    usleep(2000000);
+
+    if (IOBluetoothPreferenceGetControllerPowerState() != powered) {
+        // Happened to me once while Bluetooth devices were connected
+        return 0;
     }
 
     return 1;
@@ -69,7 +68,7 @@ char *
 macosx_get_btaddr()
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    const char *result;
+    char *result;
 
     macosx_bluetooth_set_powered(1);
 
@@ -79,11 +78,11 @@ macosx_get_btaddr()
     NSString *addr = [controller addressAsString];
     psmove_return_val_if_fail(addr != NULL, NULL);
 
-    result = [addr UTF8String];
+    result = strdup([addr UTF8String]);
     psmove_return_val_if_fail(result != NULL, NULL);
 
     [pool release];
-    return strdup(result);
+    return result;
 }
 
 int
@@ -187,9 +186,7 @@ macosx_blued_register_psmove(char *addr)
     }
 
     if (!macosx_bluetooth_set_powered(0)) {
-        OSXPAIR_DEBUG("Cannot shutdown Bluetooth.\n");
-        result = 0;
-        goto end;
+        OSXPAIR_DEBUG("Cannot shutdown Bluetooth (shut it down manually).\n");
     }
 
     int i = 0;
@@ -208,7 +205,11 @@ macosx_blued_register_psmove(char *addr)
     if (system(cmd) != 0) {
         OSXPAIR_DEBUG("Could not run the command.");
     }
+
+    // FIXME: In OS X 10.7 this might not work - fork() and call set_powered(1)
+    // from a fresh process (e.g. like "blueutil 1") to switch Bluetooth on
     macosx_bluetooth_set_powered(1);
+
     free(btaddr);
 
 end:
