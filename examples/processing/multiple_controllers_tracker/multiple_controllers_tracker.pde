@@ -2,18 +2,25 @@
 // Import the PS Move API Package
 import io.thp.psmove.*;
 
+// Tracker and controller handles
 PSMoveTracker tracker;
+PSMove [] controllers; // Define an array of controllers
 
+// Variables for storing the camera image
 PImage img;
 byte [] pixels;
-
-int connectedControllers = 2; // Number of connected Move controllers (a more generic solution would be to use count_connected() in the setup)
-PSMove[] controllers; // Define an array of controllers
 
 void setup() {
   size(640, 480);
 
-  controllers = new PSMove[connectedControllers];
+  int connected = psmoveapi.count_connected();
+
+  // This is only fun if we actually have controllers
+  if (connected == 0) {
+    print("WARNING: No controllers connected.");
+  }
+
+  controllers = new PSMove[connected];
 
   // Fill the array with controllers and light them up in white
   for (int i = 0; i<controllers.length; i++) {
