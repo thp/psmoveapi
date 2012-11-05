@@ -130,6 +130,8 @@ void reinit();
     void get_gyroscope_frame(enum PSMove_Frame frame,
         float *OUTPUT, float *OUTPUT, float *OUTPUT);
 
+    void get_magnetometer_vector(float *OUTPUT, float *OUTPUT, float *OUTPUT);
+
     void set_leds(int r, int g, int b) {
         psmove_set_leds($self, r, g, b);
     }
@@ -314,6 +316,12 @@ void
 PSMove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
     float *x, float *y, float *z) {
     psmove_get_gyroscope_frame(move, frame, x, y, z);
+}
+
+void
+PSMove_get_magnetometer_vector(PSMove *move, float *x, float *y, float *z)
+{
+    psmove_get_magnetometer_vector(move, x, y, z);
 }
 
 void
