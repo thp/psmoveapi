@@ -44,13 +44,9 @@ public class SensorReading {
 
         System.out.println("PS Move Serial: " + move.get_serial());
 
-        float [] ax = { 0.f };
-        float [] ay = { 0.f };
-        float [] az = { 0.f };
-
-        float [] gx = { 0.f };
-        float [] gy = { 0.f };
-        float [] gz = { 0.f };
+        float [] ax = { 0.f }, ay = { 0.f }, az = { 0.f };
+        float [] gx = { 0.f }, gy = { 0.f }, gz = { 0.f };
+        float [] mx = { 0.f }, my = { 0.f }, mz = { 0.f };
 
         while (true) {
             while (move.poll() != 0) {
@@ -58,10 +54,13 @@ public class SensorReading {
                         ax, ay, az);
                 move.get_gyroscope_frame(Frame.Frame_SecondHalf,
                         gx, gy, gz);
+                move.get_magnetometer_vector(mx, my, mz);
                 System.out.format("ax: %.2f ay: %.2f az: %.2f ",
                         ax[0], ay[0], az[0]);
-                System.out.format("gx: %.2f gy: %.2f gz: %.2f\n",
+                System.out.format("gx: %.2f gy: %.2f gz: %.2f ",
                         gx[0], gy[0], gz[0]);
+                System.out.format("mx: %.2f my: %.2f mz: %.2f\n",
+                        mx[0], my[0], mz[0]);
             }
         }
     }
