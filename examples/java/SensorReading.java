@@ -28,9 +28,18 @@
 
 import io.thp.psmove.PSMove;
 import io.thp.psmove.Frame;
+import io.thp.psmove.psmoveapi;
 
 public class SensorReading {
     public static void main(String [] args) {
+        int connected = psmoveapi.count_connected();
+        System.out.println("Connected controllers: " + connected);
+
+        if (connected == 0) {
+            System.out.println("Please connect a controller first.");
+            System.exit(1);
+        }
+
         PSMove move = new PSMove();
 
         System.out.println("PS Move Serial: " + move.get_serial());

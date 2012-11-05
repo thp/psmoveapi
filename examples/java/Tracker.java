@@ -28,12 +28,21 @@
 
 import io.thp.psmove.PSMove;
 import io.thp.psmove.Frame;
+import io.thp.psmove.psmoveapi;
 
 import io.thp.psmove.PSMoveTracker;
 import io.thp.psmove.Status;
 
 public class Tracker {
     public static void main(String [] args) {
+        int connected = psmoveapi.count_connected();
+        System.out.println("Connected controllers: " + connected);
+
+        if (connected == 0) {
+            System.out.println("Please connect a controller first.");
+            System.exit(1);
+        }
+
         PSMoveTracker tracker = new PSMoveTracker();
         PSMove move = new PSMove();
 
