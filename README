@@ -59,32 +59,6 @@ Environment variables:
 
 
 
- |- Windows notes ----------- -- -  -
- | If you are using MinGW from the Qt SDK, you have to replace the file
- | libbthprops.a in mingw\lib\ with the file of the same name from the
- | mingw-w64 package. A modified set of Bluetooth headers can be found in
- | external/mingw-w64-headers if you need them - they are taken from the
- | mingw-w64 distribution and have been modified to work with Qt SDK's mingw.
- |
- | If for some reason, you get an assertion error (hFind != NULL) on Windows
- | with psmovepair, it could be that you are not using the Windows Bluetooth
- | stack. Whatever the reason is, the psmovepair utility accepts a command-line
- | parameter that is the desired host address, so you can still pair the device
- | by figuring out the Bluetooth host address manually and using this as the
- | first parameter when starting psmovepair, e.g.:
- |
- |       psmovepair.exe AA:BB:CC:DD:EE:FF
- |
- | If you have Python 2.7 and Swig (tested with 2.0.4) installed, the Python
- | module will be built and can be used normally. If you want to try out the
- | samples, use the follwing (assuming you built the project in "build/":
- |
- |       set PYTHONPATH=..\build\
- |       set PATH=%PATH%;C:\python27\
- |       python psmove_test.py
- |
- .
-
 The PS Move protocol information is based on information from the the linmctool
 and Move On PC projects.
 
