@@ -146,7 +146,7 @@ int
 macosx_get_minor_version()
 {
     char tmp[1024];
-    int major, minor, patch;
+    int major, minor, patch = 0;
     FILE *fp;
 
     fp = popen("sw_vers -productVersion", "r");
@@ -154,8 +154,16 @@ macosx_get_minor_version()
     psmove_return_val_if_fail(fgets(tmp, sizeof(tmp), fp) != NULL, -1);
     pclose(fp);
 
-    psmove_return_val_if_fail(sscanf(tmp, "%d.%d.%d",
-                &major, &minor, &patch) == 3, -1);
+    int assigned = sscanf(tmp, "%d.%d.%d", &major, &minor, &patch);
+
+    /**
+     * On Mac OS X 10.8.0, the command returns "10.8", so we allow parsing
+     * only the first two numbers of the triplet, leaving the patch version
+     * to the default (0) set above.
+     *
+     * See: https://github.com/thp/psmoveapi/issue/32
+     **/
+    psmove_return_val_if_fail(assigned == 2 || assigned == 3, -1);
 
     return minor;
 }
