@@ -52,6 +52,10 @@ option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
 # Write debugging images for tracking calibration to home directory
 option(PSMOVE_USE_TRACKER_TRACE "Write tracker calibration images to disk" OFF)
 
+
+# https://github.com/thp/psmoveapi/issues/29
+add_definitions(-fPIC)
+
 # Debugging output
 if(PSMOVE_USE_DEBUG)
     add_definitions(-DPSMOVE_DEBUG)
