@@ -12,6 +12,7 @@
 %rename PSMove_Connection_Type ConnectionType;
 %rename PSMove_Frame Frame;
 %rename PSMoveTracker_Status Status;
+%rename PSMove_RemoteConfig RemoteConfig;
 %module psmoveapi
 
 #elif defined (SWIGCSHARP)
@@ -24,6 +25,7 @@
 %rename PSMove_Connection_Type ConnectionType;
 %rename PSMove_Frame Frame;
 %rename PSMoveTracker_Status Status;
+%rename PSMove_RemoteConfig RemoteConfig;
 %module psmoveapi_csharp
 
 #else
@@ -92,6 +94,8 @@ typedef struct {} PSMove;
 typedef struct {} PSMoveTracker;
 #endif /* PSMOVE_BUILD_TRACKER */
 
+
+void set_remote_config(enum PSMove_RemoteConfig config);
 
 int count_connected();
 
@@ -398,6 +402,11 @@ PSMove_mz_get(PSMove *move) {
     int result;
     psmove_get_magnetometer(move, NULL, NULL, &result);
     return result;
+}
+
+void set_remote_config(enum PSMove_RemoteConfig config)
+{
+    return psmove_set_remote_config(config);
 }
 
 int count_connected()
