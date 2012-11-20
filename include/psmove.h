@@ -151,11 +151,36 @@ enum PSMove_Bool {
     PSMove_True = 1, /*!< True, Success, Enabled (depending on context) */
 };
 
+/*! Remote configuration options, for psmove_set_remote_config() */
+enum PSMove_RemoteConfig {
+    PSMove_LocalAndRemote = 0, /*!< Use both local (hidapi) and remote (moved) devices */
+    PSMove_OnlyLocal = 1, /*!< Use only local (hidapi) devices, ignore remote devices */
+    PSMove_OnlyRemote = 2, /*!< Use only remote (moved) devices, ignore local devices */
+};
+
 #ifndef SWIG
 struct _PSMove;
 typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
                                     Obtained via psmove_connect_by_id() */
 #endif
+
+/**
+ * \brief Enable or disable the usage of local or remote devices
+ *
+ * By default, both local (hidapi) and remote (moved) controllers will be
+ * used. If your application only wants to use locally-connected devices,
+ * and ignore any remote controllers, call this function with
+ * \ref PSMove_OnlyLocal - to use only remotely-connected devices, use
+ * \ref PSMove_OnlyRemote instead.
+ *
+ * This function must be called before any other PS Move API functions are
+ * used, as it changes the behavior of counting and connecting to devices.
+ *
+ * \param config \ref PSMove_LocalAndRemote, \ref PSMove_OnlyLocal or
+ *               \ref PSMove_OnlyRemote
+ **/
+ADDAPI void
+ADDCALL psmove_set_remote_config(enum PSMove_RemoteConfig config);
 
 /**
  * \brief Get the number of available controllers

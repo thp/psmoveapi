@@ -369,15 +369,10 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 
 
 void
-_psmove_disable_remote()
+psmove_set_remote_config(enum PSMove_RemoteConfig config)
 {
-    psmove_remote_disabled = 1;
-}
-
-void
-_psmove_disable_local()
-{
-    psmove_local_disabled = 1;
+    psmove_remote_disabled = (config == PSMove_OnlyLocal);
+    psmove_local_disabled = (config == PSMove_OnlyRemote);
 }
 
 void

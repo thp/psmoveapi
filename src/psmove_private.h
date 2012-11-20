@@ -117,24 +117,6 @@ ADDAPI void
 ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
 
 /**
- * [PRIVATE API] Disable the connection to remote servers
- *
- * This can only be called at the beginning, and will disable connections to
- * any remote "moved" servers.
- **/
-ADDAPI void
-ADDCALL _psmove_disable_remote();
-
-/**
- * [PRIVATE API] Disable local (hidapi-based) controllers
- *
- * This can only be called at the beginning, and will disable all local
- * controllers that are connected via hidapi.
- **/
-ADDAPI void
-ADDCALL _psmove_disable_local();
-
-/**
  * [PRIVATE API] Internal device open function (hidraw, Linux / for moved)
  **/
 ADDAPI PSMove *

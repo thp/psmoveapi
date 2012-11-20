@@ -1,0 +1,34 @@
+
+Move Daemon Usage Instructions
+==============================
+
+You need to place a file "moved_hosts.txt" into the data directory of PS Move
+API (usually ~/.psmoveapi/, in Windows %APPDATA%/.psmoveapi/) with one IP
+address per line that points to a moved instance.
+
+Example moved_hosts.txt contents (between the "="):
+=============
+192.168.0.2
+=============
+
+This would try to use the moved running on 192.168.0.2. You can have multiple
+IPs listed there (one per line), the servers will be tried in order.
+
+After that, you can use the PS Move API just as you normally would, and after
+your locally-connected controllers, controllers connected to remote machines
+will be used (psmove_count_connected() and psmove_connect_by_id() will take
+the remote controllers into account).
+
+If you want to only use remotely-connected controllers (ignoring any
+controllers that are connected locally), or if you want to use moved running
+on localhost (where it will already provide the connected controllers to you),
+you should add the following API call at the beginning of your application to
+ensure that locally-connected devices are not used via hidapi:
+
+    psmove_set_remote_config(PSMove_OnlyRemote);
+
+Similarly, you can disable remote controllers via the following API call (in
+that case, no connections to moved are carred out, only hidapi is used):
+
+    psmove_set_remote_config(PSMove_OnlyLocal);
+

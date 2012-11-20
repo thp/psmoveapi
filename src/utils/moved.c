@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 #endif
 
     /* Never act as a client in "moved" mode */
-    _psmove_disable_remote();
+    psmove_set_remote_config(PSMove_OnlyLocal);
 
     moved_dump_devices(moved);
 
