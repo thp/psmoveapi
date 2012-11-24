@@ -569,7 +569,7 @@ psmove_tracker_new_with_camera(int camera) {
         int size = psmove_util_get_env_int(PSMOVE_TRACKER_ROI_SIZE_ENV);
 
         if (size == -1) {
-            size = MIN(frame->width/2, frame->height/2);
+            size = MIN(frame->width, frame->height) / 2;
         } else {
             psmove_DEBUG("Using ROI size: %d\n", size);
         }
