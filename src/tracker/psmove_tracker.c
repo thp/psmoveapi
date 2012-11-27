@@ -218,20 +218,16 @@ struct _PSMoveTracker {
 // -------- START: internal functions only
 
 /**
- * XXX - this function is currently not used
- * 
  * Adapts the cameras exposure to the current lighting conditions
- * This function will adapt to the most suitable exposure, it will start
- * with "expMin" and increases step by step to "expMax" until it reaches "lumMin" or "expMax"
+ *
+ * This function will find the most suitable exposure.
  *
  * tracker - A valid PSMoveTracker * instance
- * limMin  - Minimal luminance to reach
- * expMin  - Minimal exposure to test
- * expMax  - Maximal exposure to test
+ * target_luminance - The target luminance value (higher = brighter)
  *
- * Returns: the most suitable exposure within range
+ * Returns: the most suitable exposure
  **/
-int psmove_tracker_adapt_to_light(PSMoveTracker *tracker, int lumMin, int expMin, int expMax);
+int psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance);
 
 /**
  * Find the TrackedController * for a given PSMove * instance
@@ -462,26 +458,20 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
     psmove_return_if_fail(tracker != NULL);
     tracker->exposure_mode = exposure;
 
+    float target_luminance = 0;
     switch (tracker->exposure_mode) {
-        case Exposure_LOW:
-            tracker->exposure = 2051;
-            break;
         case Exposure_MEDIUM:
-            tracker->exposure = 20000;
+            target_luminance = 25;
             break;
         case Exposure_HIGH:
-            tracker->exposure = 40000;
-            break;
-        case Exposure_DYNAMIC:
-            // use dynamic exposure (a lighting condition specific exposure)
-            tracker->exposure = psmove_tracker_adapt_to_light(tracker, 25, 2051, 4051);
+            target_luminance = 50;
             break;
         default:
             psmove_DEBUG("Invalid exposure mode: %s\n", exposure);
-            tracker->exposure = 2051;
             break;
     }
 
+    tracker->exposure = psmove_tracker_adapt_to_light(tracker, target_luminance);
     camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->exposure,
             0, 0xffff, 0xffff, 0xffff, -1, -1);
 }
@@ -1462,51 +1452,56 @@ psmove_tracker_free(PSMoveTracker *tracker)
 }
 
 // -------- Implementation: internal functions only
-int psmove_tracker_adapt_to_light(PSMoveTracker *tracker, int lumMin, int expMin, int expMax) {
-	int exp = expMin;
-	// set the camera parameters to minimal exposure
-	camera_control_set_parameters(tracker->cc, 0, 0, 0, exp, 0, 0xffff, 0xffff, 0xffff, -1, -1);
-	IplImage* frame;
-	// calculate a stepsize to increase the exposure, so that not more than 5 steps are neccessary
-	int step = (expMax - expMin) / 10;
-	if (step == 0)
-		step = 1;
-	int lastExp = exp;
-	while (1) {
-		// wait a little for the new parameters to be applied
-		usleep(1000000 / 10);
-		frame = camera_control_query_frame(tracker->cc);
-		//}
-		if (!frame)
-			continue;
+int
+psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
+{
+    float minimum_exposure = 2051;
+    float maximum_exposure = 65535;
+    float current_exposure = (maximum_exposure + minimum_exposure) / 2.;
 
-		// calculate the average color
-		CvScalar avgColor = cvAvg(frame, 0x0);
-		// calculate the average luminance (energy)
-		float avgLum = th_color_avg(avgColor);
+    if (target_luminance == 0) {
+        return minimum_exposure;
+    }
 
-		printf("exp:%d: lum:%f\n", exp, avgLum);
-		// if the minimal luminance "limMin" has not been reached, increase the current exposure "exp"
-		if (avgLum < lumMin)
-			exp = exp + step;
+    float step_size = (maximum_exposure - minimum_exposure) / 4.;
 
-		// check exposure boundaries
-		if (exp < expMin)
-			exp = expMin;
-		if (exp > expMax)
-			exp = expMax;
+    // Switch off the controllers' LEDs for proper environment measurements
+    TrackedController *tc;
+    for_each_controller(tracker, tc) {
+        psmove_set_leds(tc->move, 0, 0, 0);
+        psmove_update_leds(tc->move);
+    }
 
-		// if the current exposure has been modified, apply it!
-		if (lastExp != exp) {
-			// reconfigure the camera
-			camera_control_set_parameters(tracker->cc, 0, 0, 0, exp, 0, 0xffff, 0xffff, 0xffff, -1, -1);
-			lastExp = exp;
-		} else
-			break;
-	}
-	printf("exposure set to %d(0x%x)\n", exp, exp);
-	return exp;
+    int i;
+    for (i=0; i<7; i++) {
+        camera_control_set_parameters(tracker->cc, 0, 0, 0,
+                (int)current_exposure, 0, 0xffff, 0xffff, 0xffff, -1, -1);
+
+        IplImage* frame;
+        psmove_tracker_wait_for_frame(tracker, &frame, 50);
+        assert(frame != NULL);
+
+        // calculate the average color and luminance (energy)
+        float luminance = th_color_avg(cvAvg(frame, NULL));
+
+        psmove_DEBUG("Exposure: %.2f, Luminance: %.2f\n", current_exposure, luminance);
+        if (fabsf(luminance - target_luminance) < 1) {
+            break;
+        }
+
+        // Binary search for the best exposure setting
+        if (luminance > target_luminance) {
+            current_exposure -= step_size;
+        } else {
+            current_exposure += step_size;
+        }
+
+        step_size /= 2.;
+    }
+
+    return current_exposure;
 }
+
 
 TrackedController *
 psmove_tracker_find_controller(PSMoveTracker *tracker, PSMove *move)

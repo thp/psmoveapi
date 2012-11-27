@@ -53,8 +53,4 @@ while True:
             tracker.exposure = psmove.Exposure_MEDIUM
         elif pressed & psmove.Btn_CROSS:
             tracker.exposure = psmove.Exposure_HIGH
-        elif pressed & psmove.Btn_SQUARE:
-            tracker.exposure = psmove.Exposure_DYNAMIC
-
-    time.sleep(.1)
 

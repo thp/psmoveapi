@@ -82,7 +82,6 @@ enum PSMoveTracker_Exposure {
     Exposure_LOW, /*!< Very low exposure: Good tracking, no environment visible */
     Exposure_MEDIUM, /*!< Middle ground: Good tracking, environment visibile */
     Exposure_HIGH, /*!< High exposure: Fair tracking, but good environment */
-    Exposure_DYNAMIC, /*!< Experimental dynamic exposure algorithm */
     Exposure_INVALID, /*!< Invalid exposure value (for returning failures) */
 };
 
