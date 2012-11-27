@@ -115,7 +115,6 @@ void camera_control_restore_system_settings(CameraControl* cc, const char* file)
 
 void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
 		int brightness) {
-    return;
 	int fd = open_v4l2_device(cc->cameraID);
 
 	if (fd != -1) {

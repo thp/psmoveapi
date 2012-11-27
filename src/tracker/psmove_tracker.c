@@ -49,9 +49,8 @@
 #  include "platform/psmove_linuxsupport.h"
 #endif
 
-//#define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
+#define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
 //#define DEBUG_WINDOWS 			// shall additional windows be shown
-#define GOOD_EXPOSURE 2051			// a very low exposure that was found to be good for tracking
 #define ROIS 4                   	// the number of levels of regions of interest (roi)
 #define BLINKS 4                 	// number of diff images to create during calibration
 #define BLINK_DELAY 100             	// number of milliseconds to wait between a blink
@@ -170,6 +169,7 @@ struct _PSMoveTracker {
 	IplConvKernel* kCalib; // kernel used for morphological operations during calibration
 	CvScalar rHSV; // the range of the color filter
 
+        enum PSMoveTracker_Exposure exposure_mode; // exposure mode
         float dimming_factor; // dimming factor used on LED RGB values
 
 	TrackedController controllers[PSMOVE_TRACKER_MAX_CONTROLLERS]; // controller data
@@ -456,6 +456,44 @@ psmove_tracker_get_dimming(PSMoveTracker *tracker)
 }
 
 void
+psmove_tracker_set_exposure(PSMoveTracker *tracker,
+        enum PSMoveTracker_Exposure exposure)
+{
+    psmove_return_if_fail(tracker != NULL);
+    tracker->exposure_mode = exposure;
+
+    switch (tracker->exposure_mode) {
+        case Exposure_LOW:
+            tracker->exposure = 2051;
+            break;
+        case Exposure_MEDIUM:
+            tracker->exposure = 20000;
+            break;
+        case Exposure_HIGH:
+            tracker->exposure = 40000;
+            break;
+        case Exposure_DYNAMIC:
+            // use dynamic exposure (a lighting condition specific exposure)
+            tracker->exposure = psmove_tracker_adapt_to_light(tracker, 25, 2051, 4051);
+            break;
+        default:
+            psmove_DEBUG("Invalid exposure mode: %s\n", exposure);
+            tracker->exposure = 2051;
+            break;
+    }
+
+    camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->exposure,
+            0, 0xffff, 0xffff, 0xffff, -1, -1);
+}
+
+enum PSMoveTracker_Exposure
+psmove_tracker_get_exposure(PSMoveTracker *tracker)
+{
+    psmove_return_val_if_fail(tracker != NULL, Exposure_INVALID);
+    return tracker->exposure_mode;
+}
+
+void
 psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
         enum PSMove_Bool enabled)
 {
@@ -552,10 +590,7 @@ psmove_tracker_new_with_camera(int camera) {
 #endif
 
 	// use static exposure
-	tracker->exposure = GOOD_EXPOSURE;
-	// use dynamic exposure (This function would enable a lighting condition specific exposure.)
-	//tracker->exposure = psmove_tracker_adapt_to_light(tracker, 25, 2051, 4051);
-	camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->exposure, 0, 0xffff, 0xffff, 0xffff, -1, -1);
+        psmove_tracker_set_exposure(tracker, Exposure_LOW);
 
 	// just query a frame so that we know the camera works
 	IplImage* frame = NULL;

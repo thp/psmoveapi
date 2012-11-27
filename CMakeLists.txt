@@ -46,6 +46,9 @@ option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
 # Use the CL Eye SDK to interface with the PS Eye camera (Windows only)
 option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
 
+# To show the OpenCV camera capture window everytime (useful for debugging)
+option(PSMOVE_USE_DEBUG_CAPTURE "Always show camera capture input" OFF)
+
 # Make a debug build with helpful output for debugging / maintenance
 option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
 
@@ -114,6 +117,10 @@ if (PSMOVE_USE_LOCAL_OPENCV)
     else()
         # XXX: OpenCV dependencies for Linux
     endif()
+endif()
+
+if (PSMOVE_USE_DEBUG_CAPTURE)
+    add_definitions(-DCAMERA_CONTROL_DEBUG_CAPTURED_IMAGE)
 endif()
 
 set(INFO_USE_CL_EYE_SDK "No (Windows only)")

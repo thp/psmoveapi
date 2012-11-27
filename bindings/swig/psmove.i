@@ -12,6 +12,7 @@
 %rename PSMove_Connection_Type ConnectionType;
 %rename PSMove_Frame Frame;
 %rename PSMoveTracker_Status Status;
+%rename PSMoveTracker_Exposure Exposure;
 %rename PSMove_RemoteConfig RemoteConfig;
 %module psmoveapi
 
@@ -25,6 +26,7 @@
 %rename PSMove_Connection_Type ConnectionType;
 %rename PSMove_Frame Frame;
 %rename PSMoveTracker_Status Status;
+%rename PSMoveTracker_Exposure Exposure;
 %rename PSMove_RemoteConfig RemoteConfig;
 %module psmoveapi_csharp
 
@@ -218,6 +220,9 @@ void reinit();
 %extend PSMoveTracker {
     /* Dimming factor */
     float dimming;
+
+    /* Exposure mode */
+    enum PSMoveTracker_Exposure exposure;
 
     PSMoveTracker() {
         return psmove_tracker_new();
@@ -437,6 +442,19 @@ void
 PSMoveTracker_dimming_set(PSMoveTracker *tracker, float dimming)
 {
     psmove_tracker_set_dimming(tracker, dimming);
+}
+
+void
+PSMoveTracker_exposure_set(PSMoveTracker *tracker,
+    enum PSMoveTracker_Exposure exposure)
+{
+    psmove_tracker_set_exposure(tracker, exposure);
+}
+
+enum PSMoveTracker_Exposure
+PSMoveTracker_exposure_get(PSMoveTracker *tracker)
+{
+    return psmove_tracker_get_exposure(tracker);
 }
 
 void

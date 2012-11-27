@@ -77,6 +77,15 @@ enum PSMoveTracker_Status {
     Tracker_TRACKING, /*!< Calibrated and successfully tracked in the camera */
 };
 
+/*! Exposure modes */
+enum PSMoveTracker_Exposure {
+    Exposure_LOW, /*!< Very low exposure: Good tracking, no environment visible */
+    Exposure_MEDIUM, /*!< Middle ground: Good tracking, environment visibile */
+    Exposure_HIGH, /*!< High exposure: Fair tracking, but good environment */
+    Exposure_DYNAMIC, /*!< Experimental dynamic exposure algorithm */
+    Exposure_INVALID, /*!< Invalid exposure value (for returning failures) */
+};
+
 /**
  * Create a new PS Move tracker and set up tracking
  *
@@ -118,6 +127,12 @@ ADDCALL psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming);
 
 ADDAPI float
 ADDCALL psmove_tracker_get_dimming(PSMoveTracker *tracker);
+
+ADDAPI void
+ADDCALL psmove_tracker_set_exposure(PSMoveTracker *tracker, enum PSMoveTracker_Exposure exposure);
+
+ADDAPI enum PSMoveTracker_Exposure
+ADDCALL psmove_tracker_get_exposure(PSMoveTracker *tracker);
 
 ADDAPI void
 ADDCALL psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
