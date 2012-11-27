@@ -36,6 +36,7 @@ option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 
 # Additional applications that can be used to test the library
 option(PSMOVE_BUILD_EXAMPLES "Build the C examples" ON)
+option(PSMOVE_BUILD_OPENGL_EXAMPLES "Build the OpenGL examples" OFF)
 option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
 option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" ON)
 
@@ -348,14 +349,15 @@ if(PSMOVE_BUILD_TESTS)
         add_executable(test_tracker examples/c/test_tracker.c)
         target_link_libraries(test_tracker psmoveapi psmoveapi_tracker)
 
-        add_executable(test_opengl examples/c/test_opengl.cpp)
-        target_link_libraries(test_opengl psmoveapi psmoveapi_tracker GL glut SDL)
-
-        add_executable(test_opengl2 examples/c/test_opengl2.cpp)
-        target_link_libraries(test_opengl2 psmoveapi psmoveapi_tracker GL glut SDL)
-
-        add_executable(test_opengl3 examples/c/test_opengl3.cpp)
-        target_link_libraries(test_opengl3 psmoveapi psmoveapi_tracker GL glut SDL)
+        if (PSMOVE_BUILD_OPENGL_EXAMPLES)
+            foreach(EXAMPLE test_opengl test_opengl2 test_opengl3)
+                add_executable(${EXAMPLE} examples/c/${EXAMPLE}.cpp)
+                target_link_libraries(${EXAMPLE}
+                    psmoveapi
+                    psmoveapi_tracker
+                    GL glut SDL)
+            endforeach()
+        endif()
     endif()
 endif()
 
@@ -572,6 +574,7 @@ message("    Use CL Eye SDK:   " ${INFO_USE_CL_EYE_SDK})
 message("")
 message("  Additional targets")
 feature_use_info("C example apps:   " PSMOVE_BUILD_EXAMPLES)
+feature_use_info("OpenGL examples:  " PSMOVE_BUILD_OPENGL_EXAMPLES)
 feature_use_info("C test programs:  " PSMOVE_BUILD_TESTS)
 feature_use_info("C++ TUIO server:  " PSMOVE_BUILD_TUIO_SERVER)
 message("")
