@@ -45,12 +45,35 @@ while True:
     tracker.update_image()
     tracker.update()
 
+    changed = False
     while move.poll():
         pressed, released = move.get_button_events()
         if pressed & psmove.Btn_TRIANGLE:
             tracker.exposure = psmove.Exposure_LOW
+            changed = True
         elif pressed & psmove.Btn_CIRCLE:
             tracker.exposure = psmove.Exposure_MEDIUM
+            changed = True
         elif pressed & psmove.Btn_CROSS:
             tracker.exposure = psmove.Exposure_HIGH
+            changed = True
+
+    if changed:
+        tracker.disable(move)
+        tracker.dimming = 0
+        while tracker.enable(move) != psmove.Tracker_CALIBRATED:
+            pass
+
+    status = tracker.get_status(move)
+    if status == psmove.Tracker_TRACKING:
+        x, y, radius = tracker.get_position(move)
+        print 'Position: (%5.2f, %5.2f), Radius: %3.2f, Trigger: %3d' % (
+                x, y, radius, move.get_trigger())
+    elif status == psmove.Tracker_CALIBRATED:
+        print 'Not currently tracking.'
+    elif status == psmove.Tracker_CALIBRATION_ERROR:
+        print 'Calibration error.'
+    elif status == psmove.Tracker_NOT_CALIBRATED:
+        print 'Controller not calibrated.'
+
 

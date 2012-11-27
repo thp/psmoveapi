@@ -146,7 +146,6 @@ Tracker::Tracker()
 {
     psmove_tracker_set_mirror(m_tracker, PSMove_True);
     psmove_tracker_set_exposure(m_tracker, Exposure_HIGH);
-    psmove_tracker_set_dimming(m_tracker, .01);
 
     m_moves = (PSMove**)calloc(m_move_count, sizeof(PSMove*));
     for (int i=0; i<m_move_count; i++) {
