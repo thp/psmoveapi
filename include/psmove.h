@@ -859,6 +859,43 @@ ADDCALL psmove_reset_orientation(PSMove *move);
 
 
 /**
+ * \brief Reset the magnetometer calibration state.
+ *
+ * This will reset the magnetometer calibration data, so they can be
+ * re-adjusted dynamically. Used by the calibration utility.
+ *
+ * \ref move A valid \ref PSMove handle
+ **/
+ADDAPI void
+ADDCALL psmove_reset_magnetometer_calibration(PSMove *move);
+
+/**
+ * \brief Save the magnetometer calibration values.
+ *
+ * This will save the magnetometer calibration data to persistent storage.
+ * If a calibration already exists, this will overwrite the old values.
+ *
+ * \param move A valid \ref PSMove handle
+ **/
+ADDAPI void
+ADDCALL psmove_save_magnetometer_calibration(PSMove *move);
+
+/**
+ * \brief Return the raw magnetometer calibration range.
+ *
+ * The magnetometer calibration is dynamic at runtime - this function returns
+ * the raw range of magnetometer calibration. The user should rotate the
+ * controller in all directions to find the response range of the controller
+ * (this will be dynamically adjusted).
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return The smallest raw sensor range difference of all three axes
+ **/
+ADDAPI int
+ADDCALL psmove_get_magnetometer_calibration_range(PSMove *move);
+
+/**
  * \brief Disconnect from the PS Move and release resources.
  *
  * This will disconnect from the controller and release any resources allocated

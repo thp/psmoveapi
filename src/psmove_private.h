@@ -85,6 +85,8 @@ extern "C" {
         {if(!(expr)){psmove_CRITICAL(#expr);return;}}
 #define psmove_return_val_if_fail(expr, val) \
         {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
+#define psmove_goto_if_fail(expr, label) \
+        {if(!(expr)){psmove_CRITICAL(#expr);goto label;}}
 
 /* Macro: Length of fixed-size array */
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof((x)[0]))

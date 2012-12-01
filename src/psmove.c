@@ -199,6 +199,30 @@ typedef struct {
     int z;
 } PSMove_3AxisVector;
 
+int
+psmove_3axisvector_min(PSMove_3AxisVector vector)
+{
+    if (vector.x < vector.y && vector.x < vector.z) {
+        return vector.x;
+    } else if (vector.y < vector.y) {
+        return vector.y;
+    } else {
+        return vector.z;
+    }
+}
+
+int
+psmove_3axisvector_max(PSMove_3AxisVector vector)
+{
+    if (vector.x > vector.y && vector.x > vector.z) {
+        return vector.x;
+    } else if (vector.y > vector.y) {
+        return vector.y;
+    } else {
+        return vector.z;
+    }
+}
+
 struct _PSMove {
     /* Device type (hidapi-based or moved-based */
     enum PSMove_Device_Type type;
@@ -258,6 +282,9 @@ struct _PSMove {
     unsigned char is_bluetooth;
 #endif
 };
+
+void
+psmove_load_magnetometer_calibration(PSMove *move);
 
 /* End private definitions */
 
@@ -483,14 +510,6 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_HIDAPI;
 
-    /* Initialize session-based magnetometer calibration data */
-    move->magnetometer_min.x =
-        move->magnetometer_min.y =
-        move->magnetometer_min.z = INT_MAX;
-    move->magnetometer_max.x =
-        move->magnetometer_max.y =
-        move->magnetometer_max.z = INT_MIN;
-
     /* Make sure the first LEDs update will go through (+ init get_ticks) */
     move->last_leds_update = psmove_util_get_ticks() - PSMOVE_MAX_LED_INHIBIT_MS;
 
@@ -571,6 +590,9 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     move->calibration = psmove_calibration_new(move);
     move->orientation = psmove_orientation_new(move);
 
+    /* Load magnetometer calibration data */
+    psmove_load_magnetometer_calibration(move);
+
     return move;
 }
 
@@ -587,14 +609,6 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_MOVED;
-
-    /* Initialize session-based magnetometer calibration data */
-    move->magnetometer_min.x =
-        move->magnetometer_min.y =
-        move->magnetometer_min.z = INT_MAX;
-    move->magnetometer_max.x =
-        move->magnetometer_max.y =
-        move->magnetometer_max.z = INT_MIN;
 
     move->client = client;
     move->remote_id = remote_id;
@@ -619,6 +633,9 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
     // XXX: Copy calibration remotely if possible
 
     move->orientation = psmove_orientation_new(move);
+
+    /* Load magnetometer calibration data */
+    psmove_load_magnetometer_calibration(move);
 
     /* Bookkeeping of open handles (for psmove_reinit) */
     psmove_num_open_handles++;
@@ -1450,6 +1467,119 @@ psmove_reset_orientation(PSMove *move)
     psmove_orientation_reset_quaternion(move->orientation);
 }
 
+void
+psmove_reset_magnetometer_calibration(PSMove *move)
+{
+    psmove_return_if_fail(move != NULL);
+
+    move->magnetometer_min.x =
+        move->magnetometer_min.y =
+        move->magnetometer_min.z = INT_MAX;
+    move->magnetometer_max.x =
+        move->magnetometer_max.y =
+        move->magnetometer_max.z = INT_MIN;
+}
+
+char *
+psmove_get_magnetometer_calibration_filename(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, NULL);
+
+    char filename[PATH_MAX];
+
+    char *serial = psmove_get_serial(move);
+    int i;
+    for (i=0; i<strlen(serial); i++) {
+        if (serial[i] == ':') {
+            serial[i] = '_';
+        }
+    }
+    snprintf(filename, PATH_MAX, "%s.magnetometer.csv", serial);
+    free(serial);
+
+    char *filepath = psmove_util_get_file_path(filename);
+    return filepath;
+}
+
+void
+psmove_save_magnetometer_calibration(PSMove *move)
+{
+    psmove_return_if_fail(move != NULL);
+    char *filename = psmove_get_magnetometer_calibration_filename(move);
+    FILE *fp = fopen(filename, "w");
+    free(filename);
+    psmove_return_if_fail(fp != NULL);
+
+    fprintf(fp, "axis,min,max\n");
+    fprintf(fp, "x,%d,%d\n", move->magnetometer_min.x, move->magnetometer_max.x);
+    fprintf(fp, "y,%d,%d\n", move->magnetometer_min.y, move->magnetometer_max.y);
+    fprintf(fp, "z,%d,%d\n", move->magnetometer_min.z, move->magnetometer_max.z);
+
+    fclose(fp);
+}
+
+void
+psmove_load_magnetometer_calibration(PSMove *move)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_reset_magnetometer_calibration(move);
+    char *filename = psmove_get_magnetometer_calibration_filename(move);
+    FILE *fp = fopen(filename, "r");
+    free(filename);
+
+    if (fp == NULL) {
+        char *addr = psmove_get_serial(move);
+        psmove_WARNING("Magnetometer in %s not yet calibrated.\n", addr);
+        free(addr);
+        return;
+    }
+
+    char s_axis[5], s_min[4], s_max[4];
+    char c_axis;
+    int i_min, i_max;
+    int result;
+
+    result = fscanf(fp, "%4s,%3s,%3s\n", s_axis, s_min, s_max);
+    psmove_goto_if_fail(result == 3, finish);
+    psmove_goto_if_fail(strcmp(s_axis, "axis") == 0, finish);
+    psmove_goto_if_fail(strcmp(s_min, "min") == 0, finish);
+    psmove_goto_if_fail(strcmp(s_max, "max") == 0, finish);
+
+    result = fscanf(fp, "%c,%d,%d\n", &c_axis, &i_min, &i_max);
+    psmove_goto_if_fail(result == 3, finish);
+    psmove_goto_if_fail(c_axis == 'x', finish);
+    move->magnetometer_min.x = i_min;
+    move->magnetometer_max.x = i_max;
+
+    result = fscanf(fp, "%c,%d,%d\n", &c_axis, &i_min, &i_max);
+    psmove_goto_if_fail(result == 3, finish);
+    psmove_goto_if_fail(c_axis == 'y', finish);
+    move->magnetometer_min.y = i_min;
+    move->magnetometer_max.y = i_max;
+
+    result = fscanf(fp, "%c,%d,%d\n", &c_axis, &i_min, &i_max);
+    psmove_goto_if_fail(result == 3, finish);
+    psmove_goto_if_fail(c_axis == 'z', finish);
+    move->magnetometer_min.z = i_min;
+    move->magnetometer_max.z = i_max;
+
+finish:
+    fclose(fp);
+}
+
+int
+psmove_get_magnetometer_calibration_range(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0.);
+
+    PSMove_3AxisVector diff = {
+        move->magnetometer_max.x - move->magnetometer_min.x,
+        move->magnetometer_max.y - move->magnetometer_min.y,
+        move->magnetometer_max.z - move->magnetometer_min.z,
+    };
+
+    return psmove_3axisvector_min(diff);
+}
 
 void
 psmove_disconnect(PSMove *move)
