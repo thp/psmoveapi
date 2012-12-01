@@ -60,9 +60,7 @@
 #define COLOR_FILTER_RANGE_H 12		// +- H-Range of the hsv-colorfilter
 #define COLOR_FILTER_RANGE_S 85		// +- s-Range of the hsv-colorfilter
 #define COLOR_FILTER_RANGE_V 85		// +- v-Range of the hsv-colorfilter
-#define CAMERA_FOCAL_LENGTH 28.3	// focal lenght constant of the ps-eye camera in (degrees)
-#define CAMERA_PIXEL_HEIGHT 5		// pixel height constant of the ps-eye camera in (µm)
-#define PS_MOVE_DIAMETER 47			// orb diameter constant of the ps-move controller in (mm)
+
 /* Thresholds */
 #define ROI_ADJUST_FPS_T 160		// the minimum fps to be reached, if a better roi-center adjusment is to be perfomred
 #define CALIBRATION_DIFF_T 20		// during calibration, all grey values in the diff image below this value are set to black
@@ -159,6 +157,30 @@ struct ColorMappingRingBuffer {
     unsigned char next_slot;
 };
 
+/**
+ * Parameters of the Pearson type VII distribution
+ * Source: http://fityk.nieto.pl/model.html
+ * Used for calculating the distance from the radius
+ **/
+struct PSMoveTracker_DistanceParameters {
+    float height;
+    float center;
+    float hwhm;
+    float shape;
+};
+
+/**
+ * Experimentally-determined parameters for a PS Eye camera
+ * in wide angle mode with a PS Move, color = (255, 0, 255)
+ **/
+static struct PSMoveTracker_DistanceParameters
+pseye_distance_parameters = {
+    /* height = */ 517.281,
+    /* center = */ 1.297338,
+    /* hwhm = */ 3.752844,
+    /* shape = */ 0.4762335,
+};
+
 struct _PSMoveTracker {
 	CameraControl* cc;
 	IplImage* frame; // the current frame of the camera
@@ -168,6 +190,9 @@ struct _PSMoveTracker {
 	IplImage* roiM[ROIS]; // array of images for each level of roi (greyscale)
 	IplConvKernel* kCalib; // kernel used for morphological operations during calibration
 	CvScalar rHSV; // the range of the color filter
+
+        // Parameters for psmove_tracker_distance_from_radius()
+        struct PSMoveTracker_DistanceParameters distance_parameters;
 
         enum PSMoveTracker_Exposure exposure_mode; // exposure mode
         float dimming_factor; // dimming factor used on LED RGB values
@@ -186,11 +211,6 @@ struct _PSMoveTracker {
         int search_tiles_count; // number of search tiles
 
 	// internal variables
-	float cam_focal_length; // in (mm)
-	float cam_pixel_height; // in (µm)
-	float ps_move_diameter; // in (mm)
-	float user_factor_dist; // user defined factor used in distance calulation
-
 	int tracker_adaptive_xy; // should adaptive x/y-smoothing be used
 	int tracker_adaptive_z; // should adaptive z-smoothing be used
 
@@ -305,16 +325,6 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker);
  *  resSize 	- (out)	the size of that contour in px²
  */
 void psmove_tracker_biggest_contour(IplImage* img, CvMemStorage* stor, CvSeq** resContour, float* resSize);
-
-/*
- * This calculates the distance of the orb of the controller.
- *
- * tracker 			 - (in) the PSMoveTracker to use (used to read variables)
- * blob_diameter - (in) the diameter size of the orb in pixels
- *
- * Returns: The distance between the orb and the camera in (mm).
- */
-float psmove_tracker_calculate_distance(PSMoveTracker* tracker, float blob_diameter);
 
 /*
  * This returns a subjective distance between the first estimated (during calibration process) color and the currently estimated color.
@@ -518,10 +528,6 @@ psmove_tracker_new_with_camera(int camera) {
 	tracker->storage = cvCreateMemStorage(0);
 
         tracker->dimming_factor = 0.;
-	tracker->cam_focal_length = CAMERA_FOCAL_LENGTH;
-	tracker->cam_pixel_height = CAMERA_PIXEL_HEIGHT;
-	tracker->ps_move_diameter = PS_MOVE_DIAMETER;
-	tracker->user_factor_dist = 1.05;
 
 	tracker->calibration_t = CALIBRATION_DIFF_T;
 	tracker->tracker_t1 = TRACKER_QUALITY_T1;
@@ -579,6 +585,9 @@ psmove_tracker_new_with_camera(int camera) {
         }
         free(filename);
 #endif
+
+        // Default to the distance parameters for the PS Eye camera
+        tracker->distance_parameters = pseye_distance_parameters;
 
 	// use static exposure
         psmove_tracker_set_exposure(tracker, Exposure_LOW);
@@ -1672,7 +1681,7 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 			sprintf(text, "ROI:%dx%d", roi_w, roi_h);
 			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 15), &fontSmall, c);
 
-			double distance = psmove_tracker_calculate_distance(tracker, tc->r * 2);
+			double distance = psmove_tracker_distance_from_radius(tracker, tc->r);
 
 			sprintf(text, "radius: %.2f", tc->r);
 			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 35), &fontSmall, c);
@@ -1694,27 +1703,6 @@ float psmove_tracker_hsvcolor_diff(TrackedController* tc) {
 	diff += abs(tc->eFColorHSV.val[1] - tc->eColorHSV.val[1]) * 0.5; // saturation and value not so much
 	diff += abs(tc->eFColorHSV.val[2] - tc->eColorHSV.val[2]) * 0.5;
 	return diff;
-}
-
-float psmove_tracker_calculate_distance(PSMoveTracker* tracker, float blob_diameter) {
-
-	// PS Eye uses OV7725 Chip --> http://image-sensors-world.blogspot.co.at/2010/10/omnivision-vga-sensor-inside-sony-eye.html
-	// http://www.ovt.com/download_document.php?type=sensor&sensorid=80
-	// http://photo.stackexchange.com/questions/12434/how-do-i-calculate-the-distance-of-an-object-in-a-photo
-	/*
-	 distance to object (mm) =   focal length (mm) * real height of the object (mm) * image height (pixels)
-	 ---------------------------------------------------------------------------
-	 object height (pixels) * sensor height (mm)
-	 */
-	 
-	// TODO: use measured distance only if the psmoveeye is used
-	//int n = 32;
-	// distance in mm
-	//int x[]={100,150,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000};
-	// radius in pixel
-	//float y[]={122.27,79.8,60.02,40.34,30.16,24.26,20.18,17.41,15.37,13.65,12.32,11.28,10.35,9.58,8.93,8.35,7.83,7.37,7.03,6.62,6.38,6.13,5.82,5.58,5.33,5.39,5.07,5.02,4.94,4.5,4.45};
-	
-	return (tracker->cam_focal_length * tracker->ps_move_diameter * tracker->user_factor_dist) / (blob_diameter * tracker->cam_pixel_height / 100.0 + FLT_EPSILON);
 }
 
 void psmove_tracker_biggest_contour(IplImage* img, CvMemStorage* stor, CvSeq** resContour, float* resSize) {
@@ -1812,6 +1800,42 @@ psmove_tracker_center_roi_on_controller(TrackedController* tc, PSMoveTracker* tr
 
         return (contourBest != NULL);
 }
+
+float
+psmove_tracker_distance_from_radius(PSMoveTracker *tracker, float radius)
+{
+    psmove_return_val_if_fail(tracker != NULL, 0.);
+
+    double height = (double)tracker->distance_parameters.height;
+    double center = (double)tracker->distance_parameters.center;
+    double hwhm = (double)tracker->distance_parameters.hwhm;
+    double shape = (double)tracker->distance_parameters.shape;
+    double x = (double)radius;
+
+    /**
+     * Pearson type VII distribution
+     * http://fityk.nieto.pl/model.html
+     **/
+    double a = pow((x - center) / hwhm, 2.);
+    double b = pow(2., 1. / shape) - 1.;
+    double c = 1. + a * b;
+    double distance = height / pow(c, shape);
+
+    return (float)distance;
+}
+
+void
+psmove_tracker_set_distance_parameters(PSMoveTracker *tracker,
+        float height, float center, float hwhm, float shape)
+{
+    psmove_return_if_fail(tracker != NULL);
+
+    tracker->distance_parameters.height = height;
+    tracker->distance_parameters.center = center;
+    tracker->distance_parameters.hwhm = hwhm;
+    tracker->distance_parameters.shape = shape;
+}
+
 
 int
 psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue color)

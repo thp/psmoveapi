@@ -304,6 +304,17 @@ void reinit();
 
     void get_size(int *OUTPUT, int *OUTPUT);
 
+    float distance_from_radius(float radius) {
+        return psmove_tracker_distance_from_radius($self, radius);
+    }
+
+    void set_distance_parameters(float height, float center,
+            float hwhm, float shape)
+    {
+        psmove_tracker_set_distance_parameters($self, height,
+            center, hwhm, shape);
+    }
+
     ~PSMoveTracker() {
         psmove_tracker_free($self);
     }

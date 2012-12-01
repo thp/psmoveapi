@@ -286,6 +286,36 @@ ADDCALL psmove_tracker_get_size(PSMoveTracker *tracker,
         int *width, int *height);
 
 /**
+ * Calculate the physical distance (in cm) of the controller
+ *
+ * Given the radius of the controller in the image (in pixels), this function
+ * calculates the physical distance of the controller from the camera (in cm).
+ *
+ * By default, this function's parameters are set up for the PS Eye camera in
+ * wide angle view. You can set different parameters using the function
+ * psmove_tracker_set_distance_parameters().
+ **/
+ADDAPI float
+ADDCALL psmove_tracker_distance_from_radius(PSMoveTracker *tracker,
+        float radius);
+
+/**
+ * Set the parameters for the distance mapping function
+ *
+ * This function sets the parameters for the Pearson VII distribution
+ * function that's used to map radius values to distance values in
+ * psmove_tracker_distance_from_radius(). By default, the parameters are
+ * set up so that they work well for a PS Eye camera in wide angle mode.
+ *
+ * The function is defined as in: http://fityk.nieto.pl/model.html
+ *
+ * distance = height / ((1+((radius-center)/hwhm)^2 * (2^(1/shape)-1)) ^ shape)
+ **/
+ADDAPI void
+ADDCALL psmove_tracker_set_distance_parameters(PSMoveTracker *tracker,
+        float height, float center, float hwhm, float shape);
+
+/**
  * Destroy an existing tracker instance and free allocated resources
  *
  * tracker - A valid PSMoveTracker * instance
