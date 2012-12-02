@@ -125,6 +125,7 @@ int main(int arg, char** args) {
     while ((cvWaitKey(1) & 0xFF) != 27) {
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, NULL);
+        psmove_tracker_annotate(tracker);
 
         frame = psmove_tracker_get_frame(tracker);
         if (frame) {

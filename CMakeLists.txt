@@ -346,8 +346,10 @@ if(PSMOVE_BUILD_TESTS)
     endforeach(TESTNAME)
 
     if(PSMOVE_BUILD_TRACKER)
-        add_executable(test_tracker examples/c/test_tracker.c)
-        target_link_libraries(test_tracker psmoveapi psmoveapi_tracker)
+        foreach(TESTNAME tracker capture_performance)
+            add_executable(test_${TESTNAME} examples/c/test_${TESTNAME}.c)
+            target_link_libraries(test_${TESTNAME} psmoveapi psmoveapi_tracker)
+        endforeach(TESTNAME)
 
         if (PSMOVE_BUILD_OPENGL_EXAMPLES)
             foreach(EXAMPLE test_opengl test_opengl2 test_opengl3)

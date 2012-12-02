@@ -113,24 +113,26 @@ void camera_control_restore_system_settings(CameraControl* cc, const char* file)
 	}
 }
 
-void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast,
-		int brightness) {
-	int fd = open_v4l2_device(cc->cameraID);
+void
+camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB,
+        int exposure, int gain,
+        int wbRed, int wbGreen, int wbBlue,
+        int contrast, int brightness)
+{
+    int fd = open_v4l2_device(cc->cameraID);
 
-	if (fd != -1) {
-		if (autoE >= 0)
-		v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, autoE);
-		if (autoG >= 0)
-		v4l2_set_control(fd, V4L2_CID_AUTOGAIN, autoG);
-		if (gain >= 0)
-		v4l2_set_control(fd, V4L2_CID_GAIN, gain);
-		if (exposure >= 0)
-		v4l2_set_control(fd, V4L2_CID_EXPOSURE, exposure);
-		if (contrast >= 0)
-		v4l2_set_control(fd, V4L2_CID_CONTRAST, contrast);
-		if (brightness >= 0)
-		v4l2_set_control(fd, V4L2_CID_BRIGHTNESS, brightness);
-		v4l2_close(fd);
-	}
+    if (fd != -1) {
+        v4l2_set_control(fd, V4L2_CID_EXPOSURE, exposure);
+        v4l2_set_control(fd, V4L2_CID_GAIN, gain);
+
+        v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, autoE);
+        v4l2_set_control(fd, V4L2_CID_AUTOGAIN, autoG);
+        v4l2_set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, autoWB);
+#if 0
+        v4l2_set_control(fd, V4L2_CID_CONTRAST, contrast);
+        v4l2_set_control(fd, V4L2_CID_BRIGHTNESS, brightness);
+#endif
+        v4l2_close(fd);
+    }
 }
 

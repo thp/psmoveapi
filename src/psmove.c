@@ -1769,3 +1769,31 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     return result;
 }
 
+PSMove_timestamp
+_psmove_timestamp()
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts;
+}
+
+PSMove_timestamp
+_psmove_timestamp_diff(PSMove_timestamp a, PSMove_timestamp b)
+{
+    struct timespec ts;
+    if (a.tv_nsec >= b.tv_nsec) {
+        ts.tv_sec = a.tv_sec - b.tv_sec;
+        ts.tv_nsec = a.tv_nsec - b.tv_nsec;
+    } else {
+        ts.tv_sec = a.tv_sec - b.tv_sec - 1;
+        ts.tv_nsec = 1000000000 + a.tv_nsec - b.tv_nsec;
+    }
+    return ts;
+}
+
+double
+_psmove_timestamp_value(PSMove_timestamp ts)
+{
+    return ts.tv_sec + ts.tv_nsec * 0.000000001;
+}
+

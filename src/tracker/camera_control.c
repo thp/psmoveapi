@@ -130,7 +130,7 @@ camera_control_read_calibration(CameraControl* cc,
     if (intrinsic && distortion) {
         if (!cc->frame3chUndistort) {
             cc->frame3chUndistort = cvCloneImage(
-                    camera_control_query_frame(cc));
+                    camera_control_query_frame(cc, NULL, NULL));
         }
 
         int width, height;
@@ -148,7 +148,8 @@ camera_control_read_calibration(CameraControl* cc,
 }
 
 IplImage *
-camera_control_query_frame(CameraControl* cc)
+camera_control_query_frame(CameraControl* cc,
+        PSMove_timestamp *ts_grab, PSMove_timestamp *ts_retrieve)
 {
     IplImage* result;
 
@@ -166,9 +167,14 @@ camera_control_query_frame(CameraControl* cc)
 
     result = cc->frame3ch;
 #else
-    long start = psmove_util_get_ticks();
-    result = cvQueryFrame(cc->capture);
-    psmove_DEBUG("cvQueryFrame: %ld ms\n", psmove_util_get_ticks() - start);
+    cvGrabFrame(cc->capture);
+    if (ts_grab != NULL) {
+        *ts_grab = _psmove_timestamp();
+    }
+    result = cvRetrieveFrame(cc->capture, 0);
+    if (ts_retrieve != NULL) {
+        *ts_retrieve = _psmove_timestamp();
+    }
 #endif
 
     if (cc->deinterlace == PSMove_True) {

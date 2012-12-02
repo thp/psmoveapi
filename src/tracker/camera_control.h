@@ -34,6 +34,7 @@ extern "C" {
 #endif
 
 #include "psmove.h"
+#include "../psmove_private.h"
 #include "opencv2/core/core_c.h"
 
 struct _CameraControl;
@@ -51,7 +52,8 @@ camera_control_set_deinterlace(CameraControl *cc,
         enum PSMove_Bool enabled);
 
 IplImage *
-camera_control_query_frame(CameraControl* cc);
+camera_control_query_frame(CameraControl* cc,
+        PSMove_timestamp *ts_grab, PSMove_timestamp *ts_retrieve);
 
 void
 camera_control_delete(CameraControl* cc);

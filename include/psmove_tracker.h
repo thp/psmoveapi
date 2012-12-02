@@ -252,6 +252,18 @@ ADDAPI int
 ADDCALL psmove_tracker_update(PSMoveTracker *tracker, PSMove *move);
 
 /**
+ * This draws tracking statistics into the current camera image.
+ *
+ * This function has to be called after psmove_tracker_update(), and will
+ * annotate the camera image with sphere positions and other information.
+ *
+ * tracker - the Tracker to use
+ */
+ADDAPI void
+ADDCALL psmove_tracker_annotate(PSMoveTracker* tracker);
+
+
+/**
  * Retrieves the most recently processed image by psmove_tracker_update
  *
  * tracker - A valid PSMoveTracker * instance

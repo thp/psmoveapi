@@ -40,6 +40,7 @@
 
 #include "psmove_tracker.h"
 #include "../psmove_private.h"
+#include "psmove_tracker_private.h"
 
 #include "camera_control.h"
 #include "tracker_helpers.h"
@@ -49,11 +50,10 @@
 #  include "platform/psmove_linuxsupport.h"
 #endif
 
-#define PRINT_DEBUG_STATS			// shall graphical statistics be printed to the image
 //#define DEBUG_WINDOWS 			// shall additional windows be shown
 #define ROIS 4                   	// the number of levels of regions of interest (roi)
 #define BLINKS 2                 	// number of diff images to create during calibration
-#define BLINK_DELAY 100             	// number of milliseconds to wait between a blink
+#define BLINK_DELAY 200             	// number of milliseconds to wait between a blink
 #define CALIB_MIN_SIZE 50		 	// minimum size of the estimated glowing sphere during calibration process (in pixel)
 #define CALIB_SIZE_STD 10	     	// maximum standard deviation (in %) of the glowing spheres found during calibration process
 #define CALIB_MAX_DIST 30		 	// maximum displacement of the separate found blobs
@@ -183,6 +183,13 @@ pseye_distance_parameters = {
 
 struct _PSMoveTracker {
 	CameraControl* cc;
+
+        /* Timestamps for performance measurements */
+        PSMove_timestamp ts_camera_begin; // when the capture was started
+        PSMove_timestamp ts_camera_grab; // when the image was grabbed
+        PSMove_timestamp ts_camera_retrieve; // when the image was retrieved
+        PSMove_timestamp ts_camera_converted; // when the image was converted
+
 	IplImage* frame; // the current frame of the camera
         IplImage *frame_rgb; // the frame as tightly packed RGB data
 	int exposure; // the exposure to use
@@ -308,13 +315,6 @@ void psmove_tracker_set_roi(PSMoveTracker* tracker, TrackedController* tc, int r
  * This function is just the internal implementation of "psmove_tracker_update"
  */
 int psmove_tracker_update_controller(PSMoveTracker* tracker, TrackedController *tc);
-
-/**
- * This draws tracking statistics into the current camera image. This is only used internally.
- *
- * tracker - the Tracker to use
- */
-void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker);
 
 /*
  *  This finds the biggest contour within the given image.
@@ -595,7 +595,7 @@ psmove_tracker_new_with_camera(int camera) {
 	// just query a frame so that we know the camera works
 	IplImage* frame = NULL;
 	while (!frame) {
-		frame = camera_control_query_frame(tracker->cc);
+		frame = camera_control_query_frame(tracker->cc, NULL, NULL);
 	}
 
 	// prepare ROI data structures
@@ -684,9 +684,9 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
     struct PSMove_RGBValue preset_colors[] = {
         {0xFF, 0x00, 0xFF}, /* magenta */
         {0x00, 0xFF, 0xFF}, /* cyan */
-        {0x00, 0x00, 0xFF}, /* blue */
         {0xFF, 0xFF, 0x00}, /* yellow */
-        {0x00, 0xFF, 0x00}, /* green */
+        {0xFF, 0x00, 0x00}, /* red */
+        {0x00, 0x00, 0xFF}, /* blue */
     };
 
     for (i=0; i<ARRAY_LENGTH(preset_colors); i++) {
@@ -1163,7 +1163,10 @@ psmove_tracker_get_image(PSMoveTracker *tracker)
 
 void psmove_tracker_update_image(PSMoveTracker *tracker) {
     psmove_return_if_fail(tracker != NULL);
-    tracker->frame = camera_control_query_frame(tracker->cc);
+
+    tracker->ts_camera_begin = _psmove_timestamp();
+    tracker->frame = camera_control_query_frame(tracker->cc,
+            &(tracker->ts_camera_grab), &(tracker->ts_camera_retrieve));
     if (tracker->mirror) {
         /**
          * Mirror image on the X axis (works for me with the PS Eye on Linux,
@@ -1175,6 +1178,7 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
          **/
         cvFlip(tracker->frame, NULL, 1);
     }
+    tracker->ts_camera_converted = _psmove_timestamp();
 }
 
 int
@@ -1419,11 +1423,6 @@ psmove_tracker_update(PSMoveTracker *tracker, PSMove *move)
 
     tracker->duration = psmove_util_get_ticks() - started;
 
-#ifdef PRINT_DEBUG_STATS
-    // draw all/one controller information to camera image
-    psmove_tracker_draw_tracking_stats(tracker);
-#endif
-
     return spheres_found;
 }
 
@@ -1571,7 +1570,7 @@ psmove_tracker_wait_for_frame(PSMoveTracker *tracker, IplImage **frame, int dela
 
     while (elapsed_time < delay) {
         usleep(1000 * step);
-        *frame = camera_control_query_frame(tracker->cc);
+        *frame = camera_control_query_frame(tracker->cc, NULL, NULL);
         elapsed_time += step;
     }
 }
@@ -1629,7 +1628,7 @@ void psmove_tracker_set_roi(PSMoveTracker* tracker, TrackedController* tc, int r
 		tc->roi_y = tracker->frame->height - roi_height;
 }
 
-void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
+void psmove_tracker_annotate(PSMoveTracker* tracker) {
 	CvPoint p;
 	IplImage* frame = tracker->frame;
 
@@ -1692,7 +1691,7 @@ void psmove_tracker_draw_tracking_stats(PSMoveTracker* tracker) {
 		} else {
 			roi_w = tracker->roiI[tc->roi_level]->width;
 			roi_h = tracker->roiI[tc->roi_level]->height;
-			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_RED, 3, 8, 0);
+			cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
                 }
 	}
 }
@@ -1851,3 +1850,17 @@ psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue colo
 
     return 0;
 }
+
+void
+_psmove_tracker_retrieve_stats(PSMoveTracker *tracker,
+        PSMove_timestamp *ts_begin, PSMove_timestamp *ts_grab,
+        PSMove_timestamp *ts_retrieve, PSMove_timestamp *ts_converted)
+{
+    psmove_return_if_fail(tracker != NULL);
+
+    *ts_begin = tracker->ts_camera_begin;
+    *ts_grab = tracker->ts_camera_grab;
+    *ts_retrieve = tracker->ts_camera_retrieve;
+    *ts_converted = tracker->ts_camera_converted;
+}
+

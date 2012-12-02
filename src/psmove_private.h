@@ -38,6 +38,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <wchar.h>
+#include <time.h>
 
     /**
      * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c
@@ -186,6 +187,17 @@ ADDAPI int
 ADDCALL _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller);
 
 
+/* Performance measurement structures and functions */
+typedef struct timespec PSMove_timestamp;
+
+ADDAPI PSMove_timestamp
+ADDCALL _psmove_timestamp();
+
+ADDAPI PSMove_timestamp
+ADDCALL _psmove_timestamp_diff(PSMove_timestamp a, PSMove_timestamp b);
+
+ADDAPI double
+ADDCALL _psmove_timestamp_value(PSMove_timestamp ts);
 
 
 #ifdef __cplusplus
