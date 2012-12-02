@@ -541,6 +541,19 @@ psmove_tracker_new_with_camera(int camera) {
 	tracker->color_t3 = COLOR_UPDATE_QUALITY_T3;
 	tracker->color_update_rate = COLOR_UPDATE_RATE;
 
+#ifdef __APPLE__
+    PSMove *move = psmove_connect();
+    psmove_set_leds(move, 255, 255, 255);
+    psmove_update_leds(move);
+
+    printf("Cover the iSight camera with the sphere and press the Move button\n");
+    _psmove_wait_for_button(move, Btn_MOVE);
+    psmove_set_leds(move, 0, 0, 0);
+    psmove_update_leds(move);
+    psmove_set_leds(move, 255, 255, 255);
+    psmove_update_leds(move);
+#endif
+
 	// start the video capture device for tracking
 	tracker->cc = camera_control_new(camera);
 
@@ -660,6 +673,15 @@ psmove_tracker_new_with_camera(int camera) {
 	int ks = 5; // Kernel Size
 	int kc = (ks + 1) / 2; // Kernel Center
 	tracker->kCalib = cvCreateStructuringElementEx(ks, ks, kc, kc, CV_SHAPE_RECT, NULL);
+
+#ifdef __APPLE__
+    printf("Move the controller away and press the Move button\n");
+    _psmove_wait_for_button(move, Btn_MOVE);
+    psmove_set_leds(move, 0, 0, 0);
+    psmove_update_leds(move);
+    psmove_disconnect(move);
+#endif
+
 	return tracker;
 }
 
@@ -686,7 +708,11 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
         {0x00, 0xFF, 0xFF}, /* cyan */
         {0xFF, 0xFF, 0x00}, /* yellow */
         {0xFF, 0x00, 0x00}, /* red */
+#ifdef __APPLE__
+        {0x00, 0xFF, 0x00}, /* green */
+#else
         {0x00, 0x00, 0xFF}, /* blue */
+#endif
     };
 
     for (i=0; i<ARRAY_LENGTH(preset_colors); i++) {
@@ -1367,7 +1393,7 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
 		cvResetImageROI(tracker->frame);
 
 		if (sphere_found) {
-			tc->search_tile = 0;
+			//tc->search_tile = 0;
 			// the sphere was found
 			break;
 		}else if(tc->roi_level>0){

@@ -41,23 +41,6 @@
 #include "psmove_tracker.h"
 
 
-void
-wait_for_button(PSMove *move, int button)
-{
-    /* Wait for press */
-    while ((psmove_get_buttons(move) & button) == 0) {
-        psmove_poll(move);
-        psmove_update_leds(move);
-    }
-
-    /* Wait for release */
-    while ((psmove_get_buttons(move) & button) != 0) {
-        psmove_poll(move);
-        psmove_update_leds(move);
-    }
-}
-
-
 int main(int arg, char** args) {
     int i;
     int count = psmove_count_connected();
@@ -71,40 +54,16 @@ int main(int arg, char** args) {
     void *frame;
     int result;
 
-    for (i=0; i<count; i++) {
-        printf("Opening controller %d\n", i);
-        controllers[i] = psmove_connect_by_id(i);
-        assert(controllers[i] != NULL);
-    }
-
-#ifdef __APPLE__
-    PSMove *move = controllers[0];
-    psmove_set_leds(move, 255, 255, 255);
-    psmove_update_leds(move);
-#endif
-
-#ifdef __APPLE__
-    printf("Cover the iSight camera with the sphere and press the Move button\n");
-    wait_for_button(move, Btn_MOVE);
-    psmove_set_leds(move, 0, 0, 0);
-    psmove_update_leds(move);
-    psmove_set_leds(move, 255, 255, 255);
-    psmove_update_leds(move);
-#endif
-
     fprintf(stderr, "Trying to init PSMoveTracker...");
     PSMoveTracker* tracker = psmove_tracker_new();
     psmove_tracker_set_mirror(tracker, PSMove_True);
     fprintf(stderr, "OK\n");
 
-#ifdef __APPLE__
-    printf("Move the controller away and press the Move button\n");
-    wait_for_button(move, Btn_MOVE);
-    psmove_set_leds(move, 0, 0, 0);
-    psmove_update_leds(move);
-#endif
-
     for (i=0; i<count; i++) {
+        printf("Opening controller %d\n", i);
+        controllers[i] = psmove_connect_by_id(i);
+        assert(controllers[i] != NULL);
+
         while (1) {
             printf("Calibrating controller %d...", i);
             fflush(stdout);

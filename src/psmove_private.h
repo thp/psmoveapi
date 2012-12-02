@@ -200,6 +200,11 @@ ADDAPI double
 ADDCALL _psmove_timestamp_value(PSMove_timestamp ts);
 
 
+/* Misc utility functions */
+ADDAPI void
+ADDCALL _psmove_wait_for_button(PSMove *move, int button);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -1769,6 +1769,23 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     return result;
 }
 
+#ifdef __APPLE__
+
+#define CLOCK_MONOTONIC 0
+
+static int
+clock_gettime(int unused, struct timespec *ts)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    ts->tv_sec = tv.tv_sec;
+    ts->tv_nsec = tv.tv_usec * 1000;
+
+    return 0;
+}
+#endif /* __APPLE__ */
+
 PSMove_timestamp
 _psmove_timestamp()
 {
@@ -1795,5 +1812,21 @@ double
 _psmove_timestamp_value(PSMove_timestamp ts)
 {
     return ts.tv_sec + ts.tv_nsec * 0.000000001;
+}
+
+void
+_psmove_wait_for_button(PSMove *move, int button)
+{
+    /* Wait for press */
+    while ((psmove_get_buttons(move) & button) == 0) {
+        psmove_poll(move);
+        psmove_update_leds(move);
+    }
+
+    /* Wait for release */
+    while ((psmove_get_buttons(move) & button) != 0) {
+        psmove_poll(move);
+        psmove_update_leds(move);
+    }
 }
 
