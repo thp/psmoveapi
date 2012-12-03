@@ -1710,7 +1710,7 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
 
 			sprintf(text, "radius: %.2f", tc->r);
 			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 35), &fontSmall, c);
-			sprintf(text, "dist: %.2fmm", distance);
+			sprintf(text, "dist: %.2f cm", distance);
 			cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 25), &fontSmall, c);
 
 			cvCircle(frame, p, tc->r, TH_COLOR_WHITE, 1, 8, 0);
