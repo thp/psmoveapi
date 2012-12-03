@@ -35,6 +35,7 @@
 #include <assert.h>
 
 #include "psmove.h"
+#include "../../src/psmove_private.h"
 
 enum TestMode {
     NO_UPDATES,
@@ -43,8 +44,19 @@ enum TestMode {
     STATIC_UPDATES,
 };
 
+static const char *testmode_names[] = {
+    "NO_UPDATES",
+    "ALL_UPDATES",
+    "SMART_UPDATES",
+    "STATIC_UPDATES",
+};
+
+#define ITERATIONS 1000
+
+FILE *csv;
+
 void test_read_performance(PSMove *move, enum TestMode mode) {
-    int round, max_rounds = 3;
+    int round, max_rounds = 5;
     float sum = 0.;
 
     /* Only enable rate limiting if we test for smart updates */
@@ -56,11 +68,11 @@ void test_read_performance(PSMove *move, enum TestMode mode) {
 
     for (round=0; round<max_rounds; round++) {
         long packet_loss = 0;
-        long started = psmove_util_get_ticks();
+        PSMove_timestamp ts_started = _psmove_timestamp();
         long reads = 0;
         int old_sequence = -1, sequence;
 
-        while (reads < 1000) {
+        while (reads < ITERATIONS) {
             if (mode != NO_UPDATES) {
                 if (mode != STATIC_UPDATES) {
                     psmove_set_leds(move, reads%255, reads%255, reads%255);
@@ -69,32 +81,30 @@ void test_read_performance(PSMove *move, enum TestMode mode) {
                 psmove_update_leds(move);
             }
 
-            if (reads % 20 == 0) {
-                fprintf(stderr, "\r%c", "-\\|/"[(reads/20)%4]);
-            }
+            while ((sequence = psmove_poll(move)) == 0);
 
-            while (!(sequence = psmove_poll(move))) {}
-
-            if (old_sequence != -1) {
-                if (sequence != ((old_sequence % 16) + 1)) {
-                    packet_loss++;
-                    /*fprintf(stderr, " %d->%d", old_sequence, sequence);*/
-                    fputc('x', stderr);
-                }
+            if ((old_sequence > 0) && ((old_sequence % 16) != (sequence - 1))) {
+                packet_loss++;
             }
             old_sequence = sequence;
 
             reads++;
         }
-        fputc('\r', stderr);
-        long diff = psmove_util_get_ticks() - started;
+        PSMove_timestamp ts_finished = _psmove_timestamp();
+        float diff = _psmove_timestamp_value(_psmove_timestamp_diff(ts_finished, ts_started));
 
-        double reads_per_second = 1000. * (double)reads / (double)diff;
-        printf("%ld reads in %ld ms = %f reads/sec "
+        double reads_per_second = (double)reads / diff;
+        printf("%ld reads in %.2f ms = %.5f reads/sec "
                 "(%ldx seq jump = %.2f %%)\n",
-                reads, diff, reads_per_second, packet_loss,
+                reads, diff*1000., reads_per_second, packet_loss,
                 100. * (double)packet_loss / (double)reads);
         sum += reads_per_second;
+
+        fprintf(csv, "%s,%.10f,%ld,%ld\n",
+                testmode_names[mode],
+                diff,
+                reads,
+                packet_loss);
     }
 
     printf("=====\n");
@@ -108,9 +118,13 @@ int main(int argc, char* argv[])
 
     if (move == NULL) {
         printf("Could not connect to default Move controller.\n"
-               "Please connect one via USB or Bluetooth.\n");
+               "Please connect one via Bluetooth.\n");
         exit(1);
     }
+
+    csv = fopen("read_performance.csv", "w");
+    assert(csv != NULL);
+    fprintf(csv, "mode,time,reads,dropped\n");
 
     printf("\n -- PS Move API Sensor Reading Performance Test -- \n");
 
@@ -127,6 +141,8 @@ int main(int argc, char* argv[])
     test_read_performance(move, NO_UPDATES);
 
     printf("\n");
+
+    fclose(csv);
 
     return 0;
 }
