@@ -73,6 +73,8 @@ setup(struct TestContext *context)
         while (psmove_tracker_enable(context->tracker,
                     context->moves[i]) != Tracker_CALIBRATED);
     }
+
+    _psmove_tracker_fix_roi_size(context->tracker);
 }
 
 void
@@ -93,11 +95,11 @@ teardown(struct TestContext *context)
 #define ITERATIONS 500
 
 void
-save(int i, struct TestContext *context)
+save(int i, int roi_size, struct TestContext *context)
 {
     void *frame = psmove_tracker_get_frame(context->tracker);
     char path[512];
-    snprintf(path, sizeof(path), "capture_perf_%03d.jpg", i);
+    snprintf(path, sizeof(path), "roi_perf_%03d_%03d.jpg", roi_size, i);
     int imgParams[] = { CV_IMWRITE_JPEG_QUALITY, 90, 0 };
     cvSaveImage(path, frame, imgParams);
 }
@@ -105,56 +107,98 @@ save(int i, struct TestContext *context)
 int
 main(int argc, char *argv[])
 {
-    struct TestContext context;
+    printf("\n -- PS Move API ROI Performance Test -- \n\n");
+    int roi_sizes[] = {480, 240, 120};
+    int roi;
+    int rois = sizeof(roi_sizes)/sizeof(roi_sizes[0]);
 
-    setup(&context);
+    float data[ITERATIONS][rois];
+    float position[ITERATIONS][rois][3]; // x, y, r
 
-    printf("\n -- PS Move API Camera Performance Test -- \n");
+    /**
+     * Test file for this test is available from:
+     * http://code.google.com/p/moveonpc/downloads/detail?name=test_roi_size.avi
+     *
+     * You need to have exactly one controller connected.
+     **/
+    setenv(PSMOVE_TRACKER_FILENAME_ENV, "test_roi_size.avi", 1);
+    setenv(PSMOVE_TRACKER_COLOR_ENV, "723a8c", 1);
 
-    printf("\nTesting frame grab performance\n");
-    FILE *fp = fopen("capture_grab.csv", "w");
+    for (roi=0; roi<rois; roi++) {
+        char tmp[10];
+        sprintf(tmp, "%d", roi_sizes[roi]);
+        printf("Testing tracking performance: %s\n", tmp);
+
+        setenv("PSMOVE_TRACKER_ROI_SIZE", tmp, 1);
+
+        struct TestContext context;
+        setup(&context);
+        assert(context.count == 1);
+
+        int i;
+        for (i=0; i<ITERATIONS; i++) {
+            psmove_tracker_update_image(context.tracker);
+
+            int j;
+            for (j=0; j<context.count; j++) {
+                PSMove_timestamp track_begin = _psmove_timestamp();
+                psmove_tracker_update(context.tracker, context.moves[j]);
+                PSMove_timestamp track_end = _psmove_timestamp();
+
+                float tracking = _psmove_timestamp_value(_psmove_timestamp_diff(track_end, track_begin));
+                data[i][roi] = tracking;
+
+                float x, y, r;
+                psmove_tracker_get_position(context.tracker, context.moves[j], &x, &y, &r);
+                position[i][roi][0] = x;
+                position[i][roi][1] = y;
+                position[i][roi][2] = r;
+            }
+
+            psmove_tracker_annotate(context.tracker);
+            if (i % 50 == 0) {
+                save(i, roi_sizes[roi], &context);
+            }
+        }
+
+        teardown(&context);
+    }
+
+    FILE *fp = fopen("roi_size.csv", "w");
     assert(fp != NULL);
-    fprintf(fp, "frame,grab,retrieve,converted");
+
+    /* Header */
+    fprintf(fp, "frame");
     int j;
-    for (j=0; j<context.count; j++) {
-        fprintf(fp, ",tracking%d", j);
+    for (roi=0; roi<rois; roi++) {
+        fprintf(fp, ",roi%d", roi_sizes[roi]);
+    }
+    for (roi=0; roi<rois; roi++) {
+        fprintf(fp, ",x%d,y%d,r%d",
+                roi_sizes[roi],
+                roi_sizes[roi],
+                roi_sizes[roi]);
     }
     fprintf(fp, "\n");
+
+    /* Data */
     int i;
     for (i=0; i<ITERATIONS; i++) {
-        psmove_tracker_update_image(context.tracker);
-        _psmove_tracker_retrieve_stats(context.tracker,
-                &(context.capture_begin),
-                &(context.capture_grab),
-                &(context.capture_retrieve),
-                &(context.capture_converted));
-
-        float grab = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_grab, context.capture_begin));
-        float retrieve = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_retrieve, context.capture_grab));
-        float converted = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_converted, context.capture_retrieve));
-        fprintf(fp, "%d,%.10f,%.10f,%.10f", i, grab, retrieve, converted);
-
-        for (j=0; j<context.count; j++) {
-            PSMove_timestamp track_begin = _psmove_timestamp();
-            psmove_tracker_update(context.tracker, context.moves[j]);
-            PSMove_timestamp track_end = _psmove_timestamp();
-            float tracking = _psmove_timestamp_value(_psmove_timestamp_diff(track_end, track_begin));
-            fprintf(fp, ",%.10f", tracking);
+        fprintf(fp, "%d", i);
+        for (roi=0; roi<rois; roi++) {
+            fprintf(fp, ",%.10f", data[i][roi]);
+        }
+        for (roi=0; roi<rois; roi++) {
+            fprintf(fp, ",%.10f,%.10f,%.10f",
+                    position[i][roi][0],
+                    position[i][roi][1],
+                    position[i][roi][2]);
         }
         fprintf(fp, "\n");
-
-        psmove_tracker_annotate(context.tracker);
-        save(i, &context);
     }
+
     fclose(fp);
 
-    //printf("\nTesting SMART READ performance (rate-limited LED setting)\n");
-    //printf("\nTesting BAD READ performance (continous LED setting)\n");
-    //printf("\nTesting RAW READ performance (no LED setting)\n");
-
-    printf("\n");
-
-    teardown(&context);
     return 0;
 }
 

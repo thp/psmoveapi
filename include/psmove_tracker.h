@@ -53,6 +53,9 @@ extern "C" {
 /* Name of the environment variable used to set the biggest ROI size */
 #define PSMOVE_TRACKER_ROI_SIZE_ENV "PSMOVE_TRACKER_ROI_SIZE"
 
+/* Name of the environment variable used to set a fixed tracker color */
+#define PSMOVE_TRACKER_COLOR_ENV "PSMOVE_TRACKER_COLOR"
+
 /* Name of the environment variables for the camera image size */
 #define PSMOVE_TRACKER_WIDTH_ENV "PSMOVE_TRACKER_WIDTH"
 #define PSMOVE_TRACKER_HEIGHT_ENV "PSMOVE_TRACKER_HEIGHT"

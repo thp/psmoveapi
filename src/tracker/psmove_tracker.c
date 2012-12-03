@@ -57,7 +57,7 @@
 #define CALIB_MIN_SIZE 50		 	// minimum size of the estimated glowing sphere during calibration process (in pixel)
 #define CALIB_SIZE_STD 10	     	// maximum standard deviation (in %) of the glowing spheres found during calibration process
 #define CALIB_MAX_DIST 30		 	// maximum displacement of the separate found blobs
-#define COLOR_FILTER_RANGE_H 12		// +- H-Range of the hsv-colorfilter
+#define COLOR_FILTER_RANGE_H 20		// +- H-Range of the hsv-colorfilter
 #define COLOR_FILTER_RANGE_S 85		// +- s-Range of the hsv-colorfilter
 #define COLOR_FILTER_RANGE_V 85		// +- v-Range of the hsv-colorfilter
 
@@ -120,6 +120,7 @@ struct _TrackedController {
 
     int roi_x, roi_y;			// x/y - Coordinates of the ROI
     int roi_level; 	 			// the current index for the level of ROI
+    enum PSMove_Bool roi_level_fixed;    // true if the ROI level should be fixed
     float mx, my;				// x/y - Coordinates of center of mass of the blob
     float x, y, r;				// x/y - Coordinates of the controllers sphere and its radius
     int search_tile; 			// current search quadrant when controller is not found (reset to 0 if found)
@@ -839,6 +840,21 @@ enum PSMove_Bool
 psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
         struct PSMove_RGBValue rgb, CvScalar *color, CvScalar *hsv_color)
 {
+    char *color_str = psmove_util_get_env_string(PSMOVE_TRACKER_COLOR_ENV);
+    if (color_str != NULL) {
+        int r, g, b;
+        if (sscanf(color_str, "%02x%02x%02x", &r, &g, &b) == 3) {
+            printf("r: %d, g: %d, b: %d\n", r, g, b);
+            *color = cvScalar(r, g, b, 0);
+            *hsv_color = th_brg2hsv(*color);
+            free(color_str);
+            return PSMove_True;
+        } else {
+            psmove_WARNING("Cannot parse color: '%s'\n", color_str);
+        }
+        free(color_str);
+    }
+
     psmove_tracker_update_image(tracker);
     IplImage* frame = tracker->frame;
     assert(frame != NULL);
@@ -1248,14 +1264,8 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
 		cvInRangeS(roi_i, min, max, roi_m);
 
 		#ifdef DEBUG_WINDOWS
-			if (!tc->next){
-				cvShowImage("binary:0", roi_m);
-				cvShowImage("hsv:0", roi_i);
-			}
-			else{
-				cvShowImage("binary:1", roi_m);
-				cvShowImage("hsv:1", roi_i);
-			}
+                        cvShowImage("binary:0", roi_m);
+                        cvShowImage("hsv:0", roi_i);
 		#endif
 
 		// find the biggest contour in the image
@@ -1379,7 +1389,12 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
 				for (i = 0; i < ROIS; i++) {
 					if (br.width > tracker->roiI[i]->width && br.height > tracker->roiI[i]->height)
 						break;
-					tc->roi_level = i;
+
+                                        if (tc->roi_level_fixed) {
+                                            tc->roi_level = 0;
+                                        } else {
+                                            tc->roi_level = i;
+                                        }
 					// update easy accessors
 					roi_i = tracker->roiI[tc->roi_level];
 					roi_m = tracker->roiM[tc->roi_level];
@@ -1401,7 +1416,11 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
 			tc->roi_x += roi_i->width / 2;
 			tc->roi_y += roi_i->height / 2;
 
-			tc->roi_level = tc->roi_level - 1;
+                        if (tc->roi_level_fixed) {
+                            tc->roi_level = 0;
+                        } else {
+                            tc->roi_level = tc->roi_level - 1;
+                        }
 			// update easy accessors
 			roi_i = tracker->roiI[tc->roi_level];
 			roi_m = tracker->roiM[tc->roi_level];
@@ -1888,5 +1907,16 @@ _psmove_tracker_retrieve_stats(PSMoveTracker *tracker,
     *ts_grab = tracker->ts_camera_grab;
     *ts_retrieve = tracker->ts_camera_retrieve;
     *ts_converted = tracker->ts_camera_converted;
+}
+
+void
+_psmove_tracker_fix_roi_size(PSMoveTracker *tracker)
+{
+    psmove_return_if_fail(tracker != NULL);
+
+    TrackedController *tc;
+    for_each_controller (tracker, tc) {
+        tc->roi_level_fixed = PSMove_True;
+    }
 }
 

@@ -45,6 +45,8 @@ ADDCALL _psmove_tracker_retrieve_stats(PSMoveTracker *tracker,
         PSMove_timestamp *ts_begin, PSMove_timestamp *ts_grab,
         PSMove_timestamp *ts_retrieve, PSMove_timestamp *ts_converted);
 
+ADDAPI void
+ADDCALL _psmove_tracker_fix_roi_size(PSMoveTracker *tracker);
 
 #ifdef __cplusplus
 }

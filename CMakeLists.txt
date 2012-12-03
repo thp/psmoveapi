@@ -346,7 +346,7 @@ if(PSMOVE_BUILD_TESTS)
     endforeach(TESTNAME)
 
     if(PSMOVE_BUILD_TRACKER)
-        foreach(TESTNAME tracker capture_performance)
+        foreach(TESTNAME tracker capture_performance record_video roi_size)
             add_executable(test_${TESTNAME} examples/c/test_${TESTNAME}.c)
             target_link_libraries(test_${TESTNAME} psmoveapi psmoveapi_tracker)
         endforeach(TESTNAME)
