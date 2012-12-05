@@ -46,22 +46,84 @@ extern "C" {
 
 #ifndef SWIG
 struct _PSMoveFusion;
-typedef struct _PSMoveFusion PSMoveFusion;
+typedef struct _PSMoveFusion PSMoveFusion; /*!< Handle to a PS Move Fusion object.
+                                                Obtained via psmove_fusion_new() */
 #endif
 
+/**
+ * \brief Create a new PS Move Fusion object
+ *
+ * Creates and returns a new \ref PSMoveFusion object.
+ *
+ * \param tracker The \ref PSMoveTracker instance from which position
+ *                information should be obtained
+ * \param z_near The Z coordinate of the near clipping plane
+ * \param z_far The Z coordinate of the far clipping plane
+ *
+ * \return A new \ref PSMoveFusion handle or \c NULL on error
+ **/
 ADDAPI PSMoveFusion *
 ADDCALL psmove_fusion_new(PSMoveTracker *tracker, float z_near, float z_far);
 
+/**
+ * \brief Get a pointer to the 4x4 projection matrix
+ *
+ * This function returns the OpenGL projection matrix for the camera
+ * used. Usually the return value can be loaded directly into the
+ * GL_PROJECTION matrix of the user application using glLoadMatrix().
+ *
+ * \param fusion A valid \ref PSMoveFusion handle
+ *
+ * \return A pointer to a 16-item (4x4) float array representing
+ *         the current projection matrix. The return value is only
+ *         valid as long as the \ref PSMoveFusion object exists, the
+ *         caller MUST NOT free() the return value.
+ **/
 ADDAPI float *
 ADDCALL psmove_fusion_get_projection_matrix(PSMoveFusion *fusion);
 
+/**
+ * \brief Get a pointer to the 4x4 model-view matrix for a controller
+ *
+ * This function returns the OpenGL model-view matrix for one motion
+ * controller. The coordinate system origin is at the center of the
+ * sphere, aligned with the controller. The returned matrix therefore
+ * describes both the position and orientation of the controller in 3D
+ * space. Usually the return value can be loaded directly into the
+ * GL_MODELVIEW matrix of the user application using glLoadMatrix().
+ *
+ * \param fusion A valid \ref PSMoveFusion handle
+ * \param move A valid \ref PSMove handle
+ *
+ * \return A pointer to a 16-item (4x4) float array representing
+ *         the modelview matrix for the controller. The return value
+ *         is only valid as long as the \ref PSMoveFusion object
+ *         exists, the caller MUST NOT free() the return value.
+ **/
 ADDAPI float *
 ADDCALL psmove_fusion_get_modelview_matrix(PSMoveFusion *fusion, PSMove *move);
 
+/**
+ * \brief Get the 3D position of a controller
+ *
+ * This function returns the 3D position (relative to the camera)
+ * of the motion controller, based on the current projection matrix.
+ *
+ * \param fusion A valid \ref PSMoveFusion handle
+ * \param move A valid \ref PSMove handle
+ * \param x A pointer to store the X part of the position vector
+ * \param y A pointer to store the Y part of the position vector
+ * \param z A pointer to store the Z part of the position vector
+ **/
 ADDAPI void
 ADDCALL psmove_fusion_get_position(PSMoveFusion *fusion, PSMove *move,
         float *x, float *y, float *z);
 
+/**
+ * \brief Destroy an existing fusion instance and free allocated resources
+ *
+ * \param fusion A valid \ref PSMoveFusion handle
+ **/
 ADDAPI void
 ADDCALL psmove_fusion_free(PSMoveFusion *fusion);
 
