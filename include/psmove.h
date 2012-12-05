@@ -971,25 +971,30 @@ ADDAPI char *
 ADDCALL psmove_util_get_file_path(const char *filename);
 
 /**
- * Utility function: Get an integer from the environment
+ * \brief Get an integer from an environment variable
  *
- * Returns the integer value of the environment variable, or -1 if
- * the variable is not set or could not be parsed as integer.
+ * Utility function used to get configuration from environment
+ * variables.
  *
- * name ... The name of the environment variable
+ * \param name The name of the environment variable
+ *
+ * \return The integer value of the environment variable, or -1 if
+ *         the variable is not set or could not be parsed as integer.
  **/
 ADDAPI int
 ADDCALL psmove_util_get_env_int(const char *name);
 
 /**
- * Utility function: Get a string from the environment
+ * \brief Get a string from an environment variable
  *
- * Returns the string value of the environment variable, or NULL if
- * the variable is not set.
+ * Utility function used to get configuration from environment
+ * variables.
  *
- * name ... The name of the environment variable
+ * \param name The name of the environment variable
  *
- * The returned value must be free()d after use.
+ * \return The string value of the environment variable, or NULL if the
+ *         variable is not set. The caller must free() the result when
+ *         it is not needed anymore.
  **/
 ADDAPI char *
 ADDCALL psmove_util_get_env_string(const char *name);
