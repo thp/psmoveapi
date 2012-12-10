@@ -1,4 +1,116 @@
 
+Get started on Mac OS X
+====================================================
+
+For more in-depth installation instructions with screenshots, see the tutorial on GDocs: http://goo.gl/cahbJ
+
+You will need...
+... a PS Move controller
+... a mini-usb cable
+... to create a root password (see: http://youtu.be/10sKJQuXq6A)
+... to install Homebrew: http://mxcl.github.com/homebrew/
+	$ ruby -e "$(curl -fsSkL raw.github.com/mxcl/homebrew/go)" 
+... to install cmake, and git from Homebrew
+	$ brew install cmake git
+… to download and install Doxygen (http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc) to generate the documentation (optional)
+
+
+1. Get ready
+	Connect the controller via USB.
+	Enable Bluetooth in MacOS.
+
+2. Choose the install folder
+	$ cd /Developer/Library/
+
+3. Grab binaries
+	$ git clone git://github.com/thp/psmoveapi.git
+	$ cd psmoveapi
+	$ git submodule init
+	$ git submodule update
+
+4. Build all
+	$ bash -e -x contrib/build-osx-snapshot
+
+Note: If the script returns some errors, you might need to build the API step-by-step. See “Building the API manually” for the alternative procedure.
+
+5. Check
+	$ cd build
+	$ ./example
+
+The controller vibrates and the sphere blinks. SUCCESS!
+
+6. Pairing (automatic)
+	$ ./psmovepair
+
+Repeat this step for every controller (plug the controller via usb before you call psmovepair).
+
+Note: Some MacOS 10.7 users have trouble with the automated pairing. If this is your case, see the “Manual pairing” instructions below.
+Note 2: Mountain Lion (Mac OS X 10.8) introduced changes related to bluetooth. A fix is underway. You can get more info in the comments of this blog post by Doug Wilson (http://gutefabrik.com/blog/?p=1843) or asking on the mailing list.
+
+7. Handshake
+
+Press the PS button on the controller and wait until the LED stops blinking.
+Click on the Bluetooth icon in Mac OS' toolbar; you should see a line reading “Motion Controller” for each controller connected.
+
+
+Updating the API
+====================================================
+	$ cd /Developer/Library/psmoveapi
+	$ git pull
+	$ cd build
+	$ cmake ..
+	$ make -j4
+
+
+Building the API manually
+====================================================
+
+	$ mkdir build
+	$ cd build
+	$ ccmake ..
+
+Follow instructions to configure the build then build:
+
+	$ cmake ..
+	$ make -j4
+
+
+Manual Pairing
+====================================================
+
+If ./psmovepair doesn't work or you get a PIN prompt when you press the PS button on your controller, follow these steps:
+
+8.1. Right after you run ./psmovepair write down the adress you find after “controller address:” in the form “aa:bb:cc:dd:ee:ff”
+8.2. Disable Bluetooth (or the modifications that follow won’t work).
+8.4. Wait for BT process to quit
+	$ pgrep blued
+	repeat until nothing prints anymore (e.g. the process "blued" has quit) this can take a few seconds up to a minute.
+8.5. Authorize the controller’s MAC address
+	$ sudo defaults write /Library/Preferences/com.apple.Bluetooth HIDDevices -array-add "<aa-bb-cc-dd-ee-ff>"
+	where <aa-bb-cc-dd-ee-ff> is the MAC address you wrote down at 8.2 but with hyphens for separators.
+	Type in your root password if promped
+8.6. Enable Bluetooth again then press the PS button on the controller. The PIN request should not pop up this time and the Move should now appear in the bluetooth devices as “Motion Controller”.
+
+
+
+Generate documentation with Doxygen
+====================================================
+
+Doxygen is a documentation system that takes the code from the api and automatically 
+generate an html reference for all its functions. Download the latest binary distribution 
+of Doxygen at: http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc
+
+ 1. Run Doxygen.
+ 2. Click File>Open and select the Doxyfile item in the psmoveapi folder which will 
+     load the configuration for the build.
+ 3. Click on the “Run” tab then on “Run Doxygen”.
+ 4. Once Doxygen has finished, quit the app and go to your psmoveapi folder. You will 
+     find a folder called html which contains the doc.
+ 5. Open index.html in your favorite web browser to access the documentation.
+
+
+
+
 Background information about iSight exposure locking
 ====================================================
 
@@ -8,12 +120,12 @@ built into most (all?) MacBook (Pro) computers and iMacs. Unfortunately, there
 is no API for controlling the exposure directly. It is possible to lock the
 exposure to a given value so that the exposure isn't continously corrected.
 
-How it works normally (continous autoexposure):
+How it works normally (continuous autoexposure):
 
  1. The camera device determines a good first exposure when started
- 2. While frames are captured, the exposure is continously modified
+ 2. While frames are captured, the exposure is continuously modified
     (e.g. when you hold the controller near the iSight, the exposure is
-    automatically lowered to accomodate the brighter camera image)
+    automatically lowered to accommodate the brighter camera image)
 
 How it works with locked exposure:
 
