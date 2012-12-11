@@ -18,6 +18,12 @@ PSMOVEAPI_VERSION=$(grep -m 1 -o "psmoveapi (.*)" debian/changelog |
 # Git revision identifier
 PSMOVEAPI_REVISION=$(git show-ref --head --hash=8 HEAD)
 
+# By default, we build a snapshot. If "release" is the first argument, we
+# build a release (do not add date and Git revision information to version)
+if [ "$1" != "release" ]; then
+    PSMOVEAPI_VERSION=${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
+fi
+
 if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     echo "ERROR: You have to run this script in the PS Move API source root."
     exit 1
@@ -56,7 +62,7 @@ fi
 cd $PSMOVEAPI_CHECKOUT
 
 # Build PS Move API
-PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}/
+PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_VERSION}/
 rm -rf build
 mkdir build
 cd build
@@ -80,7 +86,7 @@ cp -rpv build/tmp/* dist/
 cd $PSMOVEAPI_CHECKOUT
 
 # Tar it up
-PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}_osx108
+PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_osx108
 rm -rf $PACKAGE_NAME
 mv dist $PACKAGE_NAME
 mkdir -p upload

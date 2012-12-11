@@ -22,6 +22,13 @@ PSMOVEAPI_VERSION=$(dpkg-parsechangelog | grep ^Version: | cut -d' ' -f2-)
 # Git revision identifier
 PSMOVEAPI_REVISION=$(git show-ref --hash=8 HEAD)
 
+# By default, we build a snapshot. If "release" is the first argument, we
+# build a release (do not add date and Git revision information to version)
+if [ "$1" != "release" ]; then
+    PSMOVEAPI_VERSION=${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
+fi
+
+
 if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     echo "ERROR: You have to run this script in the PS Move API source root."
     exit 1
@@ -74,7 +81,7 @@ cd $PSMOVEAPI_CHECKOUT
 rm -rf dist
 mkdir -p dist/bin
 echo $PSMOVEAPI_REVISION >dist/revision.txt
-cp README COPYING dist/
+cp README COPYING README.win32 README.moved dist/
 cp build/*.exe dist/bin/
 cp build/libpsmoveapi.dll dist/bin/
 cp build/libpsmoveapi_tracker.dll dist/bin/
@@ -84,7 +91,7 @@ cp include/*.h dist/include/
 cd $PSMOVEAPI_CHECKOUT
 
 # Zip it up
-PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}_win32
+PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_win32
 rm -rf $PACKAGE_NAME
 mv dist $PACKAGE_NAME
 mkdir -p upload

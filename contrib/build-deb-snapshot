@@ -18,7 +18,13 @@ DEB_NAME=$(dpkg-parsechangelog | grep ^Source: | cut -d' ' -f2-)
 DEB_VERSION=$(dpkg-parsechangelog | grep ^Version: | cut -d' ' -f2-)
 DEB_PACKAGE=${DEB_NAME}_${DEB_VERSION}
 
-TARGET_VERSION=${DEB_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
+# By default, we build a snapshot. If "release" is the first argument, we
+# build a release (do not add date and Git revision information to version)
+if [ "$1" != "release" ]; then
+    TARGET_VERSION=${DEB_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
+else
+    TARGET_VERSION=${DEB_VERSION}
+fi
 
 IGNORE_DIRECTORIES="-Ibuild -Iupload -Iopencv -I.git"
 
