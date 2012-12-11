@@ -121,15 +121,15 @@ main(int argc, char *argv[])
      *
      * You need to have exactly one controller connected.
      **/
-    setenv(PSMOVE_TRACKER_FILENAME_ENV, "test_roi_size.avi", 1);
-    setenv(PSMOVE_TRACKER_COLOR_ENV, "723a8c", 1);
+    putenv(PSMOVE_TRACKER_FILENAME_ENV "=test_roi_size.avi");
+    putenv(PSMOVE_TRACKER_COLOR_ENV "=723a8c");
 
     for (roi=0; roi<rois; roi++) {
-        char tmp[10];
-        sprintf(tmp, "%d", roi_sizes[roi]);
-        printf("Testing tracking performance: %s\n", tmp);
+        printf("Testing tracking performance: %d\n", roi_sizes[roi]);
 
-        setenv("PSMOVE_TRACKER_ROI_SIZE", tmp, 1);
+        char tmp[strlen(PSMOVE_TRACKER_ROI_SIZE_ENV) + 10];
+        sprintf(tmp, "%s=%d", PSMOVE_TRACKER_ROI_SIZE_ENV, roi_sizes[roi]);
+        putenv(tmp);
 
         struct TestContext context;
         setup(&context);
