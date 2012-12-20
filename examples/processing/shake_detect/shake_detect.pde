@@ -1,5 +1,6 @@
 /*
  * A simple but effective "shake" motion detection
+ * Works best on left to right shaking motion
  */
 
 import io.thp.psmove.*;
@@ -81,3 +82,17 @@ void detectShake(float [] _xAcc, float [] _zAcc, int _threshold, int _falloff) {
   
   if(shakeCount>0) shakeCount--;
 }
+
+void keyPressed() {
+  if (key == 27) { // escape key
+    quit();
+  }
+}
+
+void quit() {
+  move.set_rumble(0);
+  move.set_leds(0, 0, 0);
+  move.update_leds(); // we switch of the sphere and rumble before we quit
+  exit();
+}
+
