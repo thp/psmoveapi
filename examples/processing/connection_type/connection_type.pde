@@ -27,14 +27,14 @@ int total_connected, unique_connected;
 int [] batteryLevels;
 
 // Battery enum values
-final int Batt_MIN           = 0;
-final int Batt_20Percent     = 1;
-final int Batt_40Percent     = 2;
-final int Batt_60Percent     = 3;
-final int Batt_80Percent     = 4;
-final int Batt_MAX           = 5;
-final int Batt_CHARGING      = 6;
-final int Batt_CHARGING_DONE = 7;
+final int Batt_MIN           = 0x00;
+final int Batt_20Percent     = 0x01;
+final int Batt_40Percent     = 0x02;
+final int Batt_60Percent     = 0x03;
+final int Batt_80Percent     = 0x04;
+final int Batt_MAX           = 0x05;
+final int Batt_CHARGING      = 0xEE;
+final int Batt_CHARGING_DONE = 0xEF;
 
 // Connection type enum values. connection_type() returns...
 final int Conn_Bluetooth = 0; // if the controller is connected via Bluetooth
@@ -104,7 +104,7 @@ void setup() {
 //--- DRAW ----------------------------------------------------------
 
 void draw() {
-  update_battery_levels();
+  update_battery_levels();  
 } // END of DRAW
 
 //---------------------------------------------------------------------
