@@ -31,6 +31,12 @@
 #include "psmove_osxsupport.h"
 
 void
+camera_control_initialize()
+{
+    macosx_camera_set_exposure_lock(0);
+}
+
+void
 camera_control_set_parameters(CameraControl* cc,
         int autoE, int autoG, int autoWB,
         int exposure, int gain,
