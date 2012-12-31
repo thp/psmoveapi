@@ -4,8 +4,6 @@
  *
  * Press 'R' to update the readings
  *
- * Known issue: get_battery() always returns 0
- *
  */
 
 // Import the PS Move API Package
@@ -23,18 +21,6 @@ HashMap<String, PSMove> controllers;
 boolean priority_bluetooth = true;
 
 int total_connected, unique_connected;
-
-int [] batteryLevels;
-
-// Battery enum values
-final int Batt_MIN           = 0x00;
-final int Batt_20Percent     = 0x01;
-final int Batt_40Percent     = 0x02;
-final int Batt_60Percent     = 0x03;
-final int Batt_80Percent     = 0x04;
-final int Batt_MAX           = 0x05;
-final int Batt_CHARGING      = 0xEE;
-final int Batt_CHARGING_DONE = 0xEF;
 
 // Connection type enum values. connection_type() returns...
 final int Conn_Bluetooth = 0; // if the controller is connected via Bluetooth
@@ -91,8 +77,6 @@ void setup() {
       }
     }
   }
-  // The size of the list matches the number of actual controllers connected
-  batteryLevels = new int[unique_connected];
 
   println(" ");  
   print_status(controllers); // Show 
@@ -104,7 +88,6 @@ void setup() {
 //--- DRAW ----------------------------------------------------------
 
 void draw() {
-  update_battery_levels();  
 } // END of DRAW
 
 //---------------------------------------------------------------------
@@ -116,17 +99,7 @@ void keyPressed() {
   } 
 }
 
-// Get the current battery level of each controller and update the list accordingly
-void update_battery_levels() {
-  int i=0;
-   for (String id: controllers.keySet()) {
-     PSMove move = controllers.get(id);     // Give me the controller with that MAC address
-     batteryLevels[i] = move.get_battery(); // Save the battery level of the current controller
-     i++;
-   }
-}
-
-// Print the current battery level, mac adress and connection type of each controller
+// Print the MAC adress and connection type of each controller
 void print_status( HashMap<String, PSMove> controllers) {
   int i = 0;
   for (String id: controllers.keySet()) {
@@ -135,9 +108,7 @@ void print_status( HashMap<String, PSMove> controllers) {
    int connection_type = move.getConnection_type(); // How is that controller connected to the computer?
    String connection_type_name = get_connection_name(connection_type);
    
-   String battery_level_name = get_battery_level_name(batteryLevels[i]);
-   
-   println("Controller #"+i+" | Battery "+battery_level_name+" | MAC address: "+id+ " | Connection type: "+connection_type_name);
+   println("Controller #"+i+" | MAC address: "+id+ " | Connection type: "+connection_type_name);
    i++;
   }
 }
@@ -151,19 +122,3 @@ String get_connection_name(int connection_type) {
       default:              return "Error in get_connection_name()";
     }
 }
-
-// Translate the battery level from int (enum) to a readable form
-String get_battery_level_name(int battery_level) {
-    switch(battery_level) {
-      case Batt_MIN:            return "low";
-      case Batt_20Percent :     return "20%";
-      case Batt_40Percent :     return "40%";
-      case Batt_60Percent :     return "60%";
-      case Batt_80Percent :     return "80%";
-      case Batt_MAX :           return "100%";
-      case Batt_CHARGING :      return "charging...";
-      case Batt_CHARGING_DONE : return "fully charged";
-      default:                  return "[Error in get_battery_level_name()]";
-    }
-}
-
