@@ -2,12 +2,6 @@
 // Import the PS Move API Package
 import io.thp.psmove.*;
 
-// The same controller connected via USB and Bluetooth 
-// shows twice. If enabled, USB controllers will be replaced 
-// with their Bluetooth counterpart when found. Otherwise,
-// it is "first in first served".
-boolean priority_bluetooth = true;
-
 int total_connected, unique_connected;
 
 HashMap<String, PSMove> controllers;
@@ -40,7 +34,7 @@ void prepare() {
 
   println("Looking for controllers...");
   println("");
-  
+
   total_connected = psmoveapi.count_connected();
   unique_connected = 0; // Number of actual controllers connected (without duplicates)
   
@@ -74,10 +68,12 @@ void prepare() {
     else {
       println("Found "+serial+" via "+connection+" (ignored)");
     }
-  } 
-  println("Finished registering "+unique_connected+" controllers.");
+  }
+  if ( unique_connected > 0 )
+    println("Finished registering "+unique_connected+" controllers.");
+  else
+    println("Oops... No bluetooth controller found.");
   println("");
-  
 }
 
 void update() {
@@ -116,7 +112,7 @@ void handle(PSMove move)
 
 color get_color ( Integer battery_level ) {
   
-  int glw = (int)map( sin( frameCount*.025 ), -1, 1, 10, 150 ); // Glow
+  int glw = (int)map( sin( frameCount*.03 ), -1, 1, 10, 150 ); // Glow
   int rnd = (int)random(0, 50); // Random intensity
   
   color sphere_color = color(0); // By default, the sphere is switched off
@@ -127,8 +123,8 @@ color get_color ( Integer battery_level ) {
     case Batt_60Percent :     sphere_color = color( 120, 240,   3 ); break; // Light green
     case Batt_80Percent :     sphere_color = color(  50, 240,   0 ); break; // Bright green
     case Batt_MAX :           sphere_color = color(   0, 255,   0 ); break; // White
-    case Batt_CHARGING :      sphere_color = color(   0, glw,   0 ); break; // Glowing green
-    case Batt_CHARGING_DONE : sphere_color = color( 255, 255, 255 ); break; // White
+    case Batt_CHARGING :      sphere_color = color(   0, glw, glw ); break; // Glowing blue
+    case Batt_CHARGING_DONE : sphere_color = color(   0, 255, 255 ); break; // Blue
     default:                  sphere_color = color(0);               break;
   }
   return sphere_color;
