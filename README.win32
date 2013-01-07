@@ -1,13 +1,54 @@
-Get started on windows
 
-Get and install
-- MinGW       : http://sourceforge.net/projects/mingw/files/latest/download?source=files
-- CMake       : http://www.cmake.org/cmake/resources/software.html 
-- OpenCV      : http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
-- GIT         : e.g. http://code.google.com/p/msysgit/
-- PSEyeDriver : http://codelaboratories.com/get/cl-eye-driver/
-[optional]
-- CLEyeSDK    : http://codelaboratories.com/get/cl-eye-sdk/
+       Building and running the PS Move API on a legacy operating system
+       =================================================================
+
+We usually build PS Move API for Windows on Linux via cross-compliation, as
+we don't run Windows for day-to-day work. For cross-compiling the PS Move API
+for Windows on Linux, you can use the following script:
+
+    contrib/cross-compile-mingw64
+
+
+Please take into account that nobody has yet managed to make Bluetooth pairing
+work reliably on Windows (it works reliably on both Mac OS X and Linux). If you
+plan to do serious development, it's time to switch to Mac OS X or Linux. As an
+alternative, you can use a Linux host for Bluetooth communcation, and export
+the controller via "moved" to the Windows host. This setup has reliable pairing,
+and you can still develop and build your applications in Windows if you have to.
+
+
+Requirements
+------------
+
+- MinGW
+  http://mingw-w64.sourceforge.net/
+- CMake
+  http://www.cmake.org/cmake/resources/software.html
+- OpenCV
+  http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
+- Git
+  http://code.google.com/p/msysgit/
+- CL Eye Driver (if you plan to use the PS Eye camera)
+  http://codelaboratories.com/get/cl-eye-driver/
+
+Optional dependency:
+
+- CLEyeSDK
+  http://codelaboratories.com/get/cl-eye-sdk/
+
+
+
+IMPORTANT: Get the right MinGW version!
+
+ -> "Regular" MinGW might not be able to build the PS Move API, as we are
+    using some features that are only included in MinGW-W64.
+
+ -> Get "MinGW-W64" instead. Despite its name, it also works for 32-bit
+    systems (and you probably have to/want to build PS Move API as 32-bit
+    library on Windows, anyway. This is also what we use, both for cross-
+    compiling it on Linux, and for building it directly on Windows.
+
+
 
 1. build and configure OpenCV with cmake
 	:: you may skip to build OpenCV on your own, however i had no luck
@@ -20,7 +61,7 @@ Get and install
 	:: now go for a coffe-break
 
 2. Get you clone of the psmoveapi
-	git clone https://github.com/thp/psmoveapi.git
+	git clone git://github.com/thp/psmoveapi.git
 	cd psmoveapi
 
 4. Init and update the submodules
@@ -39,12 +80,13 @@ Get and install
 7. prepare a new build with cmake for the psmoveapi
 	mkdir build
 	cd build
-	:: only with OpenCV Camera access
 	cmake .. -G "MinGW Makefiles"
-	:: additionally with Code Laboratories PS Eye SDK
+
+        Alternatively, if you want to use the CL Eye SDK:
 	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=ON
 
 8. finally build
-	mingw32-make
+	mingw32-make (XXX: Is this still correct for mingw-w64?)
 
 9. start one of the desired test applications
+
