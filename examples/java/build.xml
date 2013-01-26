@@ -6,6 +6,8 @@
     <path id="classpath">
         <pathelement location="build"/>
         <pathelement location="../../build/psmoveapi.jar"/>
+        <pathelement location="/usr/share/java/lwjgl.jar"/>
+        <pathelement location="/usr/share/java/lwjgl_util.jar"/>
     </path>
 
     <target name="init">
@@ -22,6 +24,12 @@
 
     <target name="run-sensorreading" depends="compile">
         <java classname="SensorReading" classpathref="classpath"/>
+    </target>
+
+    <target name="run-fusion" depends="compile">
+        <java classname="Fusion" classpathref="classpath" fork="true">
+            <sysproperty key="java.library.path" path="../../build/:/usr/lib/jni/"/>
+        </java>
     </target>
 
     <target name="clean">

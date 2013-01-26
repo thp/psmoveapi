@@ -8,6 +8,18 @@ You can run the examples using:
 
   ant run-sensorreading
   ant run-tracker
+  ant run-fusion
+
+
+The Fusion example depends on LWJGL (http://www.lwjgl.org/), make sure to set
+the right paths in build.xml (or remove Fusion.java to avoid building the example).
+For Debian-based systems such as Ubuntu, you can install it using:
+
+  apt-get install liblwjgl-java
+
+In the case of Debian-based systems such as Ubuntu, the paths in build.xml will
+alraedy be correct, so liblwjgl-java can be found.
+
 
 Adding new examples:
 
