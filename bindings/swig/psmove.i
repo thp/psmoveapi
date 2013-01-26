@@ -83,6 +83,7 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_fusion.h"
 
 %}
 
@@ -93,7 +94,10 @@ typedef struct {} PSMove;
 
 #ifdef PSMOVE_BUILD_TRACKER
 %include "psmove_tracker.h"
+%include "psmove_fusion.h"
 typedef struct {} PSMoveTracker;
+typedef struct {} PSMoveFusion;
+
 #endif /* PSMOVE_BUILD_TRACKER */
 
 
@@ -137,6 +141,20 @@ void reinit();
         float *OUTPUT, float *OUTPUT, float *OUTPUT);
 
     void get_magnetometer_vector(float *OUTPUT, float *OUTPUT, float *OUTPUT);
+
+    void enable_orientation(int enabled) {
+        psmove_enable_orientation($self, enabled);
+    }
+
+    int has_orientation() {
+        return psmove_has_orientation($self);
+    }
+
+    void get_orientation(float *OUTPUT, float *OUTPUT, float *OUTPUT, float *OUTPUT);
+
+    void reset_orientation() {
+        psmove_reset_orientation($self);
+    }
 
     void set_leds(int r, int g, int b) {
         psmove_set_leds($self, r, g, b);
@@ -321,6 +339,38 @@ void reinit();
 
 }
 
+%extend PSMoveFusion {
+    PSMoveFusion(PSMoveTracker *tracker, float z_near, float z_far) {
+        return psmove_fusion_new(tracker, z_near, z_far);
+    }
+
+    ~PSMoveFusion() {
+        psmove_fusion_free($self);
+    }
+
+    void get_position(PSMove *move, float *OUTPUT, float *OUTPUT, float *OUTPUT);
+
+    PSMoveMatrix4x4 get_projection_matrix() {
+        PSMoveMatrix4x4 tmp;
+        float *matrix = psmove_fusion_get_projection_matrix($self);
+        memcpy(&tmp, matrix, sizeof(tmp));
+        return tmp;
+    }
+
+    PSMoveMatrix4x4 get_modelview_matrix(PSMove *move) {
+        PSMoveMatrix4x4 tmp;
+        float *matrix = psmove_fusion_get_modelview_matrix($self, move);
+        memcpy(&tmp, matrix, sizeof(tmp));
+        return tmp;
+    }
+}
+
+%extend PSMoveMatrix4x4 {
+    float at(int i) {
+        return $self->m[i];
+    }
+}
+
 #endif /* PSMOVE_BUILD_TRACKER */
 
 
@@ -342,6 +392,12 @@ void
 PSMove_get_magnetometer_vector(PSMove *move, float *x, float *y, float *z)
 {
     psmove_get_magnetometer_vector(move, x, y, z);
+}
+
+void
+PSMove_get_orientation(PSMove *move, float *w, float *x, float *y, float *z)
+{
+    psmove_get_orientation(move, w, x, y, z);
 }
 
 void
@@ -495,6 +551,12 @@ PSMoveTracker_get_size(PSMoveTracker *tracker, int *width, int *height)
     return psmove_tracker_get_size(tracker, width, height);
 }
 
+void
+PSMoveFusion_get_position(PSMoveFusion *fusion, PSMove *move,
+            float *x, float *y, float *z)
+{
+    psmove_fusion_get_position(fusion, move, x, y, z);
+}
 
 #endif /* PSMOVE_BUILD_TRACKER */
 

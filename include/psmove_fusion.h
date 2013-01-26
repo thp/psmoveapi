@@ -44,6 +44,11 @@ extern "C" {
 #define PSEYE_FOV_RED_DOT 56
 
 
+/* This struct is used by the SWIG bindings as result value */
+typedef struct {
+    float m[16];
+} PSMoveMatrix4x4;
+
 #ifndef SWIG
 struct _PSMoveFusion;
 typedef struct _PSMoveFusion PSMoveFusion; /*!< Handle to a PS Move Fusion object.
