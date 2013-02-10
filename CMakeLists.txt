@@ -504,6 +504,11 @@ endif()
 
 # For system-wide installation
 
+set(PSMOVEAPI_LIB_DEST "lib")
+if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
+    set(PSMOVEAPI_LIB_DEST "lib64")
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/contrib/psmoveapi.pc.in
     ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
     @ONLY)
@@ -513,7 +518,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/psmove_config.h.in
     @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/psmoveapi.pc
-    DESTINATION lib/pkgconfig)
+    DESTINATION ${PSMOVEAPI_LIB_DEST}/pkgconfig)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # Only install the udev configuration file on Linux
@@ -523,8 +528,8 @@ endif()
 
 install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION ${PSMOVEAPI_LIB_DEST}
+    ARCHIVE DESTINATION ${PSMOVEAPI_LIB_DEST}
 )
 
 install(FILES ${PSMOVEAPI_HEADERS} DESTINATION include/psmoveapi)
