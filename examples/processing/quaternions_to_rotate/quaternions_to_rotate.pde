@@ -59,7 +59,7 @@ void draw() {
   lights();
   pushMatrix();
   translate(height*.5f, width*.5f);
-  rotate(angle, vecX, vecY, vecZ); // The rotation directions are not accurate right now
+  rotate(angle, -vecX, vecY, -vecZ); // The rotation directions for X and Z have to be inverted
   fill(255);
   box(40, 20, 100);
   popMatrix();
