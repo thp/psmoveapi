@@ -8,6 +8,9 @@ export PSMOVEAPI_CHECKOUT=$(pwd)
 export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv
 export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 
+# Known-good Git tag of OpenCV that can still be built correctly
+OPENCV_TARGET_GIT_TAG=2.4.4
+
 # For parallel builds
 MAKE_ARGS=-j4
 
@@ -38,6 +41,7 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
     rm -rf build
     mkdir -p build
     cd build
+    git checkout --force $OPENCV_TARGET_GIT_TAG
     cmake -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_PERF_TESTS=OFF \
           -DBUILD_TESTS=OFF \
@@ -49,6 +53,7 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
           -DBUILD_opencv_ts=OFF \
           -DBUILD_opencv_ml=OFF \
           -DBUILD_opencv_video=OFF \
+          -DBUILD_opencv_java=OFF \
           -DWITH_OPENEXR=OFF \
           -DWITH_FFMPEG=OFF \
           -DWITH_JASPER=OFF \
