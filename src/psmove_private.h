@@ -39,6 +39,7 @@ extern "C" {
 #include <stdio.h>
 #include <wchar.h>
 #include <time.h>
+#include <pthread.h> /* for timespec on Windows */
 
     /**
      * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c
