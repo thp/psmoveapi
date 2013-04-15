@@ -108,6 +108,7 @@ enum PSMove_Request_Type {
     PSMove_Req_GetBTAddr = 0x04,
     PSMove_Req_SetBTAddr = 0x05,
     PSMove_Req_GetCalibration = 0x10,
+    PSMove_Req_GetFirmwareVersion = 0xF9,
 };
 
 enum PSMove_Device_Type {
@@ -603,6 +604,27 @@ _psmove_get_device_path(PSMove *move)
 
     return move->device_path;
 }
+
+void
+_psmove_get_firmware(PSMove *move)
+{
+    unsigned char btg[PSMOVE_BUFFER_SIZE];
+    int res;
+
+    psmove_return_if_fail(move != NULL);
+
+    memset(btg, 0, sizeof(btg));
+    btg[0] = PSMove_Req_GetFirmwareVersion;
+    res = hid_get_feature_report(move->handle, btg, sizeof(btg));
+
+    printf("got bytes: %d\n", res);
+    int i;
+    for (i=0; i<res; i++) {
+        printf("%02x ", btg[i]);
+    }
+    printf("\n");
+}
+
 
 PSMove *
 psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
