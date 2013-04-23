@@ -550,8 +550,10 @@ ADDCALL psmove_get_battery(PSMove *move);
  *
  * This gets the raw sensor value of the internal temperature sensor.
  *
- * \bug Right now, the value range of the temperature sensor is now
- *      known, so you have to experiment with the values yourself.
+ * The temperature data is from the magnetometer which is an AK 8973.
+ *
+ * Page 20 of the datasheet shows the Celcius mappings for each value
+ * and page 9 shows typical operating temperatures.
  *
  * You need to call psmove_poll() first to read new data from the
  * controller.
@@ -562,6 +564,28 @@ ADDCALL psmove_get_battery(PSMove *move);
  **/
 ADDAPI int
 ADDCALL psmove_get_temperature(PSMove *move);
+
+/**
+ * \brief Get the current temperature reading in Celsius [-30 C - 85 C]
+ *
+ * This gets the raw temperature sensor value of the internal temperature sensor
+ * and then converts it to celcius based off of the values in the AK 8973 datasheet
+ * on page 20.
+ *
+ * During normal operation this should return around 35 C
+ *
+ * You need to call psmove_poll() first to read new data from the controller
+ *
+ * \note This is NOT room temperature, but the temperature of the magnetometer.
+ * This means that under normal operation the temperature returned by this function
+ * will be higher than room temperature due to heat up from current flow.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return The temperature sensor reading in celcius [-30 C - 85 C]
+ **/
+ADDAPI float
+ADDCALL psmove_get_temperature_in_celsius(PSMove *move);
 
 /**
  * \brief Get the value of the PS Move analog trigger.
