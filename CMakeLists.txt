@@ -104,12 +104,15 @@ if (PSMOVE_USE_LOCAL_OPENCV)
         find_library(QUARTZCORE QuartzCore)
         find_library(APPKIT AppKit)
         find_library(QTKIT QTKit)
+        find_library(AVFOUNDATION AVFoundation)
+
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
             opencv_core opencv_highgui opencv_imgproc
             libjpeg libpng zlib stdc++
             ${QUARTZCORE}
             ${APPKIT}
-            ${QTKIT})
+            ${QTKIT}
+            ${AVFOUNDATION})
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
             opencv_highgui249 opencv_imgproc249 opencv_core249
@@ -135,9 +138,6 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${IOKIT})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${COREFOUNDATION})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${IOBLUETOOTH})
-
-    find_library(AVFOUNDATION AVFoundation)
-    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${AVFOUNDATION})
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/mac/hid.c)
 
