@@ -183,8 +183,8 @@ typedef struct {
     unsigned char gYhigh2;
     unsigned char gZlow2;
     unsigned char gZhigh2;
-    unsigned char temphigh; /* temperature (bits 12-5) */
-    unsigned char templow_mXhigh; /* temp (bits 4-1); magneto X (bits 12-9) */
+    unsigned char temp; /* temperature (bits 12-5) */
+    unsigned char mXhigh; /* magneto X (bits 12-9) */
     unsigned char mXlow; /* magnetometer X (bits 8-1) */
     unsigned char mYhigh; /* magnetometer Y (bits 12-5) */
     unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
@@ -1243,8 +1243,15 @@ psmove_get_temperature(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return ((move->input.temphigh << 4) |
-            ((move->input.templow_mXhigh & 0xF0) >> 4));
+    return move->input.temp;
+}
+
+float
+psmove_get_temperature_in_celsius(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0.0);
+
+    return (move->input.temp - 176.0)/-1.6;
 }
 
 unsigned char
@@ -1437,7 +1444,7 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
     psmove_return_if_fail(move != NULL);
 
     if (mx != NULL) {
-        *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
+        *mx = TWELVE_BIT_SIGNED(((move->input.mXhigh & 0x0F) << 8) |
                 move->input.mXlow);
     }
 

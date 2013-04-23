@@ -123,7 +123,8 @@ int main(int argc, char* argv[])
                 printf("battery level: unknown (%x)\n", battery);
             }
 
-            printf("temperature: %d\n", psmove_get_temperature(move));
+            printf("raw temperature: %d\n", psmove_get_temperature(move));
+            printf("celsius temperature: %f\n", psmove_get_temperature_in_celsius(move));
 
             psmove_update_leds(move);
         }
