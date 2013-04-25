@@ -109,6 +109,23 @@ enum PSMove_Request_Type {
     PSMove_Req_SetBTAddr = 0x05,
     PSMove_Req_GetCalibration = 0x10,
     PSMove_Req_GetFirmwareVersion = 0xF9,
+
+    /**
+     * Permanently set LEDs via USB
+     *
+     * Writing USB report 0xFA controls the LEDs. But unlike BT report
+     * 0x02 this one keeps the sphere glowing as long as the USB cable
+     * is connected, i.e. no refresh updates need to be send. Not sure
+     * why that one exists. Might be useful for debugging though.
+     *
+     * TODO: Can't get this to work, but I could imagine it be useful for
+     * things like notification apps that don't have to be running all the
+     * time. Maybe it only works in specific controller firmware versions?
+     *
+     * http://lists.ims.tuwien.ac.at/pipermail/psmove/2013-March/000335.html
+     * https://github.com/thp/psmoveapi/issues/55
+     **/
+    PSMove_Req_SetLEDsPermanentUSB = 0xFA,
 };
 
 enum PSMove_Device_Type {
