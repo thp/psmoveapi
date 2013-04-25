@@ -150,6 +150,10 @@ void reinit();
         return psmove_has_orientation($self);
     }
 
+    int has_calibration() {
+        return psmove_has_calibration($self);
+    }
+
     void get_orientation(float *OUTPUT, float *OUTPUT, float *OUTPUT, float *OUTPUT);
 
     void reset_orientation() {

@@ -36,6 +36,8 @@ import psmove
 
 move = psmove.PSMove()
 
+assert move.has_calibration()
+
 while True:
     if move.poll():
         ax, ay, az = move.get_accelerometer_frame(psmove.Frame_SecondHalf)
