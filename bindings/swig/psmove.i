@@ -268,6 +268,11 @@ void reinit();
     }
 
     void
+    annotate() {
+        psmove_tracker_annotate($self);
+    }
+
+    void
     disable(PSMove *move) {
         psmove_tracker_disable($self, move);
     }
