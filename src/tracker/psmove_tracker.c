@@ -483,6 +483,7 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
             break;
     }
 
+    camera_control_initialize();
     tracker->exposure = psmove_tracker_adapt_to_light(tracker, target_luminance);
     camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->exposure,
             0, 0xffff, 0xffff, 0xffff, -1, -1);
