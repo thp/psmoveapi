@@ -353,11 +353,26 @@ if(PSMOVE_BUILD_TESTS)
 
         if (PSMOVE_BUILD_OPENGL_EXAMPLES)
             foreach(EXAMPLE test_opengl test_opengl2 test_opengl3)
+            	include_directories("/usr/local/include")
+           	    set(CMAKE_OSX_ARCHITECTURES "x86_64")
                 add_executable(${EXAMPLE} examples/c/${EXAMPLE}.cpp)
-                target_link_libraries(${EXAMPLE}
-                    psmoveapi
-                    psmoveapi_tracker
-                    GL glut SDL)
+                
+                if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	                FIND_LIBRARY(OPENGL_LIBRARY OPENGL)
+	                FIND_LIBRARY(GLUT_LIBRARY GLUT)
+	    	        FIND_LIBRARY(SDL_LIBRARY SDL)
+   	    	        FIND_LIBRARY(SDLMAIN_LIBRARY SDLmain)
+	    	        FIND_LIBRARY(COCOA_LIBRARY Cocoa)
+	                target_link_libraries(${EXAMPLE}
+    	                psmoveapi
+    	                psmoveapi_tracker
+    	                ${OPENGL_LIBRARY} ${GLUT_LIBRARY} ${SDL_LIBRARY} ${SDLMAIN_LIBRARY} ${COCOA_LIBRARY})
+    	        else()
+    	        	target_link_libraries(${EXAMPLE}
+    	                psmoveapi
+    	                psmoveapi_tracker
+				        GL glut SDL)
+    	        endif()
             endforeach()
         endif()
     endif()
