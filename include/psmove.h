@@ -859,6 +859,11 @@ ADDCALL psmove_has_orientation(PSMove *move);
  * available. You can use psmove_has_orientation() to check if all
  * preconditions are fulfilled to do orientation tracking.
  *
+ * You must also call psmove_reset_orientation() at least once before using
+ * this function, otherwise (0, 0, 0, 0) will be returned. This is required,
+ * because the orientation reported is relative to the orientation that the
+ * controller was in at the time psmove_reset_orientation() is called.
+ *
  * \param move A valid \ref PSMove handle
  * \param w A pointer to store the w part of the orientation quaternion
  * \param x A pointer to store the x part of the orientation quaternion
