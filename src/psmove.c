@@ -1482,6 +1482,9 @@ psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled)
 {
     psmove_return_if_fail(move != NULL);
 
+    // Reset orientation to current controller position
+    psmove_reset_orientation(move);
+
     move->orientation_enabled = enabled;
 }
 
