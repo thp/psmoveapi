@@ -7,3 +7,5 @@ include /usr/share/cdbs/1/class/cmake.mk
 ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
 DEB_CMAKE_EXTRA_FLAGS += -DPSMOVE_USE_DEBUG:BOOL=YES
 endif
+
+DEB_CMAKE_EXTRA_FLAGS += -DPSMOVE_BUILD_QT_BINDINGS:BOOL=YES
