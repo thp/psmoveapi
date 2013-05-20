@@ -528,9 +528,16 @@ endif()
 
 # For system-wide installation
 
-set(PSMOVEAPI_LIB_DEST "lib")
-if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
-    set(PSMOVEAPI_LIB_DEST "lib64")
+if(NOT PSMOVEAPI_LIB_DEST)
+  if(CMAKE_LIBRARY_ARCHITECTURE)
+    set(PSMOVEAPI_LIB_DEST "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
+  else()
+    if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
+      set(PSMOVEAPI_LIB_DEST "lib64")
+    else()
+      set(PSMOVEAPI_LIB_DEST "lib")
+    endif()
+  endif()
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/contrib/psmoveapi.pc.in
