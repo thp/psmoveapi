@@ -470,18 +470,23 @@ psmove_calibration_load(PSMoveCalibration *calibration)
 {
     psmove_return_val_if_fail(calibration != NULL, 0);
     FILE *fp;
+    size_t rc;
 
     fp = fopen(calibration->filename, "rb");
     if (fp == NULL) {
         return 0;
     }
 
-    assert(fread(calibration->usb_calibration,
-                sizeof(calibration->usb_calibration),
-                1, fp) == 1);
-    assert(fread(&(calibration->flags),
-                sizeof(calibration->flags),
-                1, fp) == 1);
+    rc = fread(calibration->usb_calibration,
+                    sizeof(calibration->usb_calibration),
+                    1, fp);
+
+    assert(rc == 1);
+
+    rc = fread(&(calibration->flags),
+                    sizeof(calibration->flags),
+                    1, fp);
+    assert(rc == 1);
     fclose(fp);
 
     return 1;
@@ -493,15 +498,21 @@ psmove_calibration_save(PSMoveCalibration *calibration)
     psmove_return_val_if_fail(calibration != NULL, 0);
 
     FILE *fp;
+    size_t rc;
 
     fp = fopen(calibration->filename, "wb");
     assert(fp != NULL);
-    assert(fwrite(calibration->usb_calibration,
-                sizeof(calibration->usb_calibration),
-                1, fp) == 1);
-    assert(fwrite(&(calibration->flags),
+
+    rc = fwrite(calibration->usb_calibration,
+                       sizeof(calibration->usb_calibration),
+                       1, fp);
+    assert(rc == 1);
+
+    rc = fwrite(&(calibration->flags),
                 sizeof(calibration->flags),
-                1, fp) == 1);
+                1, fp);
+    assert(rc == 1);
+
     fclose(fp);
 
     return 1;
