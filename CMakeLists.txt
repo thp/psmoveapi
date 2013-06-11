@@ -38,7 +38,7 @@ option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 option(PSMOVE_BUILD_EXAMPLES "Build the C examples" ON)
 option(PSMOVE_BUILD_OPENGL_EXAMPLES "Build the OpenGL examples" OFF)
 option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
-option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" ON)
+option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
 
 
 # Enable tweaks (e.g. registry settings on Windows, ...) for PS Eye
@@ -56,6 +56,9 @@ option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
 # Write debugging images for tracking calibration to home directory
 option(PSMOVE_USE_TRACKER_TRACE "Write tracker calibration images to disk" OFF)
 
+# Madgwick's orientation algorithm (GPL-licensed)
+option(PSMOVE_USE_MADGWICK_AHRS "Use AHRS algorithm (GPL license)" OFF)
+
 
 # https://github.com/thp/psmoveapi/issues/29
 add_definitions(-fPIC)
@@ -68,6 +71,20 @@ if(PSMOVE_USE_DEBUG)
 else()
     add_definitions(-O2 -Wall -Wno-unused)
     set(INFO_USE_DEBUG "No")
+endif()
+
+# AHRS algorithm
+if(PSMOVE_USE_MADGWICK_AHRS)
+    add_definitions(-DPSMOVE_WITH_MADGWICK_AHRS)
+    set(INFO_LICENSE "GPL")
+    set(INFO_AHRS_ALGORITHM "Madgwick AHRS")
+    set(PSMOVEAPI_ALGORITHM_SRC
+        ${PSMOVEAPI_SOURCE_DIR}/external/MadgwickAHRS/MadgwickAHRS.c
+    )
+else()
+    set(INFO_LICENSE "BSD")
+    set(INFO_AHRS_ALGORITHM "None")
+    set(PSMOVEAPI_ALGORITHM_SRC)
 endif()
 
 # Linker commands to put into the .pc file (when installing)
@@ -230,10 +247,6 @@ file(GLOB PSMOVEAPI_SRC
 
 file(GLOB PSMOVEAPI_HEADERS
     "${PSMOVEAPI_SOURCE_DIR}/include/*.h"
-)
-
-set(PSMOVEAPI_ALGORITHM_SRC
-    ${PSMOVEAPI_SOURCE_DIR}/external/MadgwickAHRS/MadgwickAHRS.c
 )
 
 # Source files that are needed for both the shared and static library
@@ -566,6 +579,8 @@ message("")
 message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
 message("    Tracker library:  " ${INFO_BUILD_TRACKER})
+message("    AHRS algorithm:   " ${INFO_AHRS_ALGORITHM})
+message("    Library license:  " ${INFO_LICENSE} " (see README for details)")
 message("")
 message("  Language bindings")
 message("    Python:           " ${INFO_BUILD_PYTHON_BINDINGS})

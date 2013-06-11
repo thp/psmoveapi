@@ -37,7 +37,9 @@
 #include "psmove_private.h"
 #include "psmove_orientation.h"
 
-#include "../external/MadgwickAHRS/MadgwickAHRS.h"
+#if defined(PSMOVE_WITH_MADGWICK_AHRS)
+#  include "../external/MadgwickAHRS/MadgwickAHRS.h"
+#endif
 
 
 struct _PSMoveOrientation {
@@ -134,6 +136,7 @@ psmove_orientation_update(PSMoveOrientation *orientation)
                 &orientation->output[4],
                 &orientation->output[5]);
 
+#if defined(PSMOVE_WITH_MADGWICK_AHRS)
         MadgwickAHRSupdate(orientation->quaternion,
                 orientation->sample_freq,
 
@@ -152,6 +155,10 @@ psmove_orientation_update(PSMoveOrientation *orientation)
                 orientation->output[8],
                 orientation->output[7]
         );
+#else
+        psmove_DEBUG("Built without Madgwick AHRS - no orientation tracking");
+        return;
+#endif
 
         if (isnan(orientation->quaternion[0]) ||
             isnan(orientation->quaternion[1]) ||

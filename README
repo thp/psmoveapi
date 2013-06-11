@@ -93,10 +93,44 @@ Environment Variables
    Example: export PSMOVE_TRACKER_WIDTH=1280
             export PSMOVE_TRACKER_HEIGHT=720
 
+
+Licensing
+---------
+
+The PS Move API source code is released under the terms of a Simplified
+BSD-style license, the exact license text can be found in the COPYING file.
+
+Some third party code under "external/" might be licensed under a different
+license. Compiling PS Move API with these modules is optional, you can use
+CMake options to configure which features you need. CMake will give you a
+hint about the library licensing for your current configuration depending
+on your options at configure time.
+
+In general, all dependencies are under a MIT- or BSD-style license, with the
+exception of the following dependencies:
+
+ - Madgwick AHRS: Released under the terms of the GNU GPL
+   For orientation tracking
+   CMake option: PSMOVE_USE_MADGWICK_AHRS (disabled by default)
+
+ - TUIO CPP: Released under the terms of the GNU GPL
+   For the TUIO server example (only in the tuio_server binary)
+   CMake option: PSMOVE_BUILD_TUIO_SERVER (disabled by default)
+
+When you enable the Madgwick AHRS algorithm, the resulting library can only
+be used under the terms of the GNU GPL. Same with the TUIO Server, although
+here only the "tuio_server" binary is affected, no the PS Move API library.
+
+More information about the third party modules and licenses:
+
+  - http://thp.io/2012/thesis/thesis.pdf (page 51-53)
+  - File "external/README" in this source tree
+
+
 More Information
 ----------------
 
- * License: Simplified BSD-style license (see COPYING)
+ * License: Simplified BSD-style license (see COPYING and "Licensing" above)
  * Maintainer: Thomas Perl <m@thp.io>
  * Website: http://thp.io/2010/psmove/
  * Git repository: https://github.com/thp/psmoveapi

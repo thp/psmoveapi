@@ -1494,6 +1494,11 @@ psmove_has_orientation(PSMove *move)
     psmove_return_val_if_fail(move != NULL, 0);
     psmove_return_val_if_fail(move->orientation != NULL, 0);
 
+#if !defined(PSMOVE_WITH_MADGWICK_AHRS)
+    psmove_WARNING("Built without Madgwick AHRS - no orientation support");
+    return PSMove_False;
+#endif
+
     return move->orientation_enabled;
 }
 
