@@ -19,5 +19,5 @@ HEADERS += debugoutput.h
 DEPENDPATH += ../../../include
 INCLUDEPATH += ../../../include
 
-LIBS += -L../../../build/ -lpsmoveapi -lpsmoveapi_tracker
+LIBS += -L../../../build/ -lpsmoveapi -lpsmoveapi_tracker -lm
 
