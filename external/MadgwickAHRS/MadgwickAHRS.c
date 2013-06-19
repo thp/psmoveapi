@@ -10,6 +10,7 @@
 // 02/10/2011	SOH Madgwick	Optimised for reduced CPU load
 // 19/02/2012	SOH Madgwick	Magnetometer measurement is normalised
 // 02/08/2012   Thomas Perl     Modifications for PS Move API integration
+// 30/05/2013   Jan Ciger       Use normal invSqrt function for 64-bit compat
 //
 //=====================================================================================================
 
@@ -237,15 +238,10 @@ void MadgwickAHRSupdateIMU(float *quaternion, float sampleFreq,
 //---------------------------------------------------------------------------------------------------
 // Fast inverse square-root
 // See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
+// 2013-05-30: Replaced with normal inverse square root for 64-bit compat
 
 float invSqrt(float x) {
-	float halfx = 0.5f * x;
-	float y = x;
-	long i = *(long*)&y;
-	i = 0x5f3759df - (i>>1);
-	y = *(float*)&i;
-	y = y * (1.5f - (halfx * y * y));
-	return y;
+	return 1.0f / sqrt(x);
 }
 
 //====================================================================================================
