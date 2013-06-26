@@ -77,17 +77,33 @@ enum PSMove_Connection_Type {
  * Used by psmove_get_buttons() and psmove_get_button_events().
  **/
 enum PSMove_Button {
-    Btn_TRIANGLE = 1 << 0x04, /*!< Green triangle */
-    Btn_CIRCLE = 1 << 0x05, /*!< Red circle */
-    Btn_CROSS = 1 << 0x06, /*!< Blue cross */
-    Btn_SQUARE = 1 << 0x07, /*!< Pink square */
+    /**
+     * See comment in psmove_get_buttons() for how this is
+     * laid out in the input report.
+     *
+     * Source:
+     * https://code.google.com/p/moveonpc/wiki/InputReport
+     * https://code.google.com/p/moveonpc/wiki/SharpShooter
+     **/
+    Btn_TRIANGLE = 1 << 4, /*!< Green triangle */
+    Btn_CIRCLE = 1 << 5, /*!< Red circle */
+    Btn_CROSS = 1 << 6, /*!< Blue cross */
+    Btn_SQUARE = 1 << 7, /*!< Pink square */
 
-    Btn_SELECT = 1 << 0x08, /*!< Select button, left side */
-    Btn_START = 1 << 0x0B, /*!< Start button, right side */
+    Btn_SELECT = 1 << 8, /*!< Select button, left side */
+    Btn_START = 1 << 11, /*!< Start button, right side */
 
-    Btn_MOVE = 1 << 0x13, /*!< Move button, big front button */
-    Btn_T = 1 << 0x14, /*!< Trigger, on the back */
-    Btn_PS = 1 << 0x10, /*!< PS button, front center */
+    Btn_PS = 1 << 16, /*!< PS button, front center */
+    Ext_SharpShooter = 1 << 17, /*!< Sharp Shooter is connected to Ext port */
+    Btn_MOVE = 1 << 19, /*!< Move button, big front button */
+    Btn_T = 1 << 20, /*!< Trigger, on the back */
+
+    Btn_WEAPON1 = 1 << 21, /*!< Weapon 1 selected on Sharp Shooter */
+    Btn_WEAPON2 = 1 << 22, /*!< Weapon 2 selected on Sharp Shooter */
+    Btn_WEAPON3 = 1 << 23, /*!< Weapon 3 selected on Sharp Shooter */
+
+    Btn_SHARPSHOOTER_TRIGGER = 1 << 27, /*!< Trigger on Sharp Shooter */
+    Btn_SHARPSHOOTER_RELOAD = 1 << 28, /*!< Reload on Sharp Shooter */
 
 #if 0
     /* Not used for now - only on Sixaxis/DS3 or nav controller */

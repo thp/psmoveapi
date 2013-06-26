@@ -207,8 +207,9 @@ typedef struct {
     unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
     unsigned char mZlow; /* magnetometer Z (bits 8-1) */
     unsigned char timelow; /* low byte of timestamp */
+    unsigned char extdata; /* external device data (ext port / sharp shooter) */
 
-    unsigned char _padding[PSMOVE_BUFFER_SIZE-44]; /* unknown */
+    unsigned char _padding[PSMOVE_BUFFER_SIZE-43]; /* unknown */
 } PSMove_Data_Input;
 
 typedef struct {
@@ -1222,10 +1223,65 @@ psmove_get_buttons(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
+    /**
+     * See also: enum PSMove_Button in include/psmove.h
+     *
+     * Source:
+     * https://code.google.com/p/moveonpc/wiki/InputReport
+     * https://code.google.com/p/moveonpc/wiki/SharpShooter
+     *
+     *   22   22221 11    1  00000   0 <- bit (read top to bottom)
+     *   87...32109.76....1..87654...0
+     *   ^^   ^^^^^ ^^    ^  ^^^^^
+     *   ||   ||||| ||    |  |||||
+     *   ||   ||||| ||    |  |22222222 <- input report byte 2
+     *   ||   ||||| ||11111111         <- input report byte 1
+     *   ||   ||||| |3                 <- bit 0 of input report byte 3
+     *   ||   |||4444                  <- bits 4-7 of input report byte 4
+     *   EEEEEEEE                      <- input report byte at offset 0x2C
+     *
+     * Input report byte 1:
+     *  xxxx4xx0
+     *  ^^^^-^^- L3 (bit 1), R3 (bit 2), UP (bit 4), RIGHT (bit 5),
+     *           DOWN (bit 6), LEFT (bit 7) on sixaxis (not exposed yet)
+     *         ^- select
+     *      ^- start
+     *
+     * Input report byte 2:
+     *  7654xxxx
+     *      ^^^^- L2 (bit 0), R2 (bit 1), L1 (bit 2),
+     *            R1 (bit 3) on sixaxis (not exposed yet)
+     *     ^- triangle
+     *    ^- circle
+     *   ^- cross
+     *  ^- square
+     *
+     * Input report byte 3:
+     *  xxxxxxx0
+     *         ^- ps button
+     *
+     * Input report byte 4:
+     *  76x4xxxx
+     *      ^^^^- input sequence number (see psmove_poll())
+     *     ^- sharp shooter connected
+     *   ^- move
+     *  ^- trigger
+     *
+     * Input report byte 0x2C (ext port / sharp shooter):
+     *  76xxx210
+     *         ^- weapon 1 selected
+     *        ^- weapon 2 selected
+     *       ^- weapon 3 selected
+     *   ^- trigger button (on sharp shooter) pressed
+     *  ^- reload button (on sharp shooter) pressed
+     *
+     **/
+
     return ((move->input.buttons2) |
             (move->input.buttons1 << 8) |
             ((move->input.buttons3 & 0x01) << 16) |
-            ((move->input.buttons4 & 0xF0) << 13));
+            ((move->input.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */) |
+            (move->input.extdata << 21));
 }
 
 void
