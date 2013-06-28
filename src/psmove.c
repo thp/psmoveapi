@@ -413,6 +413,22 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 
 /* Start implementation of the API */
 
+enum PSMove_Bool
+psmove_init(enum PSMove_Version version)
+{
+    /**
+     * You could do initialization here. Be sure to always check
+     * if initialization has already been carried out, as this
+     * might be called multiple times, even after succeeding once.
+     **/
+
+    /* For now, assume future versions will be backwards-compatible */
+    if (version >= PSMOVE_CURRENT_VERSION) {
+        return PSMove_True;
+    } else {
+        return PSMove_False;
+    }
+}
 
 void
 psmove_set_remote_config(enum PSMove_RemoteConfig config)

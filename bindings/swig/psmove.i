@@ -100,6 +100,7 @@ typedef struct {} PSMoveFusion;
 
 #endif /* PSMOVE_BUILD_TRACKER */
 
+int init(enum PSMove_Version version);
 
 void set_remote_config(enum PSMove_RemoteConfig config);
 
@@ -487,6 +488,12 @@ PSMove_mz_get(PSMove *move) {
     int result;
     psmove_get_magnetometer(move, NULL, NULL, &result);
     return result;
+}
+
+int
+init(enum PSMove_Version version)
+{
+    return psmove_init(version);
 }
 
 void set_remote_config(enum PSMove_RemoteConfig config)

@@ -41,6 +41,11 @@ int main(int argc, char* argv[])
     enum PSMove_Connection_Type ctype;
     int i;
 
+    if (!psmove_init(PSMOVE_CURRENT_VERSION)) {
+        fprintf(stderr, "PS Move API init failed (wrong version?)\n");
+        exit(1);
+    }
+
     i = psmove_count_connected();
     printf("Connected controllers: %d\n", i);
 
