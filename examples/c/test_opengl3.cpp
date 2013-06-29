@@ -37,8 +37,16 @@
 
 #include <list>
 
-#include <GL/gl.h>
-#include <GL/glut.h>
+#ifdef __APPLE__
+	#include <SDL/SDL_main.h>
+	
+	#include <OPENGL/gl.h>
+	#include <GLUT/glut.h>
+#else
+	#include <GL/gl.h>
+	#include <GL/glut.h>
+#endif
+
 #include <SDL/SDL.h>
 
 #include "psmove.h"
