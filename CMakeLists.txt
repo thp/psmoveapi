@@ -365,12 +365,23 @@ if(PSMOVE_BUILD_TESTS)
         endforeach(TESTNAME)
 
         if (PSMOVE_BUILD_OPENGL_EXAMPLES)
+            set(OPENGL_EXAMPLES_LIBRARIES SDL)
+
+            if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+                find_library(OPENGL_FRAMEWORK OpenGL)
+                find_library(GLUT_FRAMEWORK GLUT)
+                list(APPEND OPENGL_EXAMPLES_LIBRARIES SDLmain
+                    ${OPENGL_FRAMEWORK} ${GLUT_FRAMEWORK})
+            else()
+                list(APPEND OPENGL_EXAMPLES_LIBRARIES GL glut)
+            endif()
+
             foreach(EXAMPLE test_opengl test_opengl2 test_opengl3)
                 add_executable(${EXAMPLE} examples/c/${EXAMPLE}.cpp)
                 target_link_libraries(${EXAMPLE}
                     psmoveapi
                     psmoveapi_tracker
-                    GL glut SDL)
+                    ${OPENGL_EXAMPLES_LIBRARIES})
             endforeach()
         endif()
     endif()
