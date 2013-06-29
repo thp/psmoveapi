@@ -60,6 +60,48 @@ move.reset_orientation()
 while tracker.enable(move) != psmove.Tracker_CALIBRATED:
     pass
 
+class CameraTexture:
+    def __init__(self, tracker):
+        self.tracker = tracker
+        self.id = glGenTextures(1)
+
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, self.id)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glDisable(GL_TEXTURE_2D)
+
+    def draw(self):
+        image = self.tracker.get_image()
+        pixels = psmove.cdata(image.data, image.size)
+
+        glDisable(GL_LIGHTING)
+        glEnable(GL_TEXTURE_2D)
+        glBindTexture(GL_TEXTURE_2D, self.id)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width,
+                image.height, 0, GL_RGB, GL_UNSIGNED_BYTE,
+                pixels)
+
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        glColor4f(1., 1., 1., 1.)
+        glBegin(GL_TRIANGLE_STRIP)
+        glTexCoord2f(0, 0)
+        glVertex3f(-1, 1, 0)
+        glTexCoord2f(0, 1)
+        glVertex3f(-1, -1, 0)
+        glTexCoord2f(1, 0)
+        glVertex3f(1, 1, 0)
+        glTexCoord2f(1, 1)
+        glVertex3f(1, -1, 0)
+        glEnd()
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glDisable(GL_TEXTURE_2D)
+        glEnable(GL_LIGHTING)
+
 def on_draw():
     while move.poll():
         pressed, released = move.get_button_events()
@@ -70,6 +112,11 @@ def on_draw():
     tracker.update()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+    camtex.draw()
+
+    # Clear depth buffer, so cam texture doesn't cull model
+    glClear(GL_DEPTH_BUFFER_BIT)
 
     load_matrix(GL_PROJECTION, projection_matrix)
     load_matrix(GL_MODELVIEW, fusion.get_modelview_matrix(move))
@@ -89,6 +136,8 @@ glEnable(GL_BLEND)
 glEnable(GL_LIGHTING)
 glEnable(GL_LIGHT0)
 glEnable(GL_COLOR_MATERIAL)
+
+camtex = CameraTexture(tracker)
 
 glViewport(0, 0, width, height)
 glClearColor(0.0, 0.0, 0.0, 0.0)
