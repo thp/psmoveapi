@@ -36,18 +36,9 @@ import psmove
 import pygame
 import time
 
-move = psmove.PSMove()
-move.set_leds(255, 255, 255)
-move.update_leds()
 tracker = psmove.PSMoveTracker()
 
-move.set_leds(0, 0, 0)
-move.set_rumble(255)
-move.update_leds()
-time.sleep(.5)
-move.set_rumble(0)
-move.update_leds()
-time.sleep(.5)
+move = psmove.PSMove()
 
 # Calibrate the controller with the tracker
 result = -1
