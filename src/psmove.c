@@ -209,7 +209,7 @@ typedef struct {
     unsigned char timelow; /* low byte of timestamp */
     unsigned char extdata; /* external device data (ext port / sharp shooter) */
 
-    unsigned char _padding[PSMOVE_BUFFER_SIZE-43]; /* unknown */
+    unsigned char _padding[PSMOVE_BUFFER_SIZE-45]; /* unknown */
 } PSMove_Data_Input;
 
 typedef struct {
