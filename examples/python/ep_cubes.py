@@ -42,18 +42,12 @@ from OpenGL.GLUT import *
 
 import psmove
 
-glutInit(sys.argv)
-
 tracker = psmove.PSMoveTracker()
 tracker.set_mirror(True)
 
 def matrix_as_float_array(matrix):
     mdata = [matrix.at(i) for i in range(4*4)]
     return (GLfloat*16)(*mdata)
-
-def load_matrix(mode, matrix):
-    glMatrixMode(mode)
-    glLoadMatrixf(matrix_as_float_array(matrix))
 
 near_plane = 1.0
 far_plane = 100.0
@@ -157,6 +151,7 @@ class ShaderProgram:
     def __del__(self):
         glDeleteProgram(self.id)
 
+
 CAMERA_VSH = """
 attribute vec4 vtxcoord;
 
@@ -185,7 +180,7 @@ void main(void)
 }
 """
 
-class CameraTexture:
+class CameraBackground:
     def __init__(self, tracker):
         self.tracker = tracker
         self.texture = Texture()
@@ -221,7 +216,77 @@ class CameraTexture:
         self.vertex_buffer.unbind()
         self.program.unbind()
 
-def on_draw():
+
+CUBE_VSH = """
+attribute vec4 vtxcoord;
+
+uniform mat4 projection;
+uniform mat4 modelview;
+
+void main(void)
+{
+    gl_Position = vtxcoord * modelview * projection;
+}
+"""
+
+CUBE_FSH = """
+uniform vec4 color;
+
+void main(void)
+{
+    gl_FragColor = color;
+}
+"""
+
+class Cube:
+    def __init__(self):
+        self.program = ShaderProgram(CUBE_VSH, CUBE_FSH)
+        self.vertex_buffer = VertexBuffer()
+        self.vertex_buffer.bind()
+        self.vertex_buffer.data([
+            -1.0, -1.0, +1.0,
+            -1.0, +1.0, +1.0,
+            +1.0, -1.0, +1.0,
+            +1.0, +1.0, +1.0,
+        ])
+        self.vertex_buffer.unbind()
+
+    def draw(self, modelview_matrix, color):
+        self.program.bind()
+        self.vertex_buffer.bind()
+
+        vtxcoord_loc = self.program.attrib('vtxcoord')
+        glEnableVertexAttribArray(vtxcoord_loc)
+        glVertexAttribPointer(vtxcoord_loc, 3, GL_FLOAT, GL_FALSE, 0, None)
+
+        glUniformMatrix4fv(self.program.uniform('projection'), 1, GL_TRUE,
+                matrix_as_float_array(projection_matrix))
+        glUniformMatrix4fv(self.program.uniform('modelview'), 1, GL_TRUE,
+                matrix_as_float_array(modelview_matrix))
+        glUniform4f(self.program.uniform('color'), *color)
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
+        glDisableVertexAttribArray(vtxcoord_loc)
+
+        self.vertex_buffer.unbind()
+        self.program.unbind()
+
+surface = pygame.display.set_mode((640, 480), OPENGL | DOUBLEBUF)
+width, height = surface.get_size()
+
+glEnable(GL_DEPTH_TEST)
+glEnable(GL_BLEND)
+
+camera_background = CameraBackground(tracker)
+cube = Cube()
+
+glViewport(0, 0, width, height)
+glClearColor(0.0, 0.0, 0.0, 0.0)
+
+while tracker.enable(move) != psmove.Tracker_CALIBRATED:
+    pass
+
+while True:
     while move.poll():
         pressed, released = move.get_button_events()
         if pressed & psmove.Btn_MOVE:
@@ -232,40 +297,17 @@ def on_draw():
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-    camtex.draw()
+    camera_background.draw()
 
     # Clear depth buffer, so cam texture doesn't cull model
     glClear(GL_DEPTH_BUFFER_BIT)
 
-    load_matrix(GL_PROJECTION, projection_matrix)
-    load_matrix(GL_MODELVIEW, fusion.get_modelview_matrix(move))
-
     status = tracker.get_status(move)
     if status == psmove.Tracker_TRACKING:
-        glColor4f(1., 1., 1., 1.)
+        color = (1.0, 1.0, 1.0, 1.0)
     else:
-        glColor4f(1., 0., 0., .5)
-    glutSolidCube(1)
+        color = (1.0, 0.0, 0.0, 0.5)
+    cube.draw(fusion.get_modelview_matrix(move), color)
 
-surface = pygame.display.set_mode((640, 480), OPENGL | DOUBLEBUF)
-width, height = surface.get_size()
-
-glEnable(GL_DEPTH_TEST)
-glEnable(GL_BLEND)
-glEnable(GL_LIGHTING)
-glEnable(GL_LIGHT0)
-glEnable(GL_COLOR_MATERIAL)
-
-camtex = CameraTexture(tracker)
-
-glViewport(0, 0, width, height)
-glClearColor(0.0, 0.0, 0.0, 0.0)
-
-while tracker.enable(move) != psmove.Tracker_CALIBRATED:
-    pass
-
-while True:
-    on_draw()
     pygame.display.flip()
-
 
