@@ -55,15 +55,15 @@ def load_matrix(mode, matrix):
     glMatrixMode(mode)
     glLoadMatrixf(matrix_as_float_array(matrix))
 
-fusion = psmove.PSMoveFusion(tracker, 1, 1000)
+near_plane = 1.0
+far_plane = 100.0
+fusion = psmove.PSMoveFusion(tracker, near_plane, far_plane)
 projection_matrix = fusion.get_projection_matrix()
 
 move = psmove.PSMove()
 move.enable_orientation(True)
 move.reset_orientation()
 
-while tracker.enable(move) != psmove.Tracker_CALIBRATED:
-    pass
 
 class Texture:
     def __init__(self):
@@ -73,6 +73,9 @@ class Texture:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         self.unbind()
+
+    def __del__(self):
+        glDeleteTextures([self.id])
 
     def bind(self):
         glEnable(GL_TEXTURE_2D)
@@ -87,37 +90,136 @@ class Texture:
                 0, GL_RGB, GL_UNSIGNED_BYTE, pixels)
 
 
+class VertexBuffer:
+    def __init__(self):
+        self.id = glGenBuffers(1)
+
+    def __del__(self):
+        glDeleteBuffers([self.id])
+
+    def bind(self):
+        glBindBuffer(GL_ARRAY_BUFFER, self.id)
+
+    def unbind(self):
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+
+    def data(self, data):
+        glBufferData(GL_ARRAY_BUFFER, (GLfloat*len(data))(*data), GL_STREAM_DRAW)
+
+
+class Shader:
+    def __init__(self, shader_type, shader_source):
+        self.id = glCreateShader(shader_type)
+        glShaderSource(self.id, [shader_source])
+        glCompileShader(self.id)
+
+        error_message = glGetShaderInfoLog(self.id)
+        if error_message:
+            print '== Shader Compile Error =='
+            print error_message
+            print '='*30
+            print '\n'.join('%3d %s' % a for a in enumerate(shader_source.splitlines()))
+            print '='*30
+
+    def __del__(self):
+        glDeleteShader(self.id)
+
+class ShaderProgram:
+    def __init__(self, vertex_shader_src, fragment_shader_src):
+        self.id = glCreateProgram()
+
+        # Compile shaders
+        self.vertex_shader = Shader(GL_VERTEX_SHADER, vertex_shader_src)
+        self.fragment_shader = Shader(GL_FRAGMENT_SHADER, fragment_shader_src)
+
+        # Attach and link shaders
+        glAttachShader(self.id, self.vertex_shader.id)
+        glAttachShader(self.id, self.fragment_shader.id)
+        glLinkProgram(self.id)
+        error_message = glGetProgramInfoLog(self.id)
+        if error_message:
+            print '== Program Link Error =='
+            print error_message
+            print '='*30
+
+    def bind(self):
+        glUseProgram(self.id)
+
+    def unbind(self):
+        glUseProgram(0)
+
+    def attrib(self, name):
+        return glGetAttribLocation(self.id, name)
+
+    def uniform(self, name):
+        return glGetUniformLocation(self.id, name)
+
+    def __del__(self):
+        glDeleteProgram(self.id)
+
+CAMERA_VSH = """
+attribute vec4 vtxcoord;
+
+varying vec2 tex;
+
+void main(void)
+{
+    gl_Position = vtxcoord;
+    tex = vec2(0.5, 0.5) + (vtxcoord.xy * 0.5);
+    tex.y = 1.0 - tex.y;
+}
+"""
+
+CAMERA_FSH = """
+varying vec2 tex;
+
+uniform sampler2D texture;
+
+uniform float saturation;
+
+void main(void)
+{
+    vec3 color = texture2D(texture, tex).rgb;
+    vec3 grey = vec3(length(color));
+    gl_FragColor = vec4(mix(grey, color, saturation), 1.0);
+}
+"""
+
 class CameraTexture:
     def __init__(self, tracker):
         self.tracker = tracker
         self.texture = Texture()
+        self.program = ShaderProgram(CAMERA_VSH, CAMERA_FSH)
+        self.vertex_buffer = VertexBuffer()
+        self.vertex_buffer.bind()
+        self.vertex_buffer.data([
+            -1.0, -1.0,
+            -1.0, +1.0,
+            +1.0, -1.0,
+            +1.0, +1.0,
+        ])
+        self.vertex_buffer.unbind()
 
     def draw(self):
         image = self.tracker.get_image()
         pixels = psmove.cdata(image.data, image.size)
 
+        self.program.bind()
+        self.vertex_buffer.bind()
         self.texture.bind()
         self.texture.load_rgb(image.width, image.height, pixels)
 
-        glDisable(GL_LIGHTING)
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glColor4f(1., 1., 1., 1.)
-        glBegin(GL_TRIANGLE_STRIP)
-        glTexCoord2f(0, 0)
-        glVertex3f(-1, 1, 0)
-        glTexCoord2f(0, 1)
-        glVertex3f(-1, -1, 0)
-        glTexCoord2f(1, 0)
-        glVertex3f(1, 1, 0)
-        glTexCoord2f(1, 1)
-        glVertex3f(1, -1, 0)
-        glEnd()
-        glEnable(GL_LIGHTING)
+        vtxcoord_loc = self.program.attrib('vtxcoord')
+        glEnableVertexAttribArray(vtxcoord_loc)
+        glVertexAttribPointer(vtxcoord_loc, 2, GL_FLOAT, GL_FALSE, 0, None)
+        glUniform1f(self.program.uniform('saturation'),
+                move.get_trigger() / 255.)
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
+        glDisableVertexAttribArray(vtxcoord_loc)
 
         self.texture.unbind()
+        self.vertex_buffer.unbind()
+        self.program.unbind()
 
 def on_draw():
     while move.poll():
@@ -158,6 +260,9 @@ camtex = CameraTexture(tracker)
 
 glViewport(0, 0, width, height)
 glClearColor(0.0, 0.0, 0.0, 0.0)
+
+while tracker.enable(move) != psmove.Tracker_CALIBRATED:
+    pass
 
 while True:
     on_draw()
