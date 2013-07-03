@@ -39,20 +39,23 @@ from pygame.locals import *
 
 from OpenGL.GL import *
 from OpenGL.GLUT import *
+from ctypes import c_void_p
 
 import psmove
 
 tracker = psmove.PSMoveTracker()
 tracker.set_mirror(True)
 
-def matrix_as_float_array(matrix):
-    mdata = [matrix.at(i) for i in range(4*4)]
-    return (GLfloat*16)(*mdata)
+def to_glfloat(l):
+    return (GLfloat*len(l))(*l)
+
+def read_matrix(m):
+    return [m.at(i) for i in range(4*4)]
 
 near_plane = 1.0
 far_plane = 100.0
 fusion = psmove.PSMoveFusion(tracker, near_plane, far_plane)
-projection_matrix = fusion.get_projection_matrix()
+projection_matrix = read_matrix(fusion.get_projection_matrix())
 
 move = psmove.PSMove()
 move.enable_orientation(True)
@@ -219,53 +222,101 @@ class CameraBackground:
 
 CUBE_VSH = """
 attribute vec4 vtxcoord;
+attribute vec3 normal;
 
 uniform mat4 projection;
 uniform mat4 modelview;
 
+varying float intensity;
+
+float lighting(void)
+{
+    float ambient_factor = 0.4;
+    float diffuse_factor = 0.4;
+
+    vec3 lightdir = normalize(vec3(1.0, -1.0, 1.0));
+    vec3 n = (vec4(normal, 0.0) * modelview).xyz;
+    float diffuse = max(0.0, dot(lightdir, normalize(n)));
+
+    return ambient_factor + diffuse_factor * diffuse;
+}
+
 void main(void)
 {
     gl_Position = vtxcoord * modelview * projection;
+    intensity = lighting();
 }
 """
 
 CUBE_FSH = """
 uniform vec4 color;
 
+varying float intensity;
+
 void main(void)
 {
-    gl_FragColor = color;
+    gl_FragColor = color * intensity;
 }
 """
+
+def build_geometry(normals, vertices, faces):
+    for idx, face in enumerate(faces):
+        for index in face:
+            yield vertices[index]
+            yield normals[idx]
 
 class Cube:
     def __init__(self):
         self.program = ShaderProgram(CUBE_VSH, CUBE_FSH)
         self.vertex_buffer = VertexBuffer()
+
+        normals = [
+            (0., 1., 0.), (0. , 0., 1.), (1. ,0., 0.),
+            (0., 0., -1.), (-1., 0., 0.), (0., -1., 0.),
+        ]
+
+        vertices = [
+            (1., 1., -1.), (-1., 1., -1.), (1., 1., 1.), (-1., 1., 1.),
+            (-1., -1., 1.), (1., -1., 1.), (1., -1., -1.), (-1., -1., -1.),
+        ]
+
+        faces = [
+            [0, 1, 2, 3], [3, 4, 2, 5], [2, 5, 0, 6],
+            [0, 6, 1, 7], [1, 7, 3, 4], [4, 7, 5, 6],
+        ]
+
+        vertex_data = [x for v in build_geometry(normals, vertices, faces) for x in v]
+        self.count = len(vertex_data) / (3 + 3)
+
         self.vertex_buffer.bind()
-        self.vertex_buffer.data([
-            -1.0, -1.0, +1.0,
-            -1.0, +1.0, +1.0,
-            +1.0, -1.0, +1.0,
-            +1.0, +1.0, +1.0,
-        ])
+        self.vertex_buffer.data(vertex_data)
         self.vertex_buffer.unbind()
 
     def draw(self, modelview_matrix, color):
         self.program.bind()
         self.vertex_buffer.bind()
 
+        sizeof_float = 4
+        stride = (3 + 3) * sizeof_float
+        offset = 3 * sizeof_float
+
         vtxcoord_loc = self.program.attrib('vtxcoord')
         glEnableVertexAttribArray(vtxcoord_loc)
-        glVertexAttribPointer(vtxcoord_loc, 3, GL_FLOAT, GL_FALSE, 0, None)
+        glVertexAttribPointer(vtxcoord_loc, 3, GL_FLOAT, GL_FALSE, stride, c_void_p(0))
+
+        normal_loc = self.program.attrib('normal')
+        glEnableVertexAttribArray(normal_loc)
+        glVertexAttribPointer(normal_loc, 3, GL_FLOAT, GL_FALSE, stride, c_void_p(offset))
 
         glUniformMatrix4fv(self.program.uniform('projection'), 1, GL_TRUE,
-                matrix_as_float_array(projection_matrix))
+                to_glfloat(projection_matrix))
         glUniformMatrix4fv(self.program.uniform('modelview'), 1, GL_TRUE,
-                matrix_as_float_array(modelview_matrix))
+                to_glfloat(modelview_matrix))
         glUniform4f(self.program.uniform('color'), *color)
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4)
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, self.count)
+
+        glDisableVertexAttribArray(normal_loc)
         glDisableVertexAttribArray(vtxcoord_loc)
 
         self.vertex_buffer.unbind()
@@ -307,7 +358,9 @@ while True:
         color = (1.0, 1.0, 1.0, 1.0)
     else:
         color = (1.0, 0.0, 0.0, 0.5)
-    cube.draw(fusion.get_modelview_matrix(move), color)
+
+    modelview_matrix = read_matrix(fusion.get_modelview_matrix(move))
+    cube.draw(modelview_matrix, color)
 
     pygame.display.flip()
 
