@@ -43,6 +43,7 @@ from ctypes import c_void_p
 
 import math
 import operator
+import random
 
 import psmove
 
@@ -333,6 +334,7 @@ class Cube:
         self.vertex_buffer.unbind()
         self.program.unbind()
 
+pygame.init()
 surface = pygame.display.set_mode((640, 480), OPENGL | DOUBLEBUF)
 width, height = surface.get_size()
 
@@ -398,7 +400,10 @@ class Button:
         z = -(3.0 + self.gridpos[1])
         self.pos = tuple(v * Constants.BUTTON_DISTANCE for v in (x, y, z))
 
-        self.color = (1.0, 1.0, 0.0, 1.0)
+        self.highlight_value = 0
+        self.hit_block_ticks = 0
+        self.required_hits = 0
+        self.hits = 0
 
     def render(self):
         matrix = transpose_4x4_matrix([
@@ -408,18 +413,107 @@ class Button:
             0.0, 0.0, 0.0, 1.0,
         ])
 
-        cube.draw(matrix, self.color)
+        color = (1.0, 1.0, 1.0, 0.2)
+
+        if self.is_highlighted():
+            if self.hits == self.required_hits:
+                color = (0.0, 1.0, 0.0, 1.0) # green
+            elif self.hits > 0:
+                color = (1.0, 0.6, 0.0, 1.0) # orange
+            else:
+                color = (1.0, 0.0, 0.0, 1.0) # red
+
+        cube.draw(matrix, color)
 
     def calc_distance(self):
         current_pos = fusion.get_position(move)
         distance = vector_distance(current_pos, self.pos)
         if distance < 3.0:
-            self.color = (0.0, 1.0, 0.0, 1.0)
-        else:
-            self.color = (1.0, 1.0, 1.0, 0.5)
+            self.hit_by_controller()
 
+    def hit_by_controller(self):
+        if self.hit_block_ticks > 0:
+            # blocking this hit - minimum time between hits not met
+            return
+
+        self.hit_block_ticks = Constants.MIN_TICKS_BETWEEN_HITS
+
+        # Increase hit counter
+        if self.hits < self.required_hits:
+            self.hits += 1
+            if self.hits == self.required_hits:
+                print '+1 SCORE'
+
+    def highlight_now(self):
+        self.highlight_value = random.randint(*Constants.HIGHLIGHT_TICKS_RANGE)
+        self.required_hits = random.randint(*Constants.REQUIRED_HITS_RANGE)
+        self.hits = 0
+
+    def is_highlighted(self):
+        return self.highlight_value > 0
+
+    def tick(self):
+        if self.highlight_value > 0:
+            self.highlight_value -= 1
+
+        if self.hit_block_ticks > 0:
+            self.hit_block_ticks -= 1
+
+
+class Highlighter:
+    def __init__(self, buttons):
+        self.buttons = buttons
+        self.ticks_until_next_highlight = 0
+
+    def highlight_random_button(self):
+        available_buttons = [button for button in self.buttons
+                if not button.is_highlighted()]
+
+        highlighted_count = len(available_buttons) - len(self.buttons)
+        if highlighted_count >= Constants.MAX_SIMULTANEOUS_HIGHLIGHTED:
+            # Too many buttons already highlighted - skip this time
+            return
+
+        chosen = random.choice(available_buttons)
+        chosen.highlight_now()
+
+    def tick(self):
+        if self.ticks_until_next_highlight > 0:
+            # Not quite there yet
+            self.ticks_until_next_highlight -= 1
+            return
+
+        self.highlight_random_button()
+
+        # Schedule next highlight run
+        ticks = random.randint(*Constants.HIGHLIGHT_TICKS_RANGE)
+        self.ticks_until_next_highlight = ticks
 
 buttons = [Button(i) for i in range(operator.mul(*Constants.BUTTON_GRID_SIZE))]
+
+highlighter = Highlighter(buttons)
+
+tick_receivers = [highlighter] + buttons
+
+class TickEmitter:
+    def __init__(self, tick_ms, receivers):
+        self.tick_ms = tick_ms
+        self.receivers = receivers
+        self.time_accumulator = 0
+        self.last_time = pygame.time.get_ticks()
+
+    def update(self):
+        now_time = pygame.time.get_ticks()
+        diff = (now_time - self.last_time)
+        self.time_accumulator += diff
+        self.last_time = now_time
+
+        while self.time_accumulator > self.tick_ms:
+            for receiver in self.receivers:
+                receiver.tick()
+            self.time_accumulator -= self.tick_ms
+
+tick_emitter = TickEmitter(Constants.TICK_MS, tick_receivers)
 
 while True:
     while move.poll():
@@ -449,6 +543,8 @@ while True:
     for button in buttons:
         button.calc_distance()
         button.render()
+
+    tick_emitter.update()
 
     pygame.display.flip()
 
