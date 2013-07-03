@@ -255,7 +255,7 @@ varying float intensity;
 
 void main(void)
 {
-    gl_FragColor = color * intensity;
+    gl_FragColor = vec4(color.rgb * intensity, color.a);
 }
 """
 
@@ -327,6 +327,7 @@ width, height = surface.get_size()
 
 glEnable(GL_DEPTH_TEST)
 glEnable(GL_BLEND)
+glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
 camera_background = CameraBackground(tracker)
 cube = Cube()
@@ -337,11 +338,27 @@ glClearColor(0.0, 0.0, 0.0, 0.0)
 while tracker.enable(move) != psmove.Tracker_CALIBRATED:
     pass
 
+cubes = []
+
+class CubeSnapshot:
+    def __init__(self, color):
+        self.matrix = read_matrix(fusion.get_modelview_matrix(move))
+        self.color = color
+
 while True:
     while move.poll():
         pressed, released = move.get_button_events()
         if pressed & psmove.Btn_MOVE:
             move.reset_orientation()
+
+        if pressed & psmove.Btn_SQUARE:
+            cubes.append(CubeSnapshot((1.0, 0.0, 1.0, 0.4)))
+        elif pressed & psmove.Btn_CROSS:
+            cubes.append(CubeSnapshot((0.0, 0.0, 1.0, 0.4)))
+        elif pressed & psmove.Btn_CIRCLE:
+            cubes.append(CubeSnapshot((1.0, 0.0, 0.0, 0.4)))
+        elif pressed & psmove.Btn_TRIANGLE:
+            cubes.append(CubeSnapshot((0.0, 1.0, 0.0, 0.4)))
 
     tracker.update_image()
     tracker.update()
@@ -361,6 +378,9 @@ while True:
 
     modelview_matrix = read_matrix(fusion.get_modelview_matrix(move))
     cube.draw(modelview_matrix, color)
+
+    for c in cubes:
+        cube.draw(c.matrix, c.color)
 
     pygame.display.flip()
 
