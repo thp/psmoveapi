@@ -378,10 +378,13 @@ class Constants:
     REQUIRED_HITS_RANGE = (1, 2)
 
     # Minimum and maximum ticks between highlight events
-    HIGHLIGHT_TICKS_RANGE = (100, 300)
+    HIGHLIGHT_TICKS_RANGE = (30, 100)
 
     # Minimum and maximum ticks before a highlight times out
     TIMEOUT_TICKS_RANGE = (500, 1000)
+
+    # How long a green cube stays lit after hitting to zero
+    AFTERGLOW_TICKS = 100
 
     # Number of columns and rows in button grid (columns, rows)
     BUTTON_GRID_SIZE = (3, 3)
@@ -447,9 +450,10 @@ class Button:
             self.hits += 1
             if self.hits == self.required_hits:
                 print '+1 SCORE'
+                self.highlight_value = Constants.AFTERGLOW_TICKS
 
     def highlight_now(self):
-        self.highlight_value = random.randint(*Constants.HIGHLIGHT_TICKS_RANGE)
+        self.highlight_value = random.randint(*Constants.TIMEOUT_TICKS_RANGE)
         self.required_hits = random.randint(*Constants.REQUIRED_HITS_RANGE)
         self.hits = 0
 
