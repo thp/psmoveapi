@@ -477,7 +477,7 @@ class Highlighter:
         available_buttons = [button for button in self.buttons
                 if not button.is_highlighted()]
 
-        highlighted_count = len(available_buttons) - len(self.buttons)
+        highlighted_count = len(self.buttons) - len(available_buttons)
         if highlighted_count >= Constants.MAX_SIMULTANEOUS_HIGHLIGHTED:
             # Too many buttons already highlighted - skip this time
             return
