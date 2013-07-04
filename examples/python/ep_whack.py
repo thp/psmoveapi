@@ -47,23 +47,23 @@ import random
 
 import psmove
 
-tracker = psmove.PSMoveTracker()
-tracker.set_mirror(True)
-
 def to_glfloat(l):
     return (GLfloat*len(l))(*l)
 
 def read_matrix(m):
     return [m.at(i) for i in range(4*4)]
 
-near_plane = 1.0
-far_plane = 100.0
-fusion = psmove.PSMoveFusion(tracker, near_plane, far_plane)
-projection_matrix = read_matrix(fusion.get_projection_matrix())
+def vector_distance(a, b):
+    return math.sqrt(sum((a[i]-b[i])**2 for i in range(3)))
 
-move = psmove.PSMove()
-move.enable_orientation(True)
-move.reset_orientation()
+def transpose_4x4_matrix(m):
+    return [m[x] for x in [
+        0,  4,  8, 12,
+        1,  5,  9, 13,
+        2,  6, 10, 14,
+        3,  7, 11, 15,
+    ]]
+
 
 
 class Texture:
@@ -334,8 +334,24 @@ class Cube:
         self.vertex_buffer.unbind()
         self.program.unbind()
 
+
+tracker = psmove.PSMoveTracker()
+tracker.set_mirror(True)
+
+near_plane = 1.0
+far_plane = 100.0
+fusion = psmove.PSMoveFusion(tracker, near_plane, far_plane)
+projection_matrix = read_matrix(fusion.get_projection_matrix())
+
+move = psmove.PSMove()
+move.enable_orientation(True)
+move.reset_orientation()
+
 pygame.init()
-surface = pygame.display.set_mode((640, 480), OPENGL | DOUBLEBUF)
+if '-f' not in sys.argv:
+    surface = pygame.display.set_mode((640, 480), OPENGL | DOUBLEBUF)
+else:
+    surface = pygame.display.set_mode((0, 0), OPENGL | DOUBLEBUF | FULLSCREEN)
 width, height = surface.get_size()
 
 glEnable(GL_DEPTH_TEST)
@@ -375,18 +391,6 @@ class Constants:
 
     # Minimum ticks between two consecutive hits
     MIN_TICKS_BETWEEN_HITS = 25
-
-
-def vector_distance(a, b):
-    return math.sqrt(sum((a[i]-b[i])**2 for i in range(3)))
-
-def transpose_4x4_matrix(m):
-    return [m[x] for x in [
-        0,  4,  8, 12,
-        1,  5,  9, 13,
-        2,  6, 10, 14,
-        3,  7, 11, 15,
-    ]]
 
 
 class Button:
@@ -520,6 +524,8 @@ while True:
         pressed, released = move.get_button_events()
         if pressed & psmove.Btn_MOVE:
             move.reset_orientation()
+        elif pressed & psmove.Btn_PS:
+            sys.exit(0)
 
     tracker.update_image()
     tracker.update()
