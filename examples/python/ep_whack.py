@@ -395,6 +395,9 @@ class Constants:
     # Minimum ticks between two consecutive hits
     MIN_TICKS_BETWEEN_HITS = 25
 
+    # "Hit" distance threshold from controller to button
+    COLLISION_DISTANCE_TRESHOLD = 3.0
+
 
 class Button:
     def __init__(self, index):
@@ -435,7 +438,7 @@ class Button:
     def calc_distance(self):
         current_pos = fusion.get_position(move)
         distance = vector_distance(current_pos, self.pos)
-        if distance < 3.0:
+        if distance < Constants.COLLISION_DISTANCE_TRESHOLD:
             self.hit_by_controller()
 
     def hit_by_controller(self):
