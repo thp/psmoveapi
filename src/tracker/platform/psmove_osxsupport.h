@@ -35,6 +35,9 @@
 extern "C" {
 #endif
 
+void
+camera_control_initialize();
+
 int
 macosx_camera_set_exposure_lock(int locked);
 

@@ -19,12 +19,14 @@ class moveButton {
   }
   
   boolean getPressed() {
-    if(isPressed == 1) return true;
+    if(isPressed == 1)   return true;
     return false;
   }
 
   void setValue(int _val) {   
     value = _val;
+    if(value > 0) isPressed = 1;
+    else isPressed = 0;
   }
   
   int getValue() {    

@@ -11,30 +11,69 @@ boolean isTriggerPressed, isMovePressed, isSquarePressed, isTrianglePressed, isC
 
 int rumbleLevel;
 
-color sphereColor;
+color sphereColor, defaultColor;
 int r, g, b;
 
 moveButton[] moveButtons = new moveButton[9];  // The move controller has 9 buttons                 
 
 void setup() {
-  move = new PSMove();    // We need one controller
-  sphereColor = color(0); // Default sphere color (0 means ligths off)
+  
+  move = new PSMove();      // We need one controller
+  defaultColor = color( 0, 255, 0 ); // Default sphere color
 
   moveInit();             // Create the buttons
 }
 
 void draw() {
-  sphereColor = color(0, 255-triggerValue, triggerValue);
+  
+  sphereColor = defaultColor;
+  
+  if(isTriggerPressed) {
+    println("Trigger button is "+ floor(triggerValue / 255.0 * 100.0) +"% pressed ["+triggerValue+"]");
+    rumbleLevel = triggerValue;
+  }
+  else {
+    rumbleLevel = 0; // No rumble when the trigger is not pressed
+  }
   
   if(isMovePressed) {
-    rumbleLevel = 255;
+    println("Move button is pressed");
+    // The rumble & color values will be passed to the API at the end of draw()
     sphereColor = color(random(0,255), 0, 0);
   }
   else {
-    rumbleLevel = 0;
+    sphereColor = defaultColor;
   }
   
-  moveUpdate(rumbleLevel, sphereColor);           // Get the buttons value (trigger only) and presses, and update actuators/indicators
+  if(isSquarePressed) {
+    println("Square button is pressed");
+  }
+  
+  if(isTrianglePressed) {
+    println("Triangle button is pressed");
+  }
+  
+  if(isCrossPressed) {
+    println("Cross button is pressed");
+  }
+  
+  if(isCirclePressed) {
+    println("Circle button is pressed");
+  }
+  
+  if(isSelectPressed) {
+    println("Select button is pressed");
+  }
+  
+  if(isStartPressed) {
+    println("Start button is pressed");
+  }
+  
+  if(isPsPressed) {
+    println("PS button is pressed");
+  }
+  
+  moveUpdate(rumbleLevel, sphereColor);  // This is where we pass the values to the controller
 }
 
 
@@ -51,17 +90,14 @@ void moveUpdate(int _rumbleLevel, color _sphereColor) {
   while (move.poll () != 0) {
 
     int trigger = move.get_trigger();
-    move.set_leds(0, 255-trigger, trigger);
     moveButtons[0].setValue(trigger);
 
     int buttons = move.get_buttons();
     if ((buttons & Button.Btn_MOVE.swigValue()) != 0) {
       moveButtons[1].press();
-      sphereColor = color((int)(random(255)), 0, 0);
     } 
     else {
       moveButtons[1].release();
-      move.set_rumble(0);
     }
     if ((buttons & Button.Btn_SQUARE.swigValue()) != 0) {
       moveButtons[2].press();
@@ -108,7 +144,7 @@ void moveUpdate(int _rumbleLevel, color _sphereColor) {
   }
   
   // Store the values in conveniently named variables
-  triggerValue           = moveButtons[0].value;
+  triggerValue         = moveButtons[0].value;
   isTriggerPressed     = moveButtons[0].getPressed(); // The trigger is considered pressed if value > 0
   isMovePressed        = moveButtons[1].getPressed();
   isSquarePressed      = moveButtons[2].getPressed();
