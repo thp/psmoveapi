@@ -69,9 +69,10 @@ int main(int arg, char** args) {
             fflush(stdout);
             result = psmove_tracker_enable(tracker, controllers[i]);
 
-            enum PSMove_Bool auto_update_leds =
-                psmove_tracker_get_auto_update_leds(tracker, controllers[i]);
             if (result == Tracker_CALIBRATED) {
+                enum PSMove_Bool auto_update_leds =
+                    psmove_tracker_get_auto_update_leds(tracker,
+                            controllers[i]);
                 printf("OK, auto_update_leds is %s\n",
                         (auto_update_leds == PSMove_True)?"enabled":"disabled");
                 break;

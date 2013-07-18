@@ -180,6 +180,41 @@ typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
                                     Obtained via psmove_connect_by_id() */
 #endif
 
+/*! Library version number */
+enum PSMove_Version {
+    /**
+     * Version format: AA.BB.CC = 0xAABBCC
+     *
+     * Examples:
+     *  3.0.1 = 0x030001
+     *  4.2.11 = 0x04020B
+     **/
+    PSMOVE_CURRENT_VERSION = 0x030001, /*!< Current version, see psmove_init() */
+};
+
+/**
+ * \brief Initialize the library and check for the right version
+ *
+ * This library call should be used at the beginning of each application using
+ * the PS Move API to check if the correct version of the library is loaded (for
+ * dynamically-loaded versions of the PS Move API).
+ *
+ * \code
+ *    if (!psmove_init(PSMOVE_CURRENT_VERSION)) {
+ *        fprintf(stderr, "PS Move API init failed (wrong version?)\n");
+ *        exit(1);
+ *    }
+ * \endcode
+ *
+ * \param version Should be \ref PSMOVE_CURRENT_VERSION to check for the same
+ *                version as was used at compile-time
+ *
+ * \return \ref PSMove_True on success (version compatible, library initialized)
+ * \return \ref PSMove_False otherwise (version mismatch, initialization error)
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_init(enum PSMove_Version version);
+
 /**
  * \brief Enable or disable the usage of local or remote devices
  *

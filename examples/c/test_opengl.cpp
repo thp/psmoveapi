@@ -36,8 +36,7 @@
 
 #include <vector>
 
-#include <GL/gl.h>
-#include <GL/glut.h>
+#include "psmove_examples_opengl.h"
 #include <SDL/SDL.h>
 
 #include "psmove.h"

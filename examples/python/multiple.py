@@ -34,6 +34,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'build'))
 import time
 import psmove
 
+if not psmove.init(psmove.PSMOVE_CURRENT_VERSION):
+    print >>sys.stderr, 'PS Move API init failed (wrong version?)'
+    sys.exit(1)
+
 count = psmove.count_connected()
 print('Connected controllers:', count)
 
