@@ -472,6 +472,9 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
 
     float target_luminance = 0;
     switch (tracker->exposure_mode) {
+        case Exposure_LOW:
+            target_luminance = 0;
+            break;
         case Exposure_MEDIUM:
             target_luminance = 25;
             break;
