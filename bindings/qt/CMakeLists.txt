@@ -22,6 +22,6 @@ set_target_properties(psmoveapiqt PROPERTIES VERSION ${PSMOVEAPI_VERSION} SOVERS
 
 # System-wide installation of the Qt library
 
-install(TARGETS psmoveapiqt RUNTIME DESTINATION bin LIBRARY DESTINATION lib)
+install(TARGETS psmoveapiqt RUNTIME DESTINATION bin LIBRARY DESTINATION ${PSMOVEAPI_LIB_DEST})
 install(FILES psmoveqt.hpp DESTINATION include/psmoveapi)
 
