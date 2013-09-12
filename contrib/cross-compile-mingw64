@@ -37,7 +37,7 @@ fi
 # Build OpenCV
 if [ ! -d $OPENCV_INSTALL_DIR ]; then
     if [ ! -d opencv ]; then
-        git clone git://code.opencv.org/opencv.git
+        git clone git://github.com/Itseez/opencv.git
     fi
     cd opencv
     rm -rf build
