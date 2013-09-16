@@ -477,18 +477,20 @@ psmove_calibration_load(PSMoveCalibration *calibration)
         return 0;
     }
 
-    rc = fread(calibration->usb_calibration,
-                    sizeof(calibration->usb_calibration),
-                    1, fp);
+    if (fread(calibration->usb_calibration,
+	      sizeof(calibration->usb_calibration), 1, fp) != 1) {
+      psmove_CRITICAL("Unable to read USB calibration");
+      fclose(fp);
+      return 0;
+    }
+    if (fread(&(calibration->flags),
+	      sizeof(calibration->flags), 1, fp) != 1) {
+      psmove_CRITICAL("Unable to read USB calibration");
+      fclose(fp);
+      return 0;
+    }
 
-    assert(rc == 1);
-
-    rc = fread(&(calibration->flags),
-                    sizeof(calibration->flags),
-                    1, fp);
-    assert(rc == 1);
     fclose(fp);
-
     return 1;
 }
 
@@ -501,20 +503,28 @@ psmove_calibration_save(PSMoveCalibration *calibration)
     size_t rc;
 
     fp = fopen(calibration->filename, "wb");
-    assert(fp != NULL);
+    if (fp == NULL) {
+      psmove_CRITICAL("Unable to write USB calibration");
+      return 0;
+    }
 
-    rc = fwrite(calibration->usb_calibration,
-                       sizeof(calibration->usb_calibration),
-                       1, fp);
-    assert(rc == 1);
+    if (fwrite(calibration->usb_calibration,
+	      sizeof(calibration->usb_calibration),
+	      1, fp) != 1) {
+	psmove_CRITICAL("Unable to write USB calibration");
+	fclose(fp);
+	return 0;
+      }
 
-    rc = fwrite(&(calibration->flags),
-                sizeof(calibration->flags),
-                1, fp);
-    assert(rc == 1);
+    if (fwrite(&(calibration->flags),
+	       sizeof(calibration->flags),
+	       1, fp) != 1) {
+      psmove_CRITICAL("Unable to write USB calibration");
+      fclose(fp);
+      return 0;
+    }
 
     fclose(fp);
-
     return 1;
 }
 
