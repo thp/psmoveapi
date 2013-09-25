@@ -1,1 +1,1 @@
-usr/lib/lib*tracker*.so.*
+usr/lib/*/lib*tracker.so.*
