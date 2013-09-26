@@ -2,7 +2,7 @@ Source: psmoveapi
 Priority: extra
 Maintainer: Thomas Perl <m@thp.io>
 Build-Depends: debhelper (>= 7.0.50~), cmake, libudev-dev, libbluetooth-dev, libv4l-dev, libopencv-dev
-Standards-Version: 3.8.4
+Standards-Version: 3.9.4
 Section: libs
 Homepage: http://thp.io/2010/psmove/
 Vcs-Git: git://github.com/thp/psmoveapi.git
@@ -51,4 +51,3 @@ Description: Playstation Move Motion Controller API - Utilities
  Move Motion Controllers via USB or Bluetooth.
  .
  This package contains basic utilities for the PS Move API.
-
