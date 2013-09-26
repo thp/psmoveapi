@@ -12,7 +12,7 @@ Package: libpsmoveapi-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
-Depends: libpsmoveapi3 (= ${binary:Version}), libpsmoveapi-tracker3 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: libpsmoveapi3 (= ${binary:Version}), libpsmoveapi-tracker3 (= ${binary:Version}), ${misc:Depends}
 Description: Playstation Move Motion Controller API - Development files
  This library allows you to access one or more Playstation
  Move Motion Controllers via USB or Bluetooth.
