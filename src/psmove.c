@@ -666,7 +666,7 @@ _psmove_set_dfu_mode(PSMove *move)
     unsigned char buf[10];
     int res;
 
-    psmove_return_if_fail(move != NULL);
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
 
     memset(buf, 0, sizeof(buf));
     buf[0] = PSMove_Req_SetDFUMode;

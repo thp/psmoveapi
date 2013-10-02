@@ -29,8 +29,10 @@
 
 
 #include <stdio.h>
+#include <string.h>
 
 #include "psmove.h"
+#include "../psmove_private.h"
 
 
 #define I_KNOW_WHAT_I_DO "--i-know-what-i-do"
