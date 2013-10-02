@@ -303,7 +303,7 @@ if(PSMOVE_BUILD_TRACKER)
 endif()
 
 # Essential utilities
-foreach(UTILITY moved psmovepair magnetometer_calibration)
+foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
     target_link_libraries(${UTILITY} psmoveapi_static)
     set_target_properties(${UTILITY} PROPERTIES
