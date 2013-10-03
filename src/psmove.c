@@ -1823,8 +1823,14 @@ psmove_util_get_file_path(const char *filename)
 {
     const char *parent = psmove_util_get_data_dir();
     char *result;
-
     struct stat st;
+
+    if (stat(filename, &st) == 0) {
+        // File exists in the current working directory, prefer that
+        // to the file in the default data / configuration directory
+        return strdup(filename);
+    }
+
     if (stat(parent, &st) != 0) {
 #ifdef _WIN32
         psmove_return_val_if_fail(mkdir(parent) == 0, NULL);
