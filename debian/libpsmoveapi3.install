@@ -1,2 +1,2 @@
-usr/lib/lib*api.so.*
+usr/lib/*/lib*api.so.*
 etc/udev/rules.d/99-psmove.rules
