@@ -2,7 +2,7 @@ Source: psmoveapi
 Priority: extra
 Maintainer: Thomas Perl <m@thp.io>
 Build-Depends: debhelper (>= 7.0.50~), cmake, libudev-dev, libbluetooth-dev, libv4l-dev, libopencv-dev
-Standards-Version: 3.8.4
+Standards-Version: 3.9.4
 Section: libs
 Homepage: http://thp.io/2010/psmove/
 Vcs-Git: git://github.com/thp/psmoveapi.git
@@ -11,16 +11,42 @@ Vcs-Browser: http://github.com/thp/psmoveapi
 Package: libpsmoveapi-dev
 Section: libdevel
 Architecture: any
-Depends: libpsmoveapi3 (= ${binary:Version}), libpsmoveapi-tracker3 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Multi-Arch: same
+Depends: libpsmoveapi3 (= ${binary:Version}), libpsmoveapi-tracker3 (= ${binary:Version}), ${misc:Depends}
+Recommends: libpsmoveapiqt3 (= ${binary:Version})
 Description: Playstation Move Motion Controller API - Development files
  This library allows you to access one or more Playstation
  Move Motion Controllers via USB or Bluetooth.
  .
  This package contains the development headers and libraries.
 
+Package: libpsmoveapiqt3
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Playstation Move Motion Controller API - Qt library
+ This library allows you to access one or more Playstation
+ Move Motion Controllers via USB or Bluetooth.
+ .
+ This package contains the Qt libraries for the PS Move API.
+
+Package: libpsmoveapiqt3-dbg
+Section: debug
+Architecture: any
+Multi-Arch: same
+Depends: libpsmoveapiqt3 (= ${binary:Version}), ${misc:Depends}
+Description: Playstation Move Motion Controller API - Qt debug symbols
+ This library allows you to access one or more Playstation
+ Move Motion Controllers via USB or Bluetooth.
+ .
+ This package contains the detached debugging symbols for the Qt
+ libraries for the PS Move API.
+
 Package: libpsmoveapi3
 Section: libs
 Architecture: any
+Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Playstation Move Motion Controller API - Core library
  This library allows you to access one or more Playstation
@@ -28,9 +54,22 @@ Description: Playstation Move Motion Controller API - Core library
  .
  This package contains the shared library (Core) for the PS Move API.
 
+Package: libpsmoveapi3-dbg
+Section: debug
+Architecture: any
+Multi-Arch: same
+Depends: libpsmoveapi3 (= ${binary:Version}), ${misc:Depends}
+Description: Playstation Move Motion Controller API - Core debug symbols
+ This library allows you to access one or more Playstation
+ Move Motion Controllers via USB or Bluetooth.
+ .
+ This package contains detached debugging symbols for the shared
+ library (Core) for the PS Move API.
+
 Package: libpsmoveapi-tracker3
 Section: libs
 Architecture: any
+Multi-Arch: same
 Depends: libpsmoveapi3 (= ${binary:Version}), libv4l-0, ${shlibs:Depends}, ${misc:Depends}
 Description: Playstation Move Motion Controller API - Tracker library
  This library allows you to access one or more Playstation
@@ -38,13 +77,25 @@ Description: Playstation Move Motion Controller API - Tracker library
  .
  This package contains the shared library (Tracker) for the PS Move API.
 
+Package: libpsmoveapi-tracker3-dbg
+Section: debug
+Architecture: any
+Multi-Arch: same
+Depends: libpsmoveapi-tracker3 (= ${binary:Version}), ${misc:Depends}
+Description: Playstation Move Motion Controller API - Tracker library debug symbols
+ This library allows you to access one or more Playstation
+ Move Motion Controllers via USB or Bluetooth.
+ .
+ This package contains the detached debugging symbols for the shared
+ library (Tracker) for the PS Move API.
+
 Package: psmoveapi-utils
 Section: libs
 Architecture: any
+Multi-Arch: foreign
 Depends: libpsmoveapi3 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
 Description: Playstation Move Motion Controller API - Utilities
  This library allows you to access one or more Playstation
  Move Motion Controllers via USB or Bluetooth.
  .
  This package contains basic utilities for the PS Move API.
-
