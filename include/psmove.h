@@ -1050,6 +1050,25 @@ ADDCALL psmove_util_get_data_dir();
 ADDAPI char *
 ADDCALL psmove_util_get_file_path(const char *filename);
 
+#ifdef __linux
+/**
+ * \brief Get a filename path in the system save directory.
+ *
+ * This is a convenience function, which gives the absolute path for
+ * a file stored in system-wide data directory.
+ *
+ * The data directory will NOT be created in case it doesn't exist yet.
+ *
+ * \param filename The basename of the file (e.g. \c myfile.txt)
+ *
+ * \return The absolute filename to the file. The caller must
+ *         free() the result when it is not needed anymore.
+ * \return On error, \c NULL is returned.
+ **/
+ADDAPI char *
+ADDCALL psmove_util_get_system_file_path(const char *filename);
+#endif
+
 /**
  * \brief Get an integer from an environment variable
  *
