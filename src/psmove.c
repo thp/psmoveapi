@@ -108,6 +108,7 @@ enum PSMove_Request_Type {
     PSMove_Req_GetBTAddr = 0x04,
     PSMove_Req_SetBTAddr = 0x05,
     PSMove_Req_GetCalibration = 0x10,
+    PSMove_Req_SetDFUMode = 0xF2,
     PSMove_Req_GetFirmwareVersion = 0xF9,
 
     /**
@@ -659,6 +660,21 @@ _psmove_get_firmware(PSMove *move)
     printf("\n");
 }
 
+enum PSMove_Bool
+_psmove_set_dfu_mode(PSMove *move)
+{
+    unsigned char buf[10];
+    int res;
+
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = PSMove_Req_SetDFUMode;
+    buf[1] = 0x42;
+    res = hid_send_feature_report(move->handle, buf, sizeof(buf));
+
+    return (res == sizeof(buf));
+}
 
 PSMove *
 psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
@@ -1807,8 +1823,14 @@ psmove_util_get_file_path(const char *filename)
 {
     const char *parent = psmove_util_get_data_dir();
     char *result;
-
     struct stat st;
+
+    if (stat(filename, &st) == 0) {
+        // File exists in the current working directory, prefer that
+        // to the file in the default data / configuration directory
+        return strdup(filename);
+    }
+
     if (stat(parent, &st) != 0) {
 #ifdef _WIN32
         psmove_return_val_if_fail(mkdir(parent) == 0, NULL);

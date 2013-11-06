@@ -206,6 +206,14 @@ ADDAPI void
 ADDCALL _psmove_wait_for_button(PSMove *move, int button);
 
 
+/* Firmware-related private APIs */
+ADDAPI void
+ADDCALL _psmove_get_firmware(PSMove *move);
+
+ADDAPI enum PSMove_Bool
+ADDCALL _psmove_set_dfu_mode(PSMove *move);
+
+
 #ifdef __cplusplus
 }
 #endif

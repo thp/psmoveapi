@@ -8,7 +8,7 @@ include_directories(${PSMOVEAPI_SOURCE_DIR}/external/glm)
 
 set(PSMOVEAPI_MAJOR_VERSION "3")
 set(PSMOVEAPI_MINOR_VERSION "0")
-set(PSMOVEAPI_PATCH_VERSION "0")
+set(PSMOVEAPI_PATCH_VERSION "1")
 set(PSMOVEAPI_VERSION "${PSMOVEAPI_MAJOR_VERSION}.${PSMOVEAPI_MINOR_VERSION}.${PSMOVEAPI_PATCH_VERSION}")
 set(PSMOVEAPI_VERSION_SONAME "${PSMOVEAPI_MAJOR_VERSION}")
 
@@ -303,7 +303,7 @@ if(PSMOVE_BUILD_TRACKER)
 endif()
 
 # Essential utilities
-foreach(UTILITY moved psmovepair magnetometer_calibration)
+foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
     target_link_libraries(${UTILITY} psmoveapi_static)
     set_target_properties(${UTILITY} PROPERTIES
@@ -528,9 +528,16 @@ endif()
 
 # For system-wide installation
 
-set(PSMOVEAPI_LIB_DEST "lib")
-if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
-    set(PSMOVEAPI_LIB_DEST "lib64")
+if(NOT PSMOVEAPI_LIB_DEST)
+    if(CMAKE_LIBRARY_ARCHITECTURE)
+        set(PSMOVEAPI_LIB_DEST "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
+    else()
+        if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
+            set(PSMOVEAPI_LIB_DEST "lib64")
+        else()
+            set(PSMOVEAPI_LIB_DEST "lib")
+        endif()
+    endif()
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/contrib/psmoveapi.pc.in
@@ -568,7 +575,8 @@ if(PSMOVE_BUILD_QT_BINDINGS)
         add_subdirectory(bindings/qt)
         set(INFO_BUILD_QT_BINDINGS "Yes")
     else()
-        set(INFO_BUILD_QT_BINDINGS "No (Qt not found)")
+        message(FATAL_ERROR "Qt bindings were requested with PSMOVE_BUILD_QT_BINDINGS, but not found on the system.")
+        # set(INFO_BUILD_QT_BINDINGS "No (Qt not found)")
     endif()
 else()
     set(INFO_BUILD_QT_BINDINGS "No (disabled)")

@@ -1,3 +1,6 @@
 [submodule "external/hidapi"]
 	path = external/hidapi
 	url = git://github.com/signal11/hidapi.git
+[submodule "bindings/unity"]
+	path = bindings/unity
+	url = git://github.com/CopenhagenGameCollective/UniMove.git
