@@ -108,6 +108,8 @@ enum PSMove_Request_Type {
     PSMove_Req_GetBTAddr = 0x04,
     PSMove_Req_SetBTAddr = 0x05,
     PSMove_Req_GetCalibration = 0x10,
+    PSMove_Req_SetAuthChallenge = 0xA0,
+    PSMove_Req_GetAuthResponse = 0xA1,
     PSMove_Req_SetDFUMode = 0xF2,
     PSMove_Req_GetFirmwareVersion = 0xF9,
 
@@ -638,6 +640,44 @@ _psmove_get_device_path(PSMove *move)
     psmove_return_val_if_fail(move != NULL, NULL);
 
     return move->device_path;
+}
+
+enum PSMove_Bool
+_psmove_set_auth_challenge(PSMove *move, PSMove_Data_AuthChallenge *challenge)
+{
+    unsigned char buf[sizeof(PSMove_Data_AuthChallenge) + 1];
+    int res;
+
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = PSMove_Req_SetAuthChallenge;
+
+    /* Copy challenge data into send buffer */
+    memcpy(buf + 1, challenge, sizeof(buf) - 1);
+
+    res = hid_send_feature_report(move->handle, buf, sizeof(buf));
+
+    return (res == sizeof(buf));
+}
+
+PSMove_Data_AuthResponse *
+_psmove_get_auth_response(PSMove *move)
+{
+    unsigned char buf[sizeof(PSMove_Data_AuthResponse) + 1];
+    int res;
+
+    psmove_return_if_fail(move != NULL);
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = PSMove_Req_GetAuthResponse;
+    res = hid_get_feature_report(move->handle, buf, sizeof(buf));
+
+    /* Copy response data into output buffer */
+    PSMove_Data_AuthResponse *output_buf = malloc(sizeof(PSMove_Data_AuthResponse));
+    memcpy(*output_buf, buf + 1, sizeof(*output_buf));
+    
+    return output_buf;
 }
 
 void
