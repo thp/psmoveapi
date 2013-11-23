@@ -214,6 +214,21 @@ ADDAPI enum PSMove_Bool
 ADDCALL _psmove_set_dfu_mode(PSMove *move);
 
 
+/* Authentication-related private APIs */
+
+/* A challenge data buffer for authentication. */
+typedef unsigned char PSMove_Data_AuthChallenge[34];
+
+/* A response data buffer for authentication. */
+typedef unsigned char PSMove_Data_AuthResponse[22];
+
+ADDAPI enum PSMove_Bool
+ADDCALL _psmove_set_auth_challenge(PSMove *move, PSMove_Data_AuthChallenge *challenge);
+
+ADDAPI PSMove_Data_AuthResponse *
+ADDCALL _psmove_get_auth_response(PSMove *move);
+
+
 #ifdef __cplusplus
 }
 #endif
