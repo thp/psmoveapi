@@ -36,18 +36,26 @@
 
 
 #define I_KNOW_WHAT_I_DO "--i-know-what-i-do"
+#define OPT_BTDFU        "--btdfu"
 
 int main(int argc, char* argv[])
 {
     PSMove *move;
+    enum PSMove_Operation_Mode mode = Mode_STDFU;
 
-    if (argc != 2 || strcmp(argv[1], I_KNOW_WHAT_I_DO) != 0) {
+    if (argc < 2 || strcmp(argv[1], I_KNOW_WHAT_I_DO) != 0) {
         printf("Usage: %s <options>\n\n", argv[0]);
-        printf("This utility puts your controller via USB in a special mode.\n");
-        printf("You probably don't want to use this utility, if you know what\n");
-        printf("you are doing, use the option '%s'.\n\n", I_KNOW_WHAT_I_DO);
+        printf("This utility puts your controller via USB in a special operation\n" \
+               "mode. You probably don't want to use this utility. If you know\n" \
+               "what you are doing, use the option '%s'.\n\n", I_KNOW_WHAT_I_DO);
+        printf("By default, the controller is put in STDFU mode. Use the option\n" \
+               "'%s' to put it in BTDFU mode instead.\n\n", OPT_BTDFU);
         printf("This could damage your controller! If it breaks, it's your fault.\n");
         return 1;
+    }
+    
+    if (argc == 3 && strcmp(argv[2], OPT_BTDFU) == 0) {
+        mode = Mode_BTDFU;
     }
 
     if (psmove_count_connected() == 0) {
@@ -63,7 +71,7 @@ int main(int argc, char* argv[])
 
     if (psmove_connection_type(move) == Conn_USB) {
         printf("Serial: %s\n", psmove_get_serial(move));
-        if (_psmove_set_dfu_mode(move)) {
+        if (_psmove_set_operation_mode(move, mode)) {
             printf("DFU Mode activated.\n");
             printf("To exit, press the reset button on the back of the controller.\n");
         } else {
