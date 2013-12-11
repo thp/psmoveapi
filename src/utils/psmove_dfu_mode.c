@@ -62,8 +62,9 @@ int main(int argc, char* argv[])
     }
 
     if (psmove_connection_type(move) == Conn_USB) {
+        printf("Serial: %s\n", psmove_get_serial(move));
         if (_psmove_set_dfu_mode(move)) {
-            printf("DFU Mode activated. Serial: %s\n", psmove_get_serial(move));
+            printf("DFU Mode activated.\n");
             printf("To exit, press the reset button on the back of the controller.\n");
         } else {
             printf("Could not set DFU mode.\n");
