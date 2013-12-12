@@ -667,7 +667,7 @@ _psmove_get_auth_response(PSMove *move)
     unsigned char buf[sizeof(PSMove_Data_AuthResponse) + 1];
     int res;
 
-    psmove_return_if_fail(move != NULL);
+    psmove_return_val_if_fail(move != NULL, NULL);
 
     memset(buf, 0, sizeof(buf));
     buf[0] = PSMove_Req_GetAuthResponse;
