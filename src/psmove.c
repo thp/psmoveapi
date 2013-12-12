@@ -667,7 +667,7 @@ _psmove_get_auth_response(PSMove *move)
     unsigned char buf[sizeof(PSMove_Data_AuthResponse) + 1];
     int res;
 
-    psmove_return_if_fail(move != NULL);
+    psmove_return_val_if_fail(move != NULL, NULL);
 
     memset(buf, 0, sizeof(buf));
     buf[0] = PSMove_Req_GetAuthResponse;
@@ -701,16 +701,32 @@ _psmove_get_firmware(PSMove *move)
 }
 
 enum PSMove_Bool
-_psmove_set_dfu_mode(PSMove *move)
+_psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode)
 {
     unsigned char buf[10];
     int res;
+    int mode_magic_val;
 
     psmove_return_val_if_fail(move != NULL, PSMove_False);
+    
+    /* We currently support setting STDFU or BTDFU mode only */
+    psmove_return_val_if_fail(mode == Mode_STDFU || mode == Mode_BTDFU, PSMove_False);
+    
+    switch (mode) {
+        case Mode_STDFU:
+            mode_magic_val = 0x42;
+            break;
+        case Mode_BTDFU:
+            mode_magic_val = 0x43;
+            break;
+        default:
+            mode_magic_val = 0;
+            break;
+    }
 
     memset(buf, 0, sizeof(buf));
     buf[0] = PSMove_Req_SetDFUMode;
-    buf[1] = 0x42;
+    buf[1] = mode_magic_val;
     res = hid_send_feature_report(move->handle, buf, sizeof(buf));
 
     return (res == sizeof(buf));

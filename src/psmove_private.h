@@ -207,11 +207,19 @@ ADDCALL _psmove_wait_for_button(PSMove *move, int button);
 
 
 /* Firmware-related private APIs */
+
+/*! Controller's operation mode. */
+enum PSMove_Operation_Mode {
+    Mode_Normal, /*!< Default mode after starting the controller */
+    Mode_STDFU,
+    Mode_BTDFU,
+};
+
 ADDAPI void
 ADDCALL _psmove_get_firmware(PSMove *move);
 
 ADDAPI enum PSMove_Bool
-ADDCALL _psmove_set_dfu_mode(PSMove *move);
+ADDCALL _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode);
 
 
 /* Authentication-related private APIs */
