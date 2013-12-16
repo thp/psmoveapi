@@ -57,7 +57,6 @@
 #  include <bluetooth/hci_lib.h>
 #  include <sys/ioctl.h>
 #  include <linux/limits.h>
-#  define __USE_GNU
 #  include <pthread.h>
 #  include <unistd.h>
 #  define PSMOVE_USE_PTHREADS

@@ -63,6 +63,12 @@ option(PSMOVE_USE_MADGWICK_AHRS "Use AHRS algorithm (GPL license)" OFF)
 # https://github.com/thp/psmoveapi/issues/29
 add_definitions(-fPIC)
 
+# Required by pthread, must be defined before include of any standard header.
+# It's easier to do this here once instead of multiple times in different source/header files.
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_definitions(-D_GNU_SOURCE)
+ENDIF()
+
 # Debugging output
 if(PSMOVE_USE_DEBUG)
     add_definitions(-DPSMOVE_DEBUG)

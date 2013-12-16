@@ -220,6 +220,7 @@ int
 linux_bluez_register_psmove(char *addr, char *host)
 {
     int errors = 0;
+    char *base = NULL;
 
     char *controller_addr = _psmove_normalize_btaddr(addr, 0, ':');
     char *host_addr = _psmove_normalize_btaddr(host, 0, ':');
@@ -236,7 +237,7 @@ linux_bluez_register_psmove(char *addr, char *host)
         goto cleanup;
     }
 
-    char *base = malloc(strlen(BLUEZ_CONFIG_DIR) + strlen(host_addr) + 1);
+    base = malloc(strlen(BLUEZ_CONFIG_DIR) + strlen(host_addr) + 1);
     strcpy(base, BLUEZ_CONFIG_DIR);
     strcat(base, host_addr);
 
