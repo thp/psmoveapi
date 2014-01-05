@@ -112,6 +112,8 @@ on_monitor_update(enum MonitorEvent event,
 
 int run_daemon()
 {
+    // On Linux we use moved_monitor, which is based on udev, to detect
+    // controller connection
 #ifdef __linux
     moved_monitor *monitor = moved_monitor_new(on_monitor_update, NULL);
     int monitor_fd = moved_monitor_get_fd(monitor);
@@ -127,6 +129,12 @@ int run_daemon()
     }
 
     moved_monitor_free(monitor);
+#else
+    // On non-Linux systems we just try to pair every 5 seconds for now
+    while (1) {
+        sleep(5);
+        pair(NULL);
+    }
 #endif // __linux
 
     return 0;
@@ -139,15 +147,9 @@ int main(int argc, char* argv[])
     int daemon_mode = 0;
 
     if (argc > 1) {
-        // Running psmovepair as daemon for automatic pairing is supported
-        // on Linux only
-#ifdef __linux 
         if (strcmp(argv[1], "-d") == 0) {
             daemon_mode = 1;
         } else {
-#else
-        {
-#endif
             if (_psmove_btaddr_from_string(argv[1], NULL)) {
                 printf("Using user-supplied host address: %s\n", argv[1]);
             } else {

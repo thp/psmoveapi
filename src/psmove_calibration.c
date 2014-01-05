@@ -54,7 +54,6 @@ struct _PSMoveCalibration {
 
     char *filename;
 
-#ifdef __linux
     /**
      * system_filename always points to calibration file stored in
      * system-wide data directory, while filename above points to
@@ -62,7 +61,6 @@ struct _PSMoveCalibration {
      * calibration file if run by root.
      **/
     char *system_filename;
-#endif
 
     /* Pre-calculated factors for accelerometer mapping */
     float ax, ay, az;
@@ -274,9 +272,7 @@ psmove_calibration_new(PSMove *move)
     strcat(template, PSMOVE_CALIBRATION_EXTENSION);
 
     calibration->filename = psmove_util_get_file_path(template);
-#ifdef __linux
     calibration->system_filename = psmove_util_get_system_file_path(template);
-#endif
 
     free(template);
     free(serial);
@@ -424,9 +420,7 @@ psmove_calibration_dump(PSMoveCalibration *calibration)
     psmove_return_if_fail(calibration != NULL);
 
     printf("File: %s\n", calibration->filename);
-#ifdef __linux
     printf("System file: %s\n", calibration->system_filename);
-#endif
     printf("Flags: %x\n", calibration->flags);
 
     if (calibration->flags & CalibrationFlag_HaveUSB) {
@@ -490,15 +484,12 @@ psmove_calibration_load(PSMoveCalibration *calibration)
 
     fp = fopen(calibration->filename, "rb");
     if (fp == NULL) {
-#ifdef __linux
         // use system file in case local is not available
         fp = fopen(calibration->system_filename, "rb");
         if (fp == NULL) {
             return 0;
         }
-#else
         return 0;
-#endif
     }
 
     if (fread(calibration->usb_calibration,
@@ -558,9 +549,7 @@ psmove_calibration_free(PSMoveCalibration *calibration)
     psmove_return_if_fail(calibration != NULL);
 
     free(calibration->filename);
-#ifdef __linux
     free(calibration->system_filename);
-#endif
     free(calibration);
 }
 
