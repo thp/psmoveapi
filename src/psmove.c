@@ -1881,8 +1881,8 @@ psmove_util_get_file_path(const char *filename)
     char *result;
     struct stat st;
 
-#ifdef __linux
-    // if run as root on Linux, use system-wide data directory
+#ifndef __WIN32
+    // if run as root, use system-wide data directory
     if (getuid() == 0) {
         parent = PSMOVE_SYSTEM_DATA_DIR;
     }
@@ -1910,7 +1910,6 @@ psmove_util_get_file_path(const char *filename)
     return result;
 }
 
-#ifdef __linux
 char *
 psmove_util_get_system_file_path(const char *filename)
 {
@@ -1926,7 +1925,6 @@ psmove_util_get_system_file_path(const char *filename)
 
     return result;
 }
-#endif // __linux
 
 int
 psmove_util_get_env_int(const char *name)

@@ -1050,7 +1050,6 @@ ADDCALL psmove_util_get_data_dir();
 ADDAPI char *
 ADDCALL psmove_util_get_file_path(const char *filename);
 
-#ifdef __linux
 /**
  * \brief Get a filename path in the system save directory.
  *
@@ -1067,7 +1066,6 @@ ADDCALL psmove_util_get_file_path(const char *filename);
  **/
 ADDAPI char *
 ADDCALL psmove_util_get_system_file_path(const char *filename);
-#endif
 
 /**
  * \brief Get an integer from an environment variable
