@@ -33,39 +33,22 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "psmove.h"
 #include "../psmove_private.h"
 
-int main(int argc, char* argv[])
-{
-    PSMove *move;
-    int i;
-    int count = psmove_count_connected();
-    int result = 0;
-    int custom_addr = 0;
-
-    if (argc > 1) {
-        if (_psmove_btaddr_from_string(argv[1], NULL)) {
-            printf("Using user-supplied host address: %s\n", argv[1]);
-        } else {
-            printf("Cannot convert host address: %s\n", argv[1]);
-            return 1;
-        }
-        custom_addr = 1;
-    }
-
 #ifdef __linux
-    /**
-     * In order to be able to start/stop bluetoothd and to
-     * add new entries to the Bluez configuration files, we
-     * need to run as root (platform/psmove_linuxsupport.c)
-     **/
-    if (!custom_addr && geteuid() != 0) {
-        printf("This program must be run as root (or use sudo).\n");
-        return 1;
-    }
+#include "../daemon/moved_monitor.h"
+#include <poll.h>
 #endif
+
+int pair(const char *custom_addr)
+{
+    int count = psmove_count_connected();
+    int i;
+    PSMove *move;
+    int result = 0;
 
     printf("Connected controllers: %d\n", count);
 
@@ -82,8 +65,8 @@ int main(int argc, char* argv[])
             printf("PSMove #%d connected via USB.\n", i+1);
             int result = 0;
 
-            if (custom_addr) {
-                result = psmove_pair_custom(move, argv[1]);
+            if (custom_addr != NULL) {
+                result = psmove_pair_custom(move, custom_addr);
             } else {
                 result = psmove_pair(move);
             }
@@ -112,3 +95,90 @@ int main(int argc, char* argv[])
     return result;
 }
 
+#ifdef __linux
+void
+on_monitor_update(enum MonitorEvent event,
+        enum MonitorEventDeviceType device_type,
+        const char *path, const wchar_t *serial,
+        void *user_data)
+{
+    if (event == EVENT_DEVICE_ADDED) {
+        if (device_type == EVENT_DEVICE_TYPE_USB) {
+            pair(NULL);
+        }
+    }
+}
+#endif // __linux
+
+int run_daemon()
+{
+#ifdef __linux
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update, NULL);
+    int monitor_fd = moved_monitor_get_fd(monitor);
+    struct pollfd pfd;
+
+    pfd.fd = monitor_fd;
+    pfd.events = POLLIN;
+
+    while (1) {
+        if (poll(&pfd, 1, 0) > 0) {
+            moved_monitor_poll(monitor);
+        }
+    }
+
+    moved_monitor_free(monitor);
+#endif // __linux
+
+    return 0;
+}
+
+int main(int argc, char* argv[])
+{
+    int result = 0;
+    int custom_addr = 0;
+    int daemon_mode = 0;
+
+    if (argc > 1) {
+        // Running psmovepair as daemon for automatic pairing is supported
+        // on Linux only
+#ifdef __linux 
+        if (strcmp(argv[1], "-d") == 0) {
+            daemon_mode = 1;
+        } else {
+#else
+        {
+#endif
+            if (_psmove_btaddr_from_string(argv[1], NULL)) {
+                printf("Using user-supplied host address: %s\n", argv[1]);
+            } else {
+                printf("Cannot convert host address: %s\n", argv[1]);
+                return 1;
+            }
+            custom_addr = 1;
+        }
+    }
+
+#ifdef __linux
+    /**
+     * In order to be able to start/stop bluetoothd and to
+     * add new entries to the Bluez configuration files, we
+     * need to run as root (platform/psmove_linuxsupport.c)
+     **/
+    if (!custom_addr && geteuid() != 0) {
+        printf("This program must be run as root (or use sudo).\n");
+        return 1;
+    }
+#endif
+
+    if (daemon_mode == 0) {
+        if (custom_addr != 0) {
+            result = pair(argv[1]);
+        } else {
+            result = pair(NULL);
+        }
+    } else {
+        result = run_daemon();
+    }
+
+    return result;
+}
