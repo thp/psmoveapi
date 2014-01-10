@@ -43,7 +43,12 @@ camera_control_set_parameters(CameraControl* cc,
         int wbRed, int wbGreen, int wbBlue,
         int contrast, int brightness)
 {
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+    // TODO: Implement setting those parameters on cc->eye
+    psmove_WARNING("Unimplemented: Setting of PS3EYEDriver parameters\n");
+#else
     macosx_camera_set_exposure_lock(1);
+#endif
 }
 
 void

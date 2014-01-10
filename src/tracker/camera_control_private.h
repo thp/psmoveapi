@@ -44,6 +44,9 @@
 #    define CL_DRIVER_REG_PATH "Software\\PS3EyeCamera\\Settings"
 #endif
 
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+#    include "ps3eyedriver.h"
+#endif
 
 struct _CameraControl {
 	int cameraID;
@@ -54,6 +57,13 @@ struct _CameraControl {
 	IplImage* frame3ch;
 	IplImage* frame4ch;
 	PBYTE pCapBuffer;
+#endif
+
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+        ps3eye_t *eye;
+        int width;
+        int height;
+        IplImage *framebgr;
 #endif
 
 	CvCapture* capture;

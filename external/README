@@ -58,3 +58,18 @@ A C++ mathematics library for graphics programming
 by G-Truc Creation
 from http://glm.g-truc.net/
 
+
+libusb-1.0.9
+============
+
+A C library that gives applications easy access to USB devices
+by the libusb authors
+http://www.libusb.org/
+
+
+PS3EYEDriver
+============
+
+PSEye userspace driver based on libusb + the Linux driver
+by Eugene Zatepyakin, modified by Thomas Perl
+from https://github.com/thp/PS3EYEDriver
