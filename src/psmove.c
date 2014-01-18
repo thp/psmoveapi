@@ -1883,7 +1883,7 @@ psmove_util_get_file_path(const char *filename)
 
 #ifndef __WIN32
     // if run as root, use system-wide data directory
-    if (getuid() == 0) {
+    if (geteuid() == 0) {
         parent = PSMOVE_SYSTEM_DATA_DIR;
     }
 #endif
@@ -1914,14 +1914,14 @@ char *
 psmove_util_get_system_file_path(const char *filename)
 {
     char *result;
+    int len = strlen(PSMOVE_SYSTEM_DATA_DIR) + 1 + strlen(filename) + 1;
 
-    result = malloc(strlen(PSMOVE_SYSTEM_DATA_DIR) + 1 + strlen(filename) + 1);
+    result = malloc(len);
     if (result == NULL) {
         return NULL;
     }
-    strcpy(result, PSMOVE_SYSTEM_DATA_DIR);
-    strcat(result, PATH_SEP);
-    strcat(result, filename);
+
+    snprintf(result, len, "%s%s%s", PSMOVE_SYSTEM_DATA_DIR, PATH_SEP, filename);
 
     return result;
 }
