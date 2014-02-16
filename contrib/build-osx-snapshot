@@ -32,6 +32,23 @@ if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     exit 1
 fi
 
+# Build libusb-1.0.9 as universal static library
+# needed for the PS3EYEDriver to access the PSEye
+# otherwise we'd dynamically link against some the Homebrew libusb
+(
+    cd $PSMOVEAPI_CHECKOUT/external/libusb-1.0.9
+    export ARCHFLAGS='-arch i386 -arch x86_64'
+    export CFLAGS="$CFLAGS $ARCHFLAGS"
+    export CXXFLAGS="$CXXFLAGS $ARCHFLAGS"
+    rm -rf build
+    mkdir -p build
+    cd build
+    ../configure --disable-shared --enable-static
+    make ${MAKE_ARGS}
+)
+
+cd $PSMOVEAPI_CHECKOUT
+
 # Build OpenCV
 if [ ! -d $OPENCV_INSTALL_DIR ]; then
     if [ ! -d opencv ]; then
@@ -72,6 +89,8 @@ rm -rf build
 mkdir build
 cd build
 cmake -DPSMOVE_USE_LOCAL_OPENCV=ON \
+      -DPSMOVE_USE_LOCAL_LIBUSB=ON \
+      -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_TRACKER=ON \
       -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \

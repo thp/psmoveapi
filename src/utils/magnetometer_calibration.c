@@ -50,7 +50,7 @@ main(int arg, char** args)
             fflush(stdout);
             while (!calibration_done) {
                 while (psmove_poll(move)) {
-                    int pressed, released;
+                    unsigned int pressed, released;
                     psmove_get_button_events(move, &pressed, &released);
 
                     /* This call calculates the new raw min/max values */

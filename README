@@ -117,6 +117,10 @@ exception of the following dependencies:
    For the TUIO server example (only in the tuio_server binary)
    CMake option: PSMOVE_BUILD_TUIO_SERVER (disabled by default)
 
+ - PS3EYEDriver: Released under the MIT license, parts based on GPL code
+   For interfacing with the PSEye camera on OS X (only in the tracker)
+   CMake option: PSMOVE_USE_PS3EYE_DRIVER (disabled by default)
+
 When you enable the Madgwick AHRS algorithm, the resulting library can only
 be used under the terms of the GNU GPL. Same with the TUIO Server, although
 here only the "tuio_server" binary is affected, no the PS Move API library.
@@ -134,7 +138,7 @@ More Information
  * Maintainer: Thomas Perl <m@thp.io>
  * Website: http://thp.io/2010/psmove/
  * Git repository: https://github.com/thp/psmoveapi
- * Mailing list: psmove@lists.ims.tuwien.ac.at (see [5] for details)
+ * Mailing list: psmove@googlegroups.com (see [5] for details)
 
 
 This README file was last updated on 2012-12-12 by thp
@@ -144,7 +148,7 @@ This README file was last updated on 2012-12-12 by thp
 [2] http://code.google.com/p/moveonpc/
 [3] http://www.google-melange.com/gsoc/homepage/google/gsoc2012
 [4] http://thp.io/2012/thesis/
-[5] https://lists.ims.tuwien.ac.at/mailman/listinfo/psmove
+[5] https://groups.google.com/forum/#!aboutgroup/psmove
 [6] http://thp.io/about
 [7] https://github.com/thp/psmoveapi/pulls
 [8] https://github.com/thp/psmoveapi/issues

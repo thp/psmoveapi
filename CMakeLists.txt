@@ -7,8 +7,8 @@ include_directories(${PSMOVEAPI_SOURCE_DIR}/external/hidapi/hidapi)
 include_directories(${PSMOVEAPI_SOURCE_DIR}/external/glm)
 
 set(PSMOVEAPI_MAJOR_VERSION "3")
-set(PSMOVEAPI_MINOR_VERSION "0")
-set(PSMOVEAPI_PATCH_VERSION "1")
+set(PSMOVEAPI_MINOR_VERSION "1")
+set(PSMOVEAPI_PATCH_VERSION "0")
 set(PSMOVEAPI_VERSION "${PSMOVEAPI_MAJOR_VERSION}.${PSMOVEAPI_MINOR_VERSION}.${PSMOVEAPI_PATCH_VERSION}")
 set(PSMOVEAPI_VERSION_SONAME "${PSMOVEAPI_MAJOR_VERSION}")
 
@@ -47,6 +47,9 @@ option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
 # Use the CL Eye SDK to interface with the PS Eye camera (Windows only)
 option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
 
+# Use the PS3EYEDriver to interface with the PS Eye camera (OS X only)
+option(PSMOVE_USE_PS3EYE_DRIVER "Use the PS3EYEDriver on OS X" OFF)
+
 # To show the OpenCV camera capture window everytime (useful for debugging)
 option(PSMOVE_USE_DEBUG_CAPTURE "Always show camera capture input" OFF)
 
@@ -62,6 +65,12 @@ option(PSMOVE_USE_MADGWICK_AHRS "Use AHRS algorithm (GPL license)" OFF)
 
 # https://github.com/thp/psmoveapi/issues/29
 add_definitions(-fPIC)
+
+# Required by pthread, must be defined before include of any standard header.
+# It's easier to do this here once instead of multiple times in different source/header files.
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_definitions(-D_GNU_SOURCE)
+ENDIF()
 
 # Debugging output
 if(PSMOVE_USE_DEBUG)
@@ -82,7 +91,12 @@ if(PSMOVE_USE_MADGWICK_AHRS)
         ${PSMOVEAPI_SOURCE_DIR}/external/MadgwickAHRS/MadgwickAHRS.c
     )
 else()
-    set(INFO_LICENSE "BSD")
+    if (PSMOVE_USE_PS3EYE_DRIVER)
+        # PS3EYEDriver is based on GPL'd code as well
+        set(INFO_LICENSE "GPL")
+    else()
+        set(INFO_LICENSE "BSD")
+    endif()
     set(INFO_AHRS_ALGORITHM "None")
     set(PSMOVEAPI_ALGORITHM_SRC)
 endif()
@@ -145,6 +159,7 @@ if (PSMOVE_USE_DEBUG_CAPTURE)
 endif()
 
 set(INFO_USE_CL_EYE_SDK "No (Windows only)")
+set(INFO_USE_PS3EYE_DRIVER "No (OS X only)")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(FOUNDATION Foundation)
@@ -167,6 +182,35 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/psmove_osxsupport.m
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_macosx.c)
+
+    if(PSMOVE_USE_PS3EYE_DRIVER)
+        add_definitions(-DCAMERA_CONTROL_USE_PS3EYE_DRIVER)
+        list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+            ${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src/ps3eye.cpp
+            ${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src/ps3eyedriver.cpp)
+        include_directories(${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src)
+
+        # Option to statically link OpenCV instead of using the system-wide install
+        option(PSMOVE_USE_LOCAL_LIBUSB "Use locally-built libusb (static linking)" OFF)
+        if (PSMOVE_USE_LOCAL_LIBUSB)
+            set(INFO_USE_PS3EYE_DRIVER "Yes (static libusb)")
+            # Assume the user has built libusb in external/libusb-1.0.9/
+            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
+                ${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0.9/build/libusb/.libs/libusb-1.0.a)
+            include_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0.9/libusb)
+        else()
+            set(INFO_USE_PS3EYE_DRIVER "Yes")
+            # Use pkg-config to link against libusb-1.0
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+
+            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
+            include_directories(${LIBUSB_INCLUDE_DIRS})
+            link_directories(${LIBUSB_LIBDIR})
+        endif()
+    else()
+        set(INFO_USE_PS3EYE_DRIVER "No (disabled)")
+    endif()
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
 
@@ -303,7 +347,7 @@ if(PSMOVE_BUILD_TRACKER)
 endif()
 
 # Essential utilities
-foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode)
+foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode psmove_auth_response)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
     target_link_libraries(${UTILITY} psmoveapi_static)
     set_target_properties(${UTILITY} PROPERTIES
@@ -612,6 +656,7 @@ message("  Tracker")
 feature_use_info("PS Eye support:   " PSMOVE_USE_PSEYE)
 feature_use_info("HTML tracing:     " PSMOVE_USE_TRACKER_TRACE)
 message("    Use CL Eye SDK:   " ${INFO_USE_CL_EYE_SDK})
+message("    Use PS3EYEDriver: " ${INFO_USE_PS3EYE_DRIVER})
 message("")
 message("  Additional targets")
 feature_use_info("C example apps:   " PSMOVE_BUILD_EXAMPLES)

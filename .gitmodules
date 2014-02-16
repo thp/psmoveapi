@@ -4,3 +4,6 @@
 [submodule "bindings/unity"]
 	path = bindings/unity
 	url = git://github.com/CopenhagenGameCollective/UniMove.git
+[submodule "external/PS3EYEDriver"]
+	path = external/PS3EYEDriver
+	url = git://github.com/thp/PS3EYEDriver.git
