@@ -37,7 +37,7 @@ fi
 # otherwise we'd dynamically link against some the Homebrew libusb
 (
     cd $PSMOVEAPI_CHECKOUT/external/libusb-1.0.9
-    export ARCHFLAGS='-arch i386 -arch x86_64'
+    export ARCHFLAGS='-arch x86_64'
     export CFLAGS="$CFLAGS $ARCHFLAGS"
     export CXXFLAGS="$CXXFLAGS $ARCHFLAGS"
     rm -rf build
@@ -75,7 +75,7 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
           -DWITH_FFMPEG=OFF \
           -DWITH_JASPER=OFF \
           -DWITH_TIFF=OFF \
-          -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" \
+          -DCMAKE_OSX_ARCHITECTURES="x86_64" \
           -DCMAKE_INSTALL_PREFIX=$(pwd)/install ..
     make ${MAKE_ARGS}
     make install
