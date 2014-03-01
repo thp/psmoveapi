@@ -78,6 +78,9 @@ int main(int argc, char* argv[])
             printf("Could not set DFU mode.\n");
         }
     }
+    else {
+        printf("Please connect the controller via USB.\n");
+    }
 
     psmove_disconnect(move);
     return 0;
