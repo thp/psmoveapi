@@ -252,6 +252,12 @@ psmove_calibration_new(PSMove *move)
         serial = psmove_get_serial(move);
     }
 
+    if (!serial) {
+        psmove_CRITICAL("Could not determine serial from controller");
+        free(calibration);
+        return NULL;
+    }
+
     for (i=0; i<strlen(serial); i++) {
         if (serial[i] == ':') {
             serial[i] = '_';
