@@ -101,6 +101,7 @@
 /* Minimum time (in milliseconds) between two LED updates (rate limiting) */
 #define PSMOVE_MIN_LED_UPDATE_WAIT_MS 120
 
+
 enum PSMove_Request_Type {
     PSMove_Req_GetInput = 0x01,
     PSMove_Req_SetLEDs = 0x02,
@@ -1880,6 +1881,13 @@ psmove_util_get_file_path(const char *filename)
     char *result;
     struct stat st;
 
+#ifndef __WIN32
+    // if run as root, use system-wide data directory
+    if (geteuid() == 0) {
+        parent = PSMOVE_SYSTEM_DATA_DIR;
+    }
+#endif
+
     if (stat(filename, &st) == 0) {
         // File exists in the current working directory, prefer that
         // to the file in the default data / configuration directory
@@ -1898,6 +1906,22 @@ psmove_util_get_file_path(const char *filename)
     strcpy(result, parent);
     strcat(result, PATH_SEP);
     strcat(result, filename);
+
+    return result;
+}
+
+char *
+psmove_util_get_system_file_path(const char *filename)
+{
+    char *result;
+    int len = strlen(PSMOVE_SYSTEM_DATA_DIR) + 1 + strlen(filename) + 1;
+
+    result = malloc(len);
+    if (result == NULL) {
+        return NULL;
+    }
+
+    snprintf(result, len, "%s%s%s", PSMOVE_SYSTEM_DATA_DIR, PATH_SEP, filename);
 
     return result;
 }

@@ -106,6 +106,8 @@ struct PSMove_RGBValue {
 /* Three blocks, minus 2x the header (2 bytes) for the 2nd and 3rd block */
 #define PSMOVE_CALIBRATION_BLOB_SIZE (PSMOVE_CALIBRATION_SIZE*3 - 2*2)
 
+/* System-wide data directory */
+#define PSMOVE_SYSTEM_DATA_DIR "/etc/psmoveapi"
 
 /**
  * [PRIVATE API] Write raw data blob to device
