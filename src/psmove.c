@@ -987,6 +987,7 @@ psmove_pair(PSMove *move)
     }
     free(btaddr_string);
 #elif defined(__linux)
+    memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
     hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
 #elif defined(_WIN32)
     HBLUETOOTH_RADIO_FIND hFind;
