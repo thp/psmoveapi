@@ -19,7 +19,7 @@ moveButton[] moveButtons = new moveButton[9];  // The move controller has 9 butt
 void setup() {
   
   move = new PSMove();      // We need one controller
-  defaultColor = color( 0, 255, 0 ); // Default sphere color
+  defaultColor = color( 100, 100, 100 ); // Default sphere color
 
   moveInit();             // Create the buttons
 }
@@ -47,18 +47,22 @@ void draw() {
   
   if(isSquarePressed) {
     println("Square button is pressed");
+    sphereColor =  color( 255, 20, 100 );
   }
   
   if(isTrianglePressed) {
     println("Triangle button is pressed");
+    sphereColor =  color( 80, 255, 10 );
   }
   
   if(isCrossPressed) {
     println("Cross button is pressed");
+    sphereColor =  color( 10, 80, 255 );
   }
   
   if(isCirclePressed) {
     println("Circle button is pressed");
+    sphereColor =  color( 255, 20, 10 );
   }
   
   if(isSelectPressed) {

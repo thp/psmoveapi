@@ -163,10 +163,12 @@ set(INFO_USE_PS3EYE_DRIVER "No (OS X only)")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(FOUNDATION Foundation)
+    find_library(AVFOUNDATION AVFoundation)
     find_library(IOKIT IOKit)
     find_library(COREFOUNDATION CoreFoundation)
     find_library(IOBLUETOOTH IOBluetooth)
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${FOUNDATION})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${AVFOUNDATION})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${IOKIT})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${COREFOUNDATION})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${IOBLUETOOTH})
@@ -174,7 +176,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/mac/hid.c)
 
     # Build Universal Binaries for OS X
-    set(CMAKE_OSX_ARCHITECTURES "i386;x86_64")
+    set(CMAKE_OSX_ARCHITECTURES "x86_64")
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_osxsupport.m)
@@ -347,7 +349,7 @@ if(PSMOVE_BUILD_TRACKER)
 endif()
 
 # Essential utilities
-foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode psmove_auth_response)
+foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode psmove_auth_response psmove_get_firmware_version)
     add_executable(${UTILITY} src/utils/${UTILITY}.c)
     target_link_libraries(${UTILITY} psmoveapi_static)
     set_target_properties(${UTILITY} PROPERTIES
