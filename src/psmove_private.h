@@ -217,8 +217,15 @@ enum PSMove_Operation_Mode {
     Mode_BTDFU,
 };
 
-ADDAPI void
-ADDCALL _psmove_get_firmware(PSMove *move);
+typedef struct {
+    unsigned short version;    /*!< Move's firmware version number */
+    unsigned short bt_version; /*!< Move Bluetooth module's firmware version number */
+    unsigned short revision;   /*!< Move's firmware revision number */
+    unsigned char _unknown[7];
+} PSMove_Firmware_Info;
+
+ADDAPI PSMove_Firmware_Info *
+ADDCALL _psmove_get_firmware_info(PSMove *move);
 
 ADDAPI enum PSMove_Bool
 ADDCALL _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode);

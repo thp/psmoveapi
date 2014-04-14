@@ -111,7 +111,7 @@ enum PSMove_Request_Type {
     PSMove_Req_SetAuthChallenge = 0xA0,
     PSMove_Req_GetAuthResponse = 0xA1,
     PSMove_Req_SetDFUMode = 0xF2,
-    PSMove_Req_GetFirmwareVersion = 0xF9,
+    PSMove_Req_GetFirmwareInfo = 0xF9,
 
     /**
      * Permanently set LEDs via USB
@@ -680,24 +680,45 @@ _psmove_get_auth_response(PSMove *move)
     return output_buf;
 }
 
-void
-_psmove_get_firmware(PSMove *move)
+PSMove_Firmware_Info *
+_psmove_get_firmware_info(PSMove *move)
 {
-    unsigned char btg[PSMOVE_BUFFER_SIZE];
+    unsigned char buf[14];
     int res;
+    int expected_res = sizeof(buf) - 1;
+    unsigned char *p = buf;
 
-    psmove_return_if_fail(move != NULL);
+    psmove_return_val_if_fail(move != NULL, NULL);
 
-    memset(btg, 0, sizeof(btg));
-    btg[0] = PSMove_Req_GetFirmwareVersion;
-    res = hid_get_feature_report(move->handle, btg, sizeof(btg));
+    memset(buf, 0, sizeof(buf));
+    buf[0] = PSMove_Req_GetFirmwareInfo;
+    res = hid_get_feature_report(move->handle, buf, sizeof(buf));
 
-    printf("got bytes: %d\n", res);
-    int i;
-    for (i=0; i<res; i++) {
-        printf("%02x ", btg[i]);
+    /**
+     * The Bluetooth report contains the Report ID as additional first byte
+     * while the USB report does not. So we need to check the current connection
+     * type in order to determine the correct offset for reading from the report
+     * buffer.
+     **/
+
+    if (psmove_connection_type(move) == Conn_Bluetooth) {
+        expected_res += 1;
+        p = buf + 1;
     }
-    printf("\n");
+
+    psmove_return_val_if_fail(res == expected_res, NULL);
+
+    PSMove_Firmware_Info *info = malloc(sizeof(PSMove_Firmware_Info));
+
+    /* NOTE: Each field in the report is stored in Big-Endian byte order */
+    info->version    = (p[0] << 8) | p[1];
+    info->revision   = (p[2] << 8) | p[3];
+    info->bt_version = (p[4] << 8) | p[5];
+
+    /* Copy unknown trailing bytes into info struct */
+    memcpy(info->_unknown, p + 6, sizeof(info->_unknown));
+    
+    return info;
 }
 
 enum PSMove_Bool
