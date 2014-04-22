@@ -156,7 +156,7 @@ typedef struct {
 #define TWELVE_BIT_SIGNED(x) (((x) & 0x800)?(-(((~(x)) & 0xFFF) + 1)):(x))
 
 /* Decode 16-bit signed value from data pointer and offset */
-inline int
+static inline int
 psmove_decode_16bit(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
