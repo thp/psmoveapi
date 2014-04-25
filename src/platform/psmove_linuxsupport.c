@@ -267,6 +267,13 @@ for_all_entries(for_all_entries_func func, const char *base, const char *addr)
     return errors;
 }
 
+static char *
+bt_path_join(const char *directory, const char *filename)
+{
+    char *result = (char *)malloc(strlen(directory) + 1 + strlen(filename) + 1);
+    sprintf(result, "%s/%s", directory, filename);
+    return result;
+}
 
 void linux_info_init(struct linux_info_t *info)
 {
@@ -279,22 +286,57 @@ void linux_info_init(struct linux_info_t *info)
     // determine distro and thus init system type by reading /etc/os-release
     fp = fopen("/etc/os-release", "r");
     if (fp != NULL) {
-        while (fgets(str, 511, fp) != NULL) {
-            if (strstr(str, "NAME") != NULL) {
-                if ((strstr(str, "openSUSE") != NULL) ||
-                    (strstr(str, "Fedora") != NULL)) {
+        while (fgets(str, 512, fp) != NULL) {
+            char *p, *q, *value;
+
+            // ignore comments
+            if (str[0] == '#') {
+                continue;
+            }
+
+            // split into name=value
+            p = strchr(str, '=');
+            if (!p) {
+                continue;
+            }
+            *p++ = 0;
+
+            if (strcmp(str, "NAME")) {
+                // we're interested only in NAME, so we don't handle other values
+                continue;
+            }
+
+            // remove quotes and newline; un-escape
+            value = p;
+            q = value;
+            while (*p) {
+                if (*p == '\\') {
+                    ++p;
+                    if (!*p)
+                        break;
+                    *q++ = *p++;
+                } else if ((*p == '\'') || (*p == '"') || (*p == '\n')) {
+                    ++p;
+                } else {
+                    *q++ = *p++;
+                }
+            }
+            *q = 0;
+
+            if ((!strcmp(value, "openSUSE")) ||
+                (!strcmp(value, "Fedora"))) {
                     // all recent versions of openSUSE and Fedora use
                     // systemd
                     info->init_type = LINUX_SYSTEMD;
-                }
-                else if (strstr(str, "Ubuntu") != NULL) {
+            }
+            else if (!strcmp(value, "Ubuntu")) {
                     // Ubuntu uses upstart now, but in the future it is
                     // going to switch to systemd
                     info->init_type = LINUX_UPSTART;
-                }
             }
             break;
         }
+
         fclose(fp);
     }
 }
@@ -310,6 +352,7 @@ void linux_bluetoothd_control(struct linux_info_t *info, int start)
             return;
         }
         info->bluetoothd_stopped = 0;
+        LINUXPAIR_DEBUG("Trying to start bluetoothd...\n");
     }
     else {
         // stop request
@@ -318,20 +361,24 @@ void linux_bluetoothd_control(struct linux_info_t *info, int start)
             return;
         }
         info->bluetoothd_stopped = 1;
+        LINUXPAIR_DEBUG("Trying to stop bluetoothd...\n");
     }
 
     switch (info->init_type) {
     case LINUX_SYSTEMD:
         cmd = start ? "systemctl start bluetooth.service" :
                       "systemctl stop bluetooth.service";
+        LINUXPAIR_DEBUG("Using systemd...\n");
         break;
     case LINUX_UPSTART:
         cmd = start ? "service bluetooth start" :
                       "service bluetooth stop";
+        LINUXPAIR_DEBUG("Using upstart...\n");
         break;
     case LINUX_SYSVINIT:
         cmd = start ? "/etc/init.d/bluetooth start" :
                       "/etc/init.d/bluetooth stop";
+        LINUXPAIR_DEBUG("Using sysvinit...\n");
     default:
         break;
     }
@@ -339,6 +386,9 @@ void linux_bluetoothd_control(struct linux_info_t *info, int start)
     if (system(cmd) != 0) {
         LINUXPAIR_DEBUG("Automatic starting/stopping of bluetoothd failed.\n"
                "You might have to start/stop it manually.\n");
+    }
+    else {
+        LINUXPAIR_DEBUG("Succeeded\n");
     }
 }
 
@@ -413,13 +463,9 @@ int linux_bluez5_write_entry(char *path, char *contents)
     if (fp == NULL) {
         LINUXPAIR_DEBUG("Cannot open file for writing: %s\n", path);
         errors++;
-        goto cleanup;
     }
-
-    fwrite((const void *)contents, 1, strlen(contents), fp);
-
-cleanup:
-    if (fp != NULL) {
+    else {
+        fwrite((const void *)contents, 1, strlen(contents), fp);
         fclose(fp);
     }
 
@@ -429,11 +475,7 @@ cleanup:
 int linux_bluez5_write_info(char *info_dir)
 {
     int errors = 0;
-    char *info_file = (char *)malloc(strlen(info_dir) + strlen(BLUEZ5_INFO_FILE) + 2);
-
-    strcpy(info_file, info_dir);
-    strcat(info_file, "/");
-    strcat(info_file, BLUEZ5_INFO_FILE);
+    char *info_file = bt_path_join(info_dir, BLUEZ5_INFO_FILE);
 
     errors = linux_bluez5_write_entry(info_file, BLUEZ5_INFO_ENTRY);
 
@@ -444,12 +486,8 @@ int linux_bluez5_write_info(char *info_dir)
 int linux_bluez5_write_cache(struct linux_info_t *linux_info, char *cache_dir, char *addr)
 {
     int errors = 0;
-    char *cache_file = (char *)malloc(strlen(cache_dir) + strlen(addr) + 2);
+    char *cache_file = bt_path_join(cache_dir, addr);
     struct stat st;
-
-    strcpy(cache_file, cache_dir);
-    strcat(cache_file, "/");
-    strcat(cache_file, addr);
 
     // if cache file already exists, do nothing
     if (stat(cache_file, &st) != 0) {
@@ -473,10 +511,7 @@ int linux_bluez5_register_psmove(struct linux_info_t *linux_info,
     int errors = 0;
     struct stat st;
 
-    info_dir = (char *)malloc(strlen(bluetooth_dir) + strlen(addr) + 2);
-    strcpy(info_dir, bluetooth_dir);
-    strcat(info_dir, "/");
-    strcat(info_dir, addr);
+    info_dir = bt_path_join(bluetooth_dir, addr);
 
     if (stat(info_dir, &st) != 0) {
         linux_bluetoothd_control(linux_info, 0);
@@ -491,10 +526,7 @@ int linux_bluez5_register_psmove(struct linux_info_t *linux_info,
         errors += linux_bluez5_write_info(info_dir);
     }
 
-    cache_dir = (char *)malloc(strlen(bluetooth_dir) + strlen(BLUEZ5_CACHE_DIR) + 2);
-    strcpy(cache_dir, bluetooth_dir);
-    strcat(cache_dir, "/");
-    strcat(cache_dir, BLUEZ5_CACHE_DIR);
+    cache_dir = bt_path_join(bluetooth_dir, BLUEZ5_CACHE_DIR);
 
     if (stat(cache_dir, &st) != 0) {
         linux_bluetoothd_control(linux_info, 0);
