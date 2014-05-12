@@ -216,7 +216,7 @@ void reinit();
         return psmove_get_temperature($self);
     }
 
-    float get_temperature_in_celsius() {
+    int get_temperature_in_celsius() {
         return psmove_get_temperature_in_celsius($self);
     }
 
