@@ -912,12 +912,13 @@ _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
         memset(cal, 0, sizeof(cal));
         cal[0] = PSMove_Req_GetCalibration;
         res = hid_get_feature_report(move->handle, cal, sizeof(cal));
+#if defined(__linux)
         if(res == -1) {
-            // see https://github.com/thp/psmoveapi/issues/108
-            psmove_WARNING("calibration hid_get_feature_report failed *may* "
-                "indicate a kernel issue\n");
+            psmove_WARNING("hid_get_feature_report failed, kernel issue? see %s\n",
+                "https://github.com/thp/psmoveapi/issues/108");
         }
-        psmove_return_val_if_fail(res == PSMOVE_CALIBRATION_SIZE, 0)
+#endif
+        psmove_return_val_if_fail(res == PSMOVE_CALIBRATION_SIZE, 0);
 
         if (cal[1] == 0x00) {
             /* First block */
