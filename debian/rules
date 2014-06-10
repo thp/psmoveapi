@@ -11,7 +11,6 @@ DEB_CMAKE_EXTRA_FLAGS += -DPSMOVE_USE_DEBUG:BOOL=YES
 endif
 
 DEB_CMAKE_EXTRA_FLAGS += -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
-DEB_CMAKE_EXTRA_FLAGS += -DPSMOVE_BUILD_QT_BINDINGS:BOOL=YES
 
 DH_FLAGS = --parallel --buildsystem=cmake
 
@@ -24,7 +23,6 @@ override_dh_auto_configure:
 override_dh_strip:
 	dh_strip -plibpsmoveapi3 --dbg-package=libpsmoveapi3-dbg
 	dh_strip -plibpsmoveapi-tracker3 --dbg-package=libpsmoveapi-tracker3-dbg
-	dh_strip -plibpsmoveapiqt3 --dbg-package=libpsmoveapiqt3-dbg
 
 override_dh_installdocs:
 	dh_installdocs --link-doc=libpsmoveapi3
