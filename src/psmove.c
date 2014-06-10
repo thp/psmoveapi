@@ -914,7 +914,7 @@ _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
         res = hid_get_feature_report(move->handle, cal, sizeof(cal));
         if(res == -1) {
             // see https://github.com/thp/psmoveapi/issues/108
-            psmove_WARNING("calibration hid_get_feature_report failed *may*"
+            psmove_WARNING("calibration hid_get_feature_report failed *may* "
                 "indicate a kernel issue\n");
         }
         psmove_return_val_if_fail(res == PSMOVE_CALIBRATION_SIZE, 0)
