@@ -912,7 +912,12 @@ _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
         memset(cal, 0, sizeof(cal));
         cal[0] = PSMove_Req_GetCalibration;
         res = hid_get_feature_report(move->handle, cal, sizeof(cal));
-        assert(res == PSMOVE_CALIBRATION_SIZE);
+        if(res == -1) {
+            // see https://github.com/thp/psmoveapi/issues/108
+            psmove_WARNING("calibration hid_get_feature_report failed *may*"
+                "indicate a kernel issue\n");
+        }
+        psmove_return_val_if_fail(res == PSMOVE_CALIBRATION_SIZE, 0)
 
         if (cal[1] == 0x00) {
             /* First block */
@@ -1708,6 +1713,8 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
     char filename[PATH_MAX];
 
     char *serial = psmove_get_serial(move);
+    psmove_return_val_if_fail(serial != NULL, NULL);
+
     int i;
     for (i=0; i<strlen(serial); i++) {
         if (serial[i] == ':') {
