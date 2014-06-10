@@ -1,0 +1,48 @@
+ __  __                                                 
+/\ \/\ \          __  /'\_/`\                           
+\ \ \ \ \    ___ /\_\/\      \    ___   __  __     __   
+ \ \ \ \ \ /' _ `\/\ \ \ \__\ \  / __`\/\ \/\ \  /'__`\ 
+  \ \ \_\ \/\ \/\ \ \ \ \ \_/\ \/\ \L\ \ \ \_/ |/\  __/ 
+   \ \_____\ \_\ \_\ \_\ \_\\ \_\ \____/\ \___/ \ \____\
+    \/_____/\/_/\/_/\/_/\/_/ \/_/\/___/  \/__/   \/____/
+
+http://www.copenhagengamecollective.org/projects/unimove/
+
+Unity + PlayStation Move controller == UniMove!
+
+
+Introduction
+-------------------------
+
+UniMove is an open-source Unity plugin and set of C# bindings that allows you to use PlayStation Move controllers with your Unity and/or C# application. 
+
+UniMove was created by Douglas Wilson of Die Gute Fabrik and Patrick Jarnfelt of the Copenhagen Game Collective, and is based on top of Thomas Perl’s super-nifty C API. The plugin is licensed under the GNU Lesser General Public License (v2.1 or later), and is still under development.
+
+Thomas has updated his library so it works with Windows. However, connecting the move controllers to the Windows Bluetooth stack is a pain to say the least. If you can get your Move controllers to connect in windows through the move_pair utility attached here, then using the library in Unity will not be a problem. The problem is getting them connected in the first place.
+
+
+Features include
+-------------------------
+
+ * Read the status of the digital buttons (Bluetooth only)
+ * Read the status of the analog trigger (Bluetooth only)
+ * Read values for the internal sensors (Bluetooth only):
+    * accelorometer
+    * gyroscope
+    * magnetometer
+    * temperature
+    * battery level
+
+
+Installation instructions
+-------------------------
+
+ * Start a new project, then go to: Assets –> Import Package –> Custom Package…
+ * Find and select UniMove.package
+ * In the “Importing package” window, press the “Import” button in the bottom right
+
+Viola! The assets (code, scene, plugin) should now be extracted and visible in your Project window. Double click the “Test Scene” scene to load it.  You should now be able to press the Play button to run the test program!
+
+
+This README file was last updated on 2013-06-19 by pjarnfelt
+
