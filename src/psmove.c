@@ -1481,6 +1481,7 @@ psmove_get_ext_device_info(PSMove *move)
 
     PSMove_Ext_Device_Info *ext = malloc(sizeof(PSMove_Ext_Device_Info));
     psmove_return_val_if_fail(ext != NULL, NULL);
+    memset(ext, 0, sizeof(PSMove_Ext_Device_Info));
 
     /* Copy extension device ID */
     ext->dev_id = (recv_buf[9] << 8) | recv_buf[10];
