@@ -1445,7 +1445,7 @@ psmove_get_temperature_in_celsius(PSMove *move)
 {
     /**
      * The Move uses this table in Debug mode. Even though the resulting values
-     * are not labeled "degree Celcius" in the Debug output, measurements
+     * are not labeled "degree Celsius" in the Debug output, measurements
      * indicate that it is close enough.
      **/
     static int const temperature_lookup[80] = {

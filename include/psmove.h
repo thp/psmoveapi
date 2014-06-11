@@ -617,7 +617,7 @@ ADDCALL psmove_get_temperature(PSMove *move);
  * Celsius.
  *
  * This gets the raw temperature sensor value of the internal
- * temperature sensor and then converts it to degree Celcius.
+ * temperature sensor and then converts it to degree Celsius.
  *
  * The result range is -10..70 °C. Values outside this range will be
  * clipped.
@@ -632,7 +632,7 @@ ADDCALL psmove_get_temperature(PSMove *move);
  *
  * \param move A valid \ref PSMove handle
  *
- * \return The temperature sensor reading in degree Celcius
+ * \return The temperature sensor reading in degree Celsius
  **/
 ADDAPI float
 ADDCALL psmove_get_temperature_in_celsius(PSMove *move);
