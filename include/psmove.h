@@ -634,7 +634,7 @@ ADDCALL psmove_get_temperature(PSMove *move);
  *
  * \return The temperature sensor reading in degree Celcius
  **/
-ADDAPI int
+ADDAPI float
 ADDCALL psmove_get_temperature_in_celsius(PSMove *move);
 
 /**

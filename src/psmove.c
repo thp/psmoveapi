@@ -1440,7 +1440,7 @@ psmove_get_temperature(PSMove *move)
             ((move->input.templow_mXhigh & 0xF0) >> 4));
 }
 
-int
+float
 psmove_get_temperature_in_celsius(PSMove *move)
 {
     /**

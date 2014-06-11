@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
             }
 
             printf("raw temperature: %d\n", psmove_get_temperature(move));
-            printf("celsius temperature: %d\n", psmove_get_temperature_in_celsius(move));
+            printf("celsius temperature: %f\n", psmove_get_temperature_in_celsius(move));
 
             psmove_update_leds(move);
         }
