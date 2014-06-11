@@ -171,8 +171,11 @@ typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
                                     Obtained via psmove_connect_by_id() */
 #endif
 
+/*! Size of buffer for holding the extension device's data as reported by the Move */
+#define PSMOVE_EXT_DATA_BUF_SIZE 5
+
 /*! Buffer for holding the extension device's data as reported by the Move */
-typedef unsigned char PSMove_Ext_Data[5];
+typedef unsigned char PSMove_Ext_Data[PSMOVE_EXT_DATA_BUF_SIZE];
 
 /*! Extension device information */
 typedef struct {

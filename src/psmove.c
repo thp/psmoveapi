@@ -92,6 +92,12 @@
 /* Buffer size for the Bluetooth address set request */
 #define PSMOVE_BTADDR_SET_SIZE 23
 
+/* Buffer size for sending a request to an extension device */
+#define PSMOVE_EXT_DEVICE_SET_SIZE 5
+
+/* Buffer size for retrieving data from an extension device */
+#define PSMOVE_EXT_DEVICE_GET_SIZE 49
+
 /* Maximum length of the serial string */
 #define PSMOVE_MAX_SERIAL_LENGTH 255
 
@@ -212,7 +218,7 @@ typedef struct {
     unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
     unsigned char mZlow; /* magnetometer Z (bits 8-1) */
     unsigned char timelow; /* low byte of timestamp */
-    unsigned char extdata[5]; /* external device data (EXT port) */
+    unsigned char extdata[PSMOVE_EXT_DATA_BUF_SIZE]; /* external device data (EXT port) */
 } PSMove_Data_Input;
 
 typedef struct {
@@ -1444,8 +1450,8 @@ psmove_is_ext_connected(PSMove *move)
 PSMove_Ext_Device_Info *
 psmove_get_ext_device_info(PSMove *move)
 {
-    unsigned char send_buf[5];
-    unsigned char recv_buf[49];
+    unsigned char send_buf[PSMOVE_EXT_DEVICE_SET_SIZE];
+    unsigned char recv_buf[PSMOVE_EXT_DEVICE_GET_SIZE];
     int res;
 
     psmove_return_val_if_fail(move != NULL, NULL);
