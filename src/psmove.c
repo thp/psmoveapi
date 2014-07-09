@@ -2030,7 +2030,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
 
 #define CLOCK_MONOTONIC 0
 
-static int
+int
 clock_gettime(int unused, struct timespec *ts)
 {
     struct timeval tv;
