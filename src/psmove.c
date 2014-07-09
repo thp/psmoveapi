@@ -64,6 +64,7 @@
 #endif
 
 #ifdef _WIN32
+#  include <winsock2.h>
 #  include <windows.h>
 #  include <bthsdpdef.h>
 #  include <bluetoothapis.h>
