@@ -363,14 +363,8 @@ _psmove_led_write_thread_proc(void *data)
 
             long started = psmove_util_get_ticks();
 
-#if defined(__linux)
-            /* Don't write padding bytes on Linux (makes it faster) */
-            hid_write(move->handle, (unsigned char*)(&leds),
-                    sizeof(leds) - sizeof(leds._padding));
-#else
             hid_write(move->handle, (unsigned char*)(&leds),
                     sizeof(leds));
-#endif
 
             psmove_DEBUG("hid_write(%d) = %ld ms\n",
                     move->id,
