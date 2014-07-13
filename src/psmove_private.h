@@ -53,7 +53,12 @@ extern "C" {
 
 /* Vendor ID and Product ID of PS Move Controller */
 #define PSMOVE_VID 0x054c
-#define PSMOVE_PID 0x03d5
+#define PSMOVE_MOTION_PID 0x03d5
+
+#if defined(PSMOVE_USE_MOVE_NAVIGATION_CONTROLLER)
+#define PSMOVE_NAVIGATION_USB_PID 0x042f
+#define PSMOVE_NAVIGATION_BT_PID 0x0268
+#endif
 
 #define psmove_PRINTF(section, msg, ...) \
         fprintf(stderr, "[" section "] " msg, ## __VA_ARGS__)
@@ -89,6 +94,17 @@ extern "C" {
         {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
 #define psmove_goto_if_fail(expr, label) \
         {if(!(expr)){psmove_CRITICAL(#expr);goto label;}}
+
+#if defined(PSMOVE_USE_MOVE_NAVIGATION_CONTROLLER)
+#define psmove_is_controller(vid, pid) \
+    (vid == PSMOVE_VID && \
+     (pid == PSMOVE_MOTION_PID || pid == PSMOVE_NAVIGATION_USB_PID || \
+      pid == PSMOVE_NAVIGATION_BT_PID))
+#else
+#define psmove_is_controller(vid, pid) \
+    (vid == PSMOVE_VID && \
+     pid == PSMOVE_MOTION_PID)
+#endif
 
 /* Macro: Length of fixed-size array */
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof((x)[0]))

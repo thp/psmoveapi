@@ -89,9 +89,11 @@
 
 /* Buffer size for the Bluetooth address get request */
 #define PSMOVE_BTADDR_GET_SIZE 16
+#define PSMOVE_BTADDR_GET_NAVIGATION_SIZE 8
 
 /* Buffer size for the Bluetooth address set request */
 #define PSMOVE_BTADDR_SET_SIZE 23
+#define PSMOVE_BTADDR_SET_NAVIGATION_SIZE 8
 
 /* Maximum length of the serial string */
 #define PSMOVE_MAX_SERIAL_LENGTH 255
@@ -104,6 +106,7 @@
 
 
 enum PSMove_Request_Type {
+    /* Motion Controller */
     PSMove_Req_GetInput = 0x01,
     PSMove_Req_SetLEDs = 0x02,
     PSMove_Req_GetBTAddr = 0x04,
@@ -112,6 +115,10 @@ enum PSMove_Request_Type {
     PSMove_Req_SetAuthChallenge = 0xA0,
     PSMove_Req_GetAuthResponse = 0xA1,
     PSMove_Req_SetDFUMode = 0xF2,
+
+    /* Navigation Controller */
+    PSMove_Req_HostBTAddr = 0xF5,
+
     PSMove_Req_GetFirmwareInfo = 0xF9,
 
     /**
@@ -306,6 +313,9 @@ struct _PSMove {
     /* Nonzero if this device is a Bluetooth device (on Windows only) */
     unsigned char is_bluetooth;
 #endif
+
+    /* Is this a navigation controller or a motion controller? */
+    int is_navigation;
 };
 
 void
@@ -340,6 +350,14 @@ int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 
 #endif /* defined(__linux) */
 
+void
+_psmove_dump_data(unsigned char *data, int length)
+{
+    int i;
+    for (i=0; i<length; i++) {
+        fprintf(stderr, "%02x ", data[i]);
+    }
+}
 
 #if defined(PSMOVE_USE_PTHREADS)
 
@@ -496,9 +514,14 @@ psmove_count_connected_hidapi()
         return 0;
     }
 
-    devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+    devs = hid_enumerate(0, 0);
     cur_dev = devs;
-    while (cur_dev) {
+	while (cur_dev) {
+		if (!psmove_is_controller(cur_dev->vendor_id, cur_dev->product_id)) {
+            cur_dev = cur_dev->next;
+            continue;
+        }
+		
 #ifdef _WIN32
         /**
          * Windows Quirk: Ignore extraneous devices (each dev is enumerated
@@ -507,11 +530,14 @@ psmove_count_connected_hidapi()
          * We use col02 for enumeration, and col01 for connecting. We want to
          * have col02 here, because after connecting to col01, it disappears.
          **/
-        if (strstr(cur_dev->path, "&col02#") == NULL) {
-            count--;
-        }
-#endif
+		if (strstr(cur_dev->path, "col") == NULL ) {
+			count++;
+		}else if (strstr(cur_dev->path, "&col02#") != NULL ) {
+            count++;
+        } 
+#else
         count++;
+#endif
         cur_dev = cur_dev->next;
     }
     hid_free_enumeration(devs);
@@ -571,7 +597,15 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     if (serial == NULL && path != NULL) {
         move->handle = hid_open_path(path);
     } else {
-        move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
+        move->handle = hid_open(PSMOVE_VID, PSMOVE_MOTION_PID, serial);
+#if defined(PSMOVE_USE_MOVE_NAVIGATION_CONTROLLER)
+        if (!move->handle) {
+            move->handle = hid_open(PSMOVE_VID, PSMOVE_NAVIGATION_USB_PID, serial);
+        }
+        if (!move->handle) {
+            move->handle = hid_open(PSMOVE_VID, PSMOVE_NAVIGATION_BT_PID, serial);
+        }
+#endif
     }
 
     if (!move->handle) {
@@ -655,6 +689,100 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     return move;
 }
+
+#if defined(PSMOVE_USE_MOVE_NAVIGATION_CONTROLLER)
+PSMove *
+psmove_connect_internal_nav(wchar_t *serial, char *path, int id)
+{
+    char *tmp;
+
+    PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
+    move->type = PSMove_HIDAPI;
+
+    /* Make sure the first LEDs update will go through (+ init get_ticks) */
+    move->last_leds_update = psmove_util_get_ticks() - PSMOVE_MAX_LED_INHIBIT_MS;
+
+#ifdef _WIN32
+    /* Windows Quirk: USB devices have "0" as serial, BT devices their addr */
+    if (serial != NULL && wcslen(serial) > 1) {
+        move->is_bluetooth = 1;
+    }
+    /* Windows Quirk: Use path instead of serial number by ignoring serial */
+    serial = NULL;
+#endif
+	if (serial == NULL && path != NULL) {
+        move->handle = hid_open_path(path);
+    } else {
+        move->handle = hid_open(PSMOVE_VID, PSMOVE_NAVIGATION_USB_PID, serial);
+        if (!move->handle) {
+            move->handle = hid_open(PSMOVE_VID, PSMOVE_NAVIGATION_BT_PID, serial);
+        }
+    }
+
+    if (!move->handle) {
+        free(move);
+        return NULL;
+    }
+
+    /* Use Non-Blocking I/O */
+    hid_set_nonblocking(move->handle, 1);
+	
+    /* Message type for LED set requests */
+    move->leds.type = PSMove_Req_SetLEDs;
+
+    /* Remember the ID/index */
+    move->id = id;
+
+    /* Remember the serial number */
+    move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
+    if (serial != NULL) {
+        wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
+    }
+
+    if (path != NULL) {
+        move->device_path = strdup(path);
+    }
+
+    /**
+     * Normalize "aa-bb-cc-dd-ee-ff" (OS X format) into "aa:bb:cc:dd:ee:ff"
+     * Also normalize "AA:BB:CC:DD:EE:FF" into "aa:bb:cc:dd:ee:ff" (lowercase)
+     **/
+    tmp = move->serial_number;
+    while (*tmp != '\0') {
+        if (*tmp == '-') {
+            *tmp = ':';
+        }
+
+        *tmp = tolower(*tmp);
+        tmp++;
+    }
+
+#if defined(PSMOVE_USE_PTHREADS)
+    psmove_return_val_if_fail(pthread_mutex_init(&move->led_write_mutex,
+                NULL) == 0, NULL);
+    psmove_return_val_if_fail(pthread_cond_init(&move->led_write_new_data,
+                NULL) == 0, NULL);
+    psmove_return_val_if_fail(pthread_create(&move->led_write_thread,
+            NULL,
+            _psmove_led_write_thread_proc,
+            (void*)move) == 0, NULL);
+#endif
+
+    /* Bookkeeping of open handles (for psmove_reinit) */
+    psmove_num_open_handles++;
+
+    /* Set controller type to Navigation Controller */
+    move->is_navigation = 1;
+    
+	//move->calibration = psmove_calibration_new(move);
+    //move->orientation = psmove_orientation_new(move);
+ 
+    /* Load magnetometer calibration data */
+    //psmove_load_magnetometer_calibration(move);
+	
+    return move;
+}
+#endif
 
 const char *
 _psmove_get_device_path(PSMove *move)
@@ -844,24 +972,46 @@ psmove_connect_by_id(int id)
     int count = 0;
     PSMove *move = NULL;
 
-    devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+    devs = hid_enumerate(0, 0);
     cur_dev = devs;
     while (cur_dev) {
+		if (!psmove_is_controller(cur_dev->vendor_id, cur_dev->product_id)) {
+            cur_dev = cur_dev->next;
+            continue;
+        }
 #ifdef _WIN32
-        if (strstr(cur_dev->path, "&col02#") != NULL) {
-#endif
-            if (count == id) {
+        if (cur_dev->product_id != PSMOVE_MOTION_PID) {
+			
+			if (count == id) {
+                
+				move = psmove_connect_internal_nav(cur_dev->serial_number,
+                        cur_dev->path, id);
+                count++;
+				break;
+            }
+			
+		}else if (strstr(cur_dev->path, "&col02#") != NULL ) {
+			if (count == id) {
                 move = psmove_connect_internal(cur_dev->serial_number,
                         cur_dev->path, id);
-                break;
+                count++;
+				break;
             }
-#ifdef _WIN32
-        } else {
-            count--;
-        }
+        } 
+#else
+		if (count == id) {
+			
+			if (cur_dev->product_id != PSMOVE_MOTION_PID) {
+				move = psmove_connect_internal_nav(cur_dev->serial_number,
+					cur_dev->path, id);
+			}else{
+				move = psmove_connect_internal(cur_dev->serial_number,
+					cur_dev->path, id);
+			}
+			 count++;
+			break;
+		}
 #endif
-
-        count++;
         cur_dev = cur_dev->next;
     }
     hid_free_enumeration(devs);
@@ -891,10 +1041,47 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
 
     /* Get Bluetooth address */
     memset(btg, 0, sizeof(btg));
-    btg[0] = PSMove_Req_GetBTAddr;
-    res = hid_get_feature_report(move->handle, btg, sizeof(btg));
 
-    if (res == sizeof(btg)) {
+    if (move->is_navigation) {
+        btg[0] = PSMove_Req_HostBTAddr;
+    } else {
+        btg[0] = PSMove_Req_GetBTAddr;
+    }
+
+    res = hid_get_feature_report(move->handle, btg,
+            move->is_navigation?PSMOVE_BTADDR_GET_NAVIGATION_SIZE:sizeof(btg));
+	
+    printf("res: %d\n", res);
+{
+			DWORD dLastError = GetLastError();
+			LPCTSTR strErrorMessage = NULL;
+				
+			FormatMessage(
+			FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS | 
+			FORMAT_MESSAGE_ARGUMENT_ARRAY | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+					NULL,
+					dLastError,
+					0,
+					(LPWSTR) &strErrorMessage,
+					0,
+					NULL);
+
+			printf("getlast: %s\n", strErrorMessage);
+		}
+		printf("ERROR blob: %s , errno %d\n", strerror(errno), errno);
+		printf("hiderr: %d\n", hid_error(move->handle));
+
+
+    if (res == sizeof(btg) || res == PSMOVE_BTADDR_GET_NAVIGATION_SIZE) {
+        /* Navigation controller result:
+         * 01 00 aa bb cc dd ee ff
+         *       ^^^^^^^^^^^^^^^^^
+         *        host bt address
+         */
+        if (move->is_navigation) {
+            _psmove_dump_data(btg, sizeof(btg));
+        }
+
         if (controller != NULL) {
             memcpy(*controller, btg+1, 6);
         }
@@ -929,6 +1116,10 @@ _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
 
     int dest_offset;
     int src_offset;
+
+    if (move->is_navigation) {
+        return 0;
+    }
 
     for (x=0; x<3; x++) {
         memset(cal, 0, sizeof(cal));
@@ -1003,16 +1194,24 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 
     /* Get calibration data */
     memset(bts, 0, sizeof(bts));
-    bts[0] = PSMove_Req_SetBTAddr;
 
-    /* Copy 6 bytes from addr into bts[1]..bts[6] */
-    for (i=0; i<6; i++) {
-        bts[1+i] = (*addr)[i];
+    if (move->is_navigation) {
+        bts[0] = PSMove_Req_HostBTAddr;
+        /* Copy 6 bytes from addr into bts[2]..bts[7] */
+        memcpy(bts+2, addr, 6);
+    } else {
+        bts[0] = PSMove_Req_SetBTAddr;
+        /* Copy 6 bytes from addr into bts[1]..bts[6], reversed */
+        for (i=0; i<6; i++) {
+            bts[1+5-i] = (*addr)[i];
+        }
     }
 
-    res = hid_send_feature_report(move->handle, bts, sizeof(bts));
+    res = hid_send_feature_report(move->handle, bts,
+            move->is_navigation?PSMOVE_BTADDR_SET_NAVIGATION_SIZE:sizeof(bts));
 
-    return (res == sizeof(bts));
+    return (res == sizeof(bts) || res == PSMOVE_BTADDR_SET_NAVIGATION_SIZE);
+
 }
 
 enum PSMove_Bool
@@ -1641,7 +1840,10 @@ psmove_get_magnetometer_vector(PSMove *move,
 enum PSMove_Bool
 psmove_has_calibration(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, 0);
+    if (move->is_navigation)
+		return PSMove_False;
+	
+	psmove_return_val_if_fail(move != NULL, 0);
     return psmove_calibration_supported(move->calibration);
 }
 
@@ -2058,6 +2260,9 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
 
 #define CLOCK_MONOTONIC 0
 
+#if !defined(_WIN32)
+static
+#endif
 int
 clock_gettime(int unused, struct timespec *ts)
 {
@@ -2069,6 +2274,7 @@ clock_gettime(int unused, struct timespec *ts)
 
     return 0;
 }
+
 #endif /* __APPLE__ || _WIN32 */
 
 PSMove_timestamp
