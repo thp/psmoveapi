@@ -370,13 +370,13 @@ ADDCALL psmove_pair(PSMove *move);
  * specify a custom Bluetooth host address.
  *
  * \param move A valid \ref PSMove handle
- * \param btaddr_string The host address in the format \c "aa:bb:cc:dd:ee:ff"
+ * \param new_host_string The host address in the format \c "aa:bb:cc:dd:ee:ff"
  *
  * \return \ref PSMove_True if the pairing was successful
  * \return \ref PSMove_False if the pairing failed
  **/
 ADDAPI enum PSMove_Bool
-ADDCALL psmove_pair_custom(PSMove *move, const char *btaddr_string);
+ADDCALL psmove_pair_custom(PSMove *move, const char *new_host_string);
 
 /**
  * \brief Enable or disable LED update rate limiting.
