@@ -1077,28 +1077,44 @@ psmove_pair(PSMove *move)
 }
 
 enum PSMove_Bool
-psmove_pair_custom(PSMove *move, const char *btaddr_string)
+psmove_pair_custom(PSMove *move, const char *new_host_string)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    PSMove_Data_BTAddr btaddr;
+    PSMove_Data_BTAddr new_host;
     PSMove_Data_BTAddr current_host;
 
     if (!_psmove_read_btaddrs(move, &current_host, NULL)) {
         return PSMove_False;
     }
 
-    if (!_psmove_btaddr_from_string(btaddr_string, &btaddr)) {
+    if (!_psmove_btaddr_from_string(new_host_string, &new_host)) {
         return PSMove_False;
     }
 
-    if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
-        if (!psmove_set_btaddr(move, &btaddr)) {
+    if (memcmp(current_host, new_host, sizeof(PSMove_Data_BTAddr)) != 0) {
+        if (!psmove_set_btaddr(move, &new_host)) {
             return PSMove_False;
         }
     } else {
         psmove_DEBUG("Already paired.\n");
     }
+
+    char *addr = psmove_get_serial(move);
+    char *host = _psmove_btaddr_to_string(new_host);
+
+#if defined(__linux)
+    /* Add entry to Bluez' bluetoothd state file */
+    linux_bluez_register_psmove(addr, host);
+#endif
+
+#if defined(__APPLE__)
+    /* Add entry to the com.apple.Bluetooth.plist file */
+    macosx_blued_register_psmove(addr);
+#endif
+
+    free(addr);
+    free(host);
 
     return PSMove_True;
 }
