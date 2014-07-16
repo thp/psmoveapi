@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 	bool running = true;
 	while(running) {
 		for(i=0; i<c; i++) {
-			psmove_poll(moves[i]);
+			while(psmove_poll(moves[i])) {}
 			int buttons = psmove_get_buttons(moves[i]);
             int x, y, z, r, g, b;
             psmove_get_accelerometer(moves[i], &x, &y, &z);
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
             b = convert_accel_to_col(z);
 			if(buttons & Btn_PS)
 				running = false;
-			else if(buttons)
+			else if(buttons & Btn_MOVE)
 				psmove_set_leds(moves[i], 255, 255, 255);
 			else
 				psmove_set_leds(moves[i], r, g, b);
