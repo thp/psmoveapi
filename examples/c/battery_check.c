@@ -79,6 +79,7 @@ int main(int argc, char* argv[])
             psmove_set_leds(moves[i], col.r, col.g, col.b);
             psmove_update_leds(moves[i]);
         }
+        sleep(1);
     }
     free(moves);
     return 0;
