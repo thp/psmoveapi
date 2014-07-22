@@ -53,6 +53,11 @@ int convert_accel_to_col(int accel)
 
 int main(int argc, char* argv[])
 {
+    if (!psmove_init(PSMOVE_CURRENT_VERSION)) {
+        fprintf(stderr, "PS Move API init failed (wrong version?)\n");
+        exit(1);
+    }
+
     int i, c;
     c = psmove_count_connected();
     printf("Connected controllers: %d\n", c);
@@ -90,6 +95,11 @@ int main(int argc, char* argv[])
             psmove_update_leds(moves[i]);
         }
     }
+
+    for(i=0; i<c; i++) {
+        psmove_disconnect(moves[i]);
+    }
     free(moves);
+
     return 0;
 }
