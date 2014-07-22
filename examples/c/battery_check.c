@@ -57,6 +57,11 @@ Color convert_battery_to_col(enum PSMove_Battery_Level level)
 
 int main(int argc, char* argv[])
 {
+    if (!psmove_init(PSMOVE_CURRENT_VERSION)) {
+        fprintf(stderr, "PS Move API init failed (wrong version?)\n");
+        exit(1);
+    }
+
     int i, c;
     c = psmove_count_connected();
     printf("Connected controllers: %d\n", c);
@@ -78,9 +83,17 @@ int main(int argc, char* argv[])
             Color col = convert_battery_to_col(level);
             psmove_set_leds(moves[i], col.r, col.g, col.b);
             psmove_update_leds(moves[i]);
+            int buttons = psmove_get_buttons(moves[i]);
+            if(buttons & Btn_PS)
+                running = false;
         }
         sleep(1);
     }
+
+    for(i=0; i<c; i++) {
+    	psmove_disconnect(moves[i]);
+    }
+
     free(moves);
     return 0;
 }
