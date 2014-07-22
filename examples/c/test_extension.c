@@ -129,10 +129,11 @@ int main(int argc, char *argv[])
         if(psmove_is_ext_connected(move)) {
             /* if the extension device was not connected before, report connect */
             if (!ext_connected) {
-                PSMove_Ext_Device_Info *ext = psmove_get_ext_device_info(move);
+                PSMove_Ext_Device_Info ext;
+                enum PSMove_Bool success = psmove_get_ext_device_info(move, &ext);
 
-                if (ext) {
-                    switch (ext->dev_id) {
+                if (success) {
+                    switch (ext.dev_id) {
                         case EXT_DEVICE_ID_SHARP_SHOOTER:
                             ext_device = Ext_Sharp_Shooter;
                             printf("Sharp Shooter extension connected!\n");
@@ -143,7 +144,7 @@ int main(int argc, char *argv[])
                             break;
                         default:
                             ext_device = Ext_Unknown;
-                            printf("Unknown extension device (id 0x%04X) connected!\n", ext->dev_id);
+                            printf("Unknown extension device (id 0x%04X) connected!\n", ext.dev_id);
                             break;
                     }
                 }

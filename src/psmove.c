@@ -1447,14 +1447,15 @@ psmove_is_ext_connected(PSMove *move)
     return PSMove_False;
 }
 
-PSMove_Ext_Device_Info *
-psmove_get_ext_device_info(PSMove *move)
+enum PSMove_Bool
+psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
 {
     unsigned char send_buf[PSMOVE_EXT_DEVICE_SET_SIZE];
     unsigned char recv_buf[PSMOVE_EXT_DEVICE_GET_SIZE];
     int res;
 
-    psmove_return_val_if_fail(move != NULL, NULL);
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(ext != NULL, PSMove_False);
 
     /* Send setup Report for the following read operation */
     send_buf[0] = PSMove_Req_SetExtDeviceInfo;
@@ -1466,7 +1467,7 @@ psmove_get_ext_device_info(PSMove *move)
 
     if (res != sizeof(send_buf)) {
         psmove_DEBUG("Sending Feature Report for read setup failed");
-        return NULL;
+        return PSMove_False;
     }
 
     /* Send actual read Report */
@@ -1476,11 +1477,9 @@ psmove_get_ext_device_info(PSMove *move)
 
     if (res != sizeof(recv_buf)) {
         psmove_DEBUG("Sending Feature Report for actual read failed");
-        return NULL;
+        return PSMove_False;
     }
 
-    PSMove_Ext_Device_Info *ext = malloc(sizeof(PSMove_Ext_Device_Info));
-    psmove_return_val_if_fail(ext != NULL, NULL);
     memset(ext, 0, sizeof(PSMove_Ext_Device_Info));
 
     /* Copy extension device ID */
@@ -1490,7 +1489,7 @@ psmove_get_ext_device_info(PSMove *move)
     assert(sizeof(ext->dev_info) <= sizeof(recv_buf) - 11);
     memcpy(ext->dev_info, recv_buf + 11, sizeof(ext->dev_info));
     
-    return ext;
+    return PSMove_True;
 }
 
 enum PSMove_Battery_Level

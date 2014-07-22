@@ -616,13 +616,14 @@ ADDCALL psmove_is_ext_connected(PSMove *move);
  * noticeable delay may occur when calling this function.
  *
  * \param move A valid \ref PSMove handle
+ * \param ext Pointer to a \ref PSMove_Ext_Device_Info that will store the
+ *            information. Must not be \ref NULL.
  *
- * \return Pointer to a \ref PSMove_Ext_Device_Info. The caller must free() the
- *         result when it is not needed anymore.
- * \return On error, \c NULL is returned.
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
  **/
-ADDAPI PSMove_Ext_Device_Info *
-ADDCALL psmove_get_ext_device_info(PSMove *move);
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *info);
 
 /**
  * \brief Get the battery charge level of the controller.
