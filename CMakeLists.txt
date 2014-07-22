@@ -405,7 +405,7 @@ endif()
 
 # C test programs
 if(PSMOVE_BUILD_TESTS)
-    foreach(TESTNAME led_update read_performance calibration)
+    foreach(TESTNAME led_update read_performance calibration responsiveness)
         add_executable(test_${TESTNAME} examples/c/test_${TESTNAME}.c)
         target_link_libraries(test_${TESTNAME} psmoveapi)
     endforeach(TESTNAME)
