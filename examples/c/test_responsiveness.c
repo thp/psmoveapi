@@ -26,6 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+ /**
+ * A testing tool to help verify the responsiveness of connected move
+ * controllers. Connects to all available controllers and then:
+ *
+ * 1) Live updates led color based on accelerometer. Provides general feedback.
+ * 2) Sets led white when move button held. Specific 'how quick' feedback.
+ * 3) Rumbles for 1 second in every 5. For controller to controller comparison.
+ **/
 
 #include <unistd.h>
 #include <stdio.h>
