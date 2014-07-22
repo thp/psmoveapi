@@ -203,8 +203,8 @@ typedef struct {
     unsigned char gYhigh2;
     unsigned char gZlow2;
     unsigned char gZhigh2;
-    unsigned char temp; /* temperature (bits 12-5) */
-    unsigned char mXhigh; /* magneto X (bits 12-9) */
+    unsigned char temphigh; /* temperature (bits 12-5) */
+    unsigned char templow_mXhigh; /* temp (bits 4-1); magneto X (bits 12-9) */
     unsigned char mXlow; /* magnetometer X (bits 8-1) */
     unsigned char mYhigh; /* magnetometer Y (bits 12-5) */
     unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
@@ -1442,15 +1442,53 @@ psmove_get_temperature(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return move->input.temp;
+    /**
+     * On the Move Motion Controller's PCB there is a voltage divider which
+     * contains a thermistor. An ADC reads the voltage across the thermistor
+     * (which changes its resistance with the temperature) and reports the
+     * raw value (plus an offset) as the value we see in the Input Report.
+     *
+     * The offset can be changed if the controller is running in Debug mode,
+     * but it seems to default to 0.
+     **/
+
+    return ((move->input.temphigh << 4) |
+            ((move->input.templow_mXhigh & 0xF0) >> 4));
 }
 
 float
 psmove_get_temperature_in_celsius(PSMove *move)
 {
+    /**
+     * The Move uses this table in Debug mode. Even though the resulting values
+     * are not labeled "degree Celsius" in the Debug output, measurements
+     * indicate that it is close enough.
+     **/
+    static int const temperature_lookup[80] = {
+        0x1F6, 0x211, 0x22C, 0x249, 0x266, 0x284, 0x2A4, 0x2C4,
+        0x2E5, 0x308, 0x32B, 0x34F, 0x374, 0x399, 0x3C0, 0x3E8,
+        0x410, 0x439, 0x463, 0x48D, 0x4B8, 0x4E4, 0x510, 0x53D,
+        0x56A, 0x598, 0x5C6, 0x5F4, 0x623, 0x651, 0x680, 0x6AF,
+        0x6DE, 0x70D, 0x73C, 0x76B, 0x79A, 0x7C9, 0x7F7, 0x825,
+        0x853, 0x880, 0x8AD, 0x8D9, 0x905, 0x930, 0x95B, 0x985,
+        0x9AF, 0x9D8, 0xA00, 0xA28, 0xA4F, 0xA75, 0xA9B, 0xAC0,
+        0xAE4, 0xB07, 0xB2A, 0xB4B, 0xB6D, 0xB8D, 0xBAD, 0xBCB,
+        0xBEA, 0xC07, 0xC24, 0xC40, 0xC5B, 0xC75, 0xC8F, 0xCA8,
+        0xCC1, 0xCD8, 0xCF0, 0xD06, 0xD1C, 0xD31, 0xD46, 0xD5A,
+    };
+
     psmove_return_val_if_fail(move != NULL, 0.0);
 
-    return (move->input.temp - 176.0)/-1.6;
+    int raw_value = psmove_get_temperature(move);
+    int i;
+
+    for (i = 0; i < 80; i++) {
+        if (temperature_lookup[i] > raw_value) {
+            return i - 10;
+        }
+    }
+
+    return 70;
 }
 
 unsigned char
@@ -1643,7 +1681,7 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
     psmove_return_if_fail(move != NULL);
 
     if (mx != NULL) {
-        *mx = TWELVE_BIT_SIGNED(((move->input.mXhigh & 0x0F) << 8) |
+        *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
                 move->input.mXlow);
     }
 
