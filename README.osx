@@ -9,7 +9,8 @@ You will need...
 ... a mini-usb cable
 ... to create a root password (see: http://youtu.be/10sKJQuXq6A)
 ... to install Homebrew: http://mxcl.github.com/homebrew/
-	$ ruby -e "$(curl -fsSkL raw.github.com/mxcl/homebrew/go)" 
+	$ ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+	$ brew doctor
 ... to install cmake, and git from Homebrew
 	$ brew install cmake git
 … to download and install Doxygen (http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc) to generate the documentation (optional)
