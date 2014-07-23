@@ -83,7 +83,6 @@ enum PSMove_Button {
      *
      * Source:
      * https://code.google.com/p/moveonpc/wiki/InputReport
-     * https://code.google.com/p/moveonpc/wiki/SharpShooter
      **/
     Btn_TRIANGLE = 1 << 4, /*!< Green triangle */
     Btn_CIRCLE = 1 << 5, /*!< Red circle */
@@ -94,16 +93,8 @@ enum PSMove_Button {
     Btn_START = 1 << 11, /*!< Start button, right side */
 
     Btn_PS = 1 << 16, /*!< PS button, front center */
-    Ext_SharpShooter = 1 << 17, /*!< Sharp Shooter is connected to Ext port */
     Btn_MOVE = 1 << 19, /*!< Move button, big front button */
     Btn_T = 1 << 20, /*!< Trigger, on the back */
-
-    Btn_WEAPON1 = 1 << 21, /*!< Weapon 1 selected on Sharp Shooter */
-    Btn_WEAPON2 = 1 << 22, /*!< Weapon 2 selected on Sharp Shooter */
-    Btn_WEAPON3 = 1 << 23, /*!< Weapon 3 selected on Sharp Shooter */
-
-    Btn_SHARPSHOOTER_TRIGGER = 1 << 27, /*!< Trigger on Sharp Shooter */
-    Btn_SHARPSHOOTER_RELOAD = 1 << 28, /*!< Reload on Sharp Shooter */
 
 #if 0
     /* Not used for now - only on Sixaxis/DS3 or nav controller */
@@ -179,6 +170,18 @@ struct _PSMove;
 typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
                                     Obtained via psmove_connect_by_id() */
 #endif
+
+/*! Size of buffer for holding the extension device's data as reported by the Move */
+#define PSMOVE_EXT_DATA_BUF_SIZE 5
+
+/*! Buffer for holding the extension device's data as reported by the Move */
+typedef unsigned char PSMove_Ext_Data[PSMOVE_EXT_DATA_BUF_SIZE];
+
+/*! Extension device information */
+typedef struct {
+    unsigned short dev_id;
+    unsigned char dev_info[38];
+} PSMove_Ext_Device_Info;
 
 /*! Library version number */
 enum PSMove_Version {
@@ -514,6 +517,22 @@ ADDAPI int
 ADDCALL psmove_poll(PSMove *move);
 
 /**
+ * \brief Get the extension device's data as reported by the Move.
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param data Pointer to store the data, must not be \ref NULL
+ *
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
+ * 
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data);
+
+/**
  * \brief Get the current button states from the controller.
  *
  * The status of the buttons is described as a bitfield, with a bit
@@ -578,6 +597,33 @@ ADDCALL psmove_get_buttons(PSMove *move);
 ADDAPI void
 ADDCALL psmove_get_button_events(PSMove *move, unsigned int *pressed,
         unsigned int *released);
+
+/**
+ * \brief Check if an extension device is connected to the controller.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref PSMove_True if an extension device is connected
+ * \return \ref PSMove_False if no extension device is connected or in case of an error
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_is_ext_connected(PSMove *move);
+
+/**
+ * \brief Get information from an extension device connected to the controller.
+ *
+ * \note Since the information is retrieved from the extension device itself, a
+ * noticeable delay may occur when calling this function.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param ext Pointer to a \ref PSMove_Ext_Device_Info that will store the
+ *            information. Must not be \ref NULL.
+ *
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *info);
 
 /**
  * \brief Get the battery charge level of the controller.

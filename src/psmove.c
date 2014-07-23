@@ -92,6 +92,12 @@
 /* Buffer size for the Bluetooth address set request */
 #define PSMOVE_BTADDR_SET_SIZE 23
 
+/* Buffer size for sending a request to an extension device */
+#define PSMOVE_EXT_DEVICE_SET_SIZE 5
+
+/* Buffer size for retrieving data from an extension device */
+#define PSMOVE_EXT_DEVICE_GET_SIZE 49
+
 /* Maximum length of the serial string */
 #define PSMOVE_MAX_SERIAL_LENGTH 255
 
@@ -110,6 +116,8 @@ enum PSMove_Request_Type {
     PSMove_Req_GetCalibration = 0x10,
     PSMove_Req_SetAuthChallenge = 0xA0,
     PSMove_Req_GetAuthResponse = 0xA1,
+    PSMove_Req_GetExtDeviceInfo = 0xE0,
+    PSMove_Req_SetExtDeviceInfo = 0xE0,
     PSMove_Req_SetDFUMode = 0xF2,
     PSMove_Req_GetFirmwareInfo = 0xF9,
 
@@ -210,9 +218,7 @@ typedef struct {
     unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
     unsigned char mZlow; /* magnetometer Z (bits 8-1) */
     unsigned char timelow; /* low byte of timestamp */
-    unsigned char extdata; /* external device data (ext port / sharp shooter) */
-
-    unsigned char _padding[PSMOVE_BUFFER_SIZE-45]; /* unknown */
+    unsigned char extdata[PSMOVE_EXT_DATA_BUF_SIZE]; /* external device data (EXT port) */
 } PSMove_Data_Input;
 
 typedef struct {
@@ -1344,6 +1350,18 @@ psmove_poll(PSMove *move)
     return 0;
 }
 
+enum PSMove_Bool
+psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data)
+{
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(data != NULL, PSMove_False);
+
+    assert(sizeof(*data) >= sizeof(move->input.extdata));
+
+    memcpy(data, move->input.extdata, sizeof(move->input.extdata));
+    return PSMove_True;
+}
+
 unsigned int
 psmove_get_buttons(PSMove *move)
 {
@@ -1354,17 +1372,15 @@ psmove_get_buttons(PSMove *move)
      *
      * Source:
      * https://code.google.com/p/moveonpc/wiki/InputReport
-     * https://code.google.com/p/moveonpc/wiki/SharpShooter
      *
-     *   22   22221 11    1  00000   0 <- bit (read top to bottom)
-     *   87...32109.76....1..87654...0
-     *   ^^   ^^^^^ ^^    ^  ^^^^^
-     *   ||   ||||| ||    |  |||||
-     *   ||   ||||| ||    |  |22222222 <- input report byte 2
-     *   ||   ||||| ||11111111         <- input report byte 1
-     *   ||   ||||| |3                 <- bit 0 of input report byte 3
-     *   ||   |||4444                  <- bits 4-7 of input report byte 4
-     *   EEEEEEEE                      <- input report byte at offset 0x2C
+     *           21  1    1  00000   0 <- bit (read top to bottom)
+     *   ........09..6....1..87654...0
+     *           ^^  ^    ^  ^^^^^
+     *           ||  |    |  |||||
+     *           ||  |    |  |22222222 <- input report byte 2
+     *           ||  |11111111         <- input report byte 1
+     *           ||  3                 <- bit 0 of input report byte 3
+     *           44                    <- bits 6-7 of input report byte 4
      *
      * Input report byte 1:
      *  xxxx4xx0
@@ -1387,27 +1403,17 @@ psmove_get_buttons(PSMove *move)
      *         ^- ps button
      *
      * Input report byte 4:
-     *  76x4xxxx
+     *  76xxxxxx
      *      ^^^^- input sequence number (see psmove_poll())
-     *     ^- sharp shooter connected
      *   ^- move
      *  ^- trigger
-     *
-     * Input report byte 0x2C (ext port / sharp shooter):
-     *  76xxx210
-     *         ^- weapon 1 selected
-     *        ^- weapon 2 selected
-     *       ^- weapon 3 selected
-     *   ^- trigger button (on sharp shooter) pressed
-     *  ^- reload button (on sharp shooter) pressed
      *
      **/
 
     return ((move->input.buttons2) |
             (move->input.buttons1 << 8) |
             ((move->input.buttons3 & 0x01) << 16) |
-            ((move->input.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */) |
-            (move->input.extdata << 21));
+            ((move->input.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
 }
 
 void
@@ -1427,6 +1433,63 @@ psmove_get_button_events(PSMove *move, unsigned int *pressed,
     }
 
     move->last_buttons = buttons;
+}
+
+enum PSMove_Bool
+psmove_is_ext_connected(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+
+    if((move->input.buttons4 & 0x10) != 0) {
+        return PSMove_True;
+    }
+
+    return PSMove_False;
+}
+
+enum PSMove_Bool
+psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
+{
+    unsigned char send_buf[PSMOVE_EXT_DEVICE_SET_SIZE];
+    unsigned char recv_buf[PSMOVE_EXT_DEVICE_GET_SIZE];
+    int res;
+
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(ext != NULL, PSMove_False);
+
+    /* Send setup Report for the following read operation */
+    send_buf[0] = PSMove_Req_SetExtDeviceInfo;
+    send_buf[1] = 1;    /* read flag */
+    send_buf[2] = 0xA0; /* target extension device's I²C slave address */
+    send_buf[3] = 0;    /* offset for retrieving data */
+    send_buf[4] = 0xFF; /* number of bytes to retrieve */
+    res = hid_send_feature_report(move->handle, send_buf, sizeof(send_buf));
+
+    if (res != sizeof(send_buf)) {
+        psmove_DEBUG("Sending Feature Report for read setup failed");
+        return PSMove_False;
+    }
+
+    /* Send actual read Report */
+    memset(recv_buf, 0, sizeof(recv_buf));
+    recv_buf[0] = PSMove_Req_GetExtDeviceInfo;
+    res = hid_get_feature_report(move->handle, recv_buf, sizeof(recv_buf));
+
+    if (res != sizeof(recv_buf)) {
+        psmove_DEBUG("Sending Feature Report for actual read failed");
+        return PSMove_False;
+    }
+
+    memset(ext, 0, sizeof(PSMove_Ext_Device_Info));
+
+    /* Copy extension device ID */
+    ext->dev_id = (recv_buf[9] << 8) | recv_buf[10];
+
+    /* Copy device info following the device ID into EXT info struct */
+    assert(sizeof(ext->dev_info) <= sizeof(recv_buf) - 11);
+    memcpy(ext->dev_info, recv_buf + 11, sizeof(ext->dev_info));
+    
+    return PSMove_True;
 }
 
 enum PSMove_Battery_Level
