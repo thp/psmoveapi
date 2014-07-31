@@ -106,19 +106,13 @@
 
 
 enum PSMove_Request_Type {
-    /* Motion Controller */
+    /* Common */
     PSMove_Req_GetInput = 0x01,
     PSMove_Req_SetLEDs = 0x02,
-    PSMove_Req_GetBTAddr = 0x04,
-    PSMove_Req_SetBTAddr = 0x05,
     PSMove_Req_GetCalibration = 0x10,
     PSMove_Req_SetAuthChallenge = 0xA0,
     PSMove_Req_GetAuthResponse = 0xA1,
     PSMove_Req_SetDFUMode = 0xF2,
-
-    /* Navigation Controller */
-    PSMove_Req_HostBTAddr = 0xF5,
-
     PSMove_Req_GetFirmwareInfo = 0xF9,
 
     /**
@@ -137,6 +131,13 @@ enum PSMove_Request_Type {
      * https://github.com/thp/psmoveapi/issues/55
      **/
     PSMove_Req_SetLEDsPermanentUSB = 0xFA,
+
+    /* Navigation Controller */
+    PSMove_Req_HostBTAddr = 0xF5,
+
+    /* Motion Controller */
+    PSMove_Req_GetBTAddr = 0x04,
+    PSMove_Req_SetBTAddr = 0x05,
 };
 
 enum PSMove_Device_Type {
@@ -259,7 +260,7 @@ struct _PSMove {
 
     /* The handle to the HIDAPI device */
     hid_device *handle;
-	hid_device *handle_calib;
+    hid_device *handle_calib;
 
     /* The handle to the moved client */
     moved_client *client;
@@ -277,7 +278,7 @@ struct _PSMove {
 
     /* Device path of the controller */
     char *device_path;
-	char *device_path_calib;
+    char *device_path_calib;
 
     /* Nonzero if the value of the LEDs or rumble has changed */
     unsigned char leds_dirty;
@@ -350,7 +351,7 @@ int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 
 #endif /* defined(__linux) */
 
-void
+static void
 _psmove_dump_data(unsigned char *data, int length)
 {
     int i;
@@ -516,12 +517,12 @@ psmove_count_connected_hidapi()
 
     devs = hid_enumerate(0, 0);
     cur_dev = devs;
-	while (cur_dev) {
-		if (!psmove_is_controller(cur_dev->vendor_id, cur_dev->product_id)) {
+    while (cur_dev) {
+        if (!psmove_is_controller(cur_dev->vendor_id, cur_dev->product_id)) {
             cur_dev = cur_dev->next;
             continue;
         }
-		
+
 #ifdef _WIN32
         /**
          * Windows Quirk: Ignore extraneous devices (each dev is enumerated
@@ -530,9 +531,9 @@ psmove_count_connected_hidapi()
          * We use col02 for enumeration, and col01 for connecting. We want to
          * have col02 here, because after connecting to col01, it disappears.
          **/
-		if (strstr(cur_dev->path, "col") == NULL ) {
-			count++;
-		}else if (strstr(cur_dev->path, "&col02#") != NULL ) {
+        if (strstr(cur_dev->path, "col") == NULL ) {
+            count++;
+        }else if (strstr(cur_dev->path, "&col02#") != NULL ) {
             count++;
         } 
 #else
@@ -590,7 +591,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     /* XXX Ugly: Convert "col02" path to "col01" path (tested w/ BT and USB) */
     char *p;
-	psmove_return_val_if_fail((p = strstr(path, "&col02#")) != NULL, NULL);
+    psmove_return_val_if_fail((p = strstr(path, "&col02#")) != NULL, NULL);
     psmove_return_val_if_fail((p = strstr(path, "&0001#")) != NULL, NULL);
 #endif
 
@@ -615,28 +616,28 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     /* Use Non-Blocking I/O */
     hid_set_nonblocking(move->handle, 1);
-	
+
 #ifdef _WIN32
-		char *path_calib = (char*) calloc(strlen(path)+1, sizeof(char));
-		strncpy(path_calib, path, strlen(path)+1);
-	    psmove_return_val_if_fail((p = strstr(path_calib, "&col02#")) != NULL, NULL);
-		p[5] = '1';
-		psmove_return_val_if_fail((p = strstr(path_calib, "&0001#")) != NULL, NULL);
-		p[4] = '0';
-		
-		move->handle_calib = hid_open_path(path_calib);
-		if (!move->handle_calib) {
-			free(move);
-			return NULL;
-		}
-		
-		hid_set_nonblocking(move->handle_calib, 1);
-		
-		if (path_calib != NULL) {
-			move->device_path_calib = strdup(path_calib);
-		}
+        char *path_calib = (char*) calloc(strlen(path)+1, sizeof(char));
+        strncpy(path_calib, path, strlen(path)+1);
+        psmove_return_val_if_fail((p = strstr(path_calib, "&col02#")) != NULL, NULL);
+        p[5] = '1';
+        psmove_return_val_if_fail((p = strstr(path_calib, "&0001#")) != NULL, NULL);
+        p[4] = '0';
+        
+        move->handle_calib = hid_open_path(path_calib);
+        if (!move->handle_calib) {
+            free(move);
+            return NULL;
+        }
+        
+        hid_set_nonblocking(move->handle_calib, 1);
+        
+        if (path_calib != NULL) {
+            move->device_path_calib = strdup(path_calib);
+        }
 #endif
-	
+
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
 
@@ -710,7 +711,7 @@ psmove_connect_internal_nav(wchar_t *serial, char *path, int id)
     /* Windows Quirk: Use path instead of serial number by ignoring serial */
     serial = NULL;
 #endif
-	if (serial == NULL && path != NULL) {
+    if (serial == NULL && path != NULL) {
         move->handle = hid_open_path(path);
     } else {
         move->handle = hid_open(PSMOVE_VID, PSMOVE_NAVIGATION_USB_PID, serial);
@@ -726,7 +727,7 @@ psmove_connect_internal_nav(wchar_t *serial, char *path, int id)
 
     /* Use Non-Blocking I/O */
     hid_set_nonblocking(move->handle, 1);
-	
+
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
 
@@ -773,13 +774,11 @@ psmove_connect_internal_nav(wchar_t *serial, char *path, int id)
 
     /* Set controller type to Navigation Controller */
     move->is_navigation = 1;
-    
-	//move->calibration = psmove_calibration_new(move);
-    //move->orientation = psmove_orientation_new(move);
+
+    move->calibration = NULL
  
-    /* Load magnetometer calibration data */
-    //psmove_load_magnetometer_calibration(move);
-	
+    move->orientation = NULL
+
     return move;
 }
 #endif
