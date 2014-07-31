@@ -111,6 +111,7 @@
 enum PSMove_Request_Type {
     PSMove_Req_GetInput = 0x01,
     PSMove_Req_SetLEDs = 0x02,
+    PSMove_Req_SetLEDPWMFrequency = 0x03,
     PSMove_Req_GetBTAddr = 0x04,
     PSMove_Req_SetBTAddr = 0x05,
     PSMove_Req_GetCalibration = 0x10,
@@ -1199,6 +1200,34 @@ psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
     move->leds.g = g;
     move->leds.b = b;
     move->leds_dirty = 1;
+}
+
+enum PSMove_Bool
+psmove_set_led_pwm_frequency(PSMove *move, unsigned long freq)
+{
+    unsigned char buf[7];
+    int res;
+
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+
+    if (freq < 733 || freq > 24e6) {
+        psmove_WARNING("Frequency can only assume values between 733 and 24e6.");
+        return PSMove_False;
+    }
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = PSMove_Req_SetLEDPWMFrequency;
+    buf[1] = 0x41;  /* magic value, report is ignored otherwise */
+    buf[2] = 0;     /* command byte, values 1..4 are internal frequency presets */
+    /* The 32-bit frequency value must be stored in Little-Endian byte order */
+    buf[3] =  freq        & 0xFF;
+    buf[4] = (freq >>  8) & 0xFF;
+    buf[5] = (freq >> 16) & 0xFF;
+    buf[6] = (freq >> 24) & 0xFF;
+
+    res = hid_send_feature_report(move->handle, buf, sizeof(buf));
+
+    return (res == sizeof(buf));
 }
 
 void
