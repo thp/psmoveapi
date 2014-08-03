@@ -426,6 +426,38 @@ ADDCALL psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
         unsigned char b);
 
 /**
+ * \brief Set the PWM frequency used in dimming the RGB LEDs.
+ *
+ * The RGB LEDs in the Move controller are dimmed using pulse-width modulation (PWM).
+ * This function lets you modify the PWM frequency. The default is around 188 kHz and
+ * can also be restored by resetting the controller (using the small reset button on
+ * the back).
+ *
+ * \note Make sure to switch off the LEDs prior to calling this function. If you do
+ *       not do this, changing the PWM frequency will switch off the LEDs and keep
+ *       them off until the Bluetooth connection has been teared down and then
+ *       reestablished.
+ *
+ * \note Frequency values outside the valid range (see the parameter description) are
+ *       treated as errors.
+ *
+ * \note Even though the controller lets you increase the frequency to several
+ *       Megahertz, there is usually not much use in operating at such extreme rates.
+ *       Additionally, you will even lose resolution at these rates, i.e. the number
+ *       of distinct LED intensities between "off" and "fully lit" decreases. For
+ *       example: at 7 MHz there are only 5 different intensities left instead of the
+ *       usual 256. This is not a feature of PWM per se but is rather due to
+ *       software/hardware limitations of the Move controller.
+ *
+ * \param freq The PWM frequency in Hertz (range is 733 Hz to 24 MHz)
+ *
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
+ */
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_set_led_pwm_frequency(PSMove *move, unsigned long freq);
+
+/**
  * \brief Set the rumble intensity of the PS Move controller.
  *
  * This sets the rumble (vibration motor) intensity of the
