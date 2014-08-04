@@ -674,6 +674,8 @@ _psmove_get_auth_response(PSMove *move)
     buf[0] = PSMove_Req_GetAuthResponse;
     res = hid_get_feature_report(move->handle, buf, sizeof(buf));
 
+    psmove_return_val_if_fail(res == sizeof(buf), NULL);
+
     /* Copy response data into output buffer */
     PSMove_Data_AuthResponse *output_buf = malloc(sizeof(PSMove_Data_AuthResponse));
     memcpy(*output_buf, buf + 1, sizeof(*output_buf));
