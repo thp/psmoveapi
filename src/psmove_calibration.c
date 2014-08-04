@@ -486,7 +486,6 @@ psmove_calibration_load(PSMoveCalibration *calibration)
 {
     psmove_return_val_if_fail(calibration != NULL, 0);
     FILE *fp;
-    size_t rc;
 
     fp = fopen(calibration->filename, "rb");
     if (fp == NULL) {
@@ -521,7 +520,6 @@ psmove_calibration_save(PSMoveCalibration *calibration)
     psmove_return_val_if_fail(calibration != NULL, 0);
 
     FILE *fp;
-    size_t rc;
 
     fp = fopen(calibration->filename, "wb");
     if (fp == NULL) {
