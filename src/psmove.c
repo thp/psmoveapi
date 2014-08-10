@@ -329,7 +329,7 @@ static int psmove_num_open_handles = 0;
 
 int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 {
-    struct hci_dev_info di = { dev_id: dev_id };
+    struct hci_dev_info di = { .dev_id = dev_id };
     unsigned char *btaddr = (void*)arg;
     int i;
 
