@@ -169,7 +169,6 @@ main(int argc, char *argv[])
 
     /* Header */
     fprintf(fp, "frame");
-    int j;
     for (roi=0; roi<rois; roi++) {
         fprintf(fp, ",roi%d", roi_sizes[roi]);
     }

@@ -329,7 +329,7 @@ static int psmove_num_open_handles = 0;
 
 int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 {
-    struct hci_dev_info di = { dev_id: dev_id };
+    struct hci_dev_info di = { .dev_id = dev_id };
     unsigned char *btaddr = (void*)arg;
     int i;
 
@@ -673,6 +673,8 @@ _psmove_get_auth_response(PSMove *move)
     memset(buf, 0, sizeof(buf));
     buf[0] = PSMove_Req_GetAuthResponse;
     res = hid_get_feature_report(move->handle, buf, sizeof(buf));
+
+    psmove_return_val_if_fail(res == sizeof(buf), NULL);
 
     /* Copy response data into output buffer */
     PSMove_Data_AuthResponse *output_buf = malloc(sizeof(PSMove_Data_AuthResponse));

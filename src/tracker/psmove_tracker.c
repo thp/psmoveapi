@@ -890,8 +890,7 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
     CvSeq *contourBest = NULL;
 
     // DEBUG log the assigned color
-    CvScalar assignedColor = cvScalar(rgb.b, rgb.g, rgb.r, 0);
-    psmove_html_trace_put_color_var("assignedColor", assignedColor);
+    psmove_html_trace_put_color_var("assignedColor", cvScalar(rgb.b, rgb.g, rgb.r, 0));
 
     float dimming = 1.0;
     if (tracker->dimming_factor > 0) {
@@ -1780,8 +1779,8 @@ psmove_tracker_estimate_circle_from_contour(CvSeq* cont, float *x, float *y, flo
 	int i, j;
 	float d = 0;
 	float cd = 0;
-	CvPoint m1;
-	CvPoint m2;
+	CvPoint m1 = cvPoint( 0, 0 );
+	CvPoint m2 = cvPoint( 0, 0 );
 	CvPoint * p1;
 	CvPoint * p2;
         int found = 0;

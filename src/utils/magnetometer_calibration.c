@@ -36,8 +36,6 @@
 int
 main(int arg, char** args)
 {
-    PSMove *move;
-
     int i;
     int count = psmove_count_connected();
     for (i=0; i<count; i++) {
