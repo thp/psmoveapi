@@ -67,6 +67,7 @@
 #  include <windows.h>
 #  include <bthsdpdef.h>
 #  include <bluetoothapis.h>
+#  include "platform/psmove_winsupport.h"
 #ifndef PATH_MAX
 #  define PATH_MAX MAX_PATH
 #endif
@@ -1035,21 +1036,18 @@ psmove_pair(PSMove *move)
         return PSMove_False;
     }
 #elif defined(_WIN32)
-    HBLUETOOTH_RADIO_FIND hFind;
     HANDLE hRadio;
+    if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
+        psmove_WARNING("Failed to find a Bluetooth radio");
+        return PSMove_False;
+    }
+
     BLUETOOTH_RADIO_INFO radioInfo;
-
-    BLUETOOTH_FIND_RADIO_PARAMS btfrp;
-    btfrp.dwSize = sizeof(BLUETOOTH_FIND_RADIO_PARAMS);
-    hFind = BluetoothFindFirstRadio(&btfrp, &hRadio);
-
-    psmove_return_val_if_fail(hFind != NULL, PSMove_False);
     radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
 
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
         psmove_CRITICAL("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
-        BluetoothFindRadioClose(hFind);
         return PSMove_False;
     }
 
@@ -1058,9 +1056,6 @@ psmove_pair(PSMove *move)
         btaddr[i] = radioInfo.address.rgBytes[i];
     }
 
-    CloseHandle(hRadio);
-    BluetoothFindRadioClose(hFind);
-
 #else
     /* TODO: Implement for other OSes (if any?) */
     return PSMove_False;
@@ -1068,6 +1063,9 @@ psmove_pair(PSMove *move)
 
     if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
         if (!psmove_set_btaddr(move, &btaddr)) {
+#if defined(_WIN32)
+            CloseHandle(hRadio);
+#endif
             return PSMove_False;
         }
     } else {
@@ -1085,6 +1083,11 @@ psmove_pair(PSMove *move)
 #if defined(__APPLE__)
     /* Add entry to the com.apple.Bluetooth.plist file */
     macosx_blued_register_psmove(addr);
+#endif
+
+#if defined(_WIN32)
+    windows_register_psmove(addr, hRadio);
+    CloseHandle(hRadio);
 #endif
 
     free(addr);
