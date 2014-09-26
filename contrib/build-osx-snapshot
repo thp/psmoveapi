@@ -19,7 +19,7 @@ PSMOVEAPI_VERSION=$(grep -m 1 -o "psmoveapi (.*)" debian/changelog |
                     sed -e 's/psmoveapi (\(.*\))/\1/')
 
 # Git revision identifier
-PSMOVEAPI_REVISION=$(git show-ref --head --hash=8 HEAD)
+PSMOVEAPI_REVISION=$(git describe --long --tags)
 
 # By default, we build a snapshot. If "release" is the first argument, we
 # build a release (do not add date and Git revision information to version)

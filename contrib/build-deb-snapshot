@@ -12,7 +12,7 @@ if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
 fi
 
 # Git revision identifier
-PSMOVEAPI_REVISION=$(git show-ref --hash=8 HEAD)
+PSMOVEAPI_REVISION=$(git describe --long --tags)
 
 DEB_NAME=$(dpkg-parsechangelog | grep ^Source: | cut -d' ' -f2-)
 DEB_VERSION=$(dpkg-parsechangelog | grep ^Version: | cut -d' ' -f2-)
