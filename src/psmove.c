@@ -481,7 +481,8 @@ psmove_reinit()
         clients = NULL;
     }
 
-    hid_exit();
+    if(!psmove_local_disabled)
+        hid_exit();
 }
 
 int
