@@ -1018,8 +1018,15 @@ psmove_pair(PSMove *move)
     }
     free(btaddr_string);
 #elif defined(__linux)
+    PSMove_Data_BTAddr blank;
+    memset(blank, 0, sizeof(PSMove_Data_BTAddr));
     memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
     hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
+    if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
+        fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
+                "Make sure Bluetooth is turned on.\n");
+        return PSMove_False;
+    }
 #elif defined(_WIN32)
     HBLUETOOTH_RADIO_FIND hFind;
     HANDLE hRadio;
