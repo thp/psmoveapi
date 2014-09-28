@@ -46,6 +46,11 @@ enum Extension_Device {
 
 void handle_sharp_shooter(PSMove_Ext_Data *data, unsigned int move_buttons)
 {
+    /**
+     * For a detailed device documentation and a guide for accessing button values, see
+     * https://code.google.com/p/moveonpc/wiki/SharpShooter
+     **/
+
     assert(data != NULL);
 
     unsigned char const c = (*data)[0];
@@ -72,6 +77,11 @@ void handle_sharp_shooter(PSMove_Ext_Data *data, unsigned int move_buttons)
 
 void handle_racing_wheel(PSMove_Ext_Data *data, unsigned int buttons)
 {
+    /**
+     * For a detailed device documentation and a guide for accessing button values, see
+     * https://code.google.com/p/moveonpc/wiki/RacingWheel
+     **/
+
     assert(data != NULL);
 
     unsigned char throttle = (*data)[0];
