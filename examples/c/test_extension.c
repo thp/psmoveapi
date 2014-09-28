@@ -68,6 +68,10 @@ void handle_sharp_shooter(PSMove_Ext_Data *data, unsigned int move_buttons)
 
     if (c & 0x40) {
         printf("FIRING weapon %c\n", weapon);
+    } else {
+        if (move_buttons & Btn_T) {
+            printf("PUMPING\n");
+        }
     }
 
     if (c & 0x80) {
