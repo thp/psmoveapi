@@ -193,18 +193,21 @@ macosx_blued_register_psmove(char *addr)
         goto end;
     }
 
-    if (!macosx_bluetooth_set_powered(0)) {
-        OSXPAIR_DEBUG("Cannot shutdown Bluetooth (shut it down manually).\n");
-    }
+    if (minor_version < 10)
+    {
+        if (!macosx_bluetooth_set_powered(0)) {
+            OSXPAIR_DEBUG("Cannot shutdown Bluetooth (shut it down manually).\n");
+        }
 
-    int i = 0;
-    OSXPAIR_DEBUG("Waiting for blued shutdown (takes ca. 42s) ...\n");
-    while (macosx_blued_running()) {
-        usleep(1000000);
-        i++;
+        int i = 0;
+        OSXPAIR_DEBUG("Waiting for blued shutdown (takes ca. 42s) ...\n");
+        while (macosx_blued_running()) {
+            usleep(1000000);
+            i++;
+        }
+        OSXPAIR_DEBUG("blued successfully shutdown.\n");
     }
-    OSXPAIR_DEBUG("blued successfully shutdown.\n");
-
+    
     snprintf(cmd, sizeof(cmd), "osascript -e 'do shell script "
             "\"defaults write " OSX_BT_CONFIG_PATH
                 " HIDDevices -array-add \\\"%s\\\"\""
@@ -214,9 +217,12 @@ macosx_blued_register_psmove(char *addr)
         OSXPAIR_DEBUG("Could not run the command.");
     }
 
-    // FIXME: In OS X 10.7 this might not work - fork() and call set_powered(1)
-    // from a fresh process (e.g. like "blueutil 1") to switch Bluetooth on
-    macosx_bluetooth_set_powered(1);
+    if (minor_version < 10)
+    {
+        // FIXME: In OS X 10.7 this might not work - fork() and call set_powered(1)
+        // from a fresh process (e.g. like "blueutil 1") to switch Bluetooth on
+        macosx_bluetooth_set_powered(1);
+    }
 
     free(btaddr);
 
