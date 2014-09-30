@@ -2054,7 +2054,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     return result;
 }
 
-#if defined(__APPLE__) || defined(_WIN32)
+#if defined(__APPLE__)
 
 #define CLOCK_MONOTONIC 0
 
@@ -2069,7 +2069,7 @@ clock_gettime(int unused, struct timespec *ts)
 
     return 0;
 }
-#endif /* __APPLE__ || _WIN32 */
+#endif /* __APPLE__ */
 
 PSMove_timestamp
 _psmove_timestamp()
