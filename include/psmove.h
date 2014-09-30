@@ -83,7 +83,6 @@ enum PSMove_Button {
      *
      * Source:
      * https://code.google.com/p/moveonpc/wiki/InputReport
-     * https://code.google.com/p/moveonpc/wiki/SharpShooter
      **/
     Btn_TRIANGLE = 1 << 4, /*!< Green triangle */
     Btn_CIRCLE = 1 << 5, /*!< Red circle */
@@ -94,16 +93,8 @@ enum PSMove_Button {
     Btn_START = 1 << 11, /*!< Start button, right side */
 
     Btn_PS = 1 << 16, /*!< PS button, front center */
-    Ext_SharpShooter = 1 << 17, /*!< Sharp Shooter is connected to Ext port */
     Btn_MOVE = 1 << 19, /*!< Move button, big front button */
     Btn_T = 1 << 20, /*!< Trigger, on the back */
-
-    Btn_WEAPON1 = 1 << 21, /*!< Weapon 1 selected on Sharp Shooter */
-    Btn_WEAPON2 = 1 << 22, /*!< Weapon 2 selected on Sharp Shooter */
-    Btn_WEAPON3 = 1 << 23, /*!< Weapon 3 selected on Sharp Shooter */
-
-    Btn_SHARPSHOOTER_TRIGGER = 1 << 27, /*!< Trigger on Sharp Shooter */
-    Btn_SHARPSHOOTER_RELOAD = 1 << 28, /*!< Reload on Sharp Shooter */
 
 #if 0
     /* Not used for now - only on Sixaxis/DS3 or nav controller */
@@ -179,6 +170,18 @@ struct _PSMove;
 typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
                                     Obtained via psmove_connect_by_id() */
 #endif
+
+/*! Size of buffer for holding the extension device's data as reported by the Move */
+#define PSMOVE_EXT_DATA_BUF_SIZE 5
+
+/*! Buffer for holding the extension device's data as reported by the Move */
+typedef unsigned char PSMove_Ext_Data[PSMOVE_EXT_DATA_BUF_SIZE];
+
+/*! Extension device information */
+typedef struct {
+    unsigned short dev_id;
+    unsigned char dev_info[38];
+} PSMove_Ext_Device_Info;
 
 /*! Library version number */
 enum PSMove_Version {
@@ -370,13 +373,13 @@ ADDCALL psmove_pair(PSMove *move);
  * specify a custom Bluetooth host address.
  *
  * \param move A valid \ref PSMove handle
- * \param btaddr_string The host address in the format \c "aa:bb:cc:dd:ee:ff"
+ * \param new_host_string The host address in the format \c "aa:bb:cc:dd:ee:ff"
  *
  * \return \ref PSMove_True if the pairing was successful
  * \return \ref PSMove_False if the pairing failed
  **/
 ADDAPI enum PSMove_Bool
-ADDCALL psmove_pair_custom(PSMove *move, const char *btaddr_string);
+ADDCALL psmove_pair_custom(PSMove *move, const char *new_host_string);
 
 /**
  * \brief Enable or disable LED update rate limiting.
@@ -421,6 +424,38 @@ ADDCALL psmove_set_rate_limiting(PSMove *move, enum PSMove_Bool enabled);
 ADDAPI void
 ADDCALL psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
         unsigned char b);
+
+/**
+ * \brief Set the PWM frequency used in dimming the RGB LEDs.
+ *
+ * The RGB LEDs in the Move controller are dimmed using pulse-width modulation (PWM).
+ * This function lets you modify the PWM frequency. The default is around 188 kHz and
+ * can also be restored by resetting the controller (using the small reset button on
+ * the back).
+ *
+ * \note Make sure to switch off the LEDs prior to calling this function. If you do
+ *       not do this, changing the PWM frequency will switch off the LEDs and keep
+ *       them off until the Bluetooth connection has been teared down and then
+ *       reestablished.
+ *
+ * \note Frequency values outside the valid range (see the parameter description) are
+ *       treated as errors.
+ *
+ * \note Even though the controller lets you increase the frequency to several
+ *       Megahertz, there is usually not much use in operating at such extreme rates.
+ *       Additionally, you will even lose resolution at these rates, i.e. the number
+ *       of distinct LED intensities between "off" and "fully lit" decreases. For
+ *       example: at 7 MHz there are only 5 different intensities left instead of the
+ *       usual 256. This is not a feature of PWM per se but is rather due to
+ *       software/hardware limitations of the Move controller.
+ *
+ * \param freq The PWM frequency in Hertz (range is 733 Hz to 24 MHz)
+ *
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
+ */
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_set_led_pwm_frequency(PSMove *move, unsigned long freq);
 
 /**
  * \brief Set the rumble intensity of the PS Move controller.
@@ -514,6 +549,22 @@ ADDAPI int
 ADDCALL psmove_poll(PSMove *move);
 
 /**
+ * \brief Get the extension device's data as reported by the Move.
+ *
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param data Pointer to store the data, must not be \ref NULL
+ *
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
+ * 
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data);
+
+/**
  * \brief Get the current button states from the controller.
  *
  * The status of the buttons is described as a bitfield, with a bit
@@ -580,6 +631,33 @@ ADDCALL psmove_get_button_events(PSMove *move, unsigned int *pressed,
         unsigned int *released);
 
 /**
+ * \brief Check if an extension device is connected to the controller.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return \ref PSMove_True if an extension device is connected
+ * \return \ref PSMove_False if no extension device is connected or in case of an error
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_is_ext_connected(PSMove *move);
+
+/**
+ * \brief Get information from an extension device connected to the controller.
+ *
+ * \note Since the information is retrieved from the extension device itself, a
+ * noticeable delay may occur when calling this function.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param ext Pointer to a \ref PSMove_Ext_Device_Info that will store the
+ *            information. Must not be \ref NULL.
+ *
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *info);
+
+/**
  * \brief Get the battery charge level of the controller.
  *
  * This function retrieves the charge level of the controller or
@@ -597,14 +675,10 @@ ADDAPI enum PSMove_Battery_Level
 ADDCALL psmove_get_battery(PSMove *move);
 
 /**
- * \brief Get the current raw temperature reading of the controller.
+ * \brief Get the current raw device temperature reading of the
+ * controller.
  *
  * This gets the raw sensor value of the internal temperature sensor.
- *
- * The temperature data is from the magnetometer which is an AK 8973.
- *
- * Page 20 of the datasheet shows the Celcius mappings for each value
- * and page 9 shows typical operating temperatures.
  *
  * You need to call psmove_poll() first to read new data from the
  * controller.
@@ -617,23 +691,26 @@ ADDAPI int
 ADDCALL psmove_get_temperature(PSMove *move);
 
 /**
- * \brief Get the current temperature reading in Celsius [-30 C - 85 C]
+ * \brief Get the current device temperature reading in degree
+ * Celsius.
  *
- * This gets the raw temperature sensor value of the internal temperature sensor
- * and then converts it to celcius based off of the values in the AK 8973 datasheet
- * on page 20.
+ * This gets the raw temperature sensor value of the internal
+ * temperature sensor and then converts it to degree Celsius.
  *
- * During normal operation this should return around 35 C
+ * The result range is -10..70 °C. Values outside this range will be
+ * clipped.
  *
- * You need to call psmove_poll() first to read new data from the controller
+ * You need to call psmove_poll() first to read new data from the
+ * controller.
  *
- * \note This is NOT room temperature, but the temperature of the magnetometer.
- * This means that under normal operation the temperature returned by this function
- * will be higher than room temperature due to heat up from current flow.
+ * \note This is NOT room temperature, but the temperature of a small
+ * thermistor on the controller's PCB. This means that under normal
+ * operation the temperature returned by this function will be higher
+ * than room temperature due to heat up from current flow.
  *
  * \param move A valid \ref PSMove handle
  *
- * \return The temperature sensor reading in celcius [-30 C - 85 C]
+ * \return The temperature sensor reading in degree Celsius
  **/
 ADDAPI float
 ADDCALL psmove_get_temperature_in_celsius(PSMove *move);

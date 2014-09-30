@@ -366,7 +366,7 @@ endforeach()
 
 # C examples
 if(PSMOVE_BUILD_EXAMPLES)
-    foreach(EXAMPLE example multiple dump_calibration)
+    foreach(EXAMPLE example multiple dump_calibration battery_check)
         add_executable(${EXAMPLE} examples/c/${EXAMPLE}.c)
         target_link_libraries(${EXAMPLE} psmoveapi)
     endforeach()
@@ -405,7 +405,7 @@ endif()
 
 # C test programs
 if(PSMOVE_BUILD_TESTS)
-    foreach(TESTNAME led_update read_performance calibration)
+    foreach(TESTNAME led_update read_performance calibration responsiveness extension led_pwm_frequency)
         add_executable(test_${TESTNAME} examples/c/test_${TESTNAME}.c)
         target_link_libraries(test_${TESTNAME} psmoveapi)
     endforeach(TESTNAME)

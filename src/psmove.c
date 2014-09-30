@@ -93,6 +93,12 @@
 /* Buffer size for the Bluetooth address set request */
 #define PSMOVE_BTADDR_SET_SIZE 23
 
+/* Buffer size for sending a request to an extension device */
+#define PSMOVE_EXT_DEVICE_SET_SIZE 5
+
+/* Buffer size for retrieving data from an extension device */
+#define PSMOVE_EXT_DEVICE_GET_SIZE 49
+
 /* Maximum length of the serial string */
 #define PSMOVE_MAX_SERIAL_LENGTH 255
 
@@ -106,11 +112,14 @@
 enum PSMove_Request_Type {
     PSMove_Req_GetInput = 0x01,
     PSMove_Req_SetLEDs = 0x02,
+    PSMove_Req_SetLEDPWMFrequency = 0x03,
     PSMove_Req_GetBTAddr = 0x04,
     PSMove_Req_SetBTAddr = 0x05,
     PSMove_Req_GetCalibration = 0x10,
     PSMove_Req_SetAuthChallenge = 0xA0,
     PSMove_Req_GetAuthResponse = 0xA1,
+    PSMove_Req_GetExtDeviceInfo = 0xE0,
+    PSMove_Req_SetExtDeviceInfo = 0xE0,
     PSMove_Req_SetDFUMode = 0xF2,
     PSMove_Req_GetFirmwareInfo = 0xF9,
 
@@ -204,16 +213,14 @@ typedef struct {
     unsigned char gYhigh2;
     unsigned char gZlow2;
     unsigned char gZhigh2;
-    unsigned char temp; /* temperature (bits 12-5) */
-    unsigned char mXhigh; /* magneto X (bits 12-9) */
+    unsigned char temphigh; /* temperature (bits 12-5) */
+    unsigned char templow_mXhigh; /* temp (bits 4-1); magneto X (bits 12-9) */
     unsigned char mXlow; /* magnetometer X (bits 8-1) */
     unsigned char mYhigh; /* magnetometer Y (bits 12-5) */
     unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
     unsigned char mZlow; /* magnetometer Z (bits 8-1) */
     unsigned char timelow; /* low byte of timestamp */
-    unsigned char extdata; /* external device data (ext port / sharp shooter) */
-
-    unsigned char _padding[PSMOVE_BUFFER_SIZE-45]; /* unknown */
+    unsigned char extdata[PSMOVE_EXT_DATA_BUF_SIZE]; /* external device data (EXT port) */
 } PSMove_Data_Input;
 
 typedef struct {
@@ -325,7 +332,7 @@ static int psmove_num_open_handles = 0;
 
 int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 {
-    struct hci_dev_info di = { dev_id: dev_id };
+    struct hci_dev_info di = { .dev_id = dev_id };
     unsigned char *btaddr = (void*)arg;
     int i;
 
@@ -366,14 +373,8 @@ _psmove_led_write_thread_proc(void *data)
 
             long started = psmove_util_get_ticks();
 
-#if defined(__linux)
-            /* Don't write padding bytes on Linux (makes it faster) */
-            hid_write(move->handle, (unsigned char*)(&leds),
-                    sizeof(leds) - sizeof(leds._padding));
-#else
             hid_write(move->handle, (unsigned char*)(&leds),
                     sizeof(leds));
-#endif
 
             psmove_DEBUG("hid_write(%d) = %ld ms\n",
                     move->id,
@@ -483,7 +484,8 @@ psmove_reinit()
         clients = NULL;
     }
 
-    hid_exit();
+    if(!psmove_local_disabled)
+        hid_exit();
 }
 
 int
@@ -694,6 +696,8 @@ _psmove_get_auth_response(PSMove *move)
     memset(buf, 0, sizeof(buf));
     buf[0] = PSMove_Req_GetAuthResponse;
     res = hid_get_feature_report(move->handle, buf, sizeof(buf));
+
+    psmove_return_val_if_fail(res == sizeof(buf), NULL);
 
     /* Copy response data into output buffer */
     PSMove_Data_AuthResponse *output_buf = malloc(sizeof(PSMove_Data_AuthResponse));
@@ -1041,8 +1045,15 @@ psmove_pair(PSMove *move)
     }
     free(btaddr_string);
 #elif defined(__linux)
+    PSMove_Data_BTAddr blank;
+    memset(blank, 0, sizeof(PSMove_Data_BTAddr));
     memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
     hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
+    if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
+        fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
+                "Make sure Bluetooth is turned on.\n");
+        return PSMove_False;
+    }
 #elif defined(_WIN32)
     HBLUETOOTH_RADIO_FIND hFind;
     HANDLE hRadio;
@@ -1103,28 +1114,44 @@ psmove_pair(PSMove *move)
 }
 
 enum PSMove_Bool
-psmove_pair_custom(PSMove *move, const char *btaddr_string)
+psmove_pair_custom(PSMove *move, const char *new_host_string)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    PSMove_Data_BTAddr btaddr;
+    PSMove_Data_BTAddr new_host;
     PSMove_Data_BTAddr current_host;
 
     if (!_psmove_read_btaddrs(move, &current_host, NULL)) {
         return PSMove_False;
     }
 
-    if (!_psmove_btaddr_from_string(btaddr_string, &btaddr)) {
+    if (!_psmove_btaddr_from_string(new_host_string, &new_host)) {
         return PSMove_False;
     }
 
-    if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
-        if (!psmove_set_btaddr(move, &btaddr)) {
+    if (memcmp(current_host, new_host, sizeof(PSMove_Data_BTAddr)) != 0) {
+        if (!psmove_set_btaddr(move, &new_host)) {
             return PSMove_False;
         }
     } else {
         psmove_DEBUG("Already paired.\n");
     }
+
+    char *addr = psmove_get_serial(move);
+    char *host = _psmove_btaddr_to_string(new_host);
+
+#if defined(__linux)
+    /* Add entry to Bluez' bluetoothd state file */
+    linux_bluez_register_psmove(addr, host);
+#endif
+
+#if defined(__APPLE__)
+    /* Add entry to the com.apple.Bluetooth.plist file */
+    macosx_blued_register_psmove(addr);
+#endif
+
+    free(addr);
+    free(host);
 
     return PSMove_True;
 }
@@ -1209,6 +1236,34 @@ psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
     move->leds.g = g;
     move->leds.b = b;
     move->leds_dirty = 1;
+}
+
+enum PSMove_Bool
+psmove_set_led_pwm_frequency(PSMove *move, unsigned long freq)
+{
+    unsigned char buf[7];
+    int res;
+
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+
+    if (freq < 733 || freq > 24e6) {
+        psmove_WARNING("Frequency can only assume values between 733 and 24e6.");
+        return PSMove_False;
+    }
+
+    memset(buf, 0, sizeof(buf));
+    buf[0] = PSMove_Req_SetLEDPWMFrequency;
+    buf[1] = 0x41;  /* magic value, report is ignored otherwise */
+    buf[2] = 0;     /* command byte, values 1..4 are internal frequency presets */
+    /* The 32-bit frequency value must be stored in Little-Endian byte order */
+    buf[3] =  freq        & 0xFF;
+    buf[4] = (freq >>  8) & 0xFF;
+    buf[5] = (freq >> 16) & 0xFF;
+    buf[6] = (freq >> 24) & 0xFF;
+
+    res = hid_send_feature_report(move->handle, buf, sizeof(buf));
+
+    return (res == sizeof(buf));
 }
 
 void
@@ -1360,6 +1415,18 @@ psmove_poll(PSMove *move)
     return 0;
 }
 
+enum PSMove_Bool
+psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data)
+{
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(data != NULL, PSMove_False);
+
+    assert(sizeof(*data) >= sizeof(move->input.extdata));
+
+    memcpy(data, move->input.extdata, sizeof(move->input.extdata));
+    return PSMove_True;
+}
+
 unsigned int
 psmove_get_buttons(PSMove *move)
 {
@@ -1370,17 +1437,15 @@ psmove_get_buttons(PSMove *move)
      *
      * Source:
      * https://code.google.com/p/moveonpc/wiki/InputReport
-     * https://code.google.com/p/moveonpc/wiki/SharpShooter
      *
-     *   22   22221 11    1  00000   0 <- bit (read top to bottom)
-     *   87...32109.76....1..87654...0
-     *   ^^   ^^^^^ ^^    ^  ^^^^^
-     *   ||   ||||| ||    |  |||||
-     *   ||   ||||| ||    |  |22222222 <- input report byte 2
-     *   ||   ||||| ||11111111         <- input report byte 1
-     *   ||   ||||| |3                 <- bit 0 of input report byte 3
-     *   ||   |||4444                  <- bits 4-7 of input report byte 4
-     *   EEEEEEEE                      <- input report byte at offset 0x2C
+     *           21  1    1  00000   0 <- bit (read top to bottom)
+     *   ........09..6....1..87654...0
+     *           ^^  ^    ^  ^^^^^
+     *           ||  |    |  |||||
+     *           ||  |    |  |22222222 <- input report byte 2
+     *           ||  |11111111         <- input report byte 1
+     *           ||  3                 <- bit 0 of input report byte 3
+     *           44                    <- bits 6-7 of input report byte 4
      *
      * Input report byte 1:
      *  xxxx4xx0
@@ -1403,27 +1468,17 @@ psmove_get_buttons(PSMove *move)
      *         ^- ps button
      *
      * Input report byte 4:
-     *  76x4xxxx
+     *  76xxxxxx
      *      ^^^^- input sequence number (see psmove_poll())
-     *     ^- sharp shooter connected
      *   ^- move
      *  ^- trigger
-     *
-     * Input report byte 0x2C (ext port / sharp shooter):
-     *  76xxx210
-     *         ^- weapon 1 selected
-     *        ^- weapon 2 selected
-     *       ^- weapon 3 selected
-     *   ^- trigger button (on sharp shooter) pressed
-     *  ^- reload button (on sharp shooter) pressed
      *
      **/
 
     return ((move->input.buttons2) |
             (move->input.buttons1 << 8) |
             ((move->input.buttons3 & 0x01) << 16) |
-            ((move->input.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */) |
-            (move->input.extdata << 21));
+            ((move->input.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
 }
 
 void
@@ -1445,6 +1500,63 @@ psmove_get_button_events(PSMove *move, unsigned int *pressed,
     move->last_buttons = buttons;
 }
 
+enum PSMove_Bool
+psmove_is_ext_connected(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+
+    if((move->input.buttons4 & 0x10) != 0) {
+        return PSMove_True;
+    }
+
+    return PSMove_False;
+}
+
+enum PSMove_Bool
+psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
+{
+    unsigned char send_buf[PSMOVE_EXT_DEVICE_SET_SIZE];
+    unsigned char recv_buf[PSMOVE_EXT_DEVICE_GET_SIZE];
+    int res;
+
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(ext != NULL, PSMove_False);
+
+    /* Send setup Report for the following read operation */
+    send_buf[0] = PSMove_Req_SetExtDeviceInfo;
+    send_buf[1] = 1;    /* read flag */
+    send_buf[2] = 0xA0; /* target extension device's I²C slave address */
+    send_buf[3] = 0;    /* offset for retrieving data */
+    send_buf[4] = 0xFF; /* number of bytes to retrieve */
+    res = hid_send_feature_report(move->handle, send_buf, sizeof(send_buf));
+
+    if (res != sizeof(send_buf)) {
+        psmove_DEBUG("Sending Feature Report for read setup failed");
+        return PSMove_False;
+    }
+
+    /* Send actual read Report */
+    memset(recv_buf, 0, sizeof(recv_buf));
+    recv_buf[0] = PSMove_Req_GetExtDeviceInfo;
+    res = hid_get_feature_report(move->handle, recv_buf, sizeof(recv_buf));
+
+    if (res != sizeof(recv_buf)) {
+        psmove_DEBUG("Sending Feature Report for actual read failed");
+        return PSMove_False;
+    }
+
+    memset(ext, 0, sizeof(PSMove_Ext_Device_Info));
+
+    /* Copy extension device ID */
+    ext->dev_id = (recv_buf[9] << 8) | recv_buf[10];
+
+    /* Copy device info following the device ID into EXT info struct */
+    assert(sizeof(ext->dev_info) <= sizeof(recv_buf) - 11);
+    memcpy(ext->dev_info, recv_buf + 11, sizeof(ext->dev_info));
+    
+    return PSMove_True;
+}
+
 enum PSMove_Battery_Level
 psmove_get_battery(PSMove *move)
 {
@@ -1458,15 +1570,53 @@ psmove_get_temperature(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return move->input.temp;
+    /**
+     * On the Move Motion Controller's PCB there is a voltage divider which
+     * contains a thermistor. An ADC reads the voltage across the thermistor
+     * (which changes its resistance with the temperature) and reports the
+     * raw value (plus an offset) as the value we see in the Input Report.
+     *
+     * The offset can be changed if the controller is running in Debug mode,
+     * but it seems to default to 0.
+     **/
+
+    return ((move->input.temphigh << 4) |
+            ((move->input.templow_mXhigh & 0xF0) >> 4));
 }
 
 float
 psmove_get_temperature_in_celsius(PSMove *move)
 {
+    /**
+     * The Move uses this table in Debug mode. Even though the resulting values
+     * are not labeled "degree Celsius" in the Debug output, measurements
+     * indicate that it is close enough.
+     **/
+    static int const temperature_lookup[80] = {
+        0x1F6, 0x211, 0x22C, 0x249, 0x266, 0x284, 0x2A4, 0x2C4,
+        0x2E5, 0x308, 0x32B, 0x34F, 0x374, 0x399, 0x3C0, 0x3E8,
+        0x410, 0x439, 0x463, 0x48D, 0x4B8, 0x4E4, 0x510, 0x53D,
+        0x56A, 0x598, 0x5C6, 0x5F4, 0x623, 0x651, 0x680, 0x6AF,
+        0x6DE, 0x70D, 0x73C, 0x76B, 0x79A, 0x7C9, 0x7F7, 0x825,
+        0x853, 0x880, 0x8AD, 0x8D9, 0x905, 0x930, 0x95B, 0x985,
+        0x9AF, 0x9D8, 0xA00, 0xA28, 0xA4F, 0xA75, 0xA9B, 0xAC0,
+        0xAE4, 0xB07, 0xB2A, 0xB4B, 0xB6D, 0xB8D, 0xBAD, 0xBCB,
+        0xBEA, 0xC07, 0xC24, 0xC40, 0xC5B, 0xC75, 0xC8F, 0xCA8,
+        0xCC1, 0xCD8, 0xCF0, 0xD06, 0xD1C, 0xD31, 0xD46, 0xD5A,
+    };
+
     psmove_return_val_if_fail(move != NULL, 0.0);
 
-    return (move->input.temp - 176.0)/-1.6;
+    int raw_value = psmove_get_temperature(move);
+    int i;
+
+    for (i = 0; i < 80; i++) {
+        if (temperature_lookup[i] > raw_value) {
+            return i - 10;
+        }
+    }
+
+    return 70;
 }
 
 unsigned char
@@ -1659,7 +1809,7 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
     psmove_return_if_fail(move != NULL);
 
     if (mx != NULL) {
-        *mx = TWELVE_BIT_SIGNED(((move->input.mXhigh & 0x0F) << 8) |
+        *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
                 move->input.mXlow);
     }
 

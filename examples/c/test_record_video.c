@@ -45,7 +45,6 @@ int main(int arg, char** args) {
 
     int i;
     void *frame;
-    int result;
 
     if (count == 0) {
         printf("No controllers connected.\n");
