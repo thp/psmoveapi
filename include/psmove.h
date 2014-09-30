@@ -105,6 +105,7 @@ enum PSMove_Button {
     Btn_SHARPSHOOTER_TRIGGER = 1 << 27, /*!< Trigger on Sharp Shooter */
     Btn_SHARPSHOOTER_RELOAD = 1 << 28, /*!< Reload on Sharp Shooter */
 
+#if 0
     /* Not used for now - only on Sixaxis/DS3 or nav controller */
     Btn_L2 = 1 << 0x00,
     Btn_R2 = 1 << 0x01,
@@ -116,6 +117,7 @@ enum PSMove_Button {
     Btn_RIGHT = 1 << 0x0D,
     Btn_DOWN = 1 << 0x0E,
     Btn_LEFT = 1 << 0x0F,
+#endif
 };
 
 
