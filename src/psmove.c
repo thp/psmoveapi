@@ -304,6 +304,7 @@ struct _PSMove {
     pthread_mutex_t led_write_mutex;
     pthread_cond_t led_write_new_data;
     unsigned char led_write_thread_write_queued;
+    unsigned char led_write_last_result;
 #endif
 
 #ifdef _WIN32
@@ -370,8 +371,14 @@ _psmove_led_write_thread_proc(void *data)
 
             long started = psmove_util_get_ticks();
 
-            hid_write(move->handle, (unsigned char*)(&leds),
+            int res = hid_write(move->handle, (unsigned char*)(&leds),
                     sizeof(leds));
+            if (res== sizeof(leds)) {
+                move->led_write_last_result = Update_Success;
+            } else {
+                psmove_DEBUG("Threaded LED update failed (wrote %d)\n", res);
+                move->led_write_last_result = Update_Failed;
+            }
 
             psmove_DEBUG("hid_write(%d) = %ld ms\n",
                     move->id,
@@ -622,6 +629,8 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
             NULL,
             _psmove_led_write_thread_proc,
             (void*)move) == 0, NULL);
+    /* Assume that the first LED write will succeed */
+    move->led_write_last_result = Update_Success;
 #endif
 
     /* Bookkeeping of open handles (for psmove_reinit) */
@@ -1283,7 +1292,11 @@ psmove_update_leds(PSMove *move)
             move->led_write_thread_write_queued = 1;
             pthread_cond_signal(&(move->led_write_new_data));
             pthread_mutex_unlock(&(move->led_write_mutex));
-            return Update_Success;
+            /**
+             * Can only return the last result, but assume that we can either
+             * write successfully or not at all, this should be good enough.
+             **/
+            return move->led_write_last_result;
 #else
             if (hid_write(move->handle, (unsigned char*)(&(move->leds)),
                     sizeof(move->leds)) == sizeof(move->leds)) {
