@@ -92,11 +92,8 @@
 /* Buffer size for the Bluetooth address set request */
 #define PSMOVE_BTADDR_SET_SIZE 23
 
-/* Buffer size for sending a request to an extension device */
-#define PSMOVE_EXT_DEVICE_SET_SIZE 5
-
-/* Buffer size for retrieving data from an extension device */
-#define PSMOVE_EXT_DEVICE_GET_SIZE 49
+/* Buffer size for sending/retrieving a request to an extension device */
+#define PSMOVE_EXT_DEVICE_REPORT_SIZE 49
 
 /* Maximum length of the serial string */
 #define PSMOVE_MAX_SERIAL_LENGTH 255
@@ -1502,14 +1499,15 @@ psmove_is_ext_connected(PSMove *move)
 enum PSMove_Bool
 psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
 {
-    unsigned char send_buf[PSMOVE_EXT_DEVICE_SET_SIZE];
-    unsigned char recv_buf[PSMOVE_EXT_DEVICE_GET_SIZE];
+    unsigned char send_buf[PSMOVE_EXT_DEVICE_REPORT_SIZE];
+    unsigned char recv_buf[PSMOVE_EXT_DEVICE_REPORT_SIZE];
     int res;
 
     psmove_return_val_if_fail(move != NULL, PSMove_False);
     psmove_return_val_if_fail(ext != NULL, PSMove_False);
 
     /* Send setup Report for the following read operation */
+    memset(send_buf, 0, sizeof(send_buf));
     send_buf[0] = PSMove_Req_SetExtDeviceInfo;
     send_buf[1] = 1;    /* read flag */
     send_buf[2] = 0xA0; /* target extension device's I²C slave address */
