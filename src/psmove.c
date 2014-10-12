@@ -1516,7 +1516,7 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
     res = hid_send_feature_report(move->handle, send_buf, sizeof(send_buf));
 
     if (res != sizeof(send_buf)) {
-        psmove_DEBUG("Sending Feature Report for read setup failed");
+        psmove_DEBUG("Sending Feature Report for read setup failed\n");
         return PSMove_False;
     }
 
@@ -1526,7 +1526,7 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
     res = hid_get_feature_report(move->handle, recv_buf, sizeof(recv_buf));
 
     if (res != sizeof(recv_buf)) {
-        psmove_DEBUG("Sending Feature Report for actual read failed");
+        psmove_DEBUG("Sending Feature Report for actual read failed\n");
         return PSMove_False;
     }
 
