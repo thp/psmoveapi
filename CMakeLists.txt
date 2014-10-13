@@ -78,6 +78,11 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     endif()
 ENDIF()
 
+# Prevent windows.h from automatically including a bunch of header files
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+endif()
+
 # Debugging output
 if(PSMOVE_USE_DEBUG)
     add_definitions(-DPSMOVE_DEBUG)
