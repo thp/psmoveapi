@@ -90,11 +90,11 @@ IMPORTANT: Get the right MinGW version!
 	git clone git://github.com/thp/psmoveapi.git
 	cd psmoveapi
 
-4. Init and update the submodules
+3. Init and update the submodules
 	git submodule init
 	git submodule update
 
-5.  make OpenCV known to your system and the cmake toolchain
+4.  make OpenCV known to your system and the cmake toolchain
 	set OpenCV_DIR=<the path where you extracted opencv>
 	set PATH=%PATH%;%OpenCV_DIR%\build\bin
 
@@ -103,7 +103,7 @@ IMPORTANT: Get the right MinGW version!
     CMake option "PSMOVE_USE_LOCAL_OPENCV" to link against
     OpenCV statically from this checkout / build directory.
 
-7. prepare a new build with cmake for the psmoveapi
+5. prepare a new build with cmake for the psmoveapi
 	mkdir build
 	cd build
 	cmake .. -G "MinGW Makefiles"
@@ -111,8 +111,8 @@ IMPORTANT: Get the right MinGW version!
         Alternatively, if you want to use the CL Eye SDK:
 	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=ON
 
-8. finally build
+6. finally build
 	mingw32-make
 
-9. start one of the desired test applications
+7. start one of the desired test applications
 
