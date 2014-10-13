@@ -65,8 +65,12 @@ option(PSMOVE_USE_MADGWICK_AHRS "Use AHRS algorithm (GPL license)" OFF)
 # Bluez 5.x support (Linux only)
 option(PSMOVE_BLUEZ5_SUPPORT "Enable Bluez 5.x support" OFF)
 
-# https://github.com/thp/psmoveapi/issues/29
-add_definitions(-fPIC)
+# We recommend using MinGW-w64 for the Windows builds which generates
+# position-independent code by default, so skip this for Windows builds.
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # https://github.com/thp/psmoveapi/issues/29
+    add_definitions(-fPIC)
+endif()
 
 # Required by pthread, must be defined before include of any standard header.
 # It's easier to do this here once instead of multiple times in different source/header files.
