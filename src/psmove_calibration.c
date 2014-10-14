@@ -164,7 +164,7 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 
     printf("\n");
 
-    printf("# byte at 0x3F: %02hhx\n", data[0x3F]);
+    printf("# byte at 0x3F: %02x\n", (unsigned char) data[0x3F]);
 }
 
 void
@@ -226,7 +226,7 @@ psmove_calibration_dump_usb(PSMoveCalibration *calibration)
     assert(calibration != NULL);
 
     for (j=0; j<sizeof(calibration->usb_calibration); j++) {
-        printf("%02hhx", calibration->usb_calibration[j]);
+        printf("%02x", (unsigned char) calibration->usb_calibration[j]);
         if (j % 16 == 15) {
             printf("\n");
         } else if (j < sizeof(calibration->usb_calibration)-1) {
