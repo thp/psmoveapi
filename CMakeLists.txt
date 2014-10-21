@@ -62,9 +62,6 @@ option(PSMOVE_USE_TRACKER_TRACE "Write tracker calibration images to disk" OFF)
 # Madgwick's orientation algorithm (GPL-licensed)
 option(PSMOVE_USE_MADGWICK_AHRS "Use AHRS algorithm (GPL license)" OFF)
 
-# Bluez 5.x support (Linux only)
-option(PSMOVE_BLUEZ5_SUPPORT "Enable Bluez 5.x support" OFF)
-
 # https://github.com/thp/psmoveapi/issues/29
 add_definitions(-fPIC)
 
@@ -72,10 +69,6 @@ add_definitions(-fPIC)
 # It's easier to do this here once instead of multiple times in different source/header files.
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_definitions(-D_GNU_SOURCE)
-
-    if(PSMOVE_BLUEZ5_SUPPORT)
-        add_definitions(-DPSMOVE_BLUEZ5_SUPPORT)
-    endif()
 ENDIF()
 
 # Debugging output
@@ -268,6 +261,15 @@ ELSE()
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
     pkg_check_modules(BLUEZ REQUIRED bluez)
+    
+    # auto-detect BlueZ version >= 5
+    if(${BLUEZ_VERSION} VERSION_LESS "5.0")
+        set(INFO_BLUEZ5_SUPPORT "No")
+    else()
+        set(INFO_BLUEZ5_SUPPORT "Yes")
+        add_definitions(-DPSMOVE_BLUEZ5_SUPPORT)
+    endif()
+
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
 
@@ -652,6 +654,7 @@ message("    Debug build:      " ${INFO_USE_DEBUG})
 message("    Tracker library:  " ${INFO_BUILD_TRACKER})
 message("    AHRS algorithm:   " ${INFO_AHRS_ALGORITHM})
 message("    Library license:  " ${INFO_LICENSE} " (see README for details)")
+message("    BlueZ 5 support:  " ${INFO_BLUEZ5_SUPPORT} " (for pairing on Linux only)")
 message("")
 message("  Language bindings")
 message("    Python:           " ${INFO_BUILD_PYTHON_BINDINGS})
