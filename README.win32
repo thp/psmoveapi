@@ -41,12 +41,38 @@ Optional dependency:
 IMPORTANT: Get the right MinGW version!
 
  -> "Regular" MinGW might not be able to build the PS Move API, as we are
-    using some features that are only included in MinGW-W64.
+    using some features that are only included in MinGW-w64.
 
- -> Get "MinGW-W64" instead. Despite its name, it also works for 32-bit
+ -> Get "MinGW-w64" instead. Despite its name, it also works for 32-bit
     systems (and you probably have to/want to build PS Move API as 32-bit
     library on Windows, anyway. This is also what we use, both for cross-
     compiling it on Linux, and for building it directly on Windows.
+
+ -> The build has been successfully tested on Windows XP, Windows 7,
+    and Windows 8 using MinGW-w64 version 4.9.1. To get it, you can either
+    A) use the online installer or B) download the archive directly for
+    manual setup:
+
+    A) Get the online installer at http://sourceforge.net/projects/mingw-w64/
+
+       Run the installer using these setup settings:
+
+           Version:        4.9.1
+           Architecture:   i686 or x86_64
+           Threads:        posix
+           Exception:      sjlj or seh
+           Build revision: 1
+
+    B) For 64-bit Windows, get the archive at
+       http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/4.9.1/threads-posix/sjlj/
+
+       For 32-bit Windows, get the archive at
+       http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/4.9.1/threads-posix/sjlj/
+
+       Extract the archive (using 7-Zip) and add the path to its "bin" subdirectory to the
+       PATH environment variable like so, for instance:
+
+           set PATH=C:\mingw32\bin;%PATH%
 
 
 
@@ -64,11 +90,11 @@ IMPORTANT: Get the right MinGW version!
 	git clone git://github.com/thp/psmoveapi.git
 	cd psmoveapi
 
-4. Init and update the submodules
+3. Init and update the submodules
 	git submodule init
 	git submodule update
 
-5.  make OpenCV known to your system and the cmake toolchain
+4.  make OpenCV known to your system and the cmake toolchain
 	set OpenCV_DIR=<the path where you extracted opencv>
 	set PATH=%PATH%;%OpenCV_DIR%\build\bin
 
@@ -77,7 +103,7 @@ IMPORTANT: Get the right MinGW version!
     CMake option "PSMOVE_USE_LOCAL_OPENCV" to link against
     OpenCV statically from this checkout / build directory.
 
-7. prepare a new build with cmake for the psmoveapi
+5. prepare a new build with cmake for the psmoveapi
 	mkdir build
 	cd build
 	cmake .. -G "MinGW Makefiles"
@@ -85,8 +111,8 @@ IMPORTANT: Get the right MinGW version!
         Alternatively, if you want to use the CL Eye SDK:
 	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=ON
 
-8. finally build
-	mingw32-make (XXX: Is this still correct for mingw-w64?)
+6. finally build
+	mingw32-make
 
-9. start one of the desired test applications
+7. start one of the desired test applications
 

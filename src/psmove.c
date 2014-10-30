@@ -1192,8 +1192,10 @@ _psmove_btaddr_to_string(const PSMove_Data_BTAddr addr)
     int size = 18; /* strlen("aa:bb:cc:dd:ee:ff") + 1 */
     char *result = (char*)malloc(size);
 
-    snprintf(result, size, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
-            addr[5], addr[4], addr[3], addr[2], addr[1], addr[0]);
+    snprintf(result, size, "%02x:%02x:%02x:%02x:%02x:%02x",
+            (unsigned char) addr[5], (unsigned char) addr[4],
+            (unsigned char) addr[3], (unsigned char) addr[2],
+            (unsigned char) addr[1], (unsigned char) addr[0]);
 
     return result;
 }
@@ -2187,7 +2189,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     return result;
 }
 
-#if defined(__APPLE__) || defined(_WIN32)
+#if defined(__APPLE__)
 
 #define CLOCK_MONOTONIC 0
 
@@ -2202,7 +2204,7 @@ clock_gettime(int unused, struct timespec *ts)
 
     return 0;
 }
-#endif /* __APPLE__ || _WIN32 */
+#endif /* __APPLE__ */
 
 PSMove_timestamp
 _psmove_timestamp()
