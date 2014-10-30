@@ -168,6 +168,7 @@ endif()
 
 set(INFO_USE_CL_EYE_SDK "No (Windows only)")
 set(INFO_USE_PS3EYE_DRIVER "No (OS X only)")
+set(INFO_BLUEZ5_SUPPORT "No")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(FOUNDATION Foundation)
