@@ -230,7 +230,7 @@ psmove_3axisvector_min(PSMove_3AxisVector vector)
 {
     if (vector.x < vector.y && vector.x < vector.z) {
         return vector.x;
-    } else if (vector.y < vector.y) {
+    } else if (vector.y < vector.z) {
         return vector.y;
     } else {
         return vector.z;
@@ -242,7 +242,7 @@ psmove_3axisvector_max(PSMove_3AxisVector vector)
 {
     if (vector.x > vector.y && vector.x > vector.z) {
         return vector.x;
-    } else if (vector.y > vector.y) {
+    } else if (vector.y > vector.z) {
         return vector.y;
     } else {
         return vector.z;
@@ -686,7 +686,7 @@ _psmove_get_auth_response(PSMove *move)
     /* Copy response data into output buffer */
     PSMove_Data_AuthResponse *output_buf = malloc(sizeof(PSMove_Data_AuthResponse));
     memcpy(*output_buf, buf + 1, sizeof(*output_buf));
-    
+
     return output_buf;
 }
 
@@ -727,7 +727,7 @@ _psmove_get_firmware_info(PSMove *move)
 
     /* Copy unknown trailing bytes into info struct */
     memcpy(info->_unknown, p + 6, sizeof(info->_unknown));
-    
+
     return info;
 }
 
@@ -739,10 +739,10 @@ _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode)
     int mode_magic_val;
 
     psmove_return_val_if_fail(move != NULL, PSMove_False);
-    
+
     /* We currently support setting STDFU or BTDFU mode only */
     psmove_return_val_if_fail(mode == Mode_STDFU || mode == Mode_BTDFU, PSMove_False);
-    
+
     switch (mode) {
         case Mode_STDFU:
             mode_magic_val = 0x42;
@@ -1540,7 +1540,7 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
     /* Copy device info following the device ID into EXT info struct */
     assert(sizeof(ext->dev_info) <= sizeof(recv_buf) - 11);
     memcpy(ext->dev_info, recv_buf + 11, sizeof(ext->dev_info));
-    
+
     return PSMove_True;
 }
 
