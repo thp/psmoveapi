@@ -79,7 +79,7 @@ void handle_sharp_shooter(PSMove_Ext_Data *data, unsigned int move_buttons)
     }
 }
 
-void handle_racing_wheel(PSMove_Ext_Data *data, unsigned int buttons)
+void handle_racing_wheel(PSMove *move, PSMove_Ext_Data *data, unsigned int move_buttons)
 {
     /**
      * For a detailed device documentation and a guide for accessing button values, see
@@ -87,6 +87,12 @@ void handle_racing_wheel(PSMove_Ext_Data *data, unsigned int buttons)
      **/
 
     assert(data != NULL);
+
+    unsigned char send_buf[3] = { 0x20, 0x00, 0x00 };
+
+    /* helpers for keeping track of changes in the L2 and R2 buttons */
+    static unsigned char last_l2 = 0;
+    static unsigned char last_r2 = 0;
 
     unsigned char throttle = (*data)[0];
     unsigned char l2       = (*data)[1];
@@ -104,6 +110,24 @@ void handle_racing_wheel(PSMove_Ext_Data *data, unsigned int buttons)
     }
 
     printf("\n");
+
+    /* make left/right handle rumble according to the L2/R2 value */
+    /* NOTE: This example is intentionally kept simple and may thus update the rumble
+             with a small lag. In a real-world application, make sure to implement some
+             kind of rate limiting to avoid too many updates. Also, an automatic refresh
+             of rumble values may be useful since the Racing Wheel's rumble will
+             automatically switch off after short period of time.
+    */
+    if (l2 != last_l2 || r2 != last_r2) {
+        send_buf[1] = r2;
+        send_buf[2] = l2;
+        if (!psmove_send_ext_data(move, send_buf, sizeof(send_buf))) {
+            printf("Failed to send rumble data to Racing Wheel.\n");
+        }
+
+        last_l2 = l2;
+        last_r2 = r2;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -179,7 +203,7 @@ int main(int argc, char *argv[])
                         handle_sharp_shooter(&data, move_buttons);
                         break;
                     case Ext_Racing_Wheel:
-                        handle_racing_wheel(&data, move_buttons);
+                        handle_racing_wheel(move, &data, move_buttons);
                         break;
                     default:
                         break;
