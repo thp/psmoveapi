@@ -256,6 +256,9 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     set(HIDAPI_SRC ${PSMOVEAPI_SOURCE_DIR}/external/hidapi/windows/hid.c)
 
+    list(APPEND PSMOVEAPI_PLATFORM_SRC
+        ${PSMOVEAPI_SOURCE_DIR}/src/platform/psmove_winsupport.c)
+
     list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_win32.c)
 ELSE()
