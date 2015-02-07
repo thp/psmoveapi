@@ -9,12 +9,12 @@ for Windows on Linux, you can use the following script:
     contrib/cross-compile-mingw64
 
 
-Please take into account that nobody has yet managed to make Bluetooth pairing
-work reliably on Windows (it works reliably on both Mac OS X and Linux). If you
-plan to do serious development, it's time to switch to Mac OS X or Linux. As an
-alternative, you can use a Linux host for Bluetooth communcation, and export
-the controller via "moved" to the Windows host. This setup has reliable pairing,
-and you can still develop and build your applications in Windows if you have to.
+Please take into account that Bluetooth pairing on Windows still does not work
+as smoothly as on both Mac OS X and Linux. If you plan to do serious
+development, it's time to switch to Mac OS X or Linux. As an alternative, you
+can use a Linux host for Bluetooth communcation, and export the controller via
+"moved" to the Windows host. This setup has reliable pairing, and you can still
+develop and build your applications in Windows if you have to.
 
 
 Requirements
