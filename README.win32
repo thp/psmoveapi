@@ -76,55 +76,52 @@ IMPORTANT: Get the right MinGW version!
 
 
 
-1. build and configure OpenCV with cmake
-	:: you may skip to build OpenCV on your own, however i had no luck
-	:: the binary distribution did not work on my system
-	cd <where you extracted opencv>
-	mkdir build
-	cd build
-	cmake .. -G "MinGW Makefiles"
-	mingw32-make
-	:: now go for a coffe-break
-
-	Bonus-Tipp: If you wish to link opencv statically, provide
-	one extra parameter to cmake: -DBUILD_SHARED_LIBS=OFF
-
-2. Get you clone of the psmoveapi
+1. Get you clone of the psmoveapi
 	git clone git://github.com/thp/psmoveapi.git
 	cd psmoveapi
 
-3. Init and update the submodules
+2. Init and update the submodules
 	git submodule init
 	git submodule update
 
-4.  make OpenCV known to your system and the cmake toolchain
-	set OpenCV_DIR=<the path where you extracted opencv>
-	set PATH=%PATH%;%OpenCV_DIR%\build\bin
+3. Get OpenCV
+	Since OpenCV binary distributions typically do not come with
+	MinGW builds, we build our own. First, get version 2.4.10 from
+	the OpenCV repository.
 
-	You can also build opencv in a folder "opencv" inside the
-	source directory. When you're in the psmoveapi directory,
-	either clone opencv from github, or put the contents of the
-	sources directory in a directory called "opencv".
+	git clone --depth 1 --branch 2.4.10 git://github.com/Itseez/opencv.git
+	cd opencv
 
-	Either way, you should end up with a directory "opencv"
-	containing opencv's README.md
+4. Configure the OpenCV build to produce static libs
 
-	Then you can use the CMake option "PSMOVE_USE_LOCAL_OPENCV"
-	to link against OpenCV statically from this checkout /
-	build directory.
-
-5. prepare a new build with cmake for the psmoveapi
 	mkdir build
 	cd build
-	cmake .. -G "MinGW Makefiles"
+	cmake .. -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=0
+
+5. Build and install OpenCV
+
+	It will install to psmoveapi's opencv/build/install subdirectory.
+
+	mingw32-make
+	mingw32-make install
+
+6. prepare a new build with cmake for the psmoveapi
+
+	Switch back to the psmoveapi root directory.
+
+	cd ..\..
+
+	mkdir build
+	cd build
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1
 
         Alternatively, if you want to use the CL Eye SDK:
-	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=ON
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_CL_EYE_SDK=ON
 
-6. finally build
+7. finally build psmoveapi
 	mingw32-make
 
-7. pair the controller to the host
+8. pair the controller to the host
 
     Using the controllers' Bluetooth capabilities requires you to pair the
     controller to the host computer first. That is what the psmovepair utility
@@ -146,7 +143,7 @@ IMPORTANT: Get the right MinGW version!
     the controller from the list of Bluetooth devices you need to run
     psmovepair again for that controller.
 
-8. start one of the desired test applications
+9. start one of the desired test applications
 
     If you previously chose to build the example applications (which is the
     default), you can then run
