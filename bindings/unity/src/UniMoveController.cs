@@ -236,8 +236,8 @@ public class UniMoveController : MonoBehaviour
 			
 			// The events are not really working from the PS Move Api. So we do our own with the prevButtons
 			//psmove_get_button_events(handle, ref pressed, ref released);
+			currentButtons = buttons;
 		}
-		currentButtons = buttons;
 
 		
 		// For acceleration, gyroscope, and magnetometer values, we look at only the last value in the queue.
