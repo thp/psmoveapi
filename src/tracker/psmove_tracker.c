@@ -473,7 +473,7 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
     float target_luminance = 0;
     switch (tracker->exposure_mode) {
         case Exposure_LOW:
-            target_luminance = 0;
+            target_luminance = 1;
             break;
         case Exposure_MEDIUM:
             target_luminance = 25;
@@ -1545,7 +1545,7 @@ psmove_tracker_free(PSMoveTracker *tracker)
 int
 psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
 {
-    float minimum_exposure = 2051;
+    float minimum_exposure = 1; // Was 2051
     float maximum_exposure = 65535;
     float current_exposure = (maximum_exposure + minimum_exposure) / 2.;
 

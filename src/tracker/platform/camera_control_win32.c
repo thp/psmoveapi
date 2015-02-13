@@ -180,7 +180,9 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	if (cc->capture) {
             cvReleaseCapture(&cc->capture);
         }
-
+    
+    ps3eye_set_parameters(cc->eye, autoG > 0, autoWB > 0, gain, exposure, contrast, brightness);
+    
 	int width, height;
 	get_metrics(&width, &height);
 
