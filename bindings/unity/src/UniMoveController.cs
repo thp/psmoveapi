@@ -261,7 +261,7 @@ public class UniMoveController : MonoBehaviour
 	
 	/// <summary>
     /// Returns true if "button" is currently down.
-    /// </summary
+    /// </summary>
 	public bool GetButton(PSMoveButton b)
     {
 		if (disconnected) return false;
@@ -271,7 +271,7 @@ public class UniMoveController : MonoBehaviour
 
 	/// <summary>
     /// Returns true if "button" is pressed down this instant.
-    /// </summary
+    /// </summary>
 	public bool GetButtonDown(PSMoveButton b)
     {
 		if (disconnected) return false;
@@ -280,17 +280,17 @@ public class UniMoveController : MonoBehaviour
 
 	/// <summary>
     /// Returns true if "button" is released this instant.
-    /// </summary
+    /// </summary>
 	public bool GetButtonUp(PSMoveButton b)
     {
 		if (disconnected) return false;
 		
     	return ((prevButtons & (uint)b) != 0) &&  ((currentButtons & (uint)b) == 0);
     }
+
 	/// <summary>
     /// Disconnect the controller
     /// </summary>
-
 	public void Disconnect()
     {
 		disconnected = true;
@@ -301,7 +301,7 @@ public class UniMoveController : MonoBehaviour
 	
 	/// <summary>
     /// Whether or not the controller has been disconnected
-    /// </summary
+    /// </summary>
 	public bool Disconnected
     {
 		get { return disconnected; }
@@ -347,7 +347,7 @@ public class UniMoveController : MonoBehaviour
 	
 	/// <summary>
     /// Value of the analog trigger button (between 0 and 1)
-    /// </summary
+    /// </summary>
 	public float Trigger
     {
 		get { return trigger; }
@@ -376,6 +376,7 @@ public class UniMoveController : MonoBehaviour
 	{
 		get { return rawGyro; }
 	}
+
 	/// <summary>
     /// The raw values of the 3-axis gyroscope. 
     /// </summary>
