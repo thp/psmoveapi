@@ -28,7 +28,6 @@
 
 #include "../camera_control.h"
 #include "../camera_control_private.h"
-
 #include "psmove_osxsupport.h"
 
 void
@@ -47,6 +46,7 @@ camera_control_set_parameters(CameraControl* cc,
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
     // TODO: Implement setting those parameters on cc->eye
     ps3eye_set_parameters(cc->eye, autoG > 0, autoWB > 0, gain, exposure, contrast, brightness);
+    //cc->eye->eye->setExposure(exposure);
     psmove_WARNING("Unimplemented: Only some PS3EYEDriver parameters set.\n");
 #else
     macosx_camera_set_exposure_lock(1);
