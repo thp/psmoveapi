@@ -86,6 +86,9 @@ IMPORTANT: Get the right MinGW version!
 	mingw32-make
 	:: now go for a coffe-break
 
+	Bonus-Tipp: If you wish to link opencv statically, provide
+	one extra parameter to cmake: -DBUILD_SHARED_LIBS=OFF
+
 2. Get you clone of the psmoveapi
 	git clone git://github.com/thp/psmoveapi.git
 	cd psmoveapi
@@ -98,10 +101,17 @@ IMPORTANT: Get the right MinGW version!
 	set OpenCV_DIR=<the path where you extracted opencv>
 	set PATH=%PATH%;%OpenCV_DIR%\build\bin
 
-    You can also build opencv in a folder "opencv" inside the
-    source directory (opencv/build/install) and then use the
-    CMake option "PSMOVE_USE_LOCAL_OPENCV" to link against
-    OpenCV statically from this checkout / build directory.
+	You can also build opencv in a folder "opencv" inside the
+	source directory. When you're in the psmoveapi directory,
+	either clone opencv from github, or put the contents of the
+	sources directory in a directory called "opencv".
+
+	Either way, you should end up with a directory "opencv"
+	containing opencv's README.md
+
+	Then you can use the CMake option "PSMOVE_USE_LOCAL_OPENCV"
+	to link against OpenCV statically from this checkout /
+	build directory.
 
 5. prepare a new build with cmake for the psmoveapi
 	mkdir build

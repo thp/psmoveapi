@@ -132,10 +132,12 @@ endif()
 option(PSMOVE_USE_LOCAL_OPENCV "Use locally-built OpenCV (static linking)" OFF)
 if (PSMOVE_USE_LOCAL_OPENCV)
     # Force tracker build with a locally-built opencv library installation
-    set(OPENCV_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv/build/install)
-    link_directories(${OPENCV_INSTALL_DIR}/lib)
-    link_directories(${OPENCV_INSTALL_DIR}/../3rdparty/lib)
-    include_directories(${OPENCV_INSTALL_DIR}/include)
+    set(OPENCV_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
+    link_directories(${OPENCV_SRC_DIR}/build/lib)
+    link_directories(${OPENCV_SRC_DIR}/build/3rdparty/lib)
+    include_directories(${OPENCV_SRC_DIR}/modules/core/include)
+    include_directories(${OPENCV_SRC_DIR}/modules/imgproc/include)
+    include_directories(${OPENCV_SRC_DIR}/modules/highgui/include)
     set(PSMOVE_BUILD_TRACKER ON)
     set(INFO_BUILD_TRACKER "Yes (with local OpenCV)")
 
@@ -154,7 +156,7 @@ if (PSMOVE_USE_LOCAL_OPENCV)
             ${AVFOUNDATION})
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-            opencv_highgui249 opencv_imgproc249 opencv_core249
+            opencv_highgui2410 opencv_imgproc2410 opencv_core2410
             libjpeg libpng zlib stdc++
             vfw32 comctl32)
     else()
