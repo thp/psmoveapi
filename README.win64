@@ -1,0 +1,114 @@
+Requirements
+------------
+
+- MinGW
+  http://mingw-w64.sourceforge.net/
+  (Actually I used tdm64-gcc-4.9.2-3 but this should make no difference. http://tdm-gcc.tdragon.net/download)
+  See README.win32 for instructions on how to get MinGW-w64, be sure to get the 64-bit Windows archive.
+- CMake
+  http://www.cmake.org/cmake/resources/software.html
+- OpenCV
+  http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
+- Git
+  http://code.google.com/p/msysgit/
+
+1. Clone the PS Move API repository
+
+    git clone --recursive git://github.com/thp/psmoveapi.git
+    cd psmoveapi
+    
+    1.b. Until PS3EYEDriver changes are merged upstream, use mine instead.
+        edit .gitmodules and change the URL for [submodule "external/PS3EYEDriver"] to https://github.com/cboulay/PS3EYEDriver.git
+        git submodule sync
+        git submodule update
+    
+2. Get libusb-1.0 built binaries
+
+    http://libusb.info/
+    Downloads -> latest windows binaries
+    Unpack into psmoveapi\external\libusb-1.0
+    If you choose a different version then be sure to update CMakeLists.txt with the proper libusb-1.0 directory structure.
+    
+3. Build OpenCV repository
+
+    OpenCV binary distributions typically do not come with MinGW builds. We must build on our own.
+    
+    I can never seem to get a clean download of OpenCV using git, so I have to download the archive.
+    If using msys-git then you can use the following commands. The end result is to have the opencv directory as a subdirectory of psmoveapi.
+    
+    curl -L -o opencv.zip https://github.com/Itseez/opencv/archive/2.4.10.1.zip
+    unzip opencv.zip
+    mv opencv-2.4.10.1 opencv
+    rm opencv.zip
+    
+    Now build. Funny thing about cmake is it won't work very well when run from msys-git. So switch to the MinGW command prompt.
+    
+    cd opencv
+    mkdir build
+    cd build
+    cmake .. -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=0 -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_flann=OFF -DBUILD_opencv_features2d=OFF -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF
+    mingw32-make -j4
+    mingw32-make install
+    
+4. Build psmoveapi
+
+    cd ..\..
+    mkdir build
+    cd build
+    SET CMAKE_CXX_FLAGS=%CMAKE_CXX_FLAGS% -std=c++11
+    cmake .. -G "MinGW Makefiles" -DPSMOVE_BUILD_PYTHON_BINDINGS=0 -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1
+    mingw32-make
+
+8. Pair the controller to the host
+
+    Using the controllers' Bluetooth capabilities requires you to pair the
+    controller to the host computer first. That is what the psmovepair utility
+    is for. It is automatically built as part of the PS Move API.
+
+    Make sure that Bluetooth is enabled on your computer, then connect a Move
+    controller via USB and run
+
+    psmovepair.exe
+
+    to store the host's Bluetooth device address in the Move and register the
+    controller.
+    
+    Try the remaining onscreen instructions but pairing is likely to fail at this point, then just Ctrl+C out of the program.
+    
+    Reboot your computer.
+    "Devices and Printers."
+    You should see a grayed out Motion Controller device.
+    Double click on it to open its properties.
+    Click on the "Services" tab. We are looking for a checkbox "Drivers for keyboard, mice, etc (HID)"
+    If the box is unavailable, try pressing the PS button on your controller.
+    If that still does not make the box available, try running [psmove-pair-win](https://github.com/nitsch/psmove-pair-win).
+    When the box is available, check it.
+    Click OK.
+    Open regedit.
+    Navigate to HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\HidBth\Parameters\Devices
+    You will likely only have one key there for your device. Change its VirtuallyCabled DWORD value to 1.
+    Reboot.
+    
+    You should now be able to pair immediately by pressing the PS button on the controller.
+    If that fails then try the [psmove-pair-win] utility again.
+    
+9. If you intend to use the PS3Eye camera then you currently need a registry entry for it.
+    Double click ps3eye_settings.reg to enter it.
+    The camera may also crash when you attempt to access it.
+    This is because libusb is trying to open a different device that matches the VID and PID of the PS3EYE (maybe the microphone?).
+    In which case, `SET PSMOVE_TRACKER_CAMERA=2` (or maybe =1).
+
+10. Start one of the desired test applications
+
+    If you previously chose to build the example applications (which is the
+    default), you can then run
+
+    example.exe
+
+    for a basic example.
+
+For questions, please read the archives of the PS Move Mailing List. If you
+cannot find an answer to your question in the archives, send an e-mail:
+
+   https://groups.google.com/forum/#!aboutgroup/psmove
+   

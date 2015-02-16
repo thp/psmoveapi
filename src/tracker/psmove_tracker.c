@@ -414,7 +414,10 @@ PSMoveTracker *psmove_tracker_new() {
         camera = 0;
     }
 #endif
-
+#if defined(_WIN32) && defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+    printf("\nDetected PS3EYEDriver in Windows. You may have to `SET %s=2` (or =1).\n",
+           PSMOVE_TRACKER_CAMERA_ENV);
+#endif
     int camera_env = psmove_util_get_env_int(PSMOVE_TRACKER_CAMERA_ENV);
     if (camera_env != -1) {
         camera = camera_env;

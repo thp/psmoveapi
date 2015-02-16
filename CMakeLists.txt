@@ -133,8 +133,6 @@ option(PSMOVE_USE_LOCAL_OPENCV "Use locally-built OpenCV (static linking)" OFF)
 if (PSMOVE_USE_LOCAL_OPENCV)
     # Force tracker build with a locally-built opencv library installation
     set(OPENCV_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv/build/install)
-    link_directories(${OPENCV_INSTALL_DIR}/lib)
-    link_directories(${OPENCV_INSTALL_DIR}/../3rdparty/lib)
     include_directories(${OPENCV_INSTALL_DIR}/include)
     set(PSMOVE_BUILD_TRACKER ON)
     set(INFO_BUILD_TRACKER "Yes (with local OpenCV)")
@@ -144,7 +142,8 @@ if (PSMOVE_USE_LOCAL_OPENCV)
         find_library(APPKIT AppKit)
         find_library(QTKIT QTKit)
         find_library(AVFOUNDATION AVFoundation)
-
+        link_directories(${OPENCV_INSTALL_DIR}/lib)
+        link_directories(${OPENCV_INSTALL_DIR}/../3rdparty/lib)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
             opencv_core opencv_highgui opencv_imgproc
             libjpeg libpng zlib stdc++
@@ -153,8 +152,9 @@ if (PSMOVE_USE_LOCAL_OPENCV)
             ${QTKIT}
             ${AVFOUNDATION})
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        link_directories(${OPENCV_INSTALL_DIR}/x64/mingw/staticlib)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-            opencv_highgui249 opencv_imgproc249 opencv_core249
+            opencv_highgui2410 opencv_imgproc2410 opencv_core2410
             libjpeg libpng zlib stdc++
             vfw32 comctl32)
     else()
@@ -167,7 +167,7 @@ if (PSMOVE_USE_DEBUG_CAPTURE)
 endif()
 
 set(INFO_USE_CL_EYE_SDK "No (Windows only)")
-set(INFO_USE_PS3EYE_DRIVER "No (OS X only)")
+set(INFO_USE_PS3EYE_DRIVER "No (OS X or Windows only)")
 set(INFO_BLUEZ5_SUPPORT "No")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -194,34 +194,6 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/psmove_osxsupport.m
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_macosx.c)
 
-    if(PSMOVE_USE_PS3EYE_DRIVER)
-        add_definitions(-DCAMERA_CONTROL_USE_PS3EYE_DRIVER)
-        list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
-            ${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src/ps3eye.cpp
-            ${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src/ps3eyedriver.cpp)
-        include_directories(${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src)
-
-        # Option to statically link OpenCV instead of using the system-wide install
-        option(PSMOVE_USE_LOCAL_LIBUSB "Use locally-built libusb (static linking)" OFF)
-        if (PSMOVE_USE_LOCAL_LIBUSB)
-            set(INFO_USE_PS3EYE_DRIVER "Yes (static libusb)")
-            # Assume the user has built libusb in external/libusb-1.0.9/
-            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-                ${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0.9/build/libusb/.libs/libusb-1.0.a)
-            include_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0.9/libusb)
-        else()
-            set(INFO_USE_PS3EYE_DRIVER "Yes")
-            # Use pkg-config to link against libusb-1.0
-            find_package(PkgConfig REQUIRED)
-            pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
-
-            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
-            include_directories(${LIBUSB_INCLUDE_DIRS})
-            link_directories(${LIBUSB_LIBDIR})
-        endif()
-    else()
-        set(INFO_USE_PS3EYE_DRIVER "No (disabled)")
-    endif()
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
 
@@ -295,6 +267,47 @@ ELSE()
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/psmove_linuxsupport.c
         ${PSMOVEAPI_SOURCE_DIR}/src/tracker/platform/camera_control_linux.c)
 ENDIF()
+
+if(PSMOVE_USE_PS3EYE_DRIVER)
+    add_definitions(-DCAMERA_CONTROL_USE_PS3EYE_DRIVER)
+    list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+    ${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src/ps3eye.cpp
+    ${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src/ps3eyedriver.cpp)
+    include_directories(${PSMOVEAPI_SOURCE_DIR}/external/PS3EYEDriver/src)
+
+    # Option to statically link OpenCV instead of using the system-wide install
+    option(PSMOVE_USE_LOCAL_LIBUSB "Use locally-built libusb (static linking)" OFF)
+
+    # It is very unlikely a Windows user will have libusb libraries on the path.
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        set(PSMOVE_USE_LOCAL_LIBUSB ON)
+    endif()
+
+    if (PSMOVE_USE_LOCAL_LIBUSB)
+        set(INFO_USE_PS3EYE_DRIVER "Yes (static libusb)")
+        if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+            # Assume the user has built libusb in external/libusb-1.0.9/
+            include_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0.9/libusb)
+            link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0.9/build/libusb/.libs)
+        elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+            # Assume the user followed the README.win64 and downloaded prebuilt libusb binaries.
+            include_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/include/libusb-1.0)
+            link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/MinGW64/static)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+        endif()
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS libusb-1.0.a)
+    else()
+        set(INFO_USE_PS3EYE_DRIVER "Yes")
+        # Use pkg-config to link against libusb-1.0
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
+        include_directories(${LIBUSB_INCLUDE_DIRS})
+        link_directories(${LIBUSB_LIBDIR})
+    endif()
+else()
+    set(INFO_USE_PS3EYE_DRIVER "No (disabled)")
+endif()
 
 include_directories(${PSMOVEAPI_SOURCE_DIR}/include)
 
