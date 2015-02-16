@@ -44,10 +44,26 @@ camera_control_set_parameters(CameraControl* cc,
         int contrast, int brightness)
 {
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    // TODO: Implement setting those parameters on cc->eye
-    ps3eye_set_parameters(cc->eye, autoG > 0, autoWB > 0, gain, exposure, contrast, brightness);
-    //cc->eye->eye->setExposure(exposure);
-    psmove_WARNING("Unimplemented: Only some PS3EYEDriver parameters set.\n");
+    ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE, exposure);
+
+    /** Many of the values passed to this function do not work with PS3EYEDriver.
+     * comment out these functions until a sane value scheme is implemented.
+     * ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN, autoG);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_GAIN, gain);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_WHITEBALANCE, autoWB);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_CONTRAST, contrast);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS, brightness);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_REDBALANCE, wbRed);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_BLUEBALANCE, wbGreen);
+     **/
+    psmove_WARNING("Only PS3EYEDriver parameter 'exposure' set by ps3eye_set_parameter.\n");
+    /** Some PS3EYEDriver parameters that could be set are not set by this function
+     * ps3eye_set_parameter(cc->eye, PS3EYE_SHARPNESS, autoG);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_HUE, ???);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, ??);
+     * ps3eye_set_parameter(cc->eye, PS3EYE_VFLIP, ??);
+     **/
+
 #else
     macosx_camera_set_exposure_lock(1);
 #endif
