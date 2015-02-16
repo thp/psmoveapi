@@ -473,7 +473,12 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
     float target_luminance = 0;
     switch (tracker->exposure_mode) {
         case Exposure_LOW:
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+            /* Bypasses autoreturn in psmove_tracker_adapt_to_light */
             target_luminance = 1;
+#else
+            target_luminance = 0;
+#endif
             break;
         case Exposure_MEDIUM:
             target_luminance = 25;
@@ -1547,7 +1552,12 @@ psmove_tracker_free(PSMoveTracker *tracker)
 int
 psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
 {
-    float minimum_exposure = 1; // Was 2051
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+    /* PS3EYE_DRIVER seems to require different parameter ranges. */
+    float minimum_exposure = 1;
+#else
+    float minimum_exposure = 2051;
+#endif
     float maximum_exposure = 65535;
     float current_exposure = (maximum_exposure + minimum_exposure) / 2.;
 
