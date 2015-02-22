@@ -75,6 +75,13 @@ IMPORTANT: Get the right MinGW version!
            set PATH=C:\mingw32\bin;%PATH%
 
 
+    NOTE: If you want to use the CL Eye Driver (for PS Eye camera) you *must*
+          build everything as 32-bit binaries. The driver is, as of writing,
+          only available in a 32-bit version that will not work together with
+          64-bit builds of OpenCV and the PS Move API. The easiest way to
+          achieve this is to install the i686 version of MinGW-w64 (see above)
+          for the following build steps.
+
 
 1. Clone the PS Move API repository
 
