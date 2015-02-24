@@ -106,22 +106,6 @@ Requirements
     example.exe
 
     for a basic example.
-    
-11. If you intend to use the libraries with MSVC, http://www.mingw.org/wiki/MSVC_and_MinGW_DLLs
-
-    Option 1 to create the DEF files is to edit CMakeLists.txt. For example,
-    if (MINGW)
-        set_target_properties(psmoveapi_tracker PROPERTIES LINK_FLAGS "-Wl,--output-def,libpsmoveapi_tracker.def")
-    endif (MINGW)
-    
-    Option 2 is to hand-craft them. https://wiki.videolan.org/GenerateLibFromDll
-    Open a MSVC command prompt to the directory where you built the libraries.
-    dumpbin /exports libpsmoveapi.dll > libpsmoveapi.def
-    dumpbin /exports libpsmoveapi_tracker.dll > libpsmoveapi_tracker.def
-    Now edit each def so the first line is EXPORTS and the remaining lines are the symbol names.
-    
-    lib /MACHINE:X64 /DEF:libpsmoveapi.def
-    lib /MACHINE:X64 /DEF:libpsmoveapi_tracker.def
 
 For questions, please read the archives of the PS Move Mailing List. If you
 cannot find an answer to your question in the archives, send an e-mail:
