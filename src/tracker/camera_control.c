@@ -142,7 +142,6 @@ camera_control_new(int cameraID)
 #elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
         ps3eye_init();
         int cams = ps3eye_count_connected();
-
         if (cams <= cameraID) {
             free(cc);
             return NULL;

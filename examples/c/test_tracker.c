@@ -56,6 +56,11 @@ int main(int arg, char** args) {
 
     fprintf(stderr, "Trying to init PSMoveTracker...");
     PSMoveTracker* tracker = psmove_tracker_new();
+    if (!tracker)
+    {
+        fprintf(stderr, "Could not init PSMoveTracker.\n");
+        return 1;
+    }
     psmove_tracker_set_mirror(tracker, PSMove_True);
     fprintf(stderr, "OK\n");
 
