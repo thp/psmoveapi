@@ -39,7 +39,13 @@
 #include <string.h>
 #include <wchar.h>
 #include <unistd.h>
+#ifdef _MSC_VER
+#include <WinSock2.h>
+#define __func__ __FUNCTION__
+#define snprintf _snprintf
+#else
 #include <sys/time.h>
+#endif
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
@@ -81,6 +87,30 @@
 #include "daemon/moved_client.h"
 #include "hidapi.h"
 
+#ifdef _MSC_VER
+#define STIN static __inline
+#else
+#define STIN static inline
+#endif
+
+#ifdef _MSC_VER
+#include "pstdint.h"
+static const unsigned __int64 epoch = 116444736000000000;
+int
+gettimeofday(struct timeval * tp, struct timezone * tzp)
+{
+    FILETIME    file_time;
+    SYSTEMTIME  system_time;
+    ULARGE_INTEGER ularge;
+    GetSystemTime(&system_time);
+    SystemTimeToFileTime(&system_time, &file_time);
+    ularge.LowPart = file_time.dwLowDateTime;
+    ularge.HighPart = file_time.dwHighDateTime;
+    tp->tv_sec = (long)((ularge.QuadPart - epoch) / 10000000L);
+    tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
+    return 0;
+};
+#endif
 
 /* Begin private definitions */
 
@@ -163,7 +193,7 @@ typedef struct {
 #define TWELVE_BIT_SIGNED(x) (((x) & 0x800)?(-(((~(x)) & 0xFFF) + 1)):(x))
 
 /* Decode 16-bit signed value from data pointer and offset */
-static inline int
+STIN int
 psmove_decode_16bit(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
@@ -1194,12 +1224,10 @@ _psmove_btaddr_to_string(const PSMove_Data_BTAddr addr)
 {
     int size = 18; /* strlen("aa:bb:cc:dd:ee:ff") + 1 */
     char *result = (char*)malloc(size);
-
     snprintf(result, size, "%02x:%02x:%02x:%02x:%02x:%02x",
             (unsigned char) addr[5], (unsigned char) addr[4],
             (unsigned char) addr[3], (unsigned char) addr[2],
             (unsigned char) addr[1], (unsigned char) addr[0]);
-
     return result;
 }
 
@@ -2077,7 +2105,7 @@ psmove_util_get_file_path(const char *filename)
     char *result;
     struct stat st;
 
-#ifndef __WIN32
+#ifndef _WIN32
     // if run as root, use system-wide data directory
     if (geteuid() == 0) {
         parent = PSMOVE_SYSTEM_DATA_DIR;
@@ -2192,7 +2220,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     return result;
 }
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(_MSC_VER)
 
 #define CLOCK_MONOTONIC 0
 

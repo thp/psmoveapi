@@ -31,7 +31,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <time.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
+#undef _USE_MATH_DEFINES
 #include <sys/stat.h>
 
 #include "opencv2/core/core_c.h"
@@ -48,6 +50,26 @@
 
 #ifdef __linux
 #  include "platform/psmove_linuxsupport.h"
+#endif
+
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+
+#include <windows.h>
+
+void usleep(__int64 usec)
+{
+    HANDLE timer;
+    LARGE_INTEGER ft;
+
+    ft.QuadPart = -(10 * usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+};
+
 #endif
 
 //#define DEBUG_WINDOWS 			// shall additional windows be shown

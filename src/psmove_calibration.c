@@ -28,6 +28,9 @@
  **/
 
 
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
 
 #include "psmove_private.h"
 #include "psmove_calibration.h"
@@ -36,8 +39,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#ifndef _MSC_VER
 #include <libgen.h>
+#endif
+#define _USE_MATH_DEFINES
 #include <math.h>
+#undef _USE_MATH_DEFINES
 
 #define PSMOVE_CALIBRATION_EXTENSION ".calibration"
 

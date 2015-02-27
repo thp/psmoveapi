@@ -1,10 +1,8 @@
 Requirements
 ------------
 
-- MinGW
-  http://mingw-w64.sourceforge.net/
-  (Actually I used tdm64-gcc-4.9.2-3 but this should make no difference. http://tdm-gcc.tdragon.net/download)
-  See README.win32 for instructions on how to get MinGW-w64, be sure to get the 64-bit Windows archive.
+- Visual Studio Community 2013
+  http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
 - CMake
   http://www.cmake.org/cmake/resources/software.html
 - OpenCV
@@ -29,35 +27,18 @@ Requirements
     Unpack into psmoveapi\external\libusb-1.0
     If you choose a different version then be sure to update CMakeLists.txt with the proper libusb-1.0 directory structure.
     
-3. Build OpenCV repository
+3. OpenCV
+    Download opencv-2.4.10.exe http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
+    Unpack into psmoveapi\
 
-    OpenCV binary distributions typically do not come with MinGW builds. We must build on our own.
-    
-    I can never seem to get a clean download of OpenCV using git, so I have to download the archive.
-    If using msys-git then you can use the following commands. The end result is to have the opencv directory as a subdirectory of psmoveapi.
-    
-    curl -L -o opencv.zip https://github.com/Itseez/opencv/archive/2.4.10.1.zip
-    unzip opencv.zip
-    mv opencv-2.4.10.1 opencv
-    rm opencv.zip
-    
-    Now build. Funny thing about cmake is it won't work very well when run from msys-git. So switch to the MinGW command prompt.
-    
-    cd opencv
-    mkdir build
-    cd build
-    cmake .. -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=0 -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_flann=OFF -DBUILD_opencv_features2d=OFF -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF
-    mingw32-make -j4
-    mingw32-make install
-    
 4. Build psmoveapi
 
     cd ..\..
-    mkdir build
+    mkdir build 
     cd build
     SET CMAKE_CXX_FLAGS=%CMAKE_CXX_FLAGS% -std=c++11
-    cmake .. -G "MinGW Makefiles" -DPSMOVE_BUILD_PYTHON_BINDINGS=0 -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1
-    mingw32-make
+    cmake .. -G "Visual Studio 12 2013 Win64" -DPSMOVE_BUILD_PYTHON_BINDINGS=0 -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1
+    make
 
 8. Pair the controller to the host
 

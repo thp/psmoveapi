@@ -27,7 +27,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

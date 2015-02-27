@@ -40,6 +40,10 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
+
 #define PSMOVE_FUSION_STEP_EPSILON (.0001)
 
 struct _PSMoveFusion {

@@ -39,6 +39,10 @@
 
 #include "camera_control_private.h"
 
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
+
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
 
 /**
