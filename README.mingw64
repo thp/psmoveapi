@@ -1,8 +1,9 @@
 Requirements
 ------------
 
-- Visual Studio Community 2013
-  http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
+- MinGW
+  http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/
+  (Actually, I use [tdm64](http://tdm-gcc.tdragon.net/download))
 - CMake
   http://www.cmake.org/cmake/resources/software.html
 - OpenCV
@@ -28,31 +29,23 @@ Requirements
     If you choose a different version then be sure to update CMakeLists.txt with the proper libusb-1.0 directory structure.
     
     However, these binaries did not work well for me when building psmoveapi libraries to be used by MSVC-built applications.
-    Download the source and unpack the folder into psmoveapi\external\libusb-1.0
-    In that folder, open msvc\libusb_2013.sln
-    Change to Release x64 at the top.
-    Build the solution.
+    
     
 3. OpenCV
-    Download opencv-2.4.10.exe http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
-    Unpack into psmoveapi\
-    If, for some reason, the provided opencv binaries do not work for you then try to build yourself:
-    
     Open msys-git's bash to the psmoveapi directory.
     `curl -L -o opencv.zip https://github.com/Itseez/opencv/archive/2.4.11.zip`
     `unzip opencv.zip`
     `mv opencv-2.4.11 opencv`
     `rm opencv.zip`
     
-    Now build. Switch to the VS2013 command prompt.
+    Now build. Funny thing about cmake is it won't work very well when run from msys-git. So switch to the MinGW command prompt.
     
     cd opencv
     mkdir build
     cd build
-    cmake .. -G "Visual Studio 12 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_flann=OFF -DBUILD_opencv_features2d=OFF -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF
-    Open the solution.
-    Change to Release.
-    Build the solution.
+    cmake .. -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=0 -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_flann=OFF -DBUILD_opencv_features2d=OFF -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF
+    mingw32-make -j4
+    mingw32-make install
 
 4. Build psmoveapi
 
@@ -60,7 +53,7 @@ Requirements
     mkdir build 
     cd build
     SET CMAKE_CXX_FLAGS=%CMAKE_CXX_FLAGS% -std=c++11
-    cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_BUILD_PYTHON_BINDINGS=0 -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1
+    cmake .. -G "MinGW Makefiles" -DPSMOVE_BUILD_PYTHON_BINDINGS=0 -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1
     make
 
 8. Pair the controller to the host
@@ -110,6 +103,22 @@ Requirements
     example.exe
 
     for a basic example.
+    
+11. If you intend to build the libraries with MinGW but use with MSVC, http://www.mingw.org/wiki/MSVC_and_MinGW_DLLs
+
+    Option 1 to create the DEF files is to edit CMakeLists.txt. For example,
+    if (MINGW)
+        set_target_properties(psmoveapi_tracker PROPERTIES LINK_FLAGS "-Wl,--output-def,libpsmoveapi_tracker.def")
+    endif (MINGW)
+    
+    Option 2 is to hand-craft them. https://wiki.videolan.org/GenerateLibFromDll
+    Open a MSVC command prompt to the directory where you built the libraries.
+    dumpbin /exports libpsmoveapi.dll > libpsmoveapi.def
+    dumpbin /exports libpsmoveapi_tracker.dll > libpsmoveapi_tracker.def
+    Now edit each def so the first line is EXPORTS and the remaining lines are the symbol names.
+    
+    lib /MACHINE:X64 /DEF:libpsmoveapi.def
+    lib /MACHINE:X64 /DEF:libpsmoveapi_tracker.def
 
 For questions, please read the archives of the PS Move Mailing List. If you
 cannot find an answer to your question in the archives, send an e-mail:

@@ -87,11 +87,7 @@ if(PSMOVE_USE_DEBUG)
     set(INFO_USE_DEBUG "Yes")
 else()
     if(MSVC)
-<<<<<<< HEAD
         add_definitions(-O2 -Wall -DNOMINMAX)
-=======
-        add_definitions(-O2 -Wall)
->>>>>>> ccf1e94784d1f80fc9152eaf569a98b3e3d6e5c0
     else(MSVC)
         add_definitions(-O2 -Wall -Wno-unused)
     endif(MSVC)
@@ -161,14 +157,15 @@ if (PSMOVE_USE_LOCAL_OPENCV)
             ${AVFOUNDATION})
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         if(MSVC)
-            set(OPENCV_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv/build)
+            set(OPENCV_INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
             include_directories(${OPENCV_INSTALL_DIR}/include)
-            link_directories(${OPENCV_INSTALL_DIR}/x64/vc12/staticlib)
+            link_directories(${OPENCV_INSTALL_DIR}/build/lib/Release)
+            link_directories(${OPENCV_INSTALL_DIR}/build/3rdparty/lib/Release)
         else(MSVC)
-            link_directories(${OPENCV_INSTALL_DIR}/x64/mingw/staticlib)
+            link_directories(${OPENCV_INSTALL_DIR}/lib/mingw/staticlib)
         endif(MSVC)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-            opencv_highgui2410 opencv_imgproc2410 opencv_core2410
+            opencv_highgui2411 opencv_imgproc2411 opencv_core2411
             libjpeg libpng zlib vfw32 comctl32)
         if(NOT MSVC)
             list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS stdc++)
@@ -316,11 +313,14 @@ if(PSMOVE_USE_PS3EYE_DRIVER)
             list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS libusb-1.0.a)
         elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             # Assume the user followed the README.win64 and downloaded prebuilt libusb binaries.
-            include_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/include/libusb-1.0)
             if(MSVC)
-                link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/MS64/static)
+                include_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/libusb)
+                link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/x64/Release/lib)
+                list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS libusb-1.0)
             else()
+                include_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/include/libusb-1.0)
                 link_directories(${PSMOVEAPI_SOURCE_DIR}/external/libusb-1.0/MinGW64/static)
+                list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS libusb-1.0.a)
             endif()
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
         endif()
@@ -375,6 +375,9 @@ set_target_properties(psmoveapi PROPERTIES
     SOVERSION ${PSMOVEAPI_VERSION_SONAME})
 set_target_properties(psmoveapi PROPERTIES
     COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
+    if (MINGW)
+        set_target_properties(psmoveapi_tracker PROPERTIES LINK_FLAGS "-Wl,--output-def,libpsmoveapi.def")
+    endif (MINGW)
 list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi)
 
 # Static library
@@ -397,6 +400,9 @@ if(PSMOVE_BUILD_TRACKER)
         SOVERSION ${PSMOVEAPI_VERSION_SONAME})
     set_target_properties(psmoveapi_tracker PROPERTIES
         COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
+    if (MINGW)
+        set_target_properties(psmoveapi_tracker PROPERTIES LINK_FLAGS "-Wl,--output-def,libpsmoveapi_tracker.def")
+    endif (MINGW)
     list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi_tracker)
 
     add_library(psmoveapi_tracker_static STATIC

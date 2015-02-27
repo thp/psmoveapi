@@ -44,7 +44,11 @@
 int main(int arg, char** args) {
     int i;
     int count = psmove_count_connected();
+#ifdef _MSC_VER
+    PSMove* controllers[8];
+#else
     PSMove* controllers[count];
+#endif
 
     printf("### Found %d controllers.\n", count);
     if (count == 0) {
