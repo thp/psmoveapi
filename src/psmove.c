@@ -31,6 +31,7 @@
 #include "psmove_private.h"
 #include "psmove_calibration.h"
 #include "psmove_orientation.h"
+#include "psmove_vector_math.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -290,9 +291,13 @@ struct _PSMove {
     PSMoveOrientation *orientation;
 
 
-    /** vx vy vz are in world-coordinates! */
+    /** cax cay caz are in controller coordinates! */
+    float cax, cay, caz;
+    /** gax gay gaz are in global coordinates! */
+    float gax, gay, gaz;
+    /** vx vy vz are in global coordinates! */
     float vx, vy, vz;
-    /** x y z are in world-coordinates! */
+    /** x y z are in global coordinates! */
     float px, py, pz;
 
 
@@ -1870,22 +1875,17 @@ _psmove_dead_reckoning_thread_proc(void *data)
     long ticks = 0;
     long diff;
 
-    float orientation[16];
+    float orientation[4];
+    float global_gravity[3] = {0, 1, 0};
 
-    float raw_ax, raw_ay, raw_az;
-    float raw_acceleration[16];
-    float oriented_acceleration[16];
-    float bias_ax = +0.038;
-    float bias_ay = -0.02;
-    float bias_az = -0.02;
-    float corrected_ax, corrected_ay, corrected_az;
+    float measured_ax, measured_ay, measured_az;
 
-    while (move->dead_reckoning_running) {
-        long diff = psmove_util_get_ticks() - ticks;
+    while (move->dead_reckoning_running) {  // "Gameloop"-like structure with fixed framerate
+        diff = psmove_util_get_ticks() - ticks;
         ticks = ticks + diff;
-
         printf("\nTicks Passed [ms]: %ld / now at %ld\n", diff, ticks);
 
+        // resetting the values, this can be deleted at a later time
         if (psmove_get_buttons(move) & Btn_CIRCLE) {
           psmove_reset_orientation(move);
           move->vx = 0;
@@ -1896,85 +1896,46 @@ _psmove_dead_reckoning_thread_proc(void *data)
           move->pz = 0;
         }
 
-        // heading
-        float hw, hx, hy, hz;
-        psmove_get_orientation(move, &hw, &hx, &hy, &hz);
-        printf("heading: %3f %3f %3f %3f\n", hw, hx, hy, hz);
 
-        // quaternion to 4x4 from http://www.flipcode.com/documents/matrfaq.html#Q54
-        float xx = hx * hx;
-        float xy = hx * hy;
-        float xz = hx * hz;
-        float xw = hx * hw;
+        // orientation and orientation_conjugate for later use
+        psmove_get_orientation(move, &orientation[0], &orientation[1], &orientation[2], &orientation[3]);
+        printf("heading: %3f %3f %3f %3f\n", orientation[0], orientation[1], orientation[2], orientation[3]);
+        float orientation_conjugate[4];
+        psmove_quaternion_conjugate(orientation, orientation_conjugate);
 
-        float yy = hy * hy;
-        float yz = hy * hz;
-        float yw = hy * hw;
+        // getting gravity to controller
+        float controller_gravity[3];
+        psmove_vector_rotate(global_gravity, orientation_conjugate, controller_gravity);
+        float total;
+        total = sqrt(controller_gravity[0]*controller_gravity[0] + controller_gravity[1]*controller_gravity[1] + controller_gravity[2]*controller_gravity[2]);
+        printf("rotated gravity %05f %05f %05f (%05f)\n", controller_gravity[0], controller_gravity[1], controller_gravity[2], total);
 
-        float zz = hz * hz;
-        float zw = hz * hw;
-
-        orientation[0]  = 1 - 2 * ( yy + zz );
-        orientation[1]  =     2 * ( xy - zw );
-        orientation[2]  =     2 * ( xz + yw );
-
-        orientation[4]  =     2 * ( xy + zw );
-        orientation[5]  = 1 - 2 * ( xx + zz );
-        orientation[6]  =     2 * ( yz - xw );
-
-        orientation[8]  =     2 * ( xz - yw );
-        orientation[9]  =     2 * ( yz + xw );
-        orientation[10] = 1 - 2 * ( xx + yy );
-
-        orientation[3]  = orientation[7] = orientation[11] = orientation[12] = orientation[13] = orientation[14] = 0;
-        orientation[15] = 1;
 
         int frame;
         for (frame = 0; frame<2; frame++) {
-          float total;
-          psmove_get_accelerometer_frame(move, frame, &raw_ax, &raw_ay, &raw_az);
-          total = sqrt(raw_ax*raw_ax + raw_ay*raw_ay + raw_az*raw_az);
-          printf("raw acceleration %05f;%05f;%05f;%05f\n", raw_ax, raw_ay, raw_az, total);
+          // getting an acceleration measurement from the controller
+          psmove_get_accelerometer_frame(move, frame, &measured_ax, &measured_ay, &measured_az);
+          total = sqrt(measured_ax*measured_ax + measured_ay*measured_ay + measured_az*measured_az);
+          printf("raw acceleration %05f %05f %05f (%05f)\n", measured_ax, measured_ay, measured_az, total);
+          float measured_a[3] = {measured_ax, measured_ay, measured_az};
 
-          // initial 4x4 matrix
-          raw_acceleration[0] = 1;
-          raw_acceleration[1] = 0;
-          raw_acceleration[2] = 0;
-          raw_acceleration[3] = raw_ax - bias_ax;
-          raw_acceleration[4] = 0;
-          raw_acceleration[5] = 1;
-          raw_acceleration[6] = 0;
-          raw_acceleration[7] = raw_ay - bias_ay;
-          raw_acceleration[8] = 0;
-          raw_acceleration[9] = 0;
-          raw_acceleration[10] = 1;
-          raw_acceleration[11] = raw_az - bias_az;
-          raw_acceleration[12] = 0;
-          raw_acceleration[13] = 0;
-          raw_acceleration[14] = 0;
-          raw_acceleration[15] = 1;
+          // getting the pure acceleration without gravity from that controller
+          float acceleration_only[3];
+          psmove_vector_minus_vector(measured_a, controller_gravity, acceleration_only);
+          total = sqrt(acceleration_only[0]*acceleration_only[0] + acceleration_only[1]*acceleration_only[1] + acceleration_only[2]*acceleration_only[2]);
+          printf("acceleration ONLY %05f %05f %05f (%05f)\n", acceleration_only[0], acceleration_only[1], acceleration_only[2], total);
+          move->cax = acceleration_only[0];
+          move->cay = acceleration_only[1];
+          move->caz = acceleration_only[2];
 
-          oriented_acceleration[0] = raw_acceleration[0]*orientation[0] + raw_acceleration[4]*orientation[1] + raw_acceleration[8]*orientation[2] + raw_acceleration[12]*orientation[3];
-          oriented_acceleration[1] = raw_acceleration[1]*orientation[0] + raw_acceleration[5]*orientation[1] + raw_acceleration[9]*orientation[2] + raw_acceleration[13]*orientation[3];
-          oriented_acceleration[2] = raw_acceleration[2]*orientation[0] + raw_acceleration[6]*orientation[1] + raw_acceleration[10]*orientation[2] + raw_acceleration[14]*orientation[3];
-          oriented_acceleration[3] = raw_acceleration[3]*orientation[0] + raw_acceleration[7]*orientation[1] + raw_acceleration[11]*orientation[2] + raw_acceleration[15]*orientation[3];
-          oriented_acceleration[4] = raw_acceleration[0]*orientation[4] + raw_acceleration[4]*orientation[5] + raw_acceleration[8]*orientation[6] + raw_acceleration[12]*orientation[7];
-          oriented_acceleration[5] = raw_acceleration[1]*orientation[4] + raw_acceleration[5]*orientation[5] + raw_acceleration[9]*orientation[6] + raw_acceleration[13]*orientation[7];
-          oriented_acceleration[6] = raw_acceleration[2]*orientation[4] + raw_acceleration[6]*orientation[5] + raw_acceleration[10]*orientation[6] + raw_acceleration[14]*orientation[7];
-          oriented_acceleration[7] = raw_acceleration[3]*orientation[4] + raw_acceleration[7]*orientation[5] + raw_acceleration[11]*orientation[6] + raw_acceleration[15]*orientation[7];
-          oriented_acceleration[8] = raw_acceleration[0]*orientation[8] + raw_acceleration[4]*orientation[9] + raw_acceleration[8]*orientation[10] + raw_acceleration[12]*orientation[11];
-          oriented_acceleration[9] = raw_acceleration[1]*orientation[8] + raw_acceleration[5]*orientation[9] + raw_acceleration[9]*orientation[10] + raw_acceleration[13]*orientation[11];
-          oriented_acceleration[10] = raw_acceleration[2]*orientation[8] + raw_acceleration[6]*orientation[9] + raw_acceleration[10]*orientation[10] + raw_acceleration[14]*orientation[11];
-          oriented_acceleration[11] = raw_acceleration[3]*orientation[8] + raw_acceleration[7]*orientation[9] + raw_acceleration[11]*orientation[10] + raw_acceleration[15]*orientation[11];
-          oriented_acceleration[12] = raw_acceleration[0]*orientation[12] + raw_acceleration[4]*orientation[13] + raw_acceleration[8]*orientation[14] + raw_acceleration[12]*orientation[15];
-          oriented_acceleration[13] = raw_acceleration[1]*orientation[12] + raw_acceleration[5]*orientation[13] + raw_acceleration[9]*orientation[14] + raw_acceleration[13]*orientation[15];
-          oriented_acceleration[14] = raw_acceleration[2]*orientation[12] + raw_acceleration[6]*orientation[13] + raw_acceleration[10]*orientation[14] + raw_acceleration[14]*orientation[15];
-          oriented_acceleration[15] = raw_acceleration[3]*orientation[12] + raw_acceleration[7]*orientation[13] + raw_acceleration[11]*orientation[14] + raw_acceleration[15]*orientation[15];
-
-          oriented_acceleration[7] -= 1; // account for gravity (hopefully)
+          // pure acceleration converted to global coordinates
+          float global_acceleration_only[3];
+          psmove_vector_rotate(acceleration_only, orientation, global_acceleration_only);
+          move->gax = global_acceleration_only[0];
+          move->gay = global_acceleration_only[1];
+          move->gaz = global_acceleration_only[2];
 
           // first integration for speed
-          // TODO: needs to take orientation into account!
           float g = 9.80665f; // [m/s²]
           float dt = 0.5f * diff / 1000; // [s] for each frame
           move->vx += oriented_acceleration[3] * g * dt;
@@ -1989,7 +1950,7 @@ _psmove_dead_reckoning_thread_proc(void *data)
           printf("position: %3f %3f %3f\n", move->px, move->py, move->pz);
         }
 
-
+        // sleeping for fixed framerate
         Sleep(intended_tick_length - (ticks % intended_tick_length));
     }
 
@@ -2017,10 +1978,14 @@ psmove_enable_background_dead_reckoning(PSMove *move)
 void
 psmove_disable_background_dead_reckoning(PSMove *move)
 {
-    printf("Trying to stop and join the thread");
-    move->dead_reckoning_running = 0;
-    WaitForSingleObject(&(move->dead_reckoning_thread), INFINITE);
-    printf("joined.");
+    if (move->dead_reckoning_thread) {
+        printf("Trying to stop and join the thread");
+        move->dead_reckoning_running = 0;
+        WaitForSingleObject(&(move->dead_reckoning_thread), INFINITE);
+        move->dead_reckoning_thread = NULL;
+        printf("joined.");
+    }
+    Sleep(200);
 }
 
 void
@@ -2037,6 +2002,17 @@ psmove_get_dead_reckoning_velocity(PSMove *move, float *out_x, float *out_y, flo
     *out_x = move->vx;
     *out_y = move->vy;
     *out_z = move->vz;
+}
+
+void
+psmove_get_dead_reckoning_acceleration(PSMove *move, float *out_cx, float *out_cy, float *out_cz, float *out_gx, float *out_gy, float *out_gz)
+{
+    *out_cx = move->cax;
+    *out_cy = move->cay;
+    *out_cz = move->caz;
+    *out_gx = move->gax;
+    *out_gy = move->gay;
+    *out_gz = move->gaz;
 }
 
 void
@@ -2181,6 +2157,8 @@ psmove_disconnect(PSMove *move)
         pthread_cond_destroy(&(move->led_write_new_data));
     }
 #endif
+
+    psmove_disable_background_dead_reckoning(move);
 
     switch (move->type) {
         case PSMove_HIDAPI:
