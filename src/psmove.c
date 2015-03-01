@@ -1888,6 +1888,9 @@ _psmove_dead_reckoning_thread_proc(void *data)
         // resetting the values, this can be deleted at a later time
         if (psmove_get_buttons(move) & Btn_CIRCLE) {
           psmove_reset_orientation(move);
+          global_gravity[0] = measured_ax;
+          global_gravity[1] = measured_ay;
+          global_gravity[2] = measured_az;
           move->vx = 0;
           move->vy = 0;
           move->vz = 0;
@@ -1895,6 +1898,7 @@ _psmove_dead_reckoning_thread_proc(void *data)
           move->py = 0;
           move->pz = 0;
         }
+        printf("gravity vector: %3f %3f %3f\n", global_gravity[0], global_gravity[1], global_gravity[2]);
 
 
         // orientation and orientation_conjugate for later use
@@ -1923,7 +1927,7 @@ _psmove_dead_reckoning_thread_proc(void *data)
           float acceleration_only[3];
           psmove_vector_minus_vector(measured_a, controller_gravity, acceleration_only);
           total = sqrt(acceleration_only[0]*acceleration_only[0] + acceleration_only[1]*acceleration_only[1] + acceleration_only[2]*acceleration_only[2]);
-          printf("acceleration ONLY %05f %05f %05f (%05f)\n", acceleration_only[0], acceleration_only[1], acceleration_only[2], total);
+          printf("CA %05f %05f %05f (%05f)\n", acceleration_only[0], acceleration_only[1], acceleration_only[2], total);
           move->cax = acceleration_only[0];
           move->cay = acceleration_only[1];
           move->caz = acceleration_only[2];
@@ -1931,6 +1935,8 @@ _psmove_dead_reckoning_thread_proc(void *data)
           // pure acceleration converted to global coordinates
           float global_acceleration_only[3];
           psmove_vector_rotate(acceleration_only, orientation, global_acceleration_only);
+          total = sqrt(global_acceleration_only[0]*global_acceleration_only[0] + global_acceleration_only[1]*global_acceleration_only[1] + global_acceleration_only[2]*global_acceleration_only[2]);
+          printf("GA %05f %05f %05f (%05f)\n", global_acceleration_only[0], global_acceleration_only[1], global_acceleration_only[2], total);
           move->gax = global_acceleration_only[0];
           move->gay = global_acceleration_only[1];
           move->gaz = global_acceleration_only[2];
@@ -1938,9 +1944,9 @@ _psmove_dead_reckoning_thread_proc(void *data)
           // first integration for speed
           float g = 9.80665f; // [m/s²]
           float dt = 0.5f * diff / 1000; // [s] for each frame
-          move->vx += global_acceleration_only[0] * g * dt;
-          move->vy += global_acceleration_only[1] * g * dt;
-          move->vz += global_acceleration_only[2] * g * dt;
+          move->vx += move->gax * g * dt;
+          move->vy += move->gay * g * dt;
+          move->vz += move->gaz * g * dt;
           printf("velocity: %3f %3f %3f\n", move->vx, move->vy, move->vz);
 
           // second integration for position [m]
