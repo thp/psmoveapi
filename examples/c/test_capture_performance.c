@@ -119,9 +119,15 @@ main(int argc, char *argv[])
     for (j=0; j<context.count; j++) {
         fprintf(fp, ",tracking%d", j);
     }
-    fprintf(fp, "\n");
+    fprintf(fp, ",start,diff\n");
     int i;
+    float first = _psmove_timestamp_value(_psmove_timestamp());
+    float last = 0;
     for (i=0; i<ITERATIONS; i++) {
+        if (i % 50 == 0)
+        {
+            printf("Capturing Frame %d\n", i);
+        }
         psmove_tracker_update_image(context.tracker);
         _psmove_tracker_retrieve_stats(context.tracker,
                 &(context.capture_begin),
@@ -129,6 +135,7 @@ main(int argc, char *argv[])
                 &(context.capture_retrieve),
                 &(context.capture_converted));
 
+        float start =  _psmove_timestamp_value(_psmove_timestamp());
         float grab = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_grab, context.capture_begin));
         float retrieve = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_retrieve, context.capture_grab));
         float converted = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_converted, context.capture_retrieve));
@@ -141,10 +148,11 @@ main(int argc, char *argv[])
             float tracking = _psmove_timestamp_value(_psmove_timestamp_diff(track_end, track_begin));
             fprintf(fp, ",%.10f", tracking);
         }
-        fprintf(fp, "\n");
+        fprintf(fp, ",%.10f,%.10f\n", start, (start-last));
 
         psmove_tracker_annotate(context.tracker);
         save(i, &context);
+        last = start;
     }
     fclose(fp);
 
@@ -152,9 +160,9 @@ main(int argc, char *argv[])
     //printf("\nTesting BAD READ performance (continous LED setting)\n");
     //printf("\nTesting RAW READ performance (no LED setting)\n");
 
+    printf("%d frames captured in %f seconds (%.1f fps)\n", i, (last-first), i/(last-first));
     printf("\n");
 
     teardown(&context);
     return 0;
 }
-
