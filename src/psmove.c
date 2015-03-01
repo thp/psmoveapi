@@ -289,6 +289,15 @@ struct _PSMove {
     PSMoveCalibration *calibration;
     PSMoveOrientation *orientation;
 
+
+    /** vx vy vz are in world-coordinates! */
+    float vx, vy, vz;
+    /** x y z are in world-coordinates! */
+    float px, py, pz;
+
+
+
+
     /* Is orientation tracking currently enabled? */
     enum PSMove_Bool orientation_enabled;
 
@@ -1861,13 +1870,15 @@ _psmove_dead_reckoning_thread_proc(void *data)
     long ticks = 0;
     long diff;
 
-    float ax, ay, az;
-    float bias_ax = 0, bias_ay = 0, bias_az = 0;
+    float orientation[16];
 
-    /** vx vy vz are in world-coordinates! */
-    float vx = 0, vy = 0, vz = 0;
-    /** x y z are in world-coordinates! */
-    float x = 0, y = 0, z = 0;
+    float raw_ax, raw_ay, raw_az;
+    float raw_acceleration[16];
+    float oriented_acceleration[16];
+    float bias_ax = +0.038;
+    float bias_ay = -0.02;
+    float bias_az = -0.02;
+    float corrected_ax, corrected_ay, corrected_az;
 
     while (move->dead_reckoning_running) {
         long diff = psmove_util_get_ticks() - ticks;
@@ -1877,45 +1888,105 @@ _psmove_dead_reckoning_thread_proc(void *data)
 
         if (psmove_get_buttons(move) & Btn_CIRCLE) {
           psmove_reset_orientation(move);
-          // biases will still have last round's values
-          bias_ax = ax;
-          bias_ay = ay;
-          bias_az = az;
-
-          vx = 0;
-          vy = 0;
-          vz = 0;
-          x = 0;
-          y = 0;
-          z = 0;
+          move->vx = 0;
+          move->vy = 0;
+          move->vz = 0;
+          move->px = 0;
+          move->py = 0;
+          move->pz = 0;
         }
+
+        // heading
+        float hw, hx, hy, hz;
+        psmove_get_orientation(move, &hw, &hx, &hy, &hz);
+        printf("heading: %3f %3f %3f %3f\n", hw, hx, hy, hz);
+
+        // quaternion to 4x4 from http://www.flipcode.com/documents/matrfaq.html#Q54
+        float xx = hx * hx;
+        float xy = hx * hy;
+        float xz = hx * hz;
+        float xw = hx * hw;
+
+        float yy = hy * hy;
+        float yz = hy * hz;
+        float yw = hy * hw;
+
+        float zz = hz * hz;
+        float zw = hz * hw;
+
+        orientation[0]  = 1 - 2 * ( yy + zz );
+        orientation[1]  =     2 * ( xy - zw );
+        orientation[2]  =     2 * ( xz + yw );
+
+        orientation[4]  =     2 * ( xy + zw );
+        orientation[5]  = 1 - 2 * ( xx + zz );
+        orientation[6]  =     2 * ( yz - xw );
+
+        orientation[8]  =     2 * ( xz - yw );
+        orientation[9]  =     2 * ( yz + xw );
+        orientation[10] = 1 - 2 * ( xx + yy );
+
+        orientation[3]  = orientation[7] = orientation[11] = orientation[12] = orientation[13] = orientation[14] = 0;
+        orientation[15] = 1;
 
         int frame;
         for (frame = 0; frame<2; frame++) {
           float total;
-          psmove_get_accelerometer_frame(move, frame, &ax, &ay, &az);
-          total = sqrt(ax*ax + ay*ay + az*az);
-          printf("%05f;%05f;%05f;%05f\n", ax, ay, az, total);
+          psmove_get_accelerometer_frame(move, frame, &raw_ax, &raw_ay, &raw_az);
+          total = sqrt(raw_ax*raw_ax + raw_ay*raw_ay + raw_az*raw_az);
+          printf("raw acceleration %05f;%05f;%05f;%05f\n", raw_ax, raw_ay, raw_az, total);
 
-          // heading
-          float hw, hx, hy, hz;
-          psmove_get_orientation(move, &hw, &hx, &hy, &hz);
-          printf("heading: %3f %3f %3f %3f\n", hw, hx, hy, hz);
+          // initial 4x4 matrix
+          raw_acceleration[0] = 1;
+          raw_acceleration[1] = 0;
+          raw_acceleration[2] = 0;
+          raw_acceleration[3] = raw_ax - bias_ax;
+          raw_acceleration[4] = 0;
+          raw_acceleration[5] = 1;
+          raw_acceleration[6] = 0;
+          raw_acceleration[7] = raw_ay - bias_ay;
+          raw_acceleration[8] = 0;
+          raw_acceleration[9] = 0;
+          raw_acceleration[10] = 1;
+          raw_acceleration[11] = raw_az - bias_az;
+          raw_acceleration[12] = 0;
+          raw_acceleration[13] = 0;
+          raw_acceleration[14] = 0;
+          raw_acceleration[15] = 1;
+
+          oriented_acceleration[0] = raw_acceleration[0]*orientation[0] + raw_acceleration[4]*orientation[1] + raw_acceleration[8]*orientation[2] + raw_acceleration[12]*orientation[3];
+          oriented_acceleration[1] = raw_acceleration[1]*orientation[0] + raw_acceleration[5]*orientation[1] + raw_acceleration[9]*orientation[2] + raw_acceleration[13]*orientation[3];
+          oriented_acceleration[2] = raw_acceleration[2]*orientation[0] + raw_acceleration[6]*orientation[1] + raw_acceleration[10]*orientation[2] + raw_acceleration[14]*orientation[3];
+          oriented_acceleration[3] = raw_acceleration[3]*orientation[0] + raw_acceleration[7]*orientation[1] + raw_acceleration[11]*orientation[2] + raw_acceleration[15]*orientation[3];
+          oriented_acceleration[4] = raw_acceleration[0]*orientation[4] + raw_acceleration[4]*orientation[5] + raw_acceleration[8]*orientation[6] + raw_acceleration[12]*orientation[7];
+          oriented_acceleration[5] = raw_acceleration[1]*orientation[4] + raw_acceleration[5]*orientation[5] + raw_acceleration[9]*orientation[6] + raw_acceleration[13]*orientation[7];
+          oriented_acceleration[6] = raw_acceleration[2]*orientation[4] + raw_acceleration[6]*orientation[5] + raw_acceleration[10]*orientation[6] + raw_acceleration[14]*orientation[7];
+          oriented_acceleration[7] = raw_acceleration[3]*orientation[4] + raw_acceleration[7]*orientation[5] + raw_acceleration[11]*orientation[6] + raw_acceleration[15]*orientation[7];
+          oriented_acceleration[8] = raw_acceleration[0]*orientation[8] + raw_acceleration[4]*orientation[9] + raw_acceleration[8]*orientation[10] + raw_acceleration[12]*orientation[11];
+          oriented_acceleration[9] = raw_acceleration[1]*orientation[8] + raw_acceleration[5]*orientation[9] + raw_acceleration[9]*orientation[10] + raw_acceleration[13]*orientation[11];
+          oriented_acceleration[10] = raw_acceleration[2]*orientation[8] + raw_acceleration[6]*orientation[9] + raw_acceleration[10]*orientation[10] + raw_acceleration[14]*orientation[11];
+          oriented_acceleration[11] = raw_acceleration[3]*orientation[8] + raw_acceleration[7]*orientation[9] + raw_acceleration[11]*orientation[10] + raw_acceleration[15]*orientation[11];
+          oriented_acceleration[12] = raw_acceleration[0]*orientation[12] + raw_acceleration[4]*orientation[13] + raw_acceleration[8]*orientation[14] + raw_acceleration[12]*orientation[15];
+          oriented_acceleration[13] = raw_acceleration[1]*orientation[12] + raw_acceleration[5]*orientation[13] + raw_acceleration[9]*orientation[14] + raw_acceleration[13]*orientation[15];
+          oriented_acceleration[14] = raw_acceleration[2]*orientation[12] + raw_acceleration[6]*orientation[13] + raw_acceleration[10]*orientation[14] + raw_acceleration[14]*orientation[15];
+          oriented_acceleration[15] = raw_acceleration[3]*orientation[12] + raw_acceleration[7]*orientation[13] + raw_acceleration[11]*orientation[14] + raw_acceleration[15]*orientation[15];
+
+          oriented_acceleration[7] -= 1; // account for gravity (hopefully)
 
           // first integration for speed
           // TODO: needs to take orientation into account!
-          float g = 9.80665f; // m/s²
-          float dt = 0.5f * diff / 1000; // s for each frame
-          vx += (ax - bias_ax) * g * dt;
-          vy += (ay - bias_ay) * g * dt;
-          vz += (az - bias_az) * g * dt;
-          printf("velocity: %3f %3f %3f\n", vx, vy, vz);
+          float g = 9.80665f; // [m/s²]
+          float dt = 0.5f * diff / 1000; // [s] for each frame
+          move->vx += oriented_acceleration[3] * g * dt;
+          move->vy += oriented_acceleration[7] * g * dt;
+          move->vz += oriented_acceleration[11] * g * dt;
+          printf("velocity: %3f %3f %3f\n", move->vx, move->vy, move->vz);
 
           // second integration for position [m]
-          x += vx * dt;
-          y += vy * dt;
-          z += vz * dt;
-          printf("position: %3f %3f %3f\n", x, y, z);
+          move->px += move->vx * dt;
+          move->py += move->vy * dt;
+          move->pz += move->vz * dt;
+          printf("position: %3f %3f %3f\n", move->px, move->py, move->pz);
         }
 
 
@@ -1952,6 +2023,21 @@ psmove_disable_background_dead_reckoning(PSMove *move)
     printf("joined.");
 }
 
+void
+psmove_get_dead_reckoning_position(PSMove *move, float *out_x, float *out_y, float *out_z)
+{
+    *out_x = move->px;
+    *out_y = move->py;
+    *out_z = move->pz;
+}
+
+void
+psmove_get_dead_reckoning_velocity(PSMove *move, float *out_x, float *out_y, float *out_z)
+{
+    *out_x = move->vx;
+    *out_y = move->vy;
+    *out_z = move->vz;
+}
 
 void
 psmove_reset_orientation(PSMove *move)

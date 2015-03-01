@@ -1040,6 +1040,18 @@ ADDAPI void
 ADDCALL psmove_disable_background_dead_reckoning(PSMove *move);
 
 /**
+ *
+ **/
+ADDAPI void
+ADDCALL psmove_get_dead_reckoning_position(PSMove *move, float *out_x, float *out_y, float *out_z);
+
+/**
+ *
+ **/
+ADDAPI void
+ADDCALL psmove_get_dead_reckoning_velocity(PSMove *move, float *out_x, float *out_y, float *out_z);
+
+/**
  * \brief Save the magnetometer calibration values.
  *
  * This will save the magnetometer calibration data to persistent storage.
