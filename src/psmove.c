@@ -304,6 +304,9 @@ struct _PSMove {
     unsigned char led_write_thread_write_queued;
     unsigned char led_write_last_result;
 #endif
+HANDLE dead_reckoning_thread;
+unsigned int dead_reckoning_running;
+
 
 #ifdef _WIN32
     /* Nonzero if this device is a Bluetooth device (on Windows only) */
@@ -1849,6 +1852,106 @@ psmove_get_orientation(PSMove *move,
 
     psmove_orientation_get_quaternion(move->orientation, w, x, y, z);
 }
+
+DWORD WINAPI
+_psmove_dead_reckoning_thread_proc(void *data)
+{
+    PSMove *move = (PSMove*)data;
+    long intended_tick_length = 40;
+    long ticks = 0;
+    long diff;
+
+    float ax, ay, az;
+    float bias_ax = 0, bias_ay = 0, bias_az = 0;
+
+    /** vx vy vz are in world-coordinates! */
+    float vx = 0, vy = 0, vz = 0;
+    /** x y z are in world-coordinates! */
+    float x = 0, y = 0, z = 0;
+
+    while (move->dead_reckoning_running) {
+        long diff = psmove_util_get_ticks() - ticks;
+        ticks = ticks + diff;
+
+        printf("\nTicks Passed [ms]: %ld / now at %ld\n", diff, ticks);
+
+        if (psmove_get_buttons(move) & Btn_CIRCLE) {
+          psmove_reset_orientation(move);
+          // biases will still have last round's values
+          bias_ax = ax;
+          bias_ay = ay;
+          bias_az = az;
+
+          vx = 0;
+          vy = 0;
+          vz = 0;
+          x = 0;
+          y = 0;
+          z = 0;
+        }
+
+        int frame;
+        for (frame = 0; frame<2; frame++) {
+          float total;
+          psmove_get_accelerometer_frame(move, frame, &ax, &ay, &az);
+          total = sqrt(ax*ax + ay*ay + az*az);
+          printf("%05f;%05f;%05f;%05f\n", ax, ay, az, total);
+
+          // heading
+          float hw, hx, hy, hz;
+          psmove_get_orientation(move, &hw, &hx, &hy, &hz);
+          printf("heading: %3f %3f %3f %3f\n", hw, hx, hy, hz);
+
+          // first integration for speed
+          // TODO: needs to take orientation into account!
+          float g = 9.80665f; // m/s²
+          float dt = 0.5f * diff / 1000; // s for each frame
+          vx += (ax - bias_ax) * g * dt;
+          vy += (ay - bias_ay) * g * dt;
+          vz += (az - bias_az) * g * dt;
+          printf("velocity: %3f %3f %3f\n", vx, vy, vz);
+
+          // second integration for position [m]
+          x += vx * dt;
+          y += vy * dt;
+          z += vz * dt;
+          printf("position: %3f %3f %3f\n", x, y, z);
+        }
+
+
+        Sleep(intended_tick_length - (ticks % intended_tick_length));
+    }
+
+    return 0;
+}
+
+
+
+void
+psmove_enable_background_dead_reckoning(PSMove *move)
+{
+    printf("Trying to create a thread");
+
+    move->dead_reckoning_running = 1;
+    move->dead_reckoning_thread = CreateThread(
+        NULL, // LPSec
+        0, // SizeT
+        _psmove_dead_reckoning_thread_proc, // routine
+        (void*)move, // parameter
+        0, // creation flags
+        NULL // out opt
+    );
+}
+
+void
+psmove_disable_background_dead_reckoning(PSMove *move)
+{
+    printf("Trying to stop and join the thread");
+    move->dead_reckoning_running = 0;
+    WaitForSingleObject(&(move->dead_reckoning_thread), INFINITE);
+    printf("joined.");
+}
+
 
 void
 psmove_reset_orientation(PSMove *move)

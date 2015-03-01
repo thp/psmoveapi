@@ -1027,6 +1027,19 @@ ADDAPI void
 ADDCALL psmove_reset_magnetometer_calibration(PSMove *move);
 
 /**
+ *
+ **/
+ADDAPI void
+ADDCALL psmove_enable_background_dead_reckoning(PSMove *move);
+
+
+/**
+ *
+ **/
+ADDAPI void
+ADDCALL psmove_disable_background_dead_reckoning(PSMove *move);
+
+/**
  * \brief Save the magnetometer calibration values.
  *
  * This will save the magnetometer calibration data to persistent storage.
