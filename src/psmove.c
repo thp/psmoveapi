@@ -1938,9 +1938,9 @@ _psmove_dead_reckoning_thread_proc(void *data)
           // first integration for speed
           float g = 9.80665f; // [m/s²]
           float dt = 0.5f * diff / 1000; // [s] for each frame
-          move->vx += oriented_acceleration[3] * g * dt;
-          move->vy += oriented_acceleration[7] * g * dt;
-          move->vz += oriented_acceleration[11] * g * dt;
+          move->vx += global_acceleration_only[0] * g * dt;
+          move->vy += global_acceleration_only[1] * g * dt;
+          move->vz += global_acceleration_only[2] * g * dt;
           printf("velocity: %3f %3f %3f\n", move->vx, move->vy, move->vz);
 
           // second integration for position [m]
@@ -2419,4 +2419,3 @@ _psmove_wait_for_button(PSMove *move, int button)
         psmove_update_leds(move);
     }
 }
-
