@@ -132,7 +132,7 @@ int run_daemon()
 #else
     // On non-Linux systems we just try to pair every 5 seconds for now
     while (1) {
-        sleep(5);
+        usleep(5000000);
         pair(NULL);
     }
 #endif // __linux

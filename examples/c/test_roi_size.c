@@ -104,16 +104,17 @@ save(int i, int roi_size, struct TestContext *context)
     cvSaveImage(path, frame, imgParams);
 }
 
+#define cROIS 3
 int
 main(int argc, char *argv[])
 {
     printf("\n -- PS Move API ROI Performance Test -- \n\n");
-    int roi_sizes[] = {480, 240, 120};
+    int roi_sizes[cROIS] = { 480, 240, 120 };
     int roi;
-    int rois = sizeof(roi_sizes)/sizeof(roi_sizes[0]);
-
-    float data[ITERATIONS][rois];
-    float position[ITERATIONS][rois][3]; // x, y, r
+    //int rois = sizeof(roi_sizes) / sizeof(roi_sizes[0]);  // MSVC is too stupid to figure out this is a constant. See cROIS above.
+    
+    float data[ITERATIONS][cROIS];
+    float position[ITERATIONS][cROIS][3]; // x, y, r
 
     /**
      * Test file for this test is available from:
@@ -124,12 +125,15 @@ main(int argc, char *argv[])
     putenv(PSMOVE_TRACKER_FILENAME_ENV "=test_roi_size.avi");
     putenv(PSMOVE_TRACKER_COLOR_ENV "=723a8c");
 
-    for (roi=0; roi<rois; roi++) {
+    for (roi = 0; roi<cROIS; roi++) {
         printf("Testing tracking performance: %d\n", roi_sizes[roi]);
 
-        char tmp[strlen(PSMOVE_TRACKER_ROI_SIZE_ENV) + 10];
+        //char tmp[strlen(PSMOVE_TRACKER_ROI_SIZE_ENV) + 10];  //msvc cannot handle variable length arrays, and is too stupid to figure out this is constant.
+        char *tmp;
+        tmp = calloc(strlen(PSMOVE_TRACKER_ROI_SIZE_ENV) + 10, sizeof(char));
         sprintf(tmp, "%s=%d", PSMOVE_TRACKER_ROI_SIZE_ENV, roi_sizes[roi]);
         putenv(tmp);
+        free(tmp);
 
         struct TestContext context;
         setup(&context);
@@ -169,10 +173,10 @@ main(int argc, char *argv[])
 
     /* Header */
     fprintf(fp, "frame");
-    for (roi=0; roi<rois; roi++) {
+    for (roi = 0; roi<cROIS; roi++) {
         fprintf(fp, ",roi%d", roi_sizes[roi]);
     }
-    for (roi=0; roi<rois; roi++) {
+    for (roi = 0; roi<cROIS; roi++) {
         fprintf(fp, ",x%d,y%d,r%d",
                 roi_sizes[roi],
                 roi_sizes[roi],
@@ -184,10 +188,10 @@ main(int argc, char *argv[])
     int i;
     for (i=0; i<ITERATIONS; i++) {
         fprintf(fp, "%d", i);
-        for (roi=0; roi<rois; roi++) {
+        for (roi = 0; roi<cROIS; roi++) {
             fprintf(fp, ",%.10f", data[i][roi]);
         }
-        for (roi=0; roi<rois; roi++) {
+        for (roi = 0; roi<cROIS; roi++) {
             fprintf(fp, ",%.10f,%.10f,%.10f",
                     position[i][roi][0],
                     position[i][roi][1],

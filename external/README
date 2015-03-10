@@ -73,3 +73,24 @@ PS3EYEDriver
 PSEye userspace driver based on libusb + the Linux driver
 by Eugene Zatepyakin, modified by Thomas Perl
 from https://github.com/thp/PS3EYEDriver
+
+pthreads-w32
+============
+
+A Windows implementation of posix-threads.
+https://www.sourceware.org/pthreads-win32/
+
+msvc-support
+============
+
+Work-arounds for MSVC's non-compliant C and a few unix-like libraries.
+These were taken from various sources.
+
+unistd.h is from http://stackoverflow.com/questions/341817/is-there-a-replacement-for-unistd-h-for-windows-visual-c
+There is no license.
+
+stdint.h is from http://snipplr.com/view.php?codeview&id=18199
+and is public domain.
+
+getopt.h is from https://gist.github.com/ashelly/7776712
+and uses the LGPL.
