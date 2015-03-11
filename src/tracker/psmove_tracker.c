@@ -563,11 +563,17 @@ psmove_tracker_new_with_camera(int camera) {
 #endif
 
 	// start the video capture device for tracking
-	tracker->cc = camera_control_new(camera);
+    tracker->cc = camera_control_new(camera); // Returns NULL if no control found.
+                                              // e.g. PS3EYE set during compile but not plugged in.
+    if (!tracker->cc)
+    {
+        free(tracker);
+        return NULL;
+    }
 
         char *intrinsics_xml = psmove_util_get_file_path(INTRINSICS_XML);
         char *distortion_xml = psmove_util_get_file_path(DISTORTION_XML);
-	camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml);
+        camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml); // Crashes if cc is NULL
         free(intrinsics_xml);
         free(distortion_xml);
 
