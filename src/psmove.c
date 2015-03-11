@@ -599,45 +599,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     }
     if (serial == NULL && path != NULL) {
         move->handle = hid_open_path(path);
-    }
-    else {
-        move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
-    }
-
-    /**
-     * In Windows, the device is enumerated 3 times, and each has slightly different behaviour.
-     * The devices' paths differ slightly (col01, col02, and col03).
-     * The device with col01 is the one we want to use for data.
-     * The device with col02 is the one we want to use for the bluetooth address.
-     * More testing remains to determine which device is best for which feature reports.
-     **/
-
-    /**
-     * We know this function (psmove_connect_internal) will only be called with the col01 path.
-     * We first copy that path then modify it to col02. That will be the path for our addr device.
-     * Connect to the addr device first, then connect to the main device.
-     **/
-    move->device_path_addr = strdup(path);
-    char *p;
-    psmove_return_val_if_fail((p = strstr(move->device_path_addr, "&col01#")) != NULL, NULL);
-    p[5] = '2';
-    psmove_return_val_if_fail((p = strstr(move->device_path_addr, "&0000#")) != NULL, NULL);
-    p[4] = '1';
-    move->handle_addr = hid_open_path(move->device_path_addr);
-    hid_set_nonblocking(move->handle_addr, 1);
-
-    move->device_path = strdup(path);
-    move->handle = hid_open_path(move->device_path);
-
-#else
-    /* If not in Windows then we can rely on having only one device. */
-    if (path != NULL) {
-        move->device_path = strdup(path);
-    }
-    if (serial == NULL && path != NULL) {
-        move->handle = hid_open_path(path);
-    }
-    else {
+    } else {
         move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
     }
 
@@ -661,8 +623,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
     if (serial != NULL) {
         wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
-    }
-    else {
+    } else {
         move->serial_number = psmove_get_serial(move);
     }
 
@@ -947,10 +908,9 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
     btg[0] = PSMove_Req_GetBTAddr;
 
     /* _WIN32 only has move->handle_addr for getting bluetooth address. */
-    if (move->handle_addr){
+    if (move->handle_addr) {
         res = hid_get_feature_report(move->handle_addr, btg, sizeof(btg));
-    }
-    else{
+    } else {
         res = hid_get_feature_report(move->handle, btg, sizeof(btg));
     }
 
@@ -1066,10 +1026,9 @@ psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
         bts[1+i] = (*addr)[i];
     }
     /* _WIN32 only has move->handle_addr for getting bluetooth address. */
-    if (move->handle_addr){
+    if (move->handle_addr) {
         res = hid_send_feature_report(move->handle_addr, bts, sizeof(bts));
-    }
-    else{
+    } else {
         res = hid_send_feature_report(move->handle, bts, sizeof(bts));
     }
 
@@ -1891,7 +1850,7 @@ enum PSMove_Bool
 psmove_has_calibration(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
-	return psmove_calibration_supported(move->calibration);
+    return psmove_calibration_supported(move->calibration);
 }
 
 void
@@ -2105,7 +2064,7 @@ psmove_disconnect(PSMove *move)
     switch (move->type) {
         case PSMove_HIDAPI:
             hid_close(move->handle);
-            if (move->handle_addr){// _WIN32 only
+            if (move->handle_addr) {// _WIN32 only
                 hid_close(move->handle_addr);
             }
             break;
@@ -2124,7 +2083,7 @@ psmove_disconnect(PSMove *move)
 
     free(move->serial_number);
     free(move->device_path);
-    if (move->device_path_addr){ // _WIN32 only
+    if (move->device_path_addr) { // _WIN32 only
         free(move->device_path_addr);
     }
     free(move);
