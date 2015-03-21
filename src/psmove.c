@@ -1425,7 +1425,7 @@ psmove_get_buttons(PSMove *move)
      * See also: enum PSMove_Button in include/psmove.h
      *
      * Source:
-     * https://code.google.com/p/moveonpc/wiki/InputReport
+     * https://github.com/nitsch/moveonpc/wiki/Input-report
      *
      *           21  1    1  00000   0 <- bit (read top to bottom)
      *   ........09..6....1..87654...0

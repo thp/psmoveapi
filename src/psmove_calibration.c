@@ -126,7 +126,7 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 
     printf("\n");
 
-    /* http://code.google.com/p/moveonpc/wiki/CalibrationData */
+    /* https://github.com/nitsch/moveonpc/wiki/Calibration-data */
 
     for (orientation=0; orientation<6; orientation++) {
         x = psmove_calibration_decode(data, 0x04 + 6*orientation);
