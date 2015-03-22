@@ -85,15 +85,10 @@ IMPORTANT: Get the right MinGW version!
 
 1. Clone the PS Move API repository
 
-	git clone git://github.com/thp/psmoveapi.git
+	git clone --recursive git://github.com/thp/psmoveapi.git
 	cd psmoveapi
 
-2. Init and update the submodules
-
-	git submodule init
-	git submodule update
-
-3. Clone the OpenCV repository
+2. Clone the OpenCV repository
 
 	Since OpenCV binary distributions typically do not come with
 	MinGW builds, we build our own. First, get version 2.4.10 from
@@ -102,20 +97,20 @@ IMPORTANT: Get the right MinGW version!
 	git clone --depth 1 --branch 2.4.10 git://github.com/Itseez/opencv.git
 	cd opencv
 
-4. Configure the OpenCV build to produce static libs
+3. Configure the OpenCV build to produce static libs
 
 	mkdir build
 	cd build
 	cmake .. -G "MinGW Makefiles" -DBUILD_SHARED_LIBS=0
 
-5. Build and install OpenCV
+4. Build and install OpenCV
 
 	It will install to psmoveapi's opencv/build/install subdirectory.
 
 	mingw32-make
 	mingw32-make install
 
-6. Configure the PS Move API build
+5. Configure the PS Move API build
 
 	Switch back to the psmoveapi root directory.
 
@@ -129,11 +124,11 @@ IMPORTANT: Get the right MinGW version!
 
 	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_CL_EYE_SDK=1
 
-7. Finally build the PS Move API
+6. Finally build the PS Move API
 
 	mingw32-make
 
-8. Pair the controller to the host
+7. Pair the controller to the host
 
 	Using the controllers' Bluetooth capabilities requires you to pair the
 	controller to the host computer first. That is what the psmovepair utility
@@ -155,7 +150,7 @@ IMPORTANT: Get the right MinGW version!
 	the controller from the list of Bluetooth devices you need to run
 	psmovepair again for that controller.
 
-9. Start one of the desired test applications
+8. Start one of the desired test applications
 
 	If you previously chose to build the example applications (which is the
 	default), you can then run
