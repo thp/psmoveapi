@@ -31,7 +31,7 @@
 
 #include "psmove.h"
 
-#define MINIMUM_REQUIRED_RANGE 320
+#define LED_RANGE_TARGET 320
 
 int
 main(int arg, char** args)
@@ -40,47 +40,44 @@ main(int arg, char** args)
     int count = psmove_count_connected();
     for (i=0; i<count; i++) {
         PSMove *move = psmove_connect_by_id(i);
-        int old_range = 0;
         if (psmove_connection_type(move) == Conn_Bluetooth) {
+            int old_range = 0;
             int calibration_done = 0;
             psmove_reset_magnetometer_calibration(move);
             printf("Calibrating PS Move #%d\n", i);
+            printf("Rotate the controller in all directions.\n");
             fflush(stdout);
             while (!calibration_done) {
                 while (psmove_poll(move)) {
                     unsigned int pressed, released;
                     psmove_get_button_events(move, &pressed, &released);
 
-                    /* This call calculates the new raw min/max values */
+                    /* This call updates min/max values if exceeding previously stored values */
                     psmove_get_magnetometer_vector(move, NULL, NULL, NULL);
-
+                    
+                    /* Returns the minimum delta (max-min) across dimensions (x, y, z) */
                     int range = psmove_get_magnetometer_calibration_range(move);
-                    int percentage = 100 * range / MINIMUM_REQUIRED_RANGE;
+                    
+                    /* Update the LEDs to indicate progress */
+                    int percentage = 100 * range / LED_RANGE_TARGET;
                     if (percentage > 100) {
                         percentage = 100;
                     } else if (percentage < 0) {
                         percentage = 0;
                     }
-
                     psmove_set_leds(move, 2.5 * (100 - percentage), 2.5 * percentage, 0);
                     psmove_update_leds(move);
 
-                    if (range > MINIMUM_REQUIRED_RANGE) {
-                        if (old_range > 0) {
-                            printf("\rCalibration done. Press the MOVE button to continue.\n");
-                            old_range = 0;
-                        }
-                        if (pressed & Btn_MOVE) {
-                            psmove_set_leds(move, 0, 0, 0);
-                            psmove_update_leds(move);
-                            psmove_save_magnetometer_calibration(move);
-                            calibration_done = 1;
-                            break;
-                        }
+                    if (pressed & Btn_MOVE) {
+                        psmove_set_leds(move, 0, 0, 0);
+                        psmove_update_leds(move);
+                        psmove_save_magnetometer_calibration(move);
+                        calibration_done = 1;
+                        break;
                     } else if (range > old_range) {
-                        printf("\rRotate the controller in all directions: %d%%", percentage);
-                        fflush(stdout);
                         old_range = range;
+                        printf("\rPress the MOVE button when value stops changing: %d", range);
+                        fflush(stdout);
                     }
                 }
 
@@ -88,7 +85,7 @@ main(int arg, char** args)
         } else {
             printf("Ignoring non-Bluetooth PS Move #%d\n", i);
         }
-
+        printf("\nFinished PS Move #%d\n", i);
         psmove_disconnect(move);
     }
 
