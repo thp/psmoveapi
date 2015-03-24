@@ -1,6 +1,6 @@
 
-Building PS Move API in Ubuntu Linux
-====================================
+Building and running PS Move API on Ubuntu Linux
+================================================
 
 These instructions have been tested and verified for Ubuntu 12.04 LTS.
 
@@ -8,6 +8,9 @@ The commands are entered into the Terminal (use Ctrl+Alt+T to open one).
 
 We assume that you are going to clone the repository into ~/src/psmoveapi/
 
+
+Building the PS Move API
+------------------------
 
 1. Upgrade your system to the latest packages
 
@@ -45,6 +48,38 @@ We assume that you are going to clone the repository into ~/src/psmoveapi/
    cd build
    cmake ..
    make -j4
+
+
+Running with Bluetooth
+----------------------
+
+Using the controllers' Bluetooth capabilities requires you to pair the
+controller to the host computer first. That is what the psmovepair utility is
+for. It is automatically built as part of the PS Move API.
+
+Make sure that Bluetooth is enabled on your computer, then connect a Move
+controller via USB and run
+
+   sudo ./psmovepair
+
+to store the host's Bluetooth device address in the Move and register the
+controller. If that succeeded, you can unplug the USB cable and press the
+PS button on the Move. The red status LED will start blinking and should
+eventually remain lit to indicate a working Bluetooth connection.
+
+Note that the pairing step is necessary only once per controller. From that
+point on you can enable the Bluetooth connection simply by pressing the
+PS button. Only if you switched to a different Bluetooth adapter or deleted
+Bluetooth-related config data on the host you need to run psmovepair again for
+that controller.
+
+If you previously chose to build the example applications (which is the
+default), you can then run
+
+   ./example
+
+for a basic example.
+
 
 
 For questions, please read the archives of the PS Move Mailing List. If you

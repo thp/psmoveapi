@@ -6,15 +6,15 @@ We usually build PS Move API for Windows on Linux via cross-compliation, as
 we don't run Windows for day-to-day work. For cross-compiling the PS Move API
 for Windows on Linux, you can use the following script:
 
-    contrib/cross-compile-mingw64
+	contrib/cross-compile-mingw64
 
 
-Please take into account that nobody has yet managed to make Bluetooth pairing
-work reliably on Windows (it works reliably on both Mac OS X and Linux). If you
-plan to do serious development, it's time to switch to Mac OS X or Linux. As an
-alternative, you can use a Linux host for Bluetooth communcation, and export
-the controller via "moved" to the Windows host. This setup has reliable pairing,
-and you can still develop and build your applications in Windows if you have to.
+Please take into account that Bluetooth pairing on Windows still does not work
+as smoothly as on both Mac OS X and Linux. If you plan to do serious
+development, it's time to switch to Mac OS X or Linux. As an alternative, you
+can use a Linux host for Bluetooth communcation, and export the controller via
+"moved" to the Windows host. This setup has reliable pairing, and you can still
+develop and build your applications in Windows if you have to.
 
 
 Requirements
@@ -75,54 +75,96 @@ IMPORTANT: Get the right MinGW version!
            set PATH=C:\mingw32\bin;%PATH%
 
 
+    NOTE: If you want to use the CL Eye Driver (for PS Eye camera) you *must*
+          build everything as 32-bit binaries. The driver is, as of writing,
+          only available in a 32-bit version that will not work together with
+          64-bit builds of OpenCV and the PS Move API. The easiest way to
+          achieve this is to install the i686 version of MinGW-w64 (see above)
+          for the following build steps.
 
-1. build and configure OpenCV with cmake
-	:: you may skip to build OpenCV on your own, however i had no luck
-	:: the binary distribution did not work on my system
-	cd <where you extracted opencv>
-	mkdir build
-	cd build
-	cmake .. -G "MinGW Makefiles"
-	mingw32-make
-	:: now go for a coffe-break
 
-	Bonus-Tipp: If you wish to link opencv statically, provide
-	one extra parameter to cmake: -DBUILD_SHARED_LIBS=OFF
+1. Clone the PS Move API repository
 
-2. Get you clone of the psmoveapi
-	git clone git://github.com/thp/psmoveapi.git
+	git clone --recursive git://github.com/thp/psmoveapi.git
 	cd psmoveapi
 
-3. Init and update the submodules
-	git submodule init
-	git submodule update
+2. Clone the OpenCV repository
 
-4.  make OpenCV known to your system and the cmake toolchain
-	set OpenCV_DIR=<the path where you extracted opencv>
-	set PATH=%PATH%;%OpenCV_DIR%\build\bin
+	Since OpenCV binary distributions typically do not come with
+	MinGW builds, we build our own. First, get version 2.4.10 from
+	the OpenCV repository.
 
-	You can also build opencv in a folder "opencv" inside the
-	source directory. When you're in the psmoveapi directory,
-	either clone opencv from github, or put the contents of the
-	sources directory in a directory called "opencv".
+	git clone --depth 1 --branch 2.4.10 git://github.com/Itseez/opencv.git
+	cd opencv
 
-	Either way, you should end up with a directory "opencv"
-	containing opencv's README.md
+3. Configure the OpenCV build to produce static libs
 
-	Then you can use the CMake option "PSMOVE_USE_LOCAL_OPENCV"
-	to link against OpenCV statically from this checkout /
-	build directory.
-
-5. prepare a new build with cmake for the psmoveapi
 	mkdir build
 	cd build
-	cmake .. -G "MinGW Makefiles"
+	cmake .. -G "MinGW Makefiles" -DBUILD_DOCS=0 -DBUILD_PACKAGE=0 -DBUILD_PERF_TESTS=0 -DBUILD_SHARED_LIBS=0 -DBUILD_TESTS=0 -DBUILD_opencv_apps=0 -DBUILD_opencv_calib3d=0 -DBUILD_opencv_contrib=0 -DBUILD_opencv_features2d=0 -DBUILD_opencv_flann=0 -DBUILD_opencv_gpu=0 -DBUILD_opencv_java=0 -DBUILD_opencv_legacy=0 -DBUILD_opencv_ml=0 -DBUILD_opencv_nonfree=0 -DBUILD_opencv_objdetect=0 -DBUILD_opencv_ocl=0 -DBUILD_opencv_photo=0 -DBUILD_opencv_python=0 -DBUILD_opencv_stitching=0 -DBUILD_opencv_superres=0 -DBUILD_opencv_ts=0 -DBUILD_opencv_video=0 -DBUILD_opencv_videostab=0 -DBUILD_opencv_world=0 -DWITH_FFMPEG=0 -DWITH_JASPER=0 -DWITH_OPENEXR=0 -DWITH_TIFF=0
 
-        Alternatively, if you want to use the CL Eye SDK:
-	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=ON
+4. Build and install OpenCV
 
-6. finally build
+	It will install to psmoveapi's opencv/build/install subdirectory.
+
+	mingw32-make
+	mingw32-make install
+
+5. Configure the PS Move API build
+
+	Switch back to the psmoveapi root directory.
+
+	cd ..\..
+
+	mkdir build
+	cd build
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1
+
+	Alternatively, if you want to use the CL Eye SDK:
+
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_CL_EYE_SDK=1
+
+6. Finally build the PS Move API
+
 	mingw32-make
 
-7. start one of the desired test applications
+7. Pair the controller to the host
+
+	Using the controllers' Bluetooth capabilities requires you to pair the
+	controller to the host computer first. That is what the psmovepair utility
+	is for. It is automatically built as part of the PS Move API.
+
+	Make sure that Bluetooth is enabled on your computer, then connect a Move
+	controller via USB and run
+
+	psmovepair.exe
+
+	to store the host's Bluetooth device address in the Move and register the
+	controller. Follow the instructions on the screen until the Move's red
+	status LED eventually remains lit to indicate a working Bluetooth
+	connection.
+
+	Note that the pairing step is necessary only once per controller. From that
+	point on you can enable the Bluetooth connection simply by pressing the
+	PS button. Only if you switched to a different Bluetooth adapter or deleted
+	the controller from the list of Bluetooth devices you need to run
+	psmovepair again for that controller.
+
+8. Start one of the desired test applications
+
+	If you previously chose to build the example applications (which is the
+	default), you can then run
+
+	example.exe
+
+	for a basic example.
+
+
+
+For questions, please read the archives of the PS Move Mailing List. If you
+cannot find an answer to your question in the archives, send an e-mail:
+
+	https://groups.google.com/forum/#!aboutgroup/psmove
+
+
 
