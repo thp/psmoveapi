@@ -565,6 +565,19 @@ ADDAPI enum PSMove_Bool
 ADDCALL psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data);
 
 /**
+ * \brief Send data to a connected extension device.
+ *
+ * \param move A valid \ref PSMove handle
+ * \param data Pointer to the data which to send
+ * \param length Number of bytes in \ref data
+ *
+ * \return \ref PSMove_True on success
+ * \return \ref PSMove_False on error
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char length);
+
+/**
  * \brief Get the current button states from the controller.
  *
  * The status of the buttons is described as a bitfield, with a bit

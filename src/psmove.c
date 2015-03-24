@@ -1547,6 +1547,39 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
     return PSMove_True;
 }
 
+enum PSMove_Bool
+psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char length)
+{
+    unsigned char send_buf[PSMOVE_EXT_DEVICE_REPORT_SIZE];
+    int res;
+
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(data != NULL, PSMove_False);
+    psmove_return_val_if_fail(length > 0,   PSMove_False);
+
+    if (length > sizeof(send_buf) - 9) {
+        psmove_DEBUG("Data too large for send buffer\n");
+        return PSMove_False;
+    }
+
+    /* Send Feature Report */
+    memset(send_buf, 0, sizeof(send_buf));
+    send_buf[0] = PSMove_Req_SetExtDeviceInfo;
+    send_buf[1] = 0;          /* read flag */
+    send_buf[2] = 0xA0;       /* target extension device's I²C slave address */
+    send_buf[3] = data[0];    /* control byte */
+    send_buf[4] = length - 1; /* payload size */
+    memcpy(send_buf + 9, data + 1, length - 1);
+    res = hid_send_feature_report(move->handle, send_buf, sizeof(send_buf));
+
+    if (res != sizeof(send_buf)) {
+        psmove_DEBUG("Sending Feature Report failed\n");
+        return PSMove_False;
+    }
+
+    return PSMove_True;
+}
+
 enum PSMove_Battery_Level
 psmove_get_battery(PSMove *move)
 {
