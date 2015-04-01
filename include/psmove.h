@@ -82,7 +82,7 @@ enum PSMove_Button {
      * laid out in the input report.
      *
      * Source:
-     * https://code.google.com/p/moveonpc/wiki/InputReport
+     * https://github.com/nitsch/moveonpc/wiki/Input-report
      **/
     Btn_TRIANGLE = 1 << 4, /*!< Green triangle */
     Btn_CIRCLE = 1 << 5, /*!< Red circle */

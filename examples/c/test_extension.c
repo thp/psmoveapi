@@ -48,7 +48,7 @@ void handle_sharp_shooter(PSMove_Ext_Data *data, unsigned int move_buttons)
 {
     /**
      * For a detailed device documentation and a guide for accessing button values, see
-     * https://code.google.com/p/moveonpc/wiki/SharpShooter
+     * https://github.com/nitsch/moveonpc/wiki/Sharp-Shooter
      **/
 
     assert(data != NULL);
@@ -83,7 +83,7 @@ void handle_racing_wheel(PSMove *move, PSMove_Ext_Data *data, unsigned int move_
 {
     /**
      * For a detailed device documentation and a guide for accessing button values, see
-     * https://code.google.com/p/moveonpc/wiki/RacingWheel
+     * https://github.com/nitsch/moveonpc/wiki/Racing-Wheel
      **/
 
     assert(data != NULL);
