@@ -29,7 +29,7 @@
 #include "../psmove_private.h"
 #include "psmove_winsupport.h"
 
-#include <BluetoothAPIs.h>
+#include <bluetoothapis.h>
 
 #include <malloc.h>
 #include <stdio.h>

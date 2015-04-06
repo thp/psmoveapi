@@ -29,7 +29,7 @@
 #ifndef PSMOVE_WINSUPPORT_H
 #define PSMOVE_WINSUPPORT_H
 
-#include <Windows.h>
+#include <windows.h>
 
 
 /**
