@@ -64,6 +64,7 @@
 #endif
 
 #ifdef _WIN32
+#  include <winsock2.h>
 #  include <windows.h>
 #  include <bthsdpdef.h>
 #  include <bluetoothapis.h>
@@ -256,6 +257,7 @@ struct _PSMove {
 
     /* The handle to the HIDAPI device */
     hid_device *handle;
+    hid_device *handle_calib;
 
     /* The handle to the moved client */
     moved_client *client;
@@ -273,6 +275,7 @@ struct _PSMove {
 
     /* Device path of the controller */
     char *device_path;
+    char *device_path_calib;
 
     /* Nonzero if the value of the LEDs or rumble has changed */
     unsigned char leds_dirty;
@@ -569,9 +572,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     /* XXX Ugly: Convert "col02" path to "col01" path (tested w/ BT and USB) */
     char *p;
     psmove_return_val_if_fail((p = strstr(path, "&col02#")) != NULL, NULL);
-    p[5] = '1';
     psmove_return_val_if_fail((p = strstr(path, "&0001#")) != NULL, NULL);
-    p[4] = '0';
 #endif
 
     if (serial == NULL && path != NULL) {
@@ -587,6 +588,27 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     /* Use Non-Blocking I/O */
     hid_set_nonblocking(move->handle, 1);
+
+#ifdef _WIN32
+    char *path_calib = (char*) calloc(strlen(path)+1, sizeof(char));
+    strncpy(path_calib, path, strlen(path)+1);
+    psmove_return_val_if_fail((p = strstr(path_calib, "&col02#")) != NULL, NULL);
+    p[5] = '1';
+    psmove_return_val_if_fail((p = strstr(path_calib, "&0001#")) != NULL, NULL);
+    p[4] = '0';
+
+    move->handle_calib = hid_open_path(path_calib);
+    if (!move->handle_calib) {
+        free(move);
+        return NULL;
+    }
+
+    hid_set_nonblocking(move->handle_calib, 1);
+    
+    if (path_calib != NULL) {
+        move->device_path_calib = strdup(path_calib);
+    }
+#endif
 
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
@@ -922,7 +944,11 @@ _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
     for (x=0; x<3; x++) {
         memset(cal, 0, sizeof(cal));
         cal[0] = PSMove_Req_GetCalibration;
-        res = hid_get_feature_report(move->handle, cal, sizeof(cal));
+
+        if(move->handle_calib)
+            res = hid_get_feature_report(move->handle_calib, cal, sizeof(cal));
+        else
+            res = hid_get_feature_report(move->handle, cal, sizeof(cal));
 #if defined(__linux)
         if(res == -1) {
             psmove_WARNING("hid_get_feature_report failed, kernel issue? see %s\n",
@@ -1913,8 +1939,6 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
     char filename[PATH_MAX];
 
     char *serial = psmove_get_serial(move);
-    psmove_return_val_if_fail(serial != NULL, NULL);
-
     int i;
     for (i=0; i<strlen(serial); i++) {
         if (serial[i] == ':') {
@@ -2029,6 +2053,8 @@ psmove_disconnect(PSMove *move)
     switch (move->type) {
         case PSMove_HIDAPI:
             hid_close(move->handle);
+            if(move->handle_calib)
+                hid_close(move->handle_calib);
             break;
         case PSMove_MOVED:
             // XXX: Close connection?
@@ -2045,6 +2071,8 @@ psmove_disconnect(PSMove *move)
 
     free(move->serial_number);
     free(move->device_path);
+    if(move->device_path_calib)
+        free(move->device_path_calib);
     free(move);
 
     /* Bookkeeping of open handles (for psmove_reinit) */
