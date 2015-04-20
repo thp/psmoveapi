@@ -39,7 +39,11 @@
 #include <string.h>
 #include <wchar.h>
 #include <unistd.h>
+#ifdef _MSC_VER
+#include <WinSock2.h>
+#else
 #include <sys/time.h>
+#endif
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
@@ -81,6 +85,33 @@
 #include "daemon/moved_client.h"
 #include "hidapi.h"
 
+/* Add gettimeofday for MSVC http://stackoverflow.com/a/26085827/1256069 */
+#ifdef _MSC_VER
+int gettimeofday(struct timeval * tp, struct timezone * tzp)
+{
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
+
+    GetSystemTime( &system_time );
+    SystemTimeToFileTime( &system_time, &file_time );
+    time =  ((uint64_t)file_time.dwLowDateTime )      ;
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec  = (long) ((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+    return 0;
+}
+#endif
+
+#ifdef _MSC_VER
+#define STIN static __inline  // Used in psmove_decode_16bit
+#else
+#define STIN static inline
+#endif
 
 /* Begin private definitions */
 
@@ -163,7 +194,7 @@ typedef struct {
 #define TWELVE_BIT_SIGNED(x) (((x) & 0x800)?(-(((~(x)) & 0xFFF) + 1)):(x))
 
 /* Decode 16-bit signed value from data pointer and offset */
-static inline int
+STIN int
 psmove_decode_16bit(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
@@ -2151,7 +2182,7 @@ psmove_util_get_file_path(const char *filename)
     char *result;
     struct stat st;
 
-#ifndef __WIN32
+#ifndef _WIN32
     // if run as root, use system-wide data directory
     if (geteuid() == 0) {
         parent = PSMOVE_SYSTEM_DATA_DIR;
@@ -2266,7 +2297,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     return result;
 }
 
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(_MSC_VER)
 
 #define CLOCK_MONOTONIC 0
 
@@ -2281,7 +2312,7 @@ clock_gettime(int unused, struct timespec *ts)
 
     return 0;
 }
-#endif /* __APPLE__ */
+#endif /* __APPLE__ || _MSC_VER */
 
 PSMove_timestamp
 _psmove_timestamp()

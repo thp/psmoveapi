@@ -50,6 +50,10 @@
 #  include "platform/psmove_linuxsupport.h"
 #endif
 
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+
 //#define DEBUG_WINDOWS 			// shall additional windows be shown
 #define ROIS 4                   	// the number of levels of regions of interest (roi)
 #define BLINKS 2                 	// number of diff images to create during calibration

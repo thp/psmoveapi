@@ -1,0 +1,68 @@
+Requirements
+------------
+
+- Visual Studio Community 2013
+  http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
+- CMake
+  http://www.cmake.org/cmake/resources/software.html
+- OpenCV
+  http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
+- Git
+  http://code.google.com/p/msysgit/
+
+1. Clone the PS Move API repository
+    `git clone --recursive https://github.com/cboulay/psmoveapi.git`
+    `cd psmoveapi`
+    
+2. Get libusb-1.0
+    Go to http://libusb.info/ and download the latest source (tarball).
+    Unpack the folder into psmoveapi\external\ and rename the folder to libusb-1.0
+    i.e. psmoveapi\external\libusb-1.0
+    
+    In that folder, open msvc\libusb_2013.sln
+    Change the target to Release x64 (at the top of the Visual Studio window).
+    Build the solution.
+    
+3. OpenCV
+    Download opencv-2.4.11.zip from http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/
+    (Yes, I know it says unix, but all we need are the sources.)
+    Unpack it into psmoveapi\ and trim the version off the directory name (i.e. psmoveapi\opencv)
+
+    Open a VS2013 command prompt to the psmoveapi\opencv directory:
+
+    `mkdir build`
+    `cd build`
+    `cmake .. -G "Visual Studio 12 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=OFF -DBUILD_opencv_features2d=OFF -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
+
+    Open the solution in psmoveapi\opencv\build\OpenCV.sln
+    Change the target to Release (at the top of the Visual Studio window).
+    Build the solution.
+
+4. Build psmoveapi
+
+    Still in the VS2013 command prompt:
+
+    `cd ..\..`
+    `mkdir build `
+    `cd build`
+    `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_BUILD_PYTHON_BINDINGS=0 -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1`
+
+    Open the solution file.
+    Change the target to Release.
+    Build the projects psmoveapi, psmoveapi_tracker, and test_tracker (others untested).
+    
+5. Read WINDOWS_EXTRA for windows-specific information on pairing and connecting the psmove controller and on using the PS3Eye camera.
+
+6. Start one of the desired test applications
+
+    If you previously chose to build the example applications (which is the
+    default), you can then run
+
+    example.exe
+
+    for a basic example.
+
+For questions, please read the archives of the PS Move Mailing List. If you
+cannot find an answer to your question in the archives, send an e-mail:
+
+   https://groups.google.com/forum/#!aboutgroup/psmove

@@ -41,7 +41,8 @@
 
 int main(int arg, char** args) {
     int count = psmove_count_connected();
-    PSMove *moves[count];
+    //PSMove *moves[count];
+    PSMove **moves = (PSMove **)calloc(count, sizeof(PSMove *));
 
     int i;
     void *frame;
@@ -91,6 +92,7 @@ int main(int arg, char** args) {
     }
 
     psmove_tracker_free(tracker);
+    free(moves);
     return 0;
 }
 
