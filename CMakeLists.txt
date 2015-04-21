@@ -132,7 +132,7 @@ endif()
 option(PSMOVE_USE_LOCAL_OPENCV "Use locally-built OpenCV (static linking)" OFF)
 if (PSMOVE_USE_LOCAL_OPENCV)
     # Force tracker build with a locally-built opencv library installation
-    set(OPENCV_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
+
     link_directories(${OPENCV_SRC_DIR}/build/lib)
     link_directories(${OPENCV_SRC_DIR}/build/3rdparty/lib)
 
@@ -141,8 +141,8 @@ if (PSMOVE_USE_LOCAL_OPENCV)
       
       # install the required OpenCV headers
       install(DIRECTORY ${OPENCV_SRC_DIR}/modules/${OPENCV_MODULE}/include/opencv2 DESTINATION include)
-    endforeach() 
-    
+    endforeach()    
+
     set(PSMOVE_BUILD_TRACKER ON)
     set(INFO_BUILD_TRACKER "Yes (with local OpenCV)")
 
