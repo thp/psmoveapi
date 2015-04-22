@@ -140,7 +140,7 @@ if (PSMOVE_USE_LOCAL_OPENCV)
       include_directories(${OPENCV_SRC_DIR}/modules/${OPENCV_MODULE}/include) 
       
       # install the required OpenCV headers
-      install(FILES ${OPENCV_SRC_DIR}/modules/${OPENCV_MODULE}/include DESTINATION include)
+      install(DIRECTORY ${OPENCV_SRC_DIR}/modules/${OPENCV_MODULE}/include/opencv2 DESTINATION include)
     endforeach() 
     
     set(PSMOVE_BUILD_TRACKER ON)
