@@ -41,7 +41,7 @@ option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
 option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
 
 # Use a custom location for OpenCV src dir
-option(OPENCV_SRC_DIR "Path to local OpenCV" ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
+set(OPENCV_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv CACHE STRING "Path to local OpenCV source tree")
 
 # allow for an in-source build of local OpenCV
 option(PSMOVE_OPENCV_BUILT_IN_SOURCE "Local OpenCV was built in its source tree" OFF)
