@@ -135,9 +135,14 @@ if (PSMOVE_USE_LOCAL_OPENCV)
     set(OPENCV_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
     link_directories(${OPENCV_SRC_DIR}/build/lib)
     link_directories(${OPENCV_SRC_DIR}/build/3rdparty/lib)
-    include_directories(${OPENCV_SRC_DIR}/modules/core/include)
-    include_directories(${OPENCV_SRC_DIR}/modules/imgproc/include)
-    include_directories(${OPENCV_SRC_DIR}/modules/highgui/include)
+
+    foreach(OPENCV_MODULE core imgproc highgui)
+      include_directories(${OPENCV_SRC_DIR}/modules/${OPENCV_MODULE}/include) 
+      
+      # install the required OpenCV headers
+      install(FILES ${OPENCV_SRC_DIR}/modules/${OPENCV_MODULE}/include DESTINATION include)
+    endforeach() 
+    
     set(PSMOVE_BUILD_TRACKER ON)
     set(INFO_BUILD_TRACKER "Yes (with local OpenCV)")
 
