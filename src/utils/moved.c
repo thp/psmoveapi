@@ -134,6 +134,18 @@ moved_server_create()
 {
     moved_server *server = (moved_server*)calloc(1, sizeof(moved_server));
 
+#ifdef _WIN32
+    /* "wsa" = Windows Sockets API, not a misspelling of "was" */
+    static int wsa_initialized = 0;
+
+    if (!wsa_initialized) {
+        WSADATA wsa_data;
+        assert(WSAStartup(MAKEWORD(1, 1), &wsa_data) == 0);
+        wsa_initialized = 1;
+    }
+#endif
+
+
     server->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     assert(server->socket != -1);
 
