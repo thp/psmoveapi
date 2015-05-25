@@ -573,7 +573,7 @@ psmove_tracker_new_with_camera(int camera) {
 
         char *intrinsics_xml = psmove_util_get_file_path(INTRINSICS_XML);
         char *distortion_xml = psmove_util_get_file_path(DISTORTION_XML);
-        camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml); // Crashes if cc is NULL
+        camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml);
         free(intrinsics_xml);
         free(distortion_xml);
 
