@@ -73,6 +73,12 @@ PS button. Only if you switched to a different Bluetooth adapter or deleted
 Bluetooth-related config data on the host you need to run psmovepair again for
 that controller.
 
+If you wish to access the PSMove controller via USB or bluetooth without
+requiring root-level permissions then it is necessary to copy the
+contrib/99-psmove.rules file to /etc/udev/rules.d/
+
+   sudo cp ../contrib/99-psmove.rules /etc/udev/rules.d/
+
 If you previously chose to build the example applications (which is the
 default), you can then run
 
