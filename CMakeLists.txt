@@ -40,6 +40,11 @@ option(PSMOVE_BUILD_OPENGL_EXAMPLES "Build the OpenGL examples" OFF)
 option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
 option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
 
+# Use a custom location for OpenCV src dir
+set(OPENCV_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv CACHE STRING "Path to local OpenCV source tree")
+
+# allow for an in-source build of local OpenCV
+option(PSMOVE_OPENCV_BUILT_IN_SOURCE "Local OpenCV was built in its source tree" OFF)
 
 # Enable tweaks (e.g. registry settings on Windows, ...) for PS Eye
 option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
@@ -132,7 +137,14 @@ endif()
 option(PSMOVE_USE_LOCAL_OPENCV "Use locally-built OpenCV (static linking)" OFF)
 if (PSMOVE_USE_LOCAL_OPENCV)
     # Force tracker build with a locally-built opencv library installation
-    set(OPENCV_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
+
+    # allow for an in-source build of OpenCV
+    if (PSMOVE_OPENCV_BUILT_IN_SOURCE)
+        set(OPENCV_BUILD_DIR ${OPENCV_SRC_DIR})
+    else ()
+        set(OPENCV_BUILD_DIR ${OPENCV_SRC_DIR}/build)
+    endif()
+
     link_directories(${OPENCV_SRC_DIR}/build/lib)
     link_directories(${OPENCV_SRC_DIR}/build/3rdparty/lib)
 
@@ -141,8 +153,8 @@ if (PSMOVE_USE_LOCAL_OPENCV)
       
       # install the required OpenCV headers
       install(DIRECTORY ${OPENCV_SRC_DIR}/modules/${OPENCV_MODULE}/include/opencv2 DESTINATION include)
-    endforeach() 
-    
+    endforeach()
+
     set(PSMOVE_BUILD_TRACKER ON)
     set(INFO_BUILD_TRACKER "Yes (with local OpenCV)")
 
