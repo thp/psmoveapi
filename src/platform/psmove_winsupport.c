@@ -30,6 +30,8 @@
 #include "psmove_winsupport.h"
 
 #include <bluetoothapis.h>
+#include <tchar.h>
+#include <strsafe.h>
 
 #include <malloc.h>
 #include <stdio.h>
@@ -256,13 +258,77 @@ is_connection_established(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_inf
 }
 
 
+static int
+patch_registry(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr)
+{
+    int ret = 0;
+
+    TCHAR sub_key[1024];
+    HRESULT res = StringCchPrintf(
+        sub_key,
+        1024,
+        _T("SYSTEM\\CurrentControlSet\\Services\\HidBth\\Parameters\\Devices\\" \
+           "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"),
+        radio_addr->rgBytes[5], radio_addr->rgBytes[4], radio_addr->rgBytes[3],
+        radio_addr->rgBytes[2], radio_addr->rgBytes[1], radio_addr->rgBytes[0],
+        move_addr->rgBytes[5], move_addr->rgBytes[4], move_addr->rgBytes[3],
+        move_addr->rgBytes[2], move_addr->rgBytes[1], move_addr->rgBytes[0] );
+
+    if (FAILED(res)) {
+        WINPAIR_DEBUG("Failed to build registry subkey");
+        return 1;
+    }
+
+    /* open registry key for modifying a value */
+    /* NOTE: At times, Windows seems a bit slow to generate the key we are looking for.
+     *       We try more than once instead of exiting on the first failed attempt.
+     */
+    int i = 0;
+    HKEY hKey;
+    for (i = 2; i >= 0; i--) {
+        LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, sub_key, 0, KEY_SET_VALUE | KEY_WOW64_64KEY, &hKey);
+        if (result == ERROR_SUCCESS) {
+            break;
+        } else {
+            if (result == ERROR_FILE_NOT_FOUND) {
+                WINPAIR_DEBUG("Failed to open registry key, it does not yet exist");
+                if (i != 0) {
+                    /* sleep for 0.8 seconds and try again */
+                    Sleep(800);
+                    continue;
+                }
+            }
+
+            WINPAIR_DEBUG("Failed to open registry key");
+            return 1;
+        }
+    }
+
+    DWORD data = 1;
+    LONG result = RegSetValueEx(hKey, _T("VirtuallyCabled"), 0, REG_DWORD, (const BYTE *) &data, sizeof(data));
+    if (result != ERROR_SUCCESS) {
+        WINPAIR_DEBUG("Failed to set 'VirtuallyCabled'");
+        ret = 1;
+    }
+
+    RegCloseKey(hKey);
+
+    return ret;
+}
+
+
 int
-windows_register_psmove(const char *move_addr_str, const HANDLE hRadio)
+windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
 {
     /* parse controller's Bluetooth device address string */
     BLUETOOTH_ADDRESS *move_addr = string_to_btaddr(move_addr_str);
     if (!move_addr) {
         WINPAIR_DEBUG("Cannot parse controller address: '%s'", move_addr_str);
+        return 1;
+    }
+
+    if (!radio_addr) {
+        WINPAIR_DEBUG("Invalid Bluetooth device address for radio");
         return 1;
     }
 
@@ -303,6 +369,17 @@ windows_register_psmove(const char *move_addr_str, const HANDLE hRadio)
                         if (result != ERROR_SUCCESS) {
                             WINPAIR_DEBUG("Failed to enable HID service");
                         }
+                    }
+
+                    /* Windows 8 seems to require manual help with setting up the device
+                     * in the registry. Previous versions do this by themselves, but
+                     * doing it manually for them does not seem to harm them either. So we
+                     * do not single out Windows 8 but simply perform the necessary tweaks
+                     * for all versions of Windows.
+                     */
+                    WINPAIR_DEBUG("Patching the registry ...");
+                    if (patch_registry(move_addr, radio_addr) != 0) {
+                        WINPAIR_DEBUG("Failed to patch the registry");
                     }
 
                     WINPAIR_DEBUG("Verifying successful connection ...");
