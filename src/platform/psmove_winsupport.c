@@ -337,12 +337,6 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
         return 1;
     }
 
-    /* Keep track of the number of times the loop iterates so we may timeout. */
-    int timeout_duration = 30;  // seconds
-    int sleep_interval = 1000; // msec
-    int timeout_iterations = timeout_duration * 1000 / sleep_interval;
-    int loop_count = 0;
-    
     printf("\n" \
            "    Unplug the controller.\n" \
            "\n"
@@ -393,16 +387,9 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
                 WINPAIR_DEBUG("Bluetooth device matching the given address is not a Move Motion Controller");
             }
         }
-        if (loop_count >= timeout_iterations) {
-            printf("\n"
-                   "    A connection could not be established. This is not\n"
-                   "    unusual in Windows. Please refer to the README document\n"
-                   "    for your platform for more information. Press Ctrl+C to cancel.");
-        }
 
         /* sleep for 1 second */
         Sleep(1000);
-        loop_count++;
     }
 
     free(move_addr);
