@@ -181,6 +181,7 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
             cvReleaseCapture(&cc->capture);
         }
 
+#ifdef CAMERA_CONTROL_USE_PS3EYE_DRIVER
     //autoE... setAutoExposure not defined in ps3eye.h
     ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN, autoG > 0);
     ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_WHITEBALANCE, autoWB > 0);
@@ -198,7 +199,8 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
      * ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, ??);
      * ps3eye_set_parameter(cc->eye, PS3EYE_VFLIP, ??);
      **/
-
+#endif //CAMERA_CONTROL_USE_PS3EYE_DRIVER
+	 
 	int width, height;
 	get_metrics(&width, &height);
 
