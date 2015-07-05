@@ -58,6 +58,26 @@
  */
 #define CONN_CHECK_DELAY 300
 
+/* number of connection retries before removing the controller (in software)
+ * and starting all over again
+ */
+#define CONN_RETRIES 80
+
+/* the delay (in milliseconds) between connection retries
+ */
+#define CONN_DELAY 300
+
+/* time out indicator for a Bluetooth inquiry
+ */
+#define GET_BT_DEVICES_TIMEOUT_MULTIPLIER 1
+
+// Every x loop issue a new inquiry
+#define BT_SCAN_NEW_INQUIRY 5
+
+// Sleep value between bt device scan
+// Recommondation: Value should be higher than GET_BT_DEVICES_TIMEOUT_MULTIPLIER * 1.28 * 1000
+#define SLEEP_BETWEEN_SCANS (unsigned int) GET_BT_DEVICES_TIMEOUT_MULTIPLIER * 1.28 * 1000 * 1.1
+
 
 static BLUETOOTH_ADDRESS *
 string_to_btaddr(const char *str)
@@ -128,7 +148,7 @@ set_up_bluetooth_radio(const HANDLE hRadio)
 
 
 static int
-get_bluetooth_device_info(const HANDLE hRadio, const BLUETOOTH_ADDRESS *addr, BLUETOOTH_DEVICE_INFO *device_info)
+get_bluetooth_device_info(const HANDLE hRadio, const BLUETOOTH_ADDRESS *addr, BLUETOOTH_DEVICE_INFO *device_info, unsigned int inquire)
 {
     if (!addr || !device_info) {
         return 1;
@@ -136,8 +156,8 @@ get_bluetooth_device_info(const HANDLE hRadio, const BLUETOOTH_ADDRESS *addr, BL
 
     BLUETOOTH_DEVICE_SEARCH_PARAMS search_params;
     search_params.dwSize               = sizeof(search_params);
-    search_params.cTimeoutMultiplier   = 4;
-    search_params.fIssueInquiry        = FALSE;
+    search_params.cTimeoutMultiplier   = GET_BT_DEVICES_TIMEOUT_MULTIPLIER;
+    search_params.fIssueInquiry        = inquire;
     search_params.fReturnAuthenticated = TRUE;
     search_params.fReturnConnected     = TRUE;
     search_params.fReturnRemembered    = TRUE;
@@ -228,6 +248,19 @@ is_hid_service_enabled(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_info)
 
 
 static int
+update_device_info(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_info)
+{
+    DWORD result = BluetoothGetDeviceInfo(hRadio, device_info);
+    if (result != ERROR_SUCCESS) {
+        WINPAIR_DEBUG("Failed to read device info");
+        return 1;
+    }
+
+    return 0;
+}
+
+
+static int
 is_connection_established(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_info)
 {
     /* NOTE: Sometimes the Bluetooth connection appears to be established
@@ -240,9 +273,7 @@ is_connection_established(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_inf
     unsigned int i;
     for (i = 0; i < CONN_CHECK_NUM_TRIES; i++) {
         /* read device info again to check if we have a connection */
-        DWORD result = BluetoothGetDeviceInfo(hRadio, device_info);
-        if (result != ERROR_SUCCESS) {
-            WINPAIR_DEBUG("Failed to read device info");
+        if (update_device_info(hRadio, device_info) != 0) {
             return 0;
         }
 
@@ -345,51 +376,73 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
            "    PS button again. Repeat this until the status LED finally\n" \
            "    remains lit. Press Ctrl+C to cancel anytime.\n");
 
-    for(;;) {
+    unsigned int scan = 0;
+    while (1) {
         BLUETOOTH_DEVICE_INFO device_info;
-        if (get_bluetooth_device_info(hRadio, move_addr, &device_info) != 0) {
+        if (get_bluetooth_device_info(hRadio, move_addr, &device_info, scan == 0) != 0) {
             WINPAIR_DEBUG("No Bluetooth device found matching the given address");
         } else {
             if (is_move_motion_controller(&device_info)) {
                 WINPAIR_DEBUG("Found Move Motion Controller matching the given address");
 
-                if (device_info.fConnected) {
-                    /* enable HID service only if necessary */
-                    WINPAIR_DEBUG("Checking HID service ...");
-                    if (!is_hid_service_enabled(hRadio, &device_info)) {
-                        WINPAIR_DEBUG("Enabling HID service ...");
-                        GUID service = HumanInterfaceDeviceServiceClass_UUID;
-                        DWORD result = BluetoothSetServiceState(hRadio, &device_info, &service, BLUETOOTH_SERVICE_ENABLE);
-                        if (result != ERROR_SUCCESS) {
-                            WINPAIR_DEBUG("Failed to enable HID service");
-                        }
-                    }
+                unsigned int conn_try;
+                for (conn_try = 1; conn_try <= CONN_RETRIES; conn_try++) {
+                    WINPAIR_DEBUG("Connection try %d/%d", conn_try, CONN_RETRIES);
 
-                    /* Windows 8 seems to require manual help with setting up the device
-                     * in the registry. Previous versions do this by themselves, but
-                     * doing it manually for them does not seem to harm them either. So we
-                     * do not single out Windows 8 but simply perform the necessary tweaks
-                     * for all versions of Windows.
-                     */
-                    WINPAIR_DEBUG("Patching the registry ...");
-                    if (patch_registry(move_addr, radio_addr) != 0) {
-                        WINPAIR_DEBUG("Failed to patch the registry");
-                    }
-
-                    WINPAIR_DEBUG("Verifying successful connection ...");
-                    if (is_connection_established(hRadio, &device_info)) {
-                        /* if we have a connection, stop trying to connect this device */
-                        printf("Connection verified.\n");
+                    if (update_device_info(hRadio, &device_info) != 0) {
                         break;
                     }
+
+                    if (device_info.fConnected) {
+                        /* Windows 8 seems to require manual help with setting up the device
+                         * in the registry. Previous versions do this by themselves, but
+                         * doing it manually for them does not seem to harm them either. So we
+                         * do not single out Windows 8 but simply perform the necessary tweaks
+                         * for all versions of Windows.
+                         */
+                        WINPAIR_DEBUG("Patching the registry ...");
+                        if (patch_registry(move_addr, radio_addr) != 0) {
+                            WINPAIR_DEBUG("Failed to patch the registry");
+                        }
+
+                        /* enable HID service only if necessary */
+                        WINPAIR_DEBUG("Checking HID service ...");
+                        if (!is_hid_service_enabled(hRadio, &device_info)) {
+                            WINPAIR_DEBUG("Enabling HID service ...");
+                            GUID service = HumanInterfaceDeviceServiceClass_UUID;
+                            DWORD result = BluetoothSetServiceState(hRadio, &device_info, &service, BLUETOOTH_SERVICE_ENABLE);
+                            if (result != ERROR_SUCCESS) {
+                                WINPAIR_DEBUG("Failed to enable HID service");
+                            }
+
+                            WINPAIR_DEBUG("Patching the registry ...");
+                            if (patch_registry(move_addr, radio_addr) != 0) {
+                                WINPAIR_DEBUG("Failed to patch the registry");
+                            }
+                        }
+
+                        WINPAIR_DEBUG("Verifying successful connection ...");
+                        if (is_connection_established(hRadio, &device_info)) {
+                            /* if we have a connection, stop trying to connect this device */
+                            printf("Connection verified.\n");
+                            break;
+                        }
+                    }
+                
+                    Sleep(CONN_DELAY);
+                }
+
+                if(!device_info.fConnected) {
+                    BluetoothRemoveDevice(&(device_info.Address));
+                    WINPAIR_DEBUG("Device removed, starting all over again");
                 }
             } else {
                 WINPAIR_DEBUG("Bluetooth device matching the given address is not a Move Motion Controller");
             }
         }
 
-        /* sleep for 1 second */
-        Sleep(1000);
+        Sleep(SLEEP_BETWEEN_SCANS);
+        scan = (scan + 1) % BT_SCAN_NEW_INQUIRY;
     }
 
     free(move_addr);
