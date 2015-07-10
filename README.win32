@@ -94,14 +94,18 @@ IMPORTANT: Get the right MinGW version!
 	MinGW builds, we build our own. First, get version 2.4.10 from
 	the OpenCV repository.
 
-	git clone --depth 1 --branch 2.4.10 git://github.com/Itseez/opencv.git
+	cd external
+	git clone git://github.com/Itseez/opencv.git
 	cd opencv
+
+2b. Patch around a mingw-specific bug in OpenCV3 (see http://code.opencv.org/issues/4107)
+	git apply ../../contrib/opencv.patch
 
 3. Configure the OpenCV build to produce static libs
 
 	mkdir build
 	cd build
-	cmake .. -G "MinGW Makefiles" -DBUILD_DOCS=0 -DBUILD_PACKAGE=0 -DBUILD_PERF_TESTS=0 -DBUILD_SHARED_LIBS=0 -DBUILD_TESTS=0 -DBUILD_opencv_apps=0 -DBUILD_opencv_calib3d=0 -DBUILD_opencv_contrib=0 -DBUILD_opencv_features2d=0 -DBUILD_opencv_flann=0 -DBUILD_opencv_gpu=0 -DBUILD_opencv_java=0 -DBUILD_opencv_legacy=0 -DBUILD_opencv_ml=0 -DBUILD_opencv_nonfree=0 -DBUILD_opencv_objdetect=0 -DBUILD_opencv_ocl=0 -DBUILD_opencv_photo=0 -DBUILD_opencv_python=0 -DBUILD_opencv_stitching=0 -DBUILD_opencv_superres=0 -DBUILD_opencv_ts=0 -DBUILD_opencv_video=0 -DBUILD_opencv_videostab=0 -DBUILD_opencv_world=0 -DWITH_FFMPEG=0 -DWITH_JASPER=0 -DWITH_OPENEXR=0 -DWITH_TIFF=0
+	cmake .. -G "MinGW Makefiles" -DBUILD_DOCS=0 -DBUILD_FAT_JAVA_LIB=0 -DBUILD_PACKAGE=0 -DBUILD_PERF_TESTS=0 -DBUILD_SHARED_LIBS=0 -DBUILD_TESTS=0 -DBUILD_opencv_apps=0 -DBUILD_opencv_calib3d=0 -DBUILD_opencv_features2d=0 -DBUILD_opencv_flann=0 -DBUILD_opencv_objdetect=0 -DBUILD_opencv_photo=0 -DBUILD_opencv_shape=0 -DBUILD_opencv_stitching=0 -DBUILD_opencv_superres=0 -DBUILD_opencv_ts=0 -DBUILD_opencv_video=0 -DBUILD_opencv_videostab=0 -DBUILD_opencv_world=0 -DWITH_FFMPEG=0 -DWITH_IPP=OFF -DWITH_JASPER=0 -DWITH_OPENEXR=0 -DWITH_TIFF=0
 
 4. Build and install OpenCV
 
@@ -114,15 +118,18 @@ IMPORTANT: Get the right MinGW version!
 
 	Switch back to the psmoveapi root directory.
 
-	cd ..\..
+	cd ..\..\..
 
 	mkdir build
 	cd build
-	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1
+	cmake .. -G "MinGW Makefiles"
 
 	Alternatively, if you want to use the CL Eye SDK:
 
-	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_CL_EYE_SDK=1
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=1
+
+	Also alternatively, if you want to use the PS3EYEDriver:
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1
 
 6. Finally build the PS Move API
 
