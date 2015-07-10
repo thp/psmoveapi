@@ -51,6 +51,7 @@ cd $PSMOVEAPI_CHECKOUT
 
 # Build OpenCV
 if [ ! -d $OPENCV_INSTALL_DIR ]; then
+    cd external
     if [ ! -d opencv ]; then
         git clone git://github.com/Itseez/opencv.git
     fi
@@ -58,18 +59,27 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
     rm -rf build
     mkdir -p build
     cd build
-    git checkout --force $OPENCV_TARGET_GIT_TAG
+    #git checkout --force $OPENCV_TARGET_GIT_TAG
     cmake -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_PERF_TESTS=OFF \
           -DBUILD_TESTS=OFF \
           -DBUILD_DOCS=OFF \
+          -DBUILD_FAT_JAVA_LIB=OFF \
+          -DBUILD_PACKAGE=OFF \
+          -DBUILD_opencv_apps=OFF \
+          -DBUILD_opencv_calib3d=OFF \
           -DBUILD_opencv_flann=OFF \
           -DBUILD_opencv_features2d=OFF \
           -DBUILD_opencv_objdetect=OFF \
           -DBUILD_opencv_photo=OFF \
+          -DBUILD_opencv_shape=OFF \
+          -DBUILD_opencv_stitching=OFF \
+          -DBUILD_opencv_superres=OFF \
           -DBUILD_opencv_ts=OFF \
           -DBUILD_opencv_ml=OFF \
           -DBUILD_opencv_video=OFF \
+          -DBUILD_opencv_videostab=OFF \
+          -DBUILD_opencv_world=OFF \
           -DBUILD_opencv_java=OFF \
           -DWITH_OPENEXR=OFF \
           -DWITH_FFMPEG=OFF \
