@@ -43,14 +43,17 @@ ENDIF()
 option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
 
 # Debugging output
-if(PSMOVE_USE_DEBUG)
+IF(PSMOVE_USE_DEBUG)
     add_definitions(-DPSMOVE_DEBUG)
     add_definitions(-g -O0 -Wall)
     set(INFO_USE_DEBUG "Yes")
-else()
-    add_definitions(-O2 -Wall -Wno-unused)
+ELSE()
+    add_definitions(-O2 -Wall)
+    IF(NOT MSVC)
+        add_definitions(-Wno-unused)
+    ENDIF(NOT MSVC)
     set(INFO_USE_DEBUG "No")
-endif()
+ENDIF()
 
 # Linker commands to put into the .pc file (when installing)
 set(PSMOVEAPI_PKGCONFIG_LIBS "-lpsmoveapi")
@@ -75,14 +78,18 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ${ROOT_DIR}/src/platform/psmove_osxsupport.m)
 
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm)
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm ${MSVC_LIBS})
+    include_directories(${MSVC_INCLUDES})
+    list(APPEND PSMOVEAPI_PLATFORM_SRC ${MSVC_SRCS})
 
-    # http://stackoverflow.com/questions/4702732/the-program-cant-start-because-libgcc-s-dw2-1-dll-is-missing
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
-    set(CMAKE_STATIC_LIBRARY_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -static -static-libgcc -static-libstdc++")
+    IF(MINGW)
+        # http://stackoverflow.com/questions/4702732/the-program-cant-start-because-libgcc-s-dw2-1-dll-is-missing
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+        set(CMAKE_STATIC_LIBRARY_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -static -static-libgcc -static-libstdc++")
+    ENDIF(MINGW)
 
-    if (NOT CMAKE_TOOLCHAIN_FILE)
+    if (MINGW AND (NOT CMAKE_TOOLCHAIN_FILE))
         # Only include these if we are NOT cross-compiling on Linux
         include_directories(${ROOT_DIR}/external/mingw-w64-headers)
         link_directories(${ROOT_DIR}/external/mingw-w64-headers)

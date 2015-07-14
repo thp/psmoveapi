@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
             if(buttons & Btn_PS)
                 running = false;
         }
-        sleep(1);
+        usleep(1000000);
     }
 
     for(i=0; i<c; i++) {

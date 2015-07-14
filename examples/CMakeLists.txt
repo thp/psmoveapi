@@ -9,10 +9,11 @@ option(PSMOVE_BUILD_OPENGL_EXAMPLES "Build the OpenGL examples" OFF)
 option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
 option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
 
+include_directories(${MSVC_INCLUDES})
 # C examples
 if(PSMOVE_BUILD_EXAMPLES)
     foreach(EXAMPLE example multiple dump_calibration battery_check)
-        add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.c)
+        add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.c ${MSVC_SRCS})
         target_link_libraries(${EXAMPLE} psmoveapi)
     endforeach()
 
@@ -30,10 +31,11 @@ if(PSMOVE_BUILD_EXAMPLES)
             external/TUIO_CPP/oscpack/ip/posix/NetworkingUtils.cpp
             external/TUIO_CPP/oscpack/ip/posix/UdpSocket.cpp
             external/TUIO_CPP/oscpack/ip/win32/NetworkingUtils.cpp
-            external/TUIO_CPP/oscpack/ip/win32/UdpSocket.cpp)
+            external/TUIO_CPP/oscpack/ip/win32/UdpSocket.cpp
+            ${MSVC_SRCS})
         set_target_properties(tuio_server PROPERTIES
             COMPILE_FLAGS -DOSC_HOST_LITTLE_ENDIAN)
-        target_link_libraries(tuio_server psmoveapi psmoveapi_tracker)
+        target_link_libraries(tuio_server psmoveapi psmoveapi_tracker ${MSVC_LIBS})
     else()
         # Disable the TUIO Server if we don't build the tracker
         set(PSMOVE_BUILD_TUIO_SERVER OFF)
@@ -41,8 +43,8 @@ if(PSMOVE_BUILD_EXAMPLES)
 
     if(PSMOVE_BUILD_TRACKER)
         foreach(EXAMPLE distance_calibration)
-            add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.c)
-            target_link_libraries(${EXAMPLE} psmoveapi psmoveapi_tracker)
+            add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.c ${MSVC_SRCS})
+            target_link_libraries(${EXAMPLE} psmoveapi psmoveapi_tracker ${MSVC_LIBS})
         endforeach()
     endif()
 endif()
@@ -50,14 +52,14 @@ endif()
 # C test programs
 if(PSMOVE_BUILD_TESTS)
     foreach(TESTNAME led_update read_performance calibration responsiveness extension led_pwm_frequency)
-        add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c)
-        target_link_libraries(test_${TESTNAME} psmoveapi)
+        add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c ${MSVC_SRCS})
+        target_link_libraries(test_${TESTNAME} psmoveapi ${MSVC_LIBS})
     endforeach(TESTNAME)
 
     if(PSMOVE_BUILD_TRACKER)
         foreach(TESTNAME tracker capture_performance record_video roi_size end2end_latency)
-            add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c)
-            target_link_libraries(test_${TESTNAME} psmoveapi psmoveapi_tracker)
+            add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c ${MSVC_SRCS})
+            target_link_libraries(test_${TESTNAME} psmoveapi psmoveapi_tracker ${MSVC_LIBS})
         endforeach(TESTNAME)
 
         if (PSMOVE_BUILD_OPENGL_EXAMPLES)
@@ -73,11 +75,12 @@ if(PSMOVE_BUILD_TESTS)
             endif()
 
             foreach(EXAMPLE test_opengl test_opengl2 test_opengl3)
-                add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.cpp)
+                add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.cpp ${MSVC_SRCS})
                 target_link_libraries(${EXAMPLE}
                     psmoveapi
                     psmoveapi_tracker
-                    ${OPENGL_EXAMPLES_LIBRARIES})
+                    ${OPENGL_EXAMPLES_LIBRARIES}
+                    ${MSVC_LIBS})
             endforeach()
         endif()
     endif()

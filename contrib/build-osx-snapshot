@@ -8,9 +8,6 @@ export PSMOVEAPI_CHECKOUT=$(pwd)
 export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
 export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 
-# Known-good Git tag of OpenCV that can still be built correctly
-OPENCV_TARGET_GIT_TAG=2.4.4
-
 # For parallel builds
 MAKE_ARGS=-j4
 
@@ -32,18 +29,16 @@ if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     exit 1
 fi
 
-# Build libusb-1.0.9 as universal static library
+# Build libusb-1.0 as universal static library
 # needed for the PS3EYEDriver to access the PSEye
 # otherwise we'd dynamically link against some the Homebrew libusb
 (
-    cd $PSMOVEAPI_CHECKOUT/external/libusb-1.0.9
+    cd $PSMOVEAPI_CHECKOUT/external/libusb-1.0
     export ARCHFLAGS='-arch x86_64'
     export CFLAGS="$CFLAGS $ARCHFLAGS"
     export CXXFLAGS="$CXXFLAGS $ARCHFLAGS"
-    rm -rf build
-    mkdir -p build
-    cd build
-    ../configure --disable-shared --enable-static
+    ./autogen.sh
+    ./configure.ac
     make ${MAKE_ARGS}
 )
 
@@ -59,7 +54,6 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
     rm -rf build
     mkdir -p build
     cd build
-    #git checkout --force $OPENCV_TARGET_GIT_TAG
     cmake -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_PERF_TESTS=OFF \
           -DBUILD_TESTS=OFF \
@@ -98,9 +92,7 @@ PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_VERSION}/
 rm -rf build
 mkdir build
 cd build
-cmake -DPSMOVE_USE_LOCAL_OPENCV=ON \
-      -DPSMOVE_USE_LOCAL_LIBUSB=ON \
-      -DPSMOVE_USE_PS3EYE_DRIVER=ON \
+cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_TRACKER=ON \
       -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \

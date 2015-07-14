@@ -37,3 +37,6 @@ Here are some files that might be useful for users of the library:
  to be used across all CMakeLists.txt files. It also adds its path
  (i.e., the contrib path) to the CMAKE_MODULE_PATH folder so any
  Find<Library>.cmake files placed here will be used.
+ 
+ FindUSB1.cmake
+ A module to help cmake with find_library(USB1)

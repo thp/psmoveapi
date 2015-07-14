@@ -44,12 +44,13 @@
 int main(int arg, char** args) {
     int i;
     int count = psmove_count_connected();
-    PSMove* controllers[count];
 
     printf("### Found %d controllers.\n", count);
     if (count == 0) {
         return 1;
     }
+
+    PSMove **controllers = (PSMove **)calloc(count, sizeof(PSMove *));
 
     void *frame;
     int result;
@@ -116,6 +117,7 @@ int main(int arg, char** args) {
     }
 
     psmove_tracker_free(tracker);
+    free(controllers);
     return 0;
 }
 

@@ -17,8 +17,8 @@ option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
 # Use the CL Eye SDK to interface with the PS Eye camera (Windows only)
 option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
 
-# Use the PS3EYEDriver to interface with the PS Eye camera (OS X only)
-option(PSMOVE_USE_PS3EYE_DRIVER "Use the PS3EYEDriver on OS X" OFF)
+# Use the PS3EYEDriver to interface with the PS Eye camera (OS X and Windows only)
+option(PSMOVE_USE_PS3EYE_DRIVER "Use the PS3EYEDriver on OS X or Windows" OFF)
 
 # To show the OpenCV camera capture window everytime (useful for debugging)
 option(PSMOVE_USE_DEBUG_CAPTURE "Always show camera capture input" OFF)
@@ -40,9 +40,8 @@ IF(PSMOVE_BUILD_TRACKER)
     FIND_PACKAGE(OpenCV QUIET)
     IF(OpenCV_FOUND)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${OpenCV_LIBS})
-        #include_directories(${OpenCV_INCLUDE_DIR}) #? not necessary after cmake 2.8.11
+        include_directories(${OpenCV_INCLUDE_DIR})
         set(INFO_BUILD_TRACKER "Yes")
-        set(PSMOVEAPI_PKGCONFIG_LIBS "${PSMOVEAPI_PKGCONFIG_LIBS} -lpsmoveapi_tracker")
     ELSE()
         set(INFO_BUILD_TRACKER "No (OpenCV not found)")
         set(PSMOVE_BUILD_TRACKER OFF)
@@ -50,8 +49,11 @@ IF(PSMOVE_BUILD_TRACKER)
 ELSE()
     set(INFO_BUILD_TRACKER "No (disabled)")
 ENDIF()
+IF(PSMOVE_BUILD_TRACKER)
+    set(PSMOVEAPI_PKGCONFIG_LIBS "${PSMOVEAPI_PKGCONFIG_LIBS} -lpsmoveapi_tracker")
+ENDIF()
 
-# 2 - Platform-specific settings for OpenCV, PS3EYEDriver, maybe others
+# 2 - Platform-specific settings
 IF(PSMOVE_BUILD_TRACKER)
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
@@ -68,9 +70,14 @@ IF(PSMOVE_BUILD_TRACKER)
             ${QTKIT}
             ${AVFOUNDATION})
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        include_directories(${MSVC_INCLUDES})
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
-            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_win32.c)
-        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS stdc++ vfw32 comctl32)
+            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_win32.c ${MSVC_SRCS})
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS vfw32 comctl32 ${MSVC_LIBS})
+        #OpenCV extra dependencies: comctl32 gdi32 ole32 setupapi ws2_32 vfw32
+        IF(MINGW)
+            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS stdc++)
+        ENDIF(MINGW)
     ELSE() #Linux
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
             ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c
@@ -88,34 +95,10 @@ IF (PSMOVE_USE_PS3EYE_DRIVER AND (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMA
                 ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye.cpp
                 ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eyedriver.cpp)
     include_directories(${ROOT_DIR}/external/PS3EYEDriver/src)
-    IF(PSMOVE_USE_LOCAL_LIBUSB)
-        set(INFO_USE_PS3EYE_DRIVER "Yes (static libusb)")
-        #Annoyingly, each platform builds to a slightly different directory
-        IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-            # Assume the user has built libusb in external/libusb-1.0.9/
-            include_directories(${CMAKE_SOURCE_DIR}/external/libusb-1.0.9/libusb)
-            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-                ${ROOT_DIR}/external/libusb-1.0.9/build/libusb/.libs/libusb-1.0.a)
-        ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-            set(PSMOVE_USE_PSEYE OFF)  # So we don't trigger the registry code paths
-            # Assume the user has built libusb in external/libusb-1.0/
-            include_directories(${CMAKE_SOURCE_DIR}/external/libusb-1.0/include/libusb-1.0)
-            IF (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
-                list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-                    ${ROOT_DIR}/external/libusb-1.0/MinGW64/static/libusb-1.0.a)
-            ELSE()  # TODO: Detect target bitness when cross-compiling?
-                list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
-                    ${ROOT_DIR}/external/libusb-1.0/MinGW32/static/libusb-1.0.a)
-            ENDIF()
-        ENDIF()
-    ELSE() #using system libusb, e.g., homebrew
-        set(INFO_USE_PS3EYE_DRIVER "Yes")
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
-        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
-        include_directories(${LIBUSB_INCLUDE_DIRS})
-        #link_directories(${LIBUSB_LIBDIR})
-    ENDIF() #PSMOVE_USE_LOCAL_LIBUSB
+    find_package(USB1 REQUIRED)
+    include_directories(${LIBUSB_INCLUDE_DIR})
+    list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
+    set(INFO_USE_PS3EYE_DRIVER "Yes")
 ELSE()
     set(PSMOVE_USE_PS3EYE_DRIVER OFF)
     set(INFO_USE_PS3EYE_DRIVER "No (disabled)")
@@ -128,7 +111,10 @@ ENDIF()
 
 #CL_EYE_DRIVER
 set(INFO_USE_CL_EYE "No (Windows 32-bit only)")
-IF(PSMOVE_USE_PSEYE AND PSMOVE_USE_CL_EYE_SDK AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows") #TODO: Check for 32-bit
+IF(PSMOVE_USE_PSEYE
+    AND PSMOVE_USE_CL_EYE_SDK
+    AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows"
+    AND NOT(${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8))
     find_path(CL_EYE_SDK_PATH Bin/CLEyeMulticam.dll
         HINTS "C:/Program Files/Code Laboratories/CL-Eye Platform SDK"
         "C:/Program Files (x86)/Code Laboratories/CL-Eye Platform SDK")
