@@ -38,7 +38,7 @@ fi
     export CFLAGS="$CFLAGS $ARCHFLAGS"
     export CXXFLAGS="$CXXFLAGS $ARCHFLAGS"
     ./autogen.sh
-    ./configure.ac
+    ./configure
     make ${MAKE_ARGS}
 )
 
