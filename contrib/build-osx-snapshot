@@ -5,7 +5,7 @@
 #
 
 export PSMOVEAPI_CHECKOUT=$(pwd)
-export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv
+export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
 export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 
 # Known-good Git tag of OpenCV that can still be built correctly
