@@ -597,7 +597,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
     if (path != NULL) {
         move->device_path = strdup(path);
     }
-    if (serial == NULL && path != NULL) {
+    if ((serial == NULL || wcslen(serial) == 0) && path != NULL) {
         move->handle = hid_open_path(path);
     } else {
         move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
