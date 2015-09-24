@@ -41,7 +41,6 @@
 
 int main(int arg, char** args) {
     int count = psmove_count_connected();
-    PSMove *moves[count];
 
     int i;
     void *frame;
@@ -50,6 +49,7 @@ int main(int arg, char** args) {
         printf("No controllers connected.\n");
         return 1;
     }
+    PSMove **moves = (PSMove **)calloc(count, sizeof(PSMove *));
 
     PSMoveTracker* tracker = psmove_tracker_new();
 
@@ -91,6 +91,7 @@ int main(int arg, char** args) {
     }
 
     psmove_tracker_free(tracker);
+    free(moves);
     return 0;
 }
 
