@@ -21,22 +21,18 @@ Requirements
 ------------
 
 - MinGW
-  http://mingw-w64.sourceforge.net/
+  http://mingw-w64.org/doku.php (Choose downloads, then Mingw-builds. See below for install instructions.)
 - CMake
   http://www.cmake.org/cmake/resources/software.html
-- OpenCV
-  http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
 - Git
   http://code.google.com/p/msysgit/
-- CL Eye Driver (if you plan to use the PS Eye camera)
+
+Optional dependencies:
+
+- CL Eye Driver (if you plan to use the PS Eye camera with 32-bit non-free drivers)
   http://codelaboratories.com/get/cl-eye-driver/
-
-Optional dependency:
-
-- CLEyeSDK
+- CLEyeSDK (alternative 32-bit non-free drivers for PS Eye)
   http://codelaboratories.com/get/cl-eye-sdk/
-
-
 
 IMPORTANT: Get the right MinGW version!
 
@@ -57,11 +53,13 @@ IMPORTANT: Get the right MinGW version!
 
        Run the installer using these setup settings:
 
-           Version:        4.9.1
+           Version:        5.1.0
            Architecture:   i686 or x86_64
            Threads:        posix
            Exception:      sjlj or seh
            Build revision: 1
+           
+           Shorten the folder from default to something like C:\MinGW
 
     B) For 64-bit Windows, get the archive at
        http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/4.9.1/threads-posix/sjlj/
@@ -82,53 +80,59 @@ IMPORTANT: Get the right MinGW version!
           achieve this is to install the i686 version of MinGW-w64 (see above)
           for the following build steps.
 
+0. Run a MinGW terminal (e.g. C:\MinGW\mingw-w64.bat) and change to the parent folder where you will build psmoveapi.
 
 1. Clone the PS Move API repository
 
 	git clone --recursive git://github.com/thp/psmoveapi.git
 	cd psmoveapi
 
-2. Clone the OpenCV repository
+2. Build and install OpenCV (Optional, only required if building positional tracker)
 
-	Since OpenCV binary distributions typically do not come with
-	MinGW builds, we build our own. First, get version 2.4.10 from
-	the OpenCV repository.
+2a. Clone the OpenCV repository
 
-	git clone --depth 1 --branch 2.4.10 git://github.com/Itseez/opencv.git
+	cd external
+	git clone git://github.com/Itseez/opencv.git
 	cd opencv
 
-3. Configure the OpenCV build to produce static libs
+2b. Patch around a mingw-specific bug in OpenCV3 (see http://code.opencv.org/issues/4107)
+	git apply ../../contrib/opencv.patch
+
+2c. Configure the OpenCV build to produce static libs
 
 	mkdir build
 	cd build
-	cmake .. -G "MinGW Makefiles" -DBUILD_DOCS=0 -DBUILD_PACKAGE=0 -DBUILD_PERF_TESTS=0 -DBUILD_SHARED_LIBS=0 -DBUILD_TESTS=0 -DBUILD_opencv_apps=0 -DBUILD_opencv_calib3d=0 -DBUILD_opencv_contrib=0 -DBUILD_opencv_features2d=0 -DBUILD_opencv_flann=0 -DBUILD_opencv_gpu=0 -DBUILD_opencv_java=0 -DBUILD_opencv_legacy=0 -DBUILD_opencv_ml=0 -DBUILD_opencv_nonfree=0 -DBUILD_opencv_objdetect=0 -DBUILD_opencv_ocl=0 -DBUILD_opencv_photo=0 -DBUILD_opencv_python=0 -DBUILD_opencv_stitching=0 -DBUILD_opencv_superres=0 -DBUILD_opencv_ts=0 -DBUILD_opencv_video=0 -DBUILD_opencv_videostab=0 -DBUILD_opencv_world=0 -DWITH_FFMPEG=0 -DWITH_JASPER=0 -DWITH_OPENEXR=0 -DWITH_TIFF=0
+	cmake .. -G "MinGW Makefiles" -DBUILD_DOCS=0 -DBUILD_FAT_JAVA_LIB=0 -DBUILD_PACKAGE=0 -DBUILD_PERF_TESTS=0 -DBUILD_SHARED_LIBS=0 -DBUILD_TESTS=0 -DBUILD_opencv_apps=0 -DBUILD_opencv_calib3d=0 -DBUILD_opencv_features2d=0 -DBUILD_opencv_flann=0 -DBUILD_opencv_objdetect=0 -DBUILD_opencv_photo=0 -DBUILD_opencv_python2=0 -DBUILD_opencv_shape=0 -DBUILD_opencv_stitching=0 -DBUILD_opencv_superres=0 -DBUILD_opencv_ts=0 -DBUILD_opencv_video=0 -DBUILD_opencv_videostab=0 -DBUILD_opencv_world=0 -DWITH_FFMPEG=0 -DWITH_IPP=OFF -DWITH_JASPER=0 -DWITH_OPENEXR=0 -DWITH_TIFF=0
 
-4. Build and install OpenCV
+2d. Build and install OpenCV
 
 	It will install to psmoveapi's opencv/build/install subdirectory.
 
 	mingw32-make
 	mingw32-make install
 
-5. Configure the PS Move API build
+3. Configure the PS Move API build
 
 	Switch back to the psmoveapi root directory.
 
-	cd ..\..
+	cd ..\..\..
 
 	mkdir build
 	cd build
-	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1
+	cmake .. -G "MinGW Makefiles"
 
 	Alternatively, if you want to use the CL Eye SDK:
 
-	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_LOCAL_OPENCV=1 -DPSMOVE_USE_CL_EYE_SDK=1
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_CL_EYE_SDK=1
 
-6. Finally build the PS Move API
+	Also alternatively, if you want to use the PS3EYEDriver:
+	cmake .. -G "MinGW Makefiles" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_USE_LOCAL_LIBUSB=1
+
+4. Finally build the PS Move API
 
 	mingw32-make
 
-7. Pair the controller to the host
+5. Pair the controller to the host
 
 	Using the controllers' Bluetooth capabilities requires you to pair the
 	controller to the host computer first. That is what the psmovepair utility
@@ -150,7 +154,7 @@ IMPORTANT: Get the right MinGW version!
 	the controller from the list of Bluetooth devices you need to run
 	psmovepair again for that controller.
 
-8. Start one of the desired test applications
+6. Start one of the desired test applications
 
 	If you previously chose to build the example applications (which is the
 	default), you can then run
