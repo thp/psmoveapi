@@ -1,0 +1,13 @@
+diff --git a/cmake/OpenCVCompilerOptions.cmake b/cmake/OpenCVCompilerOptions.cmake
+index fe3de3f..4f77cb7 100644
+--- a/cmake/OpenCVCompilerOptions.cmake
++++ b/cmake/OpenCVCompilerOptions.cmake
+@@ -76,7 +76,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
+   add_extra_compiler_option(-W)
+   add_extra_compiler_option(-Wall)
+   add_extra_compiler_option(-Werror=return-type)
+-  add_extra_compiler_option(-Werror=non-virtual-dtor)
++  #add_extra_compiler_option(-Werror=non-virtual-dtor)
+   add_extra_compiler_option(-Werror=address)
+   add_extra_compiler_option(-Werror=sequence-point)
+   add_extra_compiler_option(-Wformat)

@@ -74,13 +74,13 @@ extern "C" {
 #define psmove_CRITICAL(x) \
         psmove_PRINTF("PSMOVE CRITICAL", \
                 "Assertion fail in %s: %s\n", \
-                __func__, x)
+                __FUNCTION__, x)
 
 /* Macro: Deprecated functions */
 #define psmove_DEPRECATED(x) \
         psmove_PRINTF("PSMOVE DEPRECATED", \
                 "%s is deprecated: %s\n", \
-                __func__, x)
+                __FUNCTION__, x)
 
 /* Macros: Return immediately if an assertion fails + log */
 #define psmove_return_if_fail(expr) \

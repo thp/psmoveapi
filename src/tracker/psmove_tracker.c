@@ -43,11 +43,16 @@
 #include "psmove_tracker_private.h"
 
 #include "camera_control.h"
+#include "camera_control_private.h"
 #include "tracker_helpers.h"
 #include "tracker_trace.h"
 
 #ifdef __linux
 #  include "platform/psmove_linuxsupport.h"
+#endif
+
+#ifdef _MSC_VER
+#include <Windows.h>
 #endif
 
 //#define DEBUG_WINDOWS 			// shall additional windows be shown
@@ -76,11 +81,8 @@
 #define COLOR_UPDATE_QUALITY_T1 0.8	// minimum ratio of number of pixels in blob vs pixel of estimated circle.
 #define COLOR_UPDATE_QUALITY_T2 0.2	// maximum allowed change of the radius in percent, compared to the last estimated radius
 #define COLOR_UPDATE_QUALITY_T3 6	// minimum radius
-#ifdef WIN32
-#define PSEYE_BACKUP_FILE "PSEye_backup_win.ini"
-#else
-#define PSEYE_BACKUP_FILE "PSEye_backup_v4l.ini"
-#endif
+
+#define PSEYE_BACKUP_FILE "PSEye_backup.ini"
 
 #define INTRINSICS_XML "intrinsics.xml"
 #define DISTORTION_XML "distortion.xml"
