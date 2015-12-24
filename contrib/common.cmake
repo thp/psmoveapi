@@ -23,8 +23,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_ARCHITECTURES "x86_64")
 ENDIF()
 
-# This should be on by default in latest MinGW and MSVC >= 2013, but just in case.
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+# This should be on by default in latest MinGW, but just in case.
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ENDIF()
 
@@ -36,9 +36,15 @@ IF(MSVC)
     add_definitions(-DNOMINMAX)
 ENDIF()
 
+macro(SuppressCompileWarning flags warning)
+	if (NOT ${${flags}} MATCHES ${warning})
+		set(${flags} "${${flags}} ${warning}")
+	endif()
+endmacro()
+
 # Fix compiler warnings
 if(MSVC)
-  # Force to always compile with W4
+  # Force to always compile with W4 (C++)
   if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
     string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   elseif(CMAKE_CXX_FLAGS MATCHES "/Wall")
@@ -46,6 +52,28 @@ if(MSVC)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
   endif()
+  
+  # Force to always compile with W4 (C)
+  if(CMAKE_C_FLAGS MATCHES "/W[0-4]")
+    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  elseif(CMAKE_C_FLAGS MATCHES "/Wall")
+    string(REGEX REPLACE "/Wall" "/W4" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+  else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4")
+  endif()
+   
+  # Disable some warnings that are not important (C++)
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4100") #unreferenced formal parameter
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4115") #named type definition in parentheses
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4201") #nonstandard extension used : nameless struct/union
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4131") #uses old-style declarator
+  
+  # Disable some warnings that are not important (C)
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4100") #unreferenced formal parameter
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4115") #named type definition in parentheses
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4201") #nonstandard extension used : nameless struct/union
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4131") #uses old-style declarator
+  
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   # Update if necessary
