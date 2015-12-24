@@ -81,6 +81,7 @@ IF(PSMOVE_BUILD_TRACKER)
     ELSE() #Linux
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
             ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c
+			${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.h
             ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_linux.c)
     ENDIF()
 ENDIF(PSMOVE_BUILD_TRACKER)
@@ -91,9 +92,18 @@ ENDIF(PSMOVE_BUILD_TRACKER)
 set(INFO_USE_PS3EYE_DRIVER "No (Windows and OS X only)")
 IF (PSMOVE_USE_PS3EYE_DRIVER AND (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
     add_definitions(-DCAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+	set(PS3_EYE_SRC)
+    list(APPEND PS3_EYE_SRC
                 ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye.cpp
                 ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eyedriver.cpp)
+	set(PS3_EYE_HEADER)
+    list(APPEND PS3_EYE_HEADER
+				${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye.h
+				${ROOT_DIR}/external/PS3EYEDriver/src/ps3eyedriver.h)
+
+	list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC ${PS3_EYE_SRC} ${PS3_EYE_HEADER})
+	source_group("Header Files\\PS3EyeDriver" FILES ${PS3_EYE_HEADER})
+	source_group("Source Files\\PS3EyeDriver" FILES ${PS3_EYE_SRC})
     include_directories(${ROOT_DIR}/external/PS3EYEDriver/src)
     find_package(USB1 REQUIRED)
     include_directories(${LIBUSB_INCLUDE_DIR})
@@ -137,8 +147,22 @@ ENDIF()
 file(GLOB PSMOVEAPI_TRACKER_SRC
     "${CMAKE_CURRENT_LIST_DIR}/*.c"
     "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
+	"${CMAKE_CURRENT_LIST_DIR}/*.h"
+)
+
+file(GLOB INIPARSER_SRC
     "${ROOT_DIR}/external/iniparser/*.c"
 )
+
+file(GLOB INIPARSER_HEADER
+    "${ROOT_DIR}/external/iniparser/*.h"
+)
+
+list(APPEND PSMOVEAPI_TRACKER_SRC ${INIPARSER_SRC} ${INIPARSER_HEADER})
+
+source_group("Header Files\\iniparser" FILES ${INIPARSER_HEADER})
+source_group("Source Files\\iniparser" FILES ${INIPARSER_SRC})
+
 
 if(PSMOVE_BUILD_TRACKER)
     include_directories(${ROOT_DIR}/external/glm)

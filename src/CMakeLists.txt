@@ -98,7 +98,8 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/windows/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_winsupport.c)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_winsupport.c
+		${CMAKE_CURRENT_LIST_DIR}/platform/psmove_winsupport.h)
 
 ELSE()
     # Linux
@@ -127,7 +128,9 @@ ELSE()
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/linux/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c
+		${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.h)
+
 ENDIF()
 
 include_directories(${ROOT_DIR}/include)
@@ -136,8 +139,16 @@ file(GLOB PSMOVEAPI_MOVED_SRC
     "${CMAKE_CURRENT_LIST_DIR}/daemon/*.c"
 )
 
+file(GLOB PSMOVEAPI_MOVED_HEADER
+	"${CMAKE_CURRENT_LIST_DIR}/daemon/*.h"
+)
+
+source_group("Header Files\\daemon" FILES ${PSMOVEAPI_MOVED_HEADER})
+source_group("Source Files\\daemon" FILES ${PSMOVEAPI_MOVED_SRC})
+
 file(GLOB PSMOVEAPI_SRC
     "${CMAKE_CURRENT_LIST_DIR}/*.c"
+	"${CMAKE_CURRENT_LIST_DIR}/*.h"
 )
 
 file(GLOB PSMOVEAPI_HEADERS
@@ -150,6 +161,7 @@ set(PSMOVEAPI_LIBRARY_SRC)
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${HIDAPI_SRC})
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_SRC})
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_MOVED_SRC})
+list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_MOVED_HEADER})
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_PLATFORM_SRC})
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_ALGORITHM_SRC})
 
