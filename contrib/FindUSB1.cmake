@@ -41,6 +41,7 @@ ELSE (LIBUSB_INCLUDE_DIR AND LIBUSB_LIBRARIES)
     # and that is also architecture-specific.
 
     set(LIBUSB_LIB_SEARCH_PATH ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0)
+	set(LIBUSB_LIB_SEARCH_PATH_DEBUG ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0)
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         IF(MINGW)
             set(LIBUSB_PLATFORM_PREFIX MinGW)
@@ -57,10 +58,14 @@ ELSE (LIBUSB_INCLUDE_DIR AND LIBUSB_LIBRARIES)
             IF (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
                 list(APPEND LIBUSB_LIB_SEARCH_PATH
                     ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/x64/Release/lib)
-            ELSE()
+                list(APPEND LIBUSB_LIB_SEARCH_PATH_DEBUG
+                    ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/x64/Debug/lib)
+			ELSE()
                 list(APPEND LIBUSB_LIB_SEARCH_PATH
                     ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/Win32/Release/lib)
-            ENDIF()
+                list(APPEND LIBUSB_LIB_SEARCH_PATH_DEBUG
+                    ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/Win32/Debug/lib)
+			ENDIF()
             set(LIBUSB_PLATFORM_PREFIX MS)
         ENDIF()
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -69,13 +74,26 @@ ELSE (LIBUSB_INCLUDE_DIR AND LIBUSB_LIBRARIES)
                     /usr/local/lib)
     ENDIF()
     
-    find_library(LIBUSB_LIBRARIES
+    find_library(LIBUSB_LIBRARIES_RELEASE
         NAMES
             libusb-1.0.a libusb-1.0.lib libusb-1.0 usb-1.0 usb
         PATHS
             ${LIBUSB_LIB_SEARCH_PATH}
     )
 
+    find_library(LIBUSB_LIBRARIES_DEBUG
+        NAMES
+            libusb-1.0.a libusb-1.0.lib libusb-1.0 usb-1.0 usb
+        PATHS
+            ${LIBUSB_LIB_SEARCH_PATH_DEBUG}
+    )
+
+	IF(LIBUSB_LIBRARIES_DEBUG)
+		SET(LIBUSB_LIBRARIES optimized ${LIBUSB_LIBRARIES_RELEASE} debug ${LIBUSB_LIBRARIES_DEBUG})
+	ELSE()
+		SET(LIBUSB_LIBRARIES ${LIBUSB_LIBRARIES_RELEASE})
+	ENDIF()
+	
   include(FindPackageHandleStandardArgs)
   FIND_PACKAGE_HANDLE_STANDARD_ARGS(LIBUSB DEFAULT_MSG LIBUSB_LIBRARIES LIBUSB_INCLUDE_DIR)
 

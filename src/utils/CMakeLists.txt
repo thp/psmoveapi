@@ -9,5 +9,6 @@ foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode psmove
     target_link_libraries(${UTILITY} psmoveapi_static ${MSVC_LIBS})
     set_target_properties(${UTILITY} PROPERTIES
         COMPILE_FLAGS -DUSING_STATIC_LIBRARY)
+	set_property(TARGET ${UTILITY} PROPERTY FOLDER "Utilities") 
     list(APPEND PSMOVEAPI_INSTALL_TARGETS ${UTILITY})
 endforeach()
