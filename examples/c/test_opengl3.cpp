@@ -38,7 +38,6 @@
 #include <list>
 
 #include "psmove_examples_opengl.h"
-#include <SDL/SDL.h>
 
 #include "psmove.h"
 #include "psmove_tracker.h"
@@ -107,7 +106,7 @@ class Drum {
                 glColor3f(.5, 0., 0.);
             }
             glTranslatef(pos.x, pos.y, pos.z);
-            glutSolidSphere(radius, 10, 10);
+            drawSolidSphere(radius, 10, 10);
         }
 
         Vector3D pos;
@@ -267,17 +266,17 @@ Tracker::render()
         glLoadMatrixf(psmove_fusion_get_modelview_matrix(m_fusion, m_moves[i]));
 
         glColor3f(1., 0., 0.);
-        glutWireCube(1.);
+        drawWireCube(1.);
         glColor3f(0., 1., 0.);
 
         glPushMatrix();
         glScalef(1., 1., 4.5);
         glTranslatef(0., 0., -.5);
-        glutWireCube(1.);
+        drawWireCube(1.);
         glPopMatrix();
 
         glColor3f(0., 0., 1.);
-        glutWireCube(3.);
+        drawWireCube(3.);
     }
 
     glEnable(GL_LIGHTING);
@@ -302,8 +301,9 @@ class Renderer {
         void init();
         void render();
 
-        SDL_Surface *m_display;
-        Tracker &m_tracker;
+		SDL_Window *m_window;
+		SDL_GLContext m_glContext;
+		Tracker &m_tracker;
 };
 
 void
@@ -328,24 +328,28 @@ play_audio(void *userdata, Uint8 *stream, int len)
 }
 
 Renderer::Renderer(Tracker &tracker)
-    : m_display(NULL),
+    : m_window(NULL),
       m_tracker(tracker)
 {
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+	SDL_Init(SDL_INIT_VIDEO);
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	{
+		sdlDie("Unable to initialize SDL");
+	}
 
-    SDL_AudioSpec wanted;
-    wanted.freq = 44100;
-    wanted.format = AUDIO_U16;
-    wanted.channels = 1;
-    wanted.samples = 1024;
-    wanted.callback = play_audio;
-    wanted.userdata = this;
-    if (SDL_OpenAudio(&wanted, NULL) < 0) {
-        printf("Cannot open audio device\n");
-    }
-    SDL_PauseAudio(0);
+	m_window = SDL_CreateWindow("OpenGL Test1",
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
+		640, 480,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+	if (m_window == NULL)
+	{
+		sdlDie("Unable to initialize SDL");
+	}
+	checkSDLError(__LINE__);
 
-    m_display = SDL_SetVideoMode(640, 480, 0, SDL_OPENGL);
+	m_glContext = SDL_GL_CreateContext(m_window);
+	checkSDLError(__LINE__);
 }
 
 Renderer::~Renderer()
@@ -356,9 +360,6 @@ Renderer::~Renderer()
 void
 Renderer::init()
 {
-    char *argv[] = { NULL };
-    int argc = 0;
-    glutInit(&argc, argv);
     glClearColor(0., 0., 0., 1.);
 
     glViewport(0, 0, 640, 480);
@@ -371,7 +372,7 @@ void
 Renderer::render()
 {
     m_tracker.render();
-    SDL_GL_SwapBuffers();
+	SDL_GL_SwapWindow(m_window);
 }
 
 class Main {
@@ -396,7 +397,7 @@ Main::exec()
     m_tracker.init();
 
     SDL_Event e;
-    while (true) {
+	for (;;) {
         if (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 break;

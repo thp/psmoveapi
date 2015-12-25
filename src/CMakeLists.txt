@@ -79,7 +79,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ${ROOT_DIR}/src/platform/psmove_osxsupport.m)
 
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm ${MSVC_LIBS})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm version Imm32 ${MSVC_LIBS})
     include_directories(${MSVC_INCLUDES})
     list(APPEND PSMOVEAPI_PLATFORM_SRC ${MSVC_SRCS})
 

@@ -24,7 +24,7 @@ Requirements
     Click OK
     Right-click on libusb-1.0 (static) and Build.
     
-3. OpenCV
+3. OpenCV (Optional -- only needed to build the positional tracker)
     Still in `psmoveapi/external`
     git clone --depth 1 --branch 2.4.11 git://github.com/Itseez/opencv.git
     `cd opencv`
@@ -35,23 +35,33 @@ Requirements
     Open the solution in psmoveapi\external\opencv\build\OpenCV.sln
     Change the target to Release (at the top of the Visual Studio window).
     Build the solution (Press F7).
+	
+4. SDL2 (Optional -- only needed to build the opengl examples)
+	Still in `psmoveapi/external`
+	`cd SDL2`
+    `mkdir build`
+    `cd build`
+    `cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF`
+    
+    Open the solution (psmoveapi\external\SDL2\build\SDL2.sln)
+    Build the solution in Debug and Release (Press F7).	
 
-4. Build psmoveapi
+5. Build psmoveapi
 
     Still in the VS2013 command prompt:
 
     `cd ..\..\..`
     `mkdir build `
     `cd build`
-    `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1`
+    `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1`
 
-    Open the `build\Project.sln` solution file.
-    Change the target to Release.
+    Open the `build\PSMoveAPI.sln` solution file.
+    Change the target to Release or Debug as desired.
     Build the solution (Press F7).
     
-5. Read [this Wiki](https://github.com/cboulay/psmove-ue4/wiki) for windows-specific information on pairing and connecting the psmove controller and on using the PS3Eye camera.
+6. Read [this Wiki](https://github.com/cboulay/psmove-ue4/wiki) for windows-specific information on pairing and connecting the psmove controller and on using the PS3Eye camera.
 
-6. Start one of the desired test applications
+7. Start one of the desired test applications
 
     If you previously chose to build the example applications (which is the
     default), you can then run
