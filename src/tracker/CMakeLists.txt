@@ -150,6 +150,10 @@ file(GLOB PSMOVEAPI_TRACKER_SRC
 	"${CMAKE_CURRENT_LIST_DIR}/*.h"
 )
 
+list(APPEND PSMOVEAPI_TRACKER_SRC 
+	"${ROOT_DIR}/include/psmove_fusion.h" 
+	"${ROOT_DIR}/include/psmove_tracker.h")
+
 file(GLOB INIPARSER_SRC
     "${ROOT_DIR}/external/iniparser/*.c"
 )

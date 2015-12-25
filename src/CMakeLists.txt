@@ -152,6 +152,10 @@ file(GLOB PSMOVEAPI_SRC
 	"${CMAKE_CURRENT_LIST_DIR}/*.h"
 )
 
+list(APPEND PSMOVEAPI_SRC 
+	"${ROOT_DIR}/include/psmove.h" 
+	"${ROOT_DIR}/include/psmove_config.h")
+
 file(GLOB PSMOVEAPI_HEADERS
     "${ROOT_DIR}/include/*.h"
 )

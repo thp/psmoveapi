@@ -38,7 +38,7 @@
 #include "../camera_control_private.h"
 
 void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
-#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && defined(PSMOVE_USE_PSEYE)
+#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
 	HKEY hKey;
 	DWORD l = sizeof(DWORD);
 	DWORD AutoAEC = 0;
@@ -52,7 +52,7 @@ void camera_control_backup_system_settings(CameraControl* cc, const char* file) 
 	char* PATH = CL_DRIVER_REG_PATH;
 	int err = RegOpenKeyEx(HKEY_CURRENT_USER, PATH, 0, KEY_ALL_ACCESS, &hKey);
 	if (err != ERROR_SUCCESS) {
-		printf("Error: %d Unable to open reg-key:  [HKCU]\%s!", err, PATH);
+		printf("Error: %d Unable to open reg-key:  [HKCU]\\%s!", err, PATH);
 		return;
 	}
 	RegQueryValueEx(hKey, "AutoAEC", NULL, NULL, (LPBYTE) &AutoAEC, &l);
@@ -80,7 +80,7 @@ void camera_control_backup_system_settings(CameraControl* cc, const char* file) 
 }
 
 void camera_control_restore_system_settings(CameraControl* cc, const char* file) {
-#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && defined(PSMOVE_USE_PSEYE)
+#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
 	int NOT_FOUND = -1;
 	int val;
 	HKEY hKey;
@@ -89,7 +89,7 @@ void camera_control_restore_system_settings(CameraControl* cc, const char* file)
 	char* PATH = CL_DRIVER_REG_PATH;
 	int err = RegOpenKeyEx(HKEY_CURRENT_USER, PATH, 0, KEY_ALL_ACCESS, &hKey);
 	if (err != ERROR_SUCCESS) {
-		printf("Error: %d Unable to open reg-key:  [HKCU]\%s!", err, PATH);
+		printf("Error: %d Unable to open reg-key:  [HKCU]\\%s!", err, PATH);
 		return;
 	}
 
@@ -153,9 +153,9 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	//autoE... setAutoExposure not defined in ps3eye.h
 	ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN,				autoG > 0);
 	ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_WHITEBALANCE,		autoWB > 0);
-	ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE,				round((511 * exposure) / 0xFFFF));
-	ps3eye_set_parameter(cc->eye, PS3EYE_GAIN,					round((79 * gain) / 0xFFFF));
-	ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS,			round((255 * brightness) / 0xFFFF));
+	ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE,				(int)round((511 * exposure) / 0xFFFF));
+	ps3eye_set_parameter(cc->eye, PS3EYE_GAIN,					(int)round((79 * gain) / 0xFFFF));
+	ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS,			(int)round((255 * brightness) / 0xFFFF));
 
 	//ps3eye_set_parameter(cc->eye, PS3EYE_REDBALANCE, round((255 * wbRed) / 0xFFFF));
 	//wbGreen... setGreenBalance not defined in ps3eye.h
