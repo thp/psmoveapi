@@ -107,7 +107,7 @@ moved_client_create(const char *hostname)
 
     client->hostname = strdup(hostname);
 
-    client->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    client->socket = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     assert(client->socket != -1);
 
     /**
@@ -125,16 +125,11 @@ moved_client_create(const char *hostname)
     };
 #endif
     assert(setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
-                &receive_timeout, sizeof(receive_timeout)) == 0);
+                (char*)&receive_timeout, sizeof(receive_timeout)) == 0);
 
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);
-#ifdef _WIN32
-    client->moved_addr.sin_addr.s_addr = inet_addr(hostname);
-    assert(client->moved_addr.sin_addr.s_addr != INADDR_NONE);
-#else
     assert(inet_pton(AF_INET, hostname, &(client->moved_addr.sin_addr)) != 0);
-#endif
 
     return client;
 }
@@ -152,14 +147,14 @@ moved_client_send(moved_client *client, char req, char id, const unsigned char *
     }
 
     while (retry_count < MOVED_MAX_RETRIES) {
-        if (sendto(client->socket, client->request_buf,
+        if (sendto(client->socket, (char*)client->request_buf,
                     sizeof(client->request_buf), 0,
                     (struct sockaddr *)&(client->moved_addr),
                     sizeof(client->moved_addr)) >= 0)
         {
             switch (req) {
                 case MOVED_REQ_COUNT_CONNECTED:
-                    if (recv(client->socket, client->read_response_buf,
+                    if (recv(client->socket, (char*)client->read_response_buf,
                                 sizeof(client->read_response_buf), 0) == -1) {
                         retry_count++;
                         continue;
@@ -168,7 +163,7 @@ moved_client_send(moved_client *client, char req, char id, const unsigned char *
                     break;
                 case MOVED_REQ_READ:
                 case MOVED_REQ_SERIAL:
-                    if (recv(client->socket, client->read_response_buf,
+                    if (recv(client->socket, (char*)client->read_response_buf,
                                 sizeof(client->read_response_buf), 0) == -1) {
                         retry_count++;
                         continue;

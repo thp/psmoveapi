@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
     }
 
     for (i=250; i>=0; i-=5) {
-        psmove_set_leds(move, i, i, 0);
+		psmove_set_leds(move, (unsigned char)i, (unsigned char)i, 0);
         psmove_set_rumble(move, 0);
         psmove_update_leds(move);
     }

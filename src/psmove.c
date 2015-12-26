@@ -477,7 +477,10 @@ _psmove_read_data(PSMove *move, unsigned char *data, int length)
     assert(data != NULL);
     assert(length >= (sizeof(move->input) + 1));
 
-    data[0] = psmove_poll(move);
+	int res = psmove_poll(move);
+	assert(res <= 0xFF);
+
+    data[0] = (unsigned char)res;
     memcpy(data+1, &(move->input), sizeof(move->input));
 }
 
@@ -650,7 +653,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
             *tmp = ':';
         }
 
-        *tmp = tolower(*tmp);
+        *tmp = (char)tolower(*tmp);
         tmp++;
     }
 
@@ -773,7 +776,7 @@ _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode)
 {
     unsigned char buf[10];
     int res;
-    int mode_magic_val;
+    char mode_magic_val;
 
     psmove_return_val_if_fail(move != NULL, PSMove_False);
 
@@ -819,7 +822,7 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
     move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
 
     if (moved_client_send(move->client, MOVED_REQ_SERIAL,
-                move->remote_id, NULL)) {
+                (char)move->remote_id, NULL)) {
         /* Retrieve the serial number from the remote host */
         strncpy(move->serial_number, (char*)move->client->read_response_buf,
                 PSMOVE_MAX_SERIAL_LENGTH);
@@ -1200,8 +1203,7 @@ psmove_connection_type(PSMove *move)
     } else {
         return Conn_USB;
     }
-#endif
-
+#else
     if (move->serial_number == NULL) {
         return Conn_Unknown;
     }
@@ -1211,6 +1213,7 @@ psmove_connection_type(PSMove *move)
     }
 
     return Conn_Bluetooth;
+#endif
 }
 
 int
@@ -1225,7 +1228,7 @@ _psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
     for (i=0; i<6; i++) {
         value = strtol(string + i*3, NULL, 16);
         psmove_return_val_if_fail(value >= 0x00 && value <= 0xFF, 0);
-        tmp[5-i] = value;
+        tmp[5-i] = (unsigned char)value;
     }
 
     if (dest != NULL) {
@@ -1362,7 +1365,7 @@ psmove_update_leds(PSMove *move)
              * updates, a few dropped packets are normally no problem.
              **/
             if (moved_client_send(move->client, MOVED_REQ_WRITE,
-                        move->remote_id, (unsigned char*)(&move->leds))) {
+                        (char)move->remote_id, (unsigned char*)(&move->leds))) {
                 return Update_Success;
             } else {
                 return Update_Failed;
@@ -1399,7 +1402,7 @@ psmove_poll(PSMove *move)
             break;
         case PSMove_MOVED:
             if (moved_client_send(move->client, MOVED_REQ_READ,
-                        move->remote_id, NULL)) {
+                        (char)move->remote_id, NULL)) {
                 /**
                  * The input buffer is stored at offset 1 (the first byte
                  * contains the return value of the remote psmove_poll())
@@ -1681,11 +1684,11 @@ psmove_get_temperature_in_celsius(PSMove *move)
 
     for (i = 0; i < 80; i++) {
         if (temperature_lookup[i] > raw_value) {
-            return i - 10;
+            return (float)(i - 10);
         }
     }
 
-    return 70;
+    return 70.0f;
 }
 
 unsigned char
@@ -2043,7 +2046,7 @@ finish:
 int
 psmove_get_magnetometer_calibration_range(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, 0.);
+    psmove_return_val_if_fail(move != NULL, 0);
 
     PSMove_3AxisVector diff = {
         move->magnetometer_max.x - move->magnetometer_min.x,
@@ -2195,7 +2198,7 @@ char *
 psmove_util_get_system_file_path(const char *filename)
 {
     char *result;
-    int len = strlen(PSMOVE_SYSTEM_DATA_DIR) + 1 + strlen(filename) + 1;
+    size_t len = strlen(PSMOVE_SYSTEM_DATA_DIR) + 1 + strlen(filename) + 1;
 
     result = malloc(len);
     if (result == NULL) {
@@ -2239,7 +2242,7 @@ psmove_util_get_env_string(const char *name)
 char *
 _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
 {
-    int count = strlen(addr);
+    size_t count = strlen(addr);
 
     if (count != 17) {
         psmove_WARNING("Invalid address: '%s'\n", addr);
@@ -2252,7 +2255,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     for (i=0; i<strlen(addr); i++) {
         if (addr[i] >= 'A' && addr[i] <= 'F' && i % 3 != 2) {
             if (lowercase) {
-                result[i] = tolower(addr[i]);
+                result[i] = (char)tolower(addr[i]);
             } else {
                 result[i] = addr[i];
             }
@@ -2262,7 +2265,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
             if (lowercase) {
                 result[i] = addr[i];
             } else {
-                result[i] = toupper(addr[i]);
+                result[i] = (char)toupper(addr[i]);
             }
         } else if ((addr[i] == ':' || addr[i] == '-') && i % 3 == 2) {
             result[i] = separator;

@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
             else if(buttons & Btn_MOVE)
                 psmove_set_leds(moves[i], 255, 255, 255);
             else
-                psmove_set_leds(moves[i], r, g, b);
+				psmove_set_leds(moves[i], (unsigned char)r, (unsigned char)g, (unsigned char)b);
             clock_t t = clock();
             if(((t/CLOCKS_PER_SEC) % 5) == 0)
                 psmove_set_rumble(moves[i], 255);

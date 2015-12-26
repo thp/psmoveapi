@@ -109,7 +109,7 @@ void MadgwickAHRSupdate(float *quaternion, float sampleFreq,
 		// Reference direction of Earth's magnetic field
 		hx = mx * q0q0 - _2q0my * q3 + _2q0mz * q2 + mx * q1q1 + _2q1 * my * q2 + _2q1 * mz * q3 - mx * q2q2 - mx * q3q3;
 		hy = _2q0mx * q3 + my * q0q0 - _2q0mz * q1 + _2q1mx * q2 - my * q1q1 + my * q2q2 + _2q2 * mz * q3 - my * q3q3;
-		_2bx = sqrt(hx * hx + hy * hy);
+		_2bx = (float)sqrt(hx * hx + hy * hy);
 		_2bz = -_2q0mx * q2 + _2q0my * q1 + mz * q0q0 + _2q1mx * q3 - mz * q1q1 + _2q2 * my * q3 - mz * q2q2 + mz * q3q3;
 		_4bx = 2.0f * _2bx;
 		_4bz = 2.0f * _2bz;
@@ -241,7 +241,7 @@ void MadgwickAHRSupdateIMU(float *quaternion, float sampleFreq,
 // 2013-05-30: Replaced with normal inverse square root for 64-bit compat
 
 float invSqrt(float x) {
-	return 1.0f / sqrt(x);
+	return 1.0f / (float)sqrt(x);
 }
 
 //====================================================================================================

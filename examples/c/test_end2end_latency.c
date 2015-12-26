@@ -196,12 +196,12 @@ float
 print_timestamp(struct TestContext *context,
         const char *msg, PSMove_timestamp ts, int frame)
 {
-    float diff = _psmove_timestamp_value(_psmove_timestamp_diff(
+	double diff = _psmove_timestamp_value(_psmove_timestamp_diff(
                 ts, context->tracking_1_found));
 
     printf("%-25s %.10f s @ frame #%d\n", msg, diff, frame);
 
-    return diff;
+    return (float)diff;
 }
 
 void
@@ -209,17 +209,17 @@ print_timestamps(struct TestContext *context,
         const char *msg, struct TrackingTimestamps ts, int frame,
         float *grab, float *tracked)
 {
-    float grab_diff = _psmove_timestamp_value(_psmove_timestamp_diff(
+	double grab_diff = _psmove_timestamp_value(_psmove_timestamp_diff(
                 ts.grab, context->tracking_1_found));
 
-    float tracked_diff = _psmove_timestamp_value(_psmove_timestamp_diff(
+	double tracked_diff = _psmove_timestamp_value(_psmove_timestamp_diff(
                 ts.tracked, context->tracking_1_found));
 
     printf("%-25s %.10f s @ frame #%d (grab time)\n", msg, grab_diff, frame);
     printf("%-25s %.10f s @ frame #%d (tracked time)\n", msg, tracked_diff, frame);
 
-    *grab = grab_diff;
-    *tracked = tracked_diff;
+    *grab = (float)grab_diff;
+    *tracked = (float)tracked_diff;
 }
 
 void

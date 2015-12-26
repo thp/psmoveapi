@@ -381,7 +381,7 @@ psmove_calibration_new(PSMove *move)
         psmove_calibration_get_usb_gyro_values(calibration,
                 &gx80, &gy80, &gz80);
 
-        float factor = (2.f * M_PI * 80.f) / 60.f;
+        float factor = (float)(2.f * M_PI * 80.f) / 60.f;
         calibration->gx = factor / (float)gx80;
         calibration->gy = factor / (float)gy80;
         calibration->gz = factor / (float)gz80;

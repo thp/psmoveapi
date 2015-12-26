@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 
     for (i = 1; i < 0x10; i++) {
         challenge[0] = 0;
-        challenge[1] = i;
+		challenge[1] = (unsigned char)i;
         send_and_receive(move, &challenge);
     }
 

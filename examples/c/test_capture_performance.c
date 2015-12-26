@@ -121,8 +121,8 @@ main(int argc, char *argv[])
     }
     fprintf(fp, ",start,diff\n");
     int i;
-    float first = _psmove_timestamp_value(_psmove_timestamp());
-    float last = 0;
+    double first = _psmove_timestamp_value(_psmove_timestamp());
+    double last = 0;
     for (i=0; i<ITERATIONS; i++) {
         if (i % 50 == 0)
         {
@@ -135,17 +135,17 @@ main(int argc, char *argv[])
                 &(context.capture_retrieve),
                 &(context.capture_converted));
 
-        float start =  _psmove_timestamp_value(_psmove_timestamp());
-        float grab = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_grab, context.capture_begin));
-        float retrieve = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_retrieve, context.capture_grab));
-        float converted = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_converted, context.capture_retrieve));
+        double start =  _psmove_timestamp_value(_psmove_timestamp());
+		double grab = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_grab, context.capture_begin));
+		double retrieve = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_retrieve, context.capture_grab));
+		double converted = _psmove_timestamp_value(_psmove_timestamp_diff(context.capture_converted, context.capture_retrieve));
         fprintf(fp, "%d,%.10f,%.10f,%.10f", i, grab, retrieve, converted);
 
         for (j=0; j<context.count; j++) {
             PSMove_timestamp track_begin = _psmove_timestamp();
             psmove_tracker_update(context.tracker, context.moves[j]);
             PSMove_timestamp track_end = _psmove_timestamp();
-            float tracking = _psmove_timestamp_value(_psmove_timestamp_diff(track_end, track_begin));
+            double tracking = _psmove_timestamp_value(_psmove_timestamp_diff(track_end, track_begin));
             fprintf(fp, ",%.10f", tracking);
         }
         fprintf(fp, ",%.10f,%.10f\n", start, (start-last));

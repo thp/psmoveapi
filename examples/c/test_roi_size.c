@@ -148,7 +148,7 @@ main(int argc, char *argv[])
                 psmove_tracker_update(context.tracker, context.moves[j]);
                 PSMove_timestamp track_end = _psmove_timestamp();
 
-                float tracking = _psmove_timestamp_value(_psmove_timestamp_diff(track_end, track_begin));
+                float tracking = (float)_psmove_timestamp_value(_psmove_timestamp_diff(track_end, track_begin));
                 data[i][roi] = tracking;
 
                 float x, y, r;

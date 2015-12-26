@@ -65,7 +65,7 @@ main(int arg, char** args)
                     } else if (percentage < 0) {
                         percentage = 0;
                     }
-                    psmove_set_leds(move, 2.5 * (100 - percentage), 2.5 * percentage, 0);
+                    psmove_set_leds(move, (unsigned char)(2.5 * (100 - percentage)), (unsigned char)(2.5 * percentage), 0);
                     psmove_update_leds(move);
 
                     if (pressed & Btn_MOVE) {

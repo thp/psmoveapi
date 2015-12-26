@@ -57,7 +57,7 @@ FILE *csv;
 
 void test_read_performance(PSMove *move, enum TestMode mode) {
     int round, max_rounds = 5;
-    float sum = 0.;
+    double sum = 0.;
 
     /* Only enable rate limiting if we test for smart updates */
     psmove_set_rate_limiting(move, mode == SMART_UPDATES);
@@ -91,7 +91,7 @@ void test_read_performance(PSMove *move, enum TestMode mode) {
             reads++;
         }
         PSMove_timestamp ts_finished = _psmove_timestamp();
-        float diff = _psmove_timestamp_value(_psmove_timestamp_diff(ts_finished, ts_started));
+        double diff = _psmove_timestamp_value(_psmove_timestamp_diff(ts_finished, ts_started));
 
         double reads_per_second = (double)reads / diff;
         printf("%ld reads in %.2f ms = %.5f reads/sec "

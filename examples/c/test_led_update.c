@@ -45,7 +45,7 @@ void test_succeeds(PSMove *move) {
 
     BEGIN_TEST("psmove_update_leds succeeds (rate limiting disabled)");
     for (i=0; i<10; i++) {
-        psmove_set_leds(move, i, i, i);
+		psmove_set_leds(move, (unsigned char)i, (unsigned char)i, (unsigned char)i);
         assert(psmove_update_leds(move) == Update_Success);
     }
     END_TEST();
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
 
     BEGIN_TEST("psmove_update_leds ignores updates (rate limiting enabled)");
     for (i=0; i<10; i++) {
-        psmove_set_leds(move, i, i, i);
+		psmove_set_leds(move, (unsigned char)i, (unsigned char)i, (unsigned char)i);
         assert(psmove_update_leds(move) == Update_Ignored);
     }
     END_TEST();

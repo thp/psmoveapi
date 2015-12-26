@@ -63,6 +63,7 @@ int main(int arg, char** args) {
         return 1;
     }
     psmove_tracker_set_mirror(tracker, PSMove_True);
+	psmove_tracker_set_exposure(tracker, Exposure_LOW);
     fprintf(stderr, "OK\n");
 
     for (i=0; i<count; i++) {
@@ -70,7 +71,7 @@ int main(int arg, char** args) {
         controllers[i] = psmove_connect_by_id(i);
         assert(controllers[i] != NULL);
 
-        while (1) {
+		for (;;) {
             printf("Calibrating controller %d...", i);
             fflush(stdout);
             result = psmove_tracker_enable(tracker, controllers[i]);

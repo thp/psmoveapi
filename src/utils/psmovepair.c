@@ -131,7 +131,7 @@ int run_daemon()
     moved_monitor_free(monitor);
 #else
     // On non-Linux systems we just try to pair every 5 seconds for now
-    while (1) {
+    for(;;) {
         usleep(5000000);
         pair(NULL);
     }
