@@ -76,7 +76,7 @@ int main(int arg, char** args) {
 	CvMat* distortion_coeffs = cvCreateMat(5, 1, CV_32FC1);
 	IplImage *image;
 
-	CvPoint2D32f corners[board_n];
+	CvPoint2D32f* corners = (CvPoint2D32f*)calloc(board_n, sizeof(CvPoint2D32f));
 	int i = 0;
 	int j = 0;
 	for (i = 0; i < board_n; i++)
@@ -86,13 +86,13 @@ int main(int arg, char** args) {
 	int successes = 0;
 	int step = 0;
 
-	while (1) {
+	for (;;) {
 		cvWaitKey(10);
 		image = cvQueryFrame(capture);
 		if (image)
 			break;
 	}
-	CvSize small_size = cvSize((int) (image->width * 0.5), ((int) image->height * 0.5));
+	CvSize small_size = cvSize((int)(image->width * 0.5f), (int)(image->height * 0.5f));
 	IplImage* small_image = cvCreateImage(small_size, image->depth, 3);
 
 	IplImage *gray_image1 = cvCreateImage(cvGetSize(image), image->depth, 1);
@@ -133,8 +133,8 @@ int main(int arg, char** args) {
 				for (i = step, j = 0; j < board_n; ++i, ++j) {
 					CV_MAT_ELEM( *image_points, float, i, 0 ) = corners[j].x;
 					CV_MAT_ELEM( *image_points, float, i, 1 ) = corners[j].y;
-					CV_MAT_ELEM( *object_points, float, i, 0 ) = j / board_w;
-					CV_MAT_ELEM( *object_points, float, i, 1 ) = j % board_w;
+					CV_MAT_ELEM( *object_points, float, i, 0 ) = (float)(j / board_w);
+					CV_MAT_ELEM( *object_points, float, i, 1 ) = (float)(j % board_w);
 					CV_MAT_ELEM( *object_points, float, i, 2 ) = 0.0f;
 				}
 				CV_MAT_ELEM( *point_counts, int, successes, 0 ) = board_n;
@@ -239,8 +239,9 @@ int main(int arg, char** args) {
 	cvReleaseImage(&gray_image1);
 	cvReleaseImage(&gray_image2);
 
-        free(intrinsics_xml);
-        free(distortion_xml);
+    free(intrinsics_xml);
+    free(distortion_xml);
+	free(corners);
 
 	return 0;
 }
