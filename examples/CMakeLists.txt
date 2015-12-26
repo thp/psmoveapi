@@ -37,6 +37,7 @@ if(PSMOVE_BUILD_EXAMPLES)
         set_target_properties(tuio_server PROPERTIES
             COMPILE_FLAGS -DOSC_HOST_LITTLE_ENDIAN)
         target_link_libraries(tuio_server psmoveapi psmoveapi_tracker ${MSVC_LIBS})
+		set_property(TARGET tuio_server PROPERTY FOLDER "Utilities") 
     else()
         # Disable the TUIO Server if we don't build the tracker
         set(PSMOVE_BUILD_TUIO_SERVER OFF)

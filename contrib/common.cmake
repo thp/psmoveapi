@@ -69,6 +69,10 @@ if(MSVC)
   SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4131") #uses old-style declarator
   SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4204") #nonstandard extension used : non-constant aggregate initializer
   SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4206") #nonstandard extension used : translation unit is empty
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4512") #assignment operator could not be generated
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4200") #nonstandard extension used : zero-sized array in struct/union
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4510") #default constructor could not be generated
+  SuppressCompileWarning(CMAKE_CXX_FLAGS "/wd4610") #struct 'libusb_version' can never be instantiated - user defined constructor required
   
   # Disable some warnings that are not important (C)
   SuppressCompileWarning(CMAKE_C_FLAGS "/wd4100") #unreferenced formal parameter
@@ -77,6 +81,10 @@ if(MSVC)
   SuppressCompileWarning(CMAKE_C_FLAGS "/wd4131") #uses old-style declarator
   SuppressCompileWarning(CMAKE_C_FLAGS "/wd4204") #nonstandard extension used : non-constant aggregate initializer
   SuppressCompileWarning(CMAKE_C_FLAGS "/wd4206") #nonstandard extension used : translation unit is empty
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4512") #assignment operator could not be generated
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4200") #nonstandard extension used : zero-sized array in struct/union
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4510") #default constructor could not be generated
+  SuppressCompileWarning(CMAKE_C_FLAGS "/wd4610") #struct 'libusb_version' can never be instantiated - user defined constructor required
   
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)

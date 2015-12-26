@@ -53,7 +53,7 @@ Requirements
     `cd ..\..\..`
     `mkdir build `
     `cd build`
-    `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1`
+    `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON`
 
     Open the `build\PSMoveAPI.sln` solution file.
     Change the target to Release or Debug as desired.
