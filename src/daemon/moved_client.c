@@ -98,7 +98,9 @@ moved_client_create(const char *hostname)
 
     if (!wsa_initialized) {
         WSADATA wsa_data;
-        assert(WSAStartup(MAKEWORD(1, 1), &wsa_data) == 0);
+		int result = WSAStartup(MAKEWORD(1, 1), &wsa_data);
+		(void)result;
+		assert(result == 0);
         wsa_initialized = 1;
     }
 #endif
@@ -124,12 +126,14 @@ moved_client_create(const char *hostname)
         .tv_usec = (MOVED_TIMEOUT_MS % 1000) * 1000,
     };
 #endif
-    assert(setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
-                (char*)&receive_timeout, sizeof(receive_timeout)) == 0);
+	int result = setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
+		(char*)&receive_timeout, sizeof(receive_timeout));
+    assert(result == 0);
 
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);
-    assert(inet_pton(AF_INET, hostname, &(client->moved_addr.sin_addr)) != 0);
+	result = inet_pton(AF_INET, hostname, &(client->moved_addr.sin_addr));
+    assert(result != 0);
 
     return client;
 }

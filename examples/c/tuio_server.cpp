@@ -237,7 +237,8 @@ TcpEventSender::TcpEventSender(const char *target, int port)
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons((u_short)port);
-	assert(inet_pton(AF_INET, target, &(addr.sin_addr)) != 0);
+	int result = inet_pton(AF_INET, target, &(addr.sin_addr));
+	assert(result != 0);
 
     assert(connect(sock, (const struct sockaddr*)&addr, sizeof(addr)) == 0);
 
