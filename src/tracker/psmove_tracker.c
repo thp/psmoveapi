@@ -60,8 +60,6 @@
 #define BLINKS 2                        // number of diff images to create during calibration
 #define COLOR_MAPPING_RING_BUFFER_SIZE 256  /* Has to be 256, so that next_slot automatically wraps */
 #define PSEYE_BACKUP_FILE "PSEye_backup.ini"
-#define INTRINSICS_XML "intrinsics.xml"
-#define DISTORTION_XML "distortion.xml"
 #define COLOR_MAPPING_DAT "colormapping.dat"
 
 static const PSMoveTrackerSettings tracker_default_settings = {
@@ -100,9 +98,8 @@ static const PSMoveTrackerSettings tracker_default_settings = {
     .color_update_quality_t1 = 0.8f,
     .color_update_quality_t2 = 0.2f,
     .color_update_quality_t3 = 6.f,
-    .xorigin_cm =  0.f,
-    .yorigin_cm = 0.f,
-    .zorigin_cm = 0.f
+	.intrinsics_xml = "intrinsics.xml",
+	.distortion_xml = "distortion.xml"
 };
 
 /**
@@ -570,11 +567,11 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
         return NULL;
     }
 
-        char *intrinsics_xml = psmove_util_get_file_path(INTRINSICS_XML);
-        char *distortion_xml = psmove_util_get_file_path(DISTORTION_XML);
-        camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml);
-        free(intrinsics_xml);
-        free(distortion_xml);
+	char *intrinsics_xml = psmove_util_get_file_path(settings->intrinsics_xml);
+	char *distortion_xml = psmove_util_get_file_path(settings->distortion_xml);
+	camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml);
+	free(intrinsics_xml);
+	free(distortion_xml);
 
     // backup the systems settings, if not already backuped
     char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);

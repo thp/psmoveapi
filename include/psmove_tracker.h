@@ -141,11 +141,9 @@ typedef struct {
     float color_update_quality_t2;              /* [0.2] maximum allowed change of the radius in percent, compared to the last estimated radius */
     float color_update_quality_t3;              /* [6.f] minimum radius */
 
-    /* CBB-specific tracker parameters */
-    float xorigin_cm;                           /* [0.f] x-distance to subtract from calculated position */
-    float yorigin_cm;                           /* [0.f] y-distance to subtract from calculated position */
-    float zorigin_cm;                           /* [0.f] z-distance to subtract from calculated position */
-
+	/* Camera calibration */
+	const char* intrinsics_xml;					/* [intrinsics.xml] File to read intrinsics matrix from */
+	const char* distortion_xml;					/* [distortion.xml] File to read distortion coefficients from */
 } PSMoveTrackerSettings; /*!< Structure for storing tracker settings */
 
 /**
