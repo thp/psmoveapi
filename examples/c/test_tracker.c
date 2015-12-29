@@ -56,14 +56,17 @@ int main(int arg, char** args) {
     int result;
 
     fprintf(stderr, "Trying to init PSMoveTracker...");
-    PSMoveTracker* tracker = psmove_tracker_new();
+    PSMoveTrackerSettings settings;
+    psmove_tracker_settings_set_default(&settings);
+    settings.color_mapping_max_age = 0;
+	settings.exposure_mode = Exposure_LOW;
+	settings.camera_mirror = PSMove_True;
+    PSMoveTracker* tracker = psmove_tracker_new_with_settings(&settings);
     if (!tracker)
     {
         fprintf(stderr, "Could not init PSMoveTracker.\n");
         return 1;
     }
-    psmove_tracker_set_mirror(tracker, PSMove_True);
-	psmove_tracker_set_exposure(tracker, Exposure_LOW);
     fprintf(stderr, "OK\n");
 
     for (i=0; i<count; i++) {

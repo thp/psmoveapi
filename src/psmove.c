@@ -641,7 +641,17 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
         move->serial_number = psmove_get_serial(move);
     }
 
-
+    // Recently disconnected controllers might still show up in hidapi (especially Windows).
+    if (!move->serial_number) {
+        if (move->handle) {
+            hid_close(move->handle);
+        }
+        if (move->handle_addr) {  // _WIN32 only
+            hid_close(move->handle_addr);
+        }
+        free(move);
+        return NULL;
+    }
 
     /**
      * Normalize "aa-bb-cc-dd-ee-ff" (OS X format) into "aa:bb:cc:dd:ee:ff"

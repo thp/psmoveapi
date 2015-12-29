@@ -40,6 +40,7 @@ extern "C" {
 /* Defines the range of x/y values for the position getting, etc.. */
 #define PSMOVE_TRACKER_DEFAULT_WIDTH 640
 #define PSMOVE_TRACKER_DEFAULT_HEIGHT 480
+#define PSMOVE_TRACKER_DEFAULT_FPS 60
 
 /* Maximum number of controllers that can be tracked at once */
 #define PSMOVE_TRACKER_MAX_CONTROLLERS 5
@@ -89,6 +90,74 @@ enum PSMoveTracker_Exposure {
     Exposure_INVALID, /*!< Invalid exposure value (for returning failures) */
 };
 
+/* A structure to retain the tracker settings. Typically these do not change after init & calib.*/
+typedef struct {
+
+    /* Camera Controls*/
+    int camera_frame_width;                     /* [0=auto] */
+    int camera_frame_height;                    /* [0=auto] */
+    int camera_frame_rate;                      /* [0=auto] */
+    enum PSMove_Bool camera_auto_gain;          /* [PSMove_False] */
+    int camera_gain;                            /* [0] [0,0xFFFF] */
+    enum PSMove_Bool camera_auto_white_balance; /* [PSMove_False] */
+    int camera_exposure;                        /* [(255 * 15) / 0xFFFF] [0,0xFFFF] */
+    int camera_brightness;                      /* [0] [0,0xFFFF] */
+    enum PSMove_Bool camera_mirror;             /* [PSMove_True] mirror camera image horizontally */
+
+    /* Settings for camera calibration process */
+    enum PSMoveTracker_Exposure exposure_mode;  /* [Exposure_LOW] exposure mode for setting target luminance */
+    int calibration_blink_delay;                /* [200] number of milliseconds to wait between a blink  */
+    int calibration_diff_t;                     /* [20] during calibration, all grey values in the diff image below this value are set to black  */
+    int calibration_min_size;                   /* [50] minimum size of the estimated glowing sphere during calibration process (in pixel)  */
+    int calibration_max_distance;               /* [30] maximum displacement of the separate found blobs  */
+    int calibration_size_std;                   /* [10] maximum standard deviation (in %) of the glowing spheres found during calibration process  */
+    int color_mapping_max_age;                  /* [2*60*60] Only re-use color mappings "younger" than this time in seconds  */
+    float dimming_factor;                       /* [1.f] dimming factor used on LED RGB values  */
+    
+    /* Settings for OpenCV image processing for sphere detection */
+    int color_hue_filter_range;                 /* [20] +- range of Hue window of the hsv-colorfilter  */
+    int color_saturation_filter_range;          /* [85] +- range of Sat window of the hsv-colorfilter  */
+    int color_value_filter_range;               /* [85] +- range of Value window of the hsv-colorfilter  */
+
+    /* Settings for tracker algorithms */
+    int tracker_adaptive_xy;                    /* [1] specifies to use a adaptive x/y smoothing  */
+    int tracker_adaptive_z;                     /* [1] specifies to use a adaptive z smoothing  */
+    float color_adaption_quality_t;             /* [35] maximal distance (calculated by 'psmove_tracker_hsvcolor_diff') between the first estimated color and the newly estimated  */
+    float color_update_rate;                    /* [1] every x seconds adapt to the color, 0 means no adaption  */
+    // size of "search" tiles when tracking is lost
+    int search_tile_width;                      /* [0=auto] width of a single tile */
+    int search_tile_height;                     /* height of a single tile */
+    int search_tiles_horizontal;                /* number of search tiles per row */
+    int search_tiles_count;                     /* number of search tiles */
+
+    /* THP-specific tracker threshold checks */
+    int roi_adjust_fps_t;                       /* [160] the minimum fps to be reached, if a better roi-center adjusment is to be perfomred */
+    // if tracker thresholds not met, sphere is deemed not to be found
+    float tracker_quality_t1;                   /* [0.3f] minimum ratio of number of pixels in blob vs pixel of estimated circle. */
+    float tracker_quality_t2;                   /* [0.7f] maximum allowed change of the radius in percent, compared to the last estimated radius */
+    float tracker_quality_t3;                   /* [4.7f] minimum radius  */
+    // if color thresholds not met, color is not adapted
+    float color_update_quality_t1;              /* [0.8] minimum ratio of number of pixels in blob vs pixel of estimated circle. */
+    float color_update_quality_t2;              /* [0.2] maximum allowed change of the radius in percent, compared to the last estimated radius */
+    float color_update_quality_t3;              /* [6.f] minimum radius */
+
+    /* CBB-specific tracker parameters */
+    float xorigin_cm;                           /* [0.f] x-distance to subtract from calculated position */
+    float yorigin_cm;                           /* [0.f] y-distance to subtract from calculated position */
+    float zorigin_cm;                           /* [0.f] z-distance to subtract from calculated position */
+
+} PSMoveTrackerSettings; /*!< Structure for storing tracker settings */
+
+/**
+* \brief Initializes a tracker settings with default values
+*
+* If you want to initialize a camera with custom settings,
+* it's recommended you initialize the settings struct with this first
+*
+**/
+ADDAPI void
+ADDCALL psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings);
+
 /**
  * \brief Create a new PS Move Tracker instance and open the camera
  *
@@ -96,11 +165,26 @@ enum PSMoveTracker_Exposure {
  * a PSEye is found, it will be used, otherwise the first available
  * camera will be used as fallback).
  *
+ * Uses default settings
+ *
  * \return A new \ref PSMoveTracker instance or \c NULL on error
  **/
 ADDAPI PSMoveTracker *
 ADDCALL psmove_tracker_new();
 
+/**
+* \brief Create a new PS Move Tracker instance and open the camera
+*
+* This will select the best camera for tracking (this means that if
+* a PSEye is found, it will be used, otherwise the first available
+* camera will be used as fallback).
+*
+* \param settings Tracker and camera settings to use
+*
+* \return A new \ref PSMoveTracker instance or \c NULL on error
+**/
+ADDAPI PSMoveTracker *
+ADDCALL psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings);
 
 /**
  * \brief Create a new PS Move Tracker instance with a specific camera
@@ -117,6 +201,23 @@ ADDCALL psmove_tracker_new();
  **/
 ADDAPI PSMoveTracker *
 ADDCALL psmove_tracker_new_with_camera(int camera);
+
+/**
+* \brief Create a new PS Move Tracker instance with a specific camera
+*
+* This function can be used when multiple cameras are available to
+* force the use of a specific camera.
+*
+* Usually it's better to use psmove_tracker_new() and let the library
+* choose the best camera, unless you have a good reason not to.
+*
+* \param camera Zero-based index of the camera to use
+* \param settings Tracker and camera settings to use
+*
+* \return A new \ref PSMoveTracker instance or \c NULL on error
+**/
+ADDAPI PSMoveTracker *
+ADDCALL psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *settings);
 
 /**
  * \brief Configure if the LEDs of a controller should be auto-updated

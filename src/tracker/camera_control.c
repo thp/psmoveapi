@@ -116,11 +116,20 @@ get_metrics(int *width, int *height)
 CameraControl *
 camera_control_new(int cameraID)
 {
+    return camera_control_new_with_settings(cameraID, 0, 0, 0);
+}
+
+CameraControl *
+camera_control_new_with_settings(int cameraID, int width, int height, int framerate)
+{
 	CameraControl* cc = (CameraControl*) calloc(1, sizeof(CameraControl));
 	cc->cameraID = cameraID;
 
+    if (framerate <= 0) {
+        framerate = PSMOVE_TRACKER_DEFAULT_FPS;
+    }
+
 #if defined(CAMERA_CONTROL_USE_CL_DRIVER)
-	int w, h;
 	int cams = CLEyeGetCameraCount();
 
 	if (cams <= cameraID) {
@@ -130,48 +139,58 @@ camera_control_new(int cameraID)
 
 	GUID cguid = CLEyeGetCameraUUID(cameraID);
 	cc->camera = CLEyeCreateCamera(cguid,
-                CLEYE_COLOR_PROCESSED, CLEYE_VGA, 60);
+        CLEYE_COLOR_PROCESSED, CLEYE_VGA, framerate);
 
-	CLEyeCameraGetFrameDimensions(cc->camera, &w, &h);
+    CLEyeCameraGetFrameDimensions(cc->camera, &width, &height);
 
 	// Depending on color mode chosen, create the appropriate OpenCV image
-	cc->frame4ch = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 4);
-	cc->frame3ch = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 3);
+    cc->frame4ch = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 4);
+    cc->frame3ch = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
 
 	CLEyeCameraStart(cc->camera);
+
 #elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-        ps3eye_init();
-        int cams = ps3eye_count_connected();
+    ps3eye_init();
+    int cams = ps3eye_count_connected();
 
-        if (cams <= cameraID) {
-            free(cc);
-            return NULL;
-        }
+    if (cams <= cameraID) {
+        free(cc);
+        return NULL;
+    }
 
-        get_metrics(&(cc->width), &(cc->height));
+    if (width <= 0 || height <= 0) {
+        get_metrics(&width, &height);
+    }
 
-        cc->eye = ps3eye_open(cameraID, cc->width, cc->height, 60);
+    cc->eye = ps3eye_open(cameraID, width, height, framerate);
 
-        cc->framebgr = cvCreateImage(cvSize(cc->width, cc->height), IPL_DEPTH_8U, 3);
+    if (cc->eye == NULL) {
+        free(cc);
+        return NULL;
+    }
+
+    cc->framebgr = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
 #else
-        char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
+    char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
 
-        if (video) {
-            psmove_DEBUG("Using '%s' as video input.\n", video);
-            cc->capture = cvCaptureFromFile(video);
-            free(video);
-        } else {
-            cc->capture = cvCaptureFromCAM(cc->cameraID);
+    if (video) {
+        psmove_DEBUG("Using '%s' as video input.\n", video);
+        cc->capture = cvCaptureFromFile(video);
+        free(video);
+    } else {
+        cc->capture = cvCaptureFromCAM(cc->cameraID);
 
-            int width, height;
+        if (width <= 0 || height <= 0) {
             get_metrics(&width, &height);
-
-            cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_WIDTH, width);
-            cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_HEIGHT, height);
         }
-#endif
 
-        cc->deinterlace = PSMove_False;
+        cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_WIDTH, width);
+        cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_HEIGHT, height);
+    }
+#endif
+    cc->width = width;
+    cc->height = height;
+    cc->deinterlace = PSMove_False;
 
 	return cc;
 }
@@ -220,7 +239,7 @@ camera_control_read_calibration(CameraControl* cc,
 }
 
 IplImage *
-camera_control_query_frame(CameraControl* cc,
+camera_control_query_frame( CameraControl* cc,
         PSMove_timestamp *ts_grab, PSMove_timestamp *ts_retrieve)
 {
     IplImage* result;
@@ -245,7 +264,7 @@ camera_control_query_frame(CameraControl* cc,
     // Convert pixels from camera to BGR
     unsigned char *cvpixels;
     cvGetRawData(cc->framebgr, &cvpixels, 0, 0);
-    yuv422_to_bgr(pixels, stride, cvpixels, cc->width, cc->height);
+        yuv422_to_bgr(pixels, stride, cvpixels, cc->width, cc->height);
 
     result = cc->framebgr;
 #else
