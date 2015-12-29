@@ -92,7 +92,7 @@ camera_control_set_parameters(CameraControl* cc,
         int autoE, int autoG, int autoWB,
         int exposure, int gain,
         int wbRed, int wbGreen, int wbBlue,
-        int contrast, int brightness);
+		int contrast, int brightness, enum PSMove_Bool h_flip);
 
 void
 camera_control_backup_system_settings(CameraControl* cc,

@@ -487,7 +487,7 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
     tracker->settings.camera_exposure = psmove_tracker_adapt_to_light(tracker, target_luminance);
 
     camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->settings.camera_exposure,
-            0, 0xffff, 0xffff, 0xffff, -1, -1);
+            0, 0xffff, 0xffff, 0xffff, -1, -1, tracker->settings.camera_mirror);
 }
 
 enum PSMoveTracker_Exposure
@@ -514,6 +514,8 @@ psmove_tracker_set_mirror(PSMoveTracker *tracker,
     psmove_return_if_fail(tracker != NULL);
 
     tracker->settings.camera_mirror = enabled;
+	camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->settings.camera_exposure,
+		0, 0xffff, 0xffff, 0xffff, -1, -1, tracker->settings.camera_mirror);
 }
 
 enum PSMove_Bool
@@ -611,6 +613,9 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 
     // Default to the distance parameters for the PS Eye camera
     tracker->distance_parameters = pseye_distance_parameters;
+
+	// set mirror
+	psmove_tracker_set_mirror(tracker, settings->camera_mirror);
 
 	// use static exposure
     psmove_tracker_set_exposure(tracker, tracker->settings.exposure_mode);
@@ -1217,6 +1222,9 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
     tracker->ts_camera_begin = _psmove_timestamp();
     tracker->frame = camera_control_query_frame(tracker->cc,
             &(tracker->ts_camera_grab), &(tracker->ts_camera_retrieve));
+
+#if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && !defined(CAMERA_CONTROL_USE_CL_DRIVER)
+	// We only need to flip here if we're using OpenCV to capture, since the PS3EyeDriver and CLEyeDriver support flipping in hardware (see camera_control_set_parameters)
     if (tracker->settings.camera_mirror) {
         /**
          * Mirror image on the X axis (works for me with the PS Eye on Linux,
@@ -1228,6 +1236,7 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
          **/
         cvFlip(tracker->frame, NULL, 1);
     }
+#endif
     tracker->ts_camera_converted = _psmove_timestamp();
 }
 
@@ -1571,7 +1580,7 @@ psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
     int i;
     for (i=0; i<7; i++) {
         camera_control_set_parameters(tracker->cc, 0, 0, 0,
-                (int)current_exposure, 0, 0xffff, 0xffff, 0xffff, -1, -1);
+                (int)current_exposure, 0, 0xffff, 0xffff, 0xffff, -1, -1, tracker->settings.camera_mirror);
 
         IplImage* frame;
         psmove_tracker_wait_for_frame(tracker, &frame, 50);
