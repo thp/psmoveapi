@@ -84,7 +84,11 @@ if(PSMOVE_BUILD_TESTS)
                 list(APPEND OPENGL_EXAMPLES_LIBRARIES ${SDL2_LIBRARY}
                     ${OPENGL_FRAMEWORK} ${GLUT_FRAMEWORK})
             ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-                list(APPEND OPENGL_EXAMPLES_LIBRARIES SDL GL glut)
+                include(FindPkgConfig)
+                pkg_search_module(SDL2 REQUIRED sdl2)
+                include_directories(${SDL2_INCLUDE_DIR})
+                list(APPEND OPENGL_EXAMPLES_LIBRARIES SDL2
+                    GL GLU glut)
             ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
                 SET(ENV{SDL2DIR} ${ROOT_DIR}/external/SDL2/)
                 FIND_PACKAGE(SDL2)
