@@ -6,37 +6,6 @@ Here are some files that might be useful for users of the library:
  by any user on the system (otherwise you might get a permission
  problem or you might have to run the application as root).
 
- create_move.py:
- This is a less intrusive variant of the above "bluez-register-move"
- script. It uses D-Bus to communicate with bluetoothd and tells it
- to add a Move Controller to the system. If that works, the device
- is set as Trusted, so that bluetoothd will accept connections from
- the Move Controller. It might still be necessary to restart Bluez
- after this script has been run, but it won't tamper with the state
- files directly.
-
- Android.mk:
- Example makefile for use with the Android NDK and/or agcc. Can be
- used to cross-compile the example application to run on a rooted
- Android device, also using bluez-register-psmove.
-
  embeddable-library-osx:
  Modify the built shared library so that it can be successfully
  embedded into an Mac OS X application bundle (.app).
-
- tracker_debug.html, tracker_debug.css:
- Debug files to display the debug information for the tracker that
- is saved to ~/.psmoveapi/. when debugging files are written there.
-
- psmoveplug.py, psmoveplug_lcd2usb.c:
- Basic files that you can use to create a PS Move "moved" plug computer,
- using an (optional) LCD2USB display for showing the current status.
- 
- common.cmake
- Sets a few compiler-specific variables and defines a macro that are
- to be used across all CMakeLists.txt files. It also adds its path
- (i.e., the contrib path) to the CMAKE_MODULE_PATH folder so any
- Find<Library>.cmake files placed here will be used.
- 
- FindUSB1.cmake
- A module to help cmake with find_library(USB1)

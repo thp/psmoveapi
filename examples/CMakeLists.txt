@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
-include(${ROOT_DIR}/contrib/common.cmake)
+include(${ROOT_DIR}/cmake/common.cmake)
 
 # Additional applications that can be used to test the library
 
@@ -126,4 +126,3 @@ feature_use_info("C example apps:   " PSMOVE_BUILD_EXAMPLES)
 feature_use_info("OpenGL examples:  " PSMOVE_BUILD_OPENGL_EXAMPLES)
 feature_use_info("C test programs:  " PSMOVE_BUILD_TESTS)
 feature_use_info("C++ TUIO server:  " PSMOVE_BUILD_TUIO_SERVER)
-message("")

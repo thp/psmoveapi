@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
-include(${ROOT_DIR}/contrib/common.cmake)
+include(${ROOT_DIR}/cmake/common.cmake)
 
 set(PSMOVEAPI_TRACKER_REQUIRED_LIBS)
 set(PSMOVEAPI_TRACKER_PLATFORM_SRC)
@@ -138,6 +138,8 @@ IF(PSMOVE_USE_PSEYE
     ELSE()  # Fall back to registry version
         set(INFO_USE_CL_EYE_SDK "Yes (registry version)")
     ENDIF()
+else()
+    SET(INFO_USE_CL_EYE_SDK "No")
 ENDIF()
 
 IF(PSMOVE_USE_DEBUG_CAPTURE)
