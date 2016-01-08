@@ -366,6 +366,11 @@ target_link_libraries(psmoveapi_static ${PSMOVEAPI_REQUIRED_LIBS})
 set_target_properties(psmoveapi_static PROPERTIES
     COMPILE_FLAGS -DBUILDING_STATIC_LIBRARY)
 
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Required on Raspbian, see https://github.com/thp/psmoveapi/pull/184
+    target_link_libraries(psmoveapi_static rt)
+ENDIF()
+
 if(PSMOVE_BUILD_TRACKER)
     add_library(psmoveapi_tracker SHARED
         ${PSMOVEAPI_TRACKER_SRC}
