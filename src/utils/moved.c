@@ -97,7 +97,7 @@ main(int argc, char *argv[])
     int nfds = ((server_fd > monitor_fd)?(server_fd):(monitor_fd)) + 1;
 #endif
 
-    while (1) {
+    for (;;) {
 #ifdef __linux
         FD_ZERO(&fds);
         FD_SET(server_fd, &fds);
@@ -146,7 +146,7 @@ moved_server_create()
 #endif
 
 
-    server->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    server->socket = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     assert(server->socket != -1);
 
     server->server_addr.sin_family = AF_INET;
@@ -172,15 +172,15 @@ moved_server_handle_request(moved_server *server)
     unsigned char request[MOVED_SIZE_REQUEST] = {0};
     unsigned char response[MOVED_SIZE_READ_RESPONSE] = {0};
 
-    assert(recvfrom(server->socket, request, sizeof(request),
-                0, (struct sockaddr *)&si_other, &si_len) != -1);
+    assert(recvfrom(server->socket, (char*)request, sizeof(request),
+                0, (struct sockaddr *)&si_other, (int*)&si_len) != -1);
 
     request_id = request[0];
     device_id = request[1];
 
     switch (request_id) {
         case MOVED_REQ_COUNT_CONNECTED:
-            response[0] = server->moved->count;
+            response[0] = (unsigned char)server->moved->count;
 
             send_response = 1;
             break;
@@ -236,7 +236,7 @@ moved_server_handle_request(moved_server *server)
 
     /* Some requests need a response - send it here */
     if (send_response) {
-        assert(sendto(server->socket, response, sizeof(response),
+        assert(sendto(server->socket, (char*)response, sizeof(response),
                 0, (struct sockaddr *)&si_other, si_len) != -1);
     }
 }

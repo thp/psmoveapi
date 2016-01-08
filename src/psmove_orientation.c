@@ -104,7 +104,7 @@ psmove_orientation_update(PSMoveOrientation *orientation)
     long now = psmove_util_get_ticks();
     if (now - orientation->sample_freq_measure_start >= 1000) {
         float measured = ((float)orientation->sample_freq_measure_count) /
-            ((float)(now-orientation->sample_freq_measure_start))*1000.;
+            ((float)(now-orientation->sample_freq_measure_start))*1000.0f;
         psmove_DEBUG("Measured sample_freq: %f\n", measured);
 
         orientation->sample_freq = measured;
@@ -239,10 +239,10 @@ psmove_orientation_reset_quaternion(PSMoveOrientation *orientation)
      *  - Conjugate using (scalar, x, y, z) -> (scalar, -x, -y, -z)
      **/
     double length = sqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3);
-    orientation->reset_quaternion[0] = q0 / length;
-    orientation->reset_quaternion[1] = -q1 / length;
-    orientation->reset_quaternion[2] = -q2 / length;
-    orientation->reset_quaternion[3] = -q3 / length;
+    orientation->reset_quaternion[0] = (float)(q0 / length);
+	orientation->reset_quaternion[1] = (float)(-q1 / length);
+	orientation->reset_quaternion[2] = (float)(-q2 / length);
+	orientation->reset_quaternion[3] = (float)(-q3 / length);
 }
 
 void

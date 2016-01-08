@@ -1,0 +1,76 @@
+Requirements
+------------
+
+- Visual Studio Community 2013
+  http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
+- CMake
+  http://www.cmake.org/cmake/resources/software.html
+- OpenCV
+  http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
+- Git
+  http://code.google.com/p/msysgit/
+
+1. Clone the PS Move API repository
+    `git clone --recursive https://github.com/cboulay/psmoveapi.git`
+    `cd psmoveapi`
+    
+2. Build libusb-1.0
+    Open psmoveapi\external\libusb-1.0\msvc\libusb_2013.sln
+    Change the target to Release x64 (at the top of the Visual Studio window).
+    Right-click on libusb-1.0 (static) and select Properties.
+    In the properties Window, make sure the Platform is set to Active or All Platforms.
+    In the properties Window, navigate to Configuration Properties > C/C++ > Code Generation
+    Change "Runtime Library" to Multi-threaded DLL (/MD)
+    Click OK
+    Right-click on libusb-1.0 (static) and Build.
+    
+3. OpenCV (Optional -- only needed to build the positional tracker)
+    Still in `psmoveapi/external`
+    git clone --depth 1 --branch 2.4.11 git://github.com/Itseez/opencv.git
+    `cd opencv`
+    `mkdir build`
+    `cd build`
+    `cmake .. -G "Visual Studio 12 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
+
+    Open the solution in psmoveapi\external\opencv\build\OpenCV.sln
+    Change the target to Release (at the top of the Visual Studio window).
+    Build the solution (Press F7).
+	
+4. SDL2 (Optional -- only needed to build the opengl examples)
+	Still in `psmoveapi/external`
+	`cd SDL2`
+    `mkdir build`
+    `cd build`
+    `cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF`
+    
+    Open the solution (psmoveapi\external\SDL2\build\SDL2.sln)
+    Build the solution in Debug and Release (Press F7).	
+
+5. Build psmoveapi
+
+    Still in the VS2013 command prompt:
+
+    `cd ..\..\..`
+    `mkdir build `
+    `cd build`
+    `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON`
+
+    Open the `build\PSMoveAPI.sln` solution file.
+    Change the target to Release or Debug as desired.
+    Build the solution (Press F7).
+    
+6. Read [this Wiki](https://github.com/cboulay/psmove-ue4/wiki) for windows-specific information on pairing and connecting the psmove controller and on using the PS3Eye camera.
+
+7. Start one of the desired test applications
+
+    If you previously chose to build the example applications (which is the
+    default), you can then run
+
+    example.exe
+
+    for a basic example.
+
+For questions, please read the archives of the PS Move Mailing List. If you
+cannot find an answer to your question in the archives, send an e-mail:
+
+   https://groups.google.com/forum/#!aboutgroup/psmove

@@ -285,7 +285,7 @@ windows_register_psmove(const char *move_addr_str, const HANDLE hRadio)
            "    PS button again. Repeat this until the status LED finally\n" \
            "    remains lit. Press Ctrl+C to cancel anytime.\n");
 
-    while (1) {
+    for(;;) {
         BLUETOOTH_DEVICE_INFO device_info;
         if (get_bluetooth_device_info(hRadio, move_addr, &device_info) != 0) {
             WINPAIR_DEBUG("No Bluetooth device found matching the given address");

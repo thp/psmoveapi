@@ -209,7 +209,7 @@ class TcpEventSender
 #define SOCKET_PRINTF(sock, ...) { \
     char *tmp = (char*)malloc(MAX_TCP_EVENT_LINE_LENGTH+2); \
     sprintf(tmp, __VA_ARGS__); \
-    send(sock, tmp, strlen(tmp), 0); \
+    send(sock, tmp, (int)strlen(tmp), 0); \
     free(tmp); \
 }
 
@@ -228,7 +228,7 @@ TcpEventSender::TcpEventSender(const char *target, int port)
 
     memset(m_state, 0, sizeof(m_state));
 
-    int sock;
+    SOCKET sock;
     struct sockaddr_in addr;
 
     sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -236,13 +236,13 @@ TcpEventSender::TcpEventSender(const char *target, int port)
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = inet_addr(target);
-    assert(addr.sin_addr.s_addr != INADDR_NONE);
+    addr.sin_port = htons((u_short)port);
+	int result = inet_pton(AF_INET, target, &(addr.sin_addr));
+	assert(result != 0);
 
     assert(connect(sock, (const struct sockaddr*)&addr, sizeof(addr)) == 0);
 
-    m_socket = sock;
+    m_socket = (int)sock;
     SOCKET_PRINTF(m_socket, "hello\n");
 }
 
@@ -491,8 +491,9 @@ main(int argc, const char **argv) {
     if (port) {
         tuio_server = new TUIO::TuioServer(hostname, port);
     }
-    TUIO::TuioCursor *cursors[count];
-    PSMove* moves[count];
+
+	TUIO::TuioCursor **cursors = (TUIO::TuioCursor **)calloc(count, sizeof(TUIO::TuioCursor *));
+	PSMove **moves = (PSMove **)calloc(count, sizeof(PSMove *));
 
     if (tuio_server) {
         tuio_server->enableFullUpdate();
@@ -577,7 +578,7 @@ main(int argc, const char **argv) {
                     sscanf(s, "dimming %d\n", &dimming);
                     if (dimming < 1) dimming = 1;
                     if (dimming > 100) dimming = 100;
-                    psmove_tracker_set_dimming(tracker, .01*dimming);
+                    psmove_tracker_set_dimming(tracker, .01f*dimming);
                     printf("setting dimming factor to %d\n", dimming);
                 } else if (strcmp(s, "deinterlace") == 0) {
                     deinterlacing = (deinterlacing==PSMove_True)?
@@ -636,7 +637,7 @@ main(int argc, const char **argv) {
                 }
             }
 
-            bool pressed = (psmove_get_buttons(moves[i]) & Btn_T);
+            bool pressed = (psmove_get_buttons(moves[i]) & Btn_T) != 0;
 
             enum PSMoveTracker_Status status =
                 psmove_tracker_get_status(tracker, moves[i]);
@@ -712,6 +713,9 @@ main(int argc, const char **argv) {
         delete tuio_server;
     }
     psmove_tracker_free(tracker);
+
+	free(cursors);
+	free(moves);
 
     return 0;
 }

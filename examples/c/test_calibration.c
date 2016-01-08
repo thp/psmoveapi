@@ -52,7 +52,7 @@ main(int argc, char* argv[])
     if (psmove_connection_type(move) == Conn_Bluetooth) {
         float ax, ay, az, gx, gy, gz;
 
-        while (1) {
+        for(;;) {
             int res = psmove_poll(move);
             if (res) {
                 psmove_get_accelerometer_frame(move, Frame_SecondHalf,

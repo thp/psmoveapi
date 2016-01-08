@@ -1,2 +1,5 @@
 include/psmove_config.h
 build*
+bindings/processing
+external/opencv
+external/SDL2

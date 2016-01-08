@@ -81,13 +81,13 @@ int main(int argc, char* argv[])
             while(psmove_poll(moves[i])) {}
             enum PSMove_Battery_Level level = psmove_get_battery(moves[i]);
             Color col = convert_battery_to_col(level);
-            psmove_set_leds(moves[i], col.r, col.g, col.b);
+			psmove_set_leds(moves[i], (unsigned char)col.r, (unsigned char)col.g, (unsigned char)col.b);
             psmove_update_leds(moves[i]);
             int buttons = psmove_get_buttons(moves[i]);
             if(buttons & Btn_PS)
                 running = false;
         }
-        sleep(1);
+        usleep(1000000);
     }
 
     for(i=0; i<c; i++) {
