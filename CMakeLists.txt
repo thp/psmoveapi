@@ -363,6 +363,8 @@ list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi)
 
 add_library(psmoveapi_static STATIC ${PSMOVEAPI_LIBRARY_SRC})
 target_link_libraries(psmoveapi_static ${PSMOVEAPI_REQUIRED_LIBS})
+target_link_libraries(psmoveapi_static rt)
+
 set_target_properties(psmoveapi_static PROPERTIES
     COMPILE_FLAGS -DBUILDING_STATIC_LIBRARY)
 
