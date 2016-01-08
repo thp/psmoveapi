@@ -184,7 +184,7 @@ Tracker::update()
 		Particle *particle = *i;
 		if (!particle->valid())
 		{
-			m_particles.erase(i++);
+			i = m_particles.erase(i);
 			delete particle;
 		}
 		else
