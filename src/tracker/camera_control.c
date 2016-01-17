@@ -195,6 +195,20 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
 	return cc;
 }
 
+int
+camera_control_count_connected()
+{
+#if defined(CAMERA_CONTROL_USE_CL_DRIVER)
+	return CLEyeGetCameraCount();
+#elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+	ps3eye_init();
+	return ps3eye_count_connected();
+#else
+	// Don't know how to get number of connected cameras through opencv...
+	return 0;
+#endif
+}
+
 void
 camera_control_set_deinterlace(CameraControl *cc,
         enum PSMove_Bool enabled)

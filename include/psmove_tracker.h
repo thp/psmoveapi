@@ -218,6 +218,14 @@ ADDAPI PSMoveTracker *
 ADDCALL psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *settings);
 
 /**
+* \brief Get the number of available cameras
+*
+* \return Number of cameras available
+**/
+ADDAPI int
+ADDCALL psmove_tracker_count_connected();
+
+/**
  * \brief Configure if the LEDs of a controller should be auto-updated
  *
  * If auto-update is enabled (the default), the tracker will set and

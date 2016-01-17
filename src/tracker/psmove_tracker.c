@@ -700,6 +700,12 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 	return tracker;
 }
 
+int
+psmove_tracker_count_connected()
+{
+	return camera_control_count_connected();
+}
+
 enum PSMoveTracker_Status
 psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
 {
