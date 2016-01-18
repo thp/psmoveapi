@@ -377,7 +377,8 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
            "    remains lit. Press Ctrl+C to cancel anytime.\n");
 
     unsigned int scan = 0;
-    while (1) {
+    int connected = 0;
+    while (!connected) {
         BLUETOOTH_DEVICE_INFO device_info;
         if (get_bluetooth_device_info(hRadio, move_addr, &device_info, scan == 0) != 0) {
             WINPAIR_DEBUG("No Bluetooth device found matching the given address");
@@ -425,6 +426,7 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
                         if (is_connection_established(hRadio, &device_info)) {
                             /* if we have a connection, stop trying to connect this device */
                             printf("Connection verified.\n");
+                            connected = 1;
                             break;
                         }
                     }
