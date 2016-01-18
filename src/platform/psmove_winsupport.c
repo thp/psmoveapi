@@ -348,34 +348,33 @@ patch_registry(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radi
 }
 
 
-int
-windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+static int
+is_windows8_or_later()
 {
-    /* parse controller's Bluetooth device address string */
-    BLUETOOTH_ADDRESS *move_addr = string_to_btaddr(move_addr_str);
-    if (!move_addr) {
-        WINPAIR_DEBUG("Cannot parse controller address: '%s'", move_addr_str);
-        return 1;
-    }
+    OSVERSIONINFOEX info;
+    memset(&info, 0, sizeof(info));
+    info.dwOSVersionInfoSize = sizeof(info);
+    info.dwMajorVersion    = 6;
+    info.dwMinorVersion    = 2;
+    info.wServicePackMajor = 0;
+    info.wServicePackMinor = 0;
 
-    if (!radio_addr) {
-        WINPAIR_DEBUG("Invalid Bluetooth device address for radio");
-        return 1;
-    }
+    DWORDLONG conditionMask = 0;
+    VER_SET_CONDITION(conditionMask, VER_MAJORVERSION,     VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_MINORVERSION,     VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_SERVICEPACKMINOR, VER_GREATER_EQUAL);
 
-    if (set_up_bluetooth_radio(hRadio) != 0) {
-        WINPAIR_DEBUG("Failed to configure Bluetooth radio for use");
-        return 1;
-    }
+    return VerifyVersionInfo(
+        &info, 
+        VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+        conditionMask);
+}
 
-    printf("\n" \
-           "    Unplug the controller.\n" \
-           "\n"
-           "    Now press the controller's PS button. The red status LED\n" \
-           "    will start blinking. Whenever it goes off, press the\n" \
-           "    PS button again. Repeat this until the status LED finally\n" \
-           "    remains lit. Press Ctrl+C to cancel anytime.\n");
 
+static void
+handle_windows8_and_later(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+{
     unsigned int scan = 0;
     int connected = 0;
     while (!connected) {
@@ -395,11 +394,8 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
                     }
 
                     if (device_info.fConnected) {
-                        /* Windows 8 seems to require manual help with setting up the device
-                         * in the registry. Previous versions do this by themselves, but
-                         * doing it manually for them does not seem to harm them either. So we
-                         * do not single out Windows 8 but simply perform the necessary tweaks
-                         * for all versions of Windows.
+                        /* Windows 8 (and later) seems to require manual help with setting up
+                         * the device in the registry.
                          */
                         WINPAIR_DEBUG("Patching the registry ...");
                         if (patch_registry(move_addr, radio_addr) != 0) {
@@ -445,6 +441,86 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
 
         Sleep(SLEEP_BETWEEN_SCANS);
         scan = (scan + 1) % BT_SCAN_NEW_INQUIRY;
+    }
+}
+
+
+static void
+handle_windows_pre8(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+{
+    int connected = 0;
+    while (!connected) {
+        BLUETOOTH_DEVICE_INFO device_info;
+        if (get_bluetooth_device_info(hRadio, move_addr, &device_info, 0) != 0) {
+            WINPAIR_DEBUG("No Bluetooth device found matching the given address");
+        } else {
+            if (is_move_motion_controller(&device_info)) {
+                WINPAIR_DEBUG("Found Move Motion Controller matching the given address");
+
+                if (device_info.fConnected) {
+                    /* enable HID service only if necessary */
+                    WINPAIR_DEBUG("Checking HID service ...");
+                    if (!is_hid_service_enabled(hRadio, &device_info)) {
+                        WINPAIR_DEBUG("Enabling HID service ...");
+                        GUID service = HumanInterfaceDeviceServiceClass_UUID;
+                        DWORD result = BluetoothSetServiceState(hRadio, &device_info, &service, BLUETOOTH_SERVICE_ENABLE);
+                        if (result != ERROR_SUCCESS) {
+                            WINPAIR_DEBUG("Failed to enable HID service");
+                        }
+                    }
+
+                    WINPAIR_DEBUG("Verifying successful connection ...");
+                    if (is_connection_established(hRadio, &device_info)) {
+                        /* if we have a connection, stop trying to connect this device */
+                        printf("Connection verified.\n");
+                        connected = 1;
+                        break;
+                    }
+                }
+            } else {
+                WINPAIR_DEBUG("Bluetooth device matching the given address is not a Move Motion Controller");
+            }
+        }
+
+        Sleep(SLEEP_BETWEEN_SCANS);
+    }
+}
+
+
+int
+windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+{
+    /* parse controller's Bluetooth device address string */
+    BLUETOOTH_ADDRESS *move_addr = string_to_btaddr(move_addr_str);
+    if (!move_addr) {
+        WINPAIR_DEBUG("Cannot parse controller address: '%s'", move_addr_str);
+        return 1;
+    }
+
+    if (!radio_addr) {
+        WINPAIR_DEBUG("Invalid Bluetooth device address for radio");
+        return 1;
+    }
+
+    if (set_up_bluetooth_radio(hRadio) != 0) {
+        WINPAIR_DEBUG("Failed to configure Bluetooth radio for use");
+        return 1;
+    }
+
+    printf("\n" \
+           "    Unplug the controller.\n" \
+           "\n"
+           "    Now press the controller's PS button. The red status LED\n" \
+           "    will start blinking. Whenever it goes off, press the\n" \
+           "    PS button again. Repeat this until the status LED finally\n" \
+           "    remains lit. Press Ctrl+C to cancel anytime.\n");
+
+    if (is_windows8_or_later()) {
+        WINPAIR_DEBUG("Dealing with Windows 8 or later");
+        handle_windows8_and_later(move_addr, radio_addr, hRadio);
+    } else {
+        WINPAIR_DEBUG("Dealing with Windows version older than 8");
+        handle_windows_pre8(move_addr, radio_addr, hRadio);
     }
 
     free(move_addr);
