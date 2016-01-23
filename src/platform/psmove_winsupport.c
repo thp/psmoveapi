@@ -311,32 +311,21 @@ patch_registry(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radi
     }
 
     /* open registry key for modifying a value */
-    /* NOTE: At times, Windows seems a bit slow to generate the key we are looking for.
-     *       We try more than once instead of exiting on the first failed attempt.
-     */
-    int i = 0;
     HKEY hKey;
-    for (i = 2; i >= 0; i--) {
-        LONG result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, sub_key, 0, KEY_SET_VALUE | KEY_WOW64_64KEY, &hKey);
-        if (result == ERROR_SUCCESS) {
-            break;
+    LONG result;
+    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, sub_key, 0, KEY_SET_VALUE | KEY_WOW64_64KEY, &hKey);
+    if (result != ERROR_SUCCESS) {
+        if (result == ERROR_FILE_NOT_FOUND) {
+            WINPAIR_DEBUG("Failed to open registry key, it does not yet exist");
         } else {
-            if (result == ERROR_FILE_NOT_FOUND) {
-                WINPAIR_DEBUG("Failed to open registry key, it does not yet exist");
-                if (i != 0) {
-                    /* sleep for 0.8 seconds and try again */
-                    Sleep(800);
-                    continue;
-                }
-            }
-
             WINPAIR_DEBUG("Failed to open registry key");
-            return 1;
         }
+
+        return 1;
     }
 
     DWORD data = 1;
-    LONG result = RegSetValueEx(hKey, _T("VirtuallyCabled"), 0, REG_DWORD, (const BYTE *) &data, sizeof(data));
+    result = RegSetValueEx(hKey, _T("VirtuallyCabled"), 0, REG_DWORD, (const BYTE *) &data, sizeof(data));
     if (result != ERROR_SUCCESS) {
         WINPAIR_DEBUG("Failed to set 'VirtuallyCabled'");
         ret = 1;
