@@ -62,6 +62,9 @@ camera_control_query_frame(CameraControl* cc,
         PSMove_timestamp *ts_grab, PSMove_timestamp *ts_retrieve);
 
 void
+camera_control_wait_for_frame(CameraControl* cc, IplImage **frame, int delay);
+
+void
 camera_control_delete(CameraControl* cc);
 
 
