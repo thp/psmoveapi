@@ -162,8 +162,9 @@ IMPORTANT: Get the right MinGW version!
 	to store the host's Bluetooth device address in the Move and register the
 	controller. Follow the instructions on the screen until the Move's red
 	status LED eventually remains lit to indicate a working Bluetooth
-	connection. Since this step involves modifications of the Windows registry,
-	you will probably have to run psmovepair.exe as Administrator.
+	connection. Since this step involves modifications of the registry on
+	Windows 8 and later, you will probably have to run psmovepair.exe as
+	Administrator.
 
 	Note that the pairing step is necessary only once per controller. From that
 	point on you can enable the Bluetooth connection simply by pressing the
