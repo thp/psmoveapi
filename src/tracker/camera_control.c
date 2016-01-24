@@ -35,7 +35,6 @@
 
 #include "../psmove_private.h"
 
-#include <unistd.h>
 #include <stdio.h>
 
 #include "camera_control_private.h"
@@ -339,27 +338,6 @@ camera_control_query_frame( CameraControl* cc,
 #endif
 
     return result;
-}
-
-void
-camera_control_wait_for_frame(CameraControl* cc, IplImage **frame, int delay)
-{
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-	int num_captured = 0;
-	while (num_captured++ < 16)
-	{
-		*frame = camera_control_query_frame(cc, NULL, NULL);
-	}
-#else
-	int elapsed_time = 0;
-	int step = 10;
-
-	while (elapsed_time < delay) {
-		usleep(1000 * step);
-		*frame = camera_control_query_frame(cc, NULL, NULL);
-		elapsed_time += step;
-	}
-#endif
 }
 
 void
