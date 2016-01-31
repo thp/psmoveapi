@@ -1145,7 +1145,7 @@ psmove_pair(PSMove *move)
 #endif
 
 #if defined(_WIN32)
-    windows_register_psmove(addr, hRadio);
+    windows_register_psmove(addr, &radioInfo.address, hRadio);
     CloseHandle(hRadio);
 #endif
 

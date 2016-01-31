@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 2.8.12)
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
-include(${ROOT_DIR}/contrib/common.cmake)
+include(${ROOT_DIR}/cmake/common.cmake)
 
 # Language bindings
 
-option(PSMOVE_BUILD_QT_BINDINGS "Build the Qt bindings" OFF)
 option(PSMOVE_BUILD_JAVA_BINDINGS "Build the Java bindings" OFF)
 option(PSMOVE_BUILD_CSHARP_BINDINGS "Build the C# bindings" OFF)
 option(PSMOVE_BUILD_PROCESSING_BINDINGS "Build the Processing bindings" OFF)
@@ -146,26 +145,10 @@ else()
     set(INFO_BUILD_PROCESSING_BINDINGS "No (SWIG not found)")
 endif()
 
-# Qt bindings
-if(PSMOVE_BUILD_QT_BINDINGS)
-    find_package(Qt4 QUIET)
-
-    if(QT_QTDECLARATIVE_FOUND)
-        add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/qt)
-        set(INFO_BUILD_QT_BINDINGS "Yes")
-    else()
-        message(FATAL_ERROR "Qt bindings were requested with PSMOVE_BUILD_QT_BINDINGS, but not found on the system.")
-        # set(INFO_BUILD_QT_BINDINGS "No (Qt not found)")
-    endif()
-else()
-    set(INFO_BUILD_QT_BINDINGS "No (disabled)")
-endif()
-
 message("")
 message("  Language bindings")
 message("    Python:           " ${INFO_BUILD_PYTHON_BINDINGS})
 message("    Java:             " ${INFO_BUILD_JAVA_BINDINGS})
 message("    C#:               " ${INFO_BUILD_CSHARP_BINDINGS})
 message("    Processing:       " ${INFO_BUILD_PROCESSING_BINDINGS})
-message("    Qt:               " ${INFO_BUILD_QT_BINDINGS})
 message("")

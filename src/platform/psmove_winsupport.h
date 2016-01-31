@@ -30,18 +30,20 @@
 #define PSMOVE_WINSUPPORT_H
 
 #include <windows.h>
+#include <bluetoothapis.h>
 
 
 /**
  * \brief Interactively establish a Bluetooth connection between Move and a host radio
  *
  * \param move_addr The Move's Bluetooth device address in the format \c "aa:bb:cc:dd:ee:ff"
+ * \param radio_addr The host radio's Bluetooth device address
  * \param hRadio A valid handle to the host Bluetooth radio
  *
  * \return Zero on success, or a non-zero value upon error
  **/
 int
-windows_register_psmove(const char *move_addr, const HANDLE hRadio);
+windows_register_psmove(const char *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio);
 
 /**
  * \brief Get a handle to the first local Bluetooth radio found

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/..)
-include(${ROOT_DIR}/contrib/common.cmake)
+include(${ROOT_DIR}/cmake/common.cmake)
 
 # Do all the PSMOVEAPI-only work
 # At the end we will call separate files for tracker and utils
@@ -210,6 +210,9 @@ configure_file(${ROOT_DIR}/include/psmove_config.h.in
     ${ROOT_DIR}/include/psmove_config.h
     @ONLY)
 
+include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
+include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)
+
 install(FILES ${CMAKE_BINARY_DIR}/psmoveapi.pc
     DESTINATION ${PSMOVEAPI_LIB_DEST}/pkgconfig)
 
@@ -226,14 +229,10 @@ install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
 )
 
 install(FILES ${PSMOVEAPI_HEADERS} DESTINATION include/psmoveapi)
-install(FILES README COPYING LAYOUT INSTALL DESTINATION share/psmoveapi)
+install(FILES README COPYING DESTINATION share/psmoveapi)
 
 message("")
 message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
 message("    Library license:  " ${INFO_LICENSE} " (see README for details)")
 message("    BlueZ 5 support:  " ${INFO_BLUEZ5_SUPPORT} " (for pairing on Linux only)")
-
-#add_subdirectory(tracker ${CMAKE_BINARY_DIR})
-include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)#add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/utils)

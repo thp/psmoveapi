@@ -30,6 +30,8 @@
 #include "psmove_winsupport.h"
 
 #include <bluetoothapis.h>
+#include <tchar.h>
+#include <strsafe.h>
 
 #include <malloc.h>
 #include <stdio.h>
@@ -55,6 +57,26 @@
  * established Bluetooth connection
  */
 #define CONN_CHECK_DELAY 300
+
+/* number of connection retries before removing the controller (in software)
+ * and starting all over again
+ */
+#define CONN_RETRIES 80
+
+/* the delay (in milliseconds) between connection retries
+ */
+#define CONN_DELAY 300
+
+/* time out indicator for a Bluetooth inquiry
+ */
+#define GET_BT_DEVICES_TIMEOUT_MULTIPLIER 1
+
+// Every x loop issue a new inquiry
+#define BT_SCAN_NEW_INQUIRY 5
+
+// Sleep value between bt device scan
+// Recommondation: Value should be higher than GET_BT_DEVICES_TIMEOUT_MULTIPLIER * 1.28 * 1000
+#define SLEEP_BETWEEN_SCANS (unsigned int) GET_BT_DEVICES_TIMEOUT_MULTIPLIER * 1.28 * 1000 * 1.1
 
 
 static BLUETOOTH_ADDRESS *
@@ -126,7 +148,7 @@ set_up_bluetooth_radio(const HANDLE hRadio)
 
 
 static int
-get_bluetooth_device_info(const HANDLE hRadio, const BLUETOOTH_ADDRESS *addr, BLUETOOTH_DEVICE_INFO *device_info)
+get_bluetooth_device_info(const HANDLE hRadio, const BLUETOOTH_ADDRESS *addr, BLUETOOTH_DEVICE_INFO *device_info, unsigned int inquire)
 {
     if (!addr || !device_info) {
         return 1;
@@ -134,8 +156,8 @@ get_bluetooth_device_info(const HANDLE hRadio, const BLUETOOTH_ADDRESS *addr, BL
 
     BLUETOOTH_DEVICE_SEARCH_PARAMS search_params;
     search_params.dwSize               = sizeof(search_params);
-    search_params.cTimeoutMultiplier   = 4;
-    search_params.fIssueInquiry        = FALSE;
+    search_params.cTimeoutMultiplier   = GET_BT_DEVICES_TIMEOUT_MULTIPLIER;
+    search_params.fIssueInquiry        = inquire;
     search_params.fReturnAuthenticated = TRUE;
     search_params.fReturnConnected     = TRUE;
     search_params.fReturnRemembered    = TRUE;
@@ -226,6 +248,19 @@ is_hid_service_enabled(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_info)
 
 
 static int
+update_device_info(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_info)
+{
+    DWORD result = BluetoothGetDeviceInfo(hRadio, device_info);
+    if (result != ERROR_SUCCESS) {
+        WINPAIR_DEBUG("Failed to read device info");
+        return 1;
+    }
+
+    return 0;
+}
+
+
+static int
 is_connection_established(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_info)
 {
     /* NOTE: Sometimes the Bluetooth connection appears to be established
@@ -238,9 +273,7 @@ is_connection_established(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_inf
     unsigned int i;
     for (i = 0; i < CONN_CHECK_NUM_TRIES; i++) {
         /* read device info again to check if we have a connection */
-        DWORD result = BluetoothGetDeviceInfo(hRadio, device_info);
-        if (result != ERROR_SUCCESS) {
-            WINPAIR_DEBUG("Failed to read device info");
+        if (update_device_info(hRadio, device_info) != 0) {
             return 0;
         }
 
@@ -256,38 +289,158 @@ is_connection_established(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_inf
 }
 
 
-int
-windows_register_psmove(const char *move_addr_str, const HANDLE hRadio)
+static int
+patch_registry(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr)
 {
-    /* parse controller's Bluetooth device address string */
-    BLUETOOTH_ADDRESS *move_addr = string_to_btaddr(move_addr_str);
-    if (!move_addr) {
-        WINPAIR_DEBUG("Cannot parse controller address: '%s'", move_addr_str);
+    int ret = 0;
+
+    TCHAR sub_key[1024];
+    HRESULT res = StringCchPrintf(
+        sub_key,
+        1024,
+        _T("SYSTEM\\CurrentControlSet\\Services\\HidBth\\Parameters\\Devices\\" \
+           "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"),
+        radio_addr->rgBytes[5], radio_addr->rgBytes[4], radio_addr->rgBytes[3],
+        radio_addr->rgBytes[2], radio_addr->rgBytes[1], radio_addr->rgBytes[0],
+        move_addr->rgBytes[5], move_addr->rgBytes[4], move_addr->rgBytes[3],
+        move_addr->rgBytes[2], move_addr->rgBytes[1], move_addr->rgBytes[0] );
+
+    if (FAILED(res)) {
+        WINPAIR_DEBUG("Failed to build registry subkey");
         return 1;
     }
 
-    if (set_up_bluetooth_radio(hRadio) != 0) {
-        WINPAIR_DEBUG("Failed to configure Bluetooth radio for use");
+    /* open registry key for modifying a value */
+    HKEY hKey;
+    LONG result;
+    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, sub_key, 0, KEY_SET_VALUE | KEY_WOW64_64KEY, &hKey);
+    if (result != ERROR_SUCCESS) {
+        if (result == ERROR_FILE_NOT_FOUND) {
+            WINPAIR_DEBUG("Failed to open registry key, it does not yet exist");
+        } else {
+            WINPAIR_DEBUG("Failed to open registry key");
+        }
+
         return 1;
     }
 
-    /* Keep track of the number of times the loop iterates so we may timeout. */
-    int timeout_duration = 30;  // seconds
-    int sleep_interval = 1000; // msec
-    int timeout_iterations = timeout_duration * 1000 / sleep_interval;
-    int loop_count = 0;
-    
-    printf("\n" \
-           "    Unplug the controller.\n" \
-           "\n"
-           "    Now press the controller's PS button. The red status LED\n" \
-           "    will start blinking. Whenever it goes off, press the\n" \
-           "    PS button again. Repeat this until the status LED finally\n" \
-           "    remains lit. Press Ctrl+C to cancel anytime.\n");
+    DWORD data = 1;
+    result = RegSetValueEx(hKey, _T("VirtuallyCabled"), 0, REG_DWORD, (const BYTE *) &data, sizeof(data));
+    if (result != ERROR_SUCCESS) {
+        WINPAIR_DEBUG("Failed to set 'VirtuallyCabled'");
+        ret = 1;
+    }
 
-    for(;;) {
+    RegCloseKey(hKey);
+
+    return ret;
+}
+
+
+static int
+is_windows8_or_later()
+{
+    OSVERSIONINFOEX info;
+    memset(&info, 0, sizeof(info));
+    info.dwOSVersionInfoSize = sizeof(info);
+    info.dwMajorVersion    = 6;
+    info.dwMinorVersion    = 2;
+    info.wServicePackMajor = 0;
+    info.wServicePackMinor = 0;
+
+    DWORDLONG conditionMask = 0;
+    VER_SET_CONDITION(conditionMask, VER_MAJORVERSION,     VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_MINORVERSION,     VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_SERVICEPACKMINOR, VER_GREATER_EQUAL);
+
+    return VerifyVersionInfo(
+        &info, 
+        VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR | VER_SERVICEPACKMINOR,
+        conditionMask);
+}
+
+
+static void
+handle_windows8_and_later(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+{
+    unsigned int scan = 0;
+    int connected = 0;
+    while (!connected) {
         BLUETOOTH_DEVICE_INFO device_info;
-        if (get_bluetooth_device_info(hRadio, move_addr, &device_info) != 0) {
+        if (get_bluetooth_device_info(hRadio, move_addr, &device_info, scan == 0) != 0) {
+            WINPAIR_DEBUG("No Bluetooth device found matching the given address");
+        } else {
+            if (is_move_motion_controller(&device_info)) {
+                WINPAIR_DEBUG("Found Move Motion Controller matching the given address");
+
+                unsigned int conn_try;
+                for (conn_try = 1; conn_try <= CONN_RETRIES; conn_try++) {
+                    WINPAIR_DEBUG("Connection try %d/%d", conn_try, CONN_RETRIES);
+
+                    if (update_device_info(hRadio, &device_info) != 0) {
+                        break;
+                    }
+
+                    if (device_info.fConnected) {
+                        /* Windows 8 (and later) seems to require manual help with setting up
+                         * the device in the registry.
+                         */
+                        WINPAIR_DEBUG("Patching the registry ...");
+                        if (patch_registry(move_addr, radio_addr) != 0) {
+                            WINPAIR_DEBUG("Failed to patch the registry");
+                        }
+
+                        /* enable HID service only if necessary */
+                        WINPAIR_DEBUG("Checking HID service ...");
+                        if (!is_hid_service_enabled(hRadio, &device_info)) {
+                            WINPAIR_DEBUG("Enabling HID service ...");
+                            GUID service = HumanInterfaceDeviceServiceClass_UUID;
+                            DWORD result = BluetoothSetServiceState(hRadio, &device_info, &service, BLUETOOTH_SERVICE_ENABLE);
+                            if (result != ERROR_SUCCESS) {
+                                WINPAIR_DEBUG("Failed to enable HID service");
+                            }
+
+                            WINPAIR_DEBUG("Patching the registry ...");
+                            if (patch_registry(move_addr, radio_addr) != 0) {
+                                WINPAIR_DEBUG("Failed to patch the registry");
+                            }
+                        }
+
+                        WINPAIR_DEBUG("Verifying successful connection ...");
+                        if (is_connection_established(hRadio, &device_info)) {
+                            /* if we have a connection, stop trying to connect this device */
+                            printf("Connection verified.\n");
+                            connected = 1;
+                            break;
+                        }
+                    }
+                
+                    Sleep(CONN_DELAY);
+                }
+
+                if(!device_info.fConnected) {
+                    BluetoothRemoveDevice(&(device_info.Address));
+                    WINPAIR_DEBUG("Device removed, starting all over again");
+                }
+            } else {
+                WINPAIR_DEBUG("Bluetooth device matching the given address is not a Move Motion Controller");
+            }
+        }
+
+        Sleep(SLEEP_BETWEEN_SCANS);
+        scan = (scan + 1) % BT_SCAN_NEW_INQUIRY;
+    }
+}
+
+
+static void
+handle_windows_pre8(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+{
+    int connected = 0;
+    while (!connected) {
+        BLUETOOTH_DEVICE_INFO device_info;
+        if (get_bluetooth_device_info(hRadio, move_addr, &device_info, 0) != 0) {
             WINPAIR_DEBUG("No Bluetooth device found matching the given address");
         } else {
             if (is_move_motion_controller(&device_info)) {
@@ -309,6 +462,7 @@ windows_register_psmove(const char *move_addr_str, const HANDLE hRadio)
                     if (is_connection_established(hRadio, &device_info)) {
                         /* if we have a connection, stop trying to connect this device */
                         printf("Connection verified.\n");
+                        connected = 1;
                         break;
                     }
                 }
@@ -316,16 +470,46 @@ windows_register_psmove(const char *move_addr_str, const HANDLE hRadio)
                 WINPAIR_DEBUG("Bluetooth device matching the given address is not a Move Motion Controller");
             }
         }
-        if (loop_count >= timeout_iterations) {
-            printf("\n"
-                   "    A connection could not be established. This is not\n"
-                   "    unusual in Windows. Please refer to the README document\n"
-                   "    for your platform for more information. Press Ctrl+C to cancel.");
-        }
 
-        /* sleep for 1 second */
-        Sleep(1000);
-        loop_count++;
+        Sleep(SLEEP_BETWEEN_SCANS);
+    }
+}
+
+
+int
+windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+{
+    /* parse controller's Bluetooth device address string */
+    BLUETOOTH_ADDRESS *move_addr = string_to_btaddr(move_addr_str);
+    if (!move_addr) {
+        WINPAIR_DEBUG("Cannot parse controller address: '%s'", move_addr_str);
+        return 1;
+    }
+
+    if (!radio_addr) {
+        WINPAIR_DEBUG("Invalid Bluetooth device address for radio");
+        return 1;
+    }
+
+    if (set_up_bluetooth_radio(hRadio) != 0) {
+        WINPAIR_DEBUG("Failed to configure Bluetooth radio for use");
+        return 1;
+    }
+
+    printf("\n" \
+           "    Unplug the controller.\n" \
+           "\n"
+           "    Now press the controller's PS button. The red status LED\n" \
+           "    will start blinking. Whenever it goes off, press the\n" \
+           "    PS button again. Repeat this until the status LED finally\n" \
+           "    remains lit. Press Ctrl+C to cancel anytime.\n");
+
+    if (is_windows8_or_later()) {
+        WINPAIR_DEBUG("Dealing with Windows 8 or later");
+        handle_windows8_and_later(move_addr, radio_addr, hRadio);
+    } else {
+        WINPAIR_DEBUG("Dealing with Windows version older than 8");
+        handle_windows_pre8(move_addr, radio_addr, hRadio);
     }
 
     free(move_addr);

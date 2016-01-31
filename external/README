@@ -59,8 +59,8 @@ by G-Truc Creation
 from http://glm.g-truc.net/
 
 
-libusb-1.0.9
-============
+libusb-1.0
+==========
 
 A C library that gives applications easy access to USB devices
 by the libusb authors
@@ -99,3 +99,10 @@ pthreads-w32
 A Windows implementation of posix-threads. Also for struct timespec
 https://www.sourceware.org/pthreads-win32/
 It is distributed under the LGPL 2.1 (or later).
+
+
+SDL2
+====
+
+Simple DirectMedia Layer; version 2; used for building the examples.
+from http://libsdl.org/
