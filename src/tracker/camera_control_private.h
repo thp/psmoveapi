@@ -45,7 +45,7 @@
 #endif
 
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-#    include "ps3eyedriver.h"
+#    include "ps3eye_capi.h"
 #endif
 
 struct _CameraControl {

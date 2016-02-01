@@ -95,11 +95,11 @@ IF (PSMOVE_USE_PS3EYE_DRIVER AND (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMA
 	set(PS3_EYE_SRC)
     list(APPEND PS3_EYE_SRC
                 ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye.cpp
-                ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eyedriver.cpp)
+                ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye_capi.cpp)
 	set(PS3_EYE_HEADER)
     list(APPEND PS3_EYE_HEADER
 				${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye.h
-				${ROOT_DIR}/external/PS3EYEDriver/src/ps3eyedriver.h)
+				${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye_capi.h)
 
 	list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC ${PS3_EYE_SRC} ${PS3_EYE_HEADER})
 	source_group("Header Files\\PS3EyeDriver" FILES ${PS3_EYE_HEADER})
