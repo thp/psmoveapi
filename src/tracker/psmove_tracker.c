@@ -382,8 +382,7 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
 void
 psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
 {
-    *settings = tracker_default_settings;  // Doesn't work.
-    printf("Copied default tracker settings to tracker->settings.\n");
+    *settings = tracker_default_settings; 
 }
 
 PSMoveTracker *psmove_tracker_new() {
