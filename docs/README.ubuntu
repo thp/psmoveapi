@@ -25,38 +25,14 @@ Building the PS Move API
 
    mkdir -p ~/src/
    cd ~/src/
-   git clone git://github.com/thp/psmoveapi.git
+   git clone --recursive git://github.com/thp/psmoveapi.git
    cd psmoveapi
-   git submodule init
-   git submodule update
 
 4. Install the build-dependencies
 
-   sudo apt-get install build-essential cmake libudev-dev libbluetooth-dev \
-           libv4l-dev
+   sudo apt-get install build-essential cmake libudev-dev libbluetooth-dev libv4l-dev libopencv-dev
 
-5.a Install OpenCV with apt-get
-   sudo apt-get install libopencv-dev
-
-5.b Install OpenCV from source
-   sudo apt-get install git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev libjpeg-dev libpng-dev libtiff-dev
-   cd external
-   git clone https://github.com/Itseez/opencv.git
-   cd opencv
-   mkdir build
-   cd build
-   cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_DOCS=0 -DBUILD_FAT_JAVA_LIB=0 -DBUILD_PACKAGE=0 -DBUILD_PERF_TESTS=0 -DBUILD_SHARED_LIBS=0 -DBUILD_TESTS=0 -DBUILD_opencv_apps=0 -DBUILD_opencv_calib3d=0 -DBUILD_opencv_features2d=0 -DBUILD_opencv_flann=0 -DBUILD_opencv_objdetect=0 -DBUILD_opencv_photo=0 -DBUILD_opencv_shape=0 -DBUILD_opencv_stitching=0 -DBUILD_opencv_superres=0 -DBUILD_opencv_ts=0 -DBUILD_opencv_video=0 -DBUILD_opencv_videostab=0 -DBUILD_opencv_world=0 -DWITH_FFMPEG=0 -DWITH_JASPER=0 -DWITH_OPENEXR=0 -DWITH_TIFF=0 ..
-   make -j7
-   #optional
-   sudo make install
-
-6.a Build the API (as Debian package) and install it
-
-   cd ~/src/psmoveapi/
-   dpkg-buildpackage -rfakeroot
-   sudo dpkg -i ../*psmoveapi*.deb
-
-6.b Build the API (standalone - if you want to make changes)
+5. Build the API (standalone - if you want to make changes)
 
    cd ~/src/psmoveapi/
    mkdir build
