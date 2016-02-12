@@ -94,9 +94,13 @@ int main(int argc, char* argv[])
     psmove_set_rumble(move, 0);
     psmove_update_leds(move);
 
+    psmove_enable_orientation(move, PSMove_True);
+    psmove_enable_background_dead_reckoning(move);
+
     while (ctype != Conn_USB && !(psmove_get_buttons(move) & Btn_PS)) {
         int res = psmove_poll(move);
         if (res) {
+/*
             if (psmove_get_buttons(move) & Btn_TRIANGLE) {
                 printf("Triangle pressed, with trigger value: %d\n",
                         psmove_get_trigger(move));
@@ -132,11 +136,14 @@ int main(int argc, char* argv[])
             printf("celsius temperature: %f\n", psmove_get_temperature_in_celsius(move));
 
             psmove_update_leds(move);
+*/
         }
     }
+
+    psmove_disable_background_dead_reckoning(move);
+    psmove_enable_orientation(move, PSMove_False);
 
     psmove_disconnect(move);
 
     return 0;
 }
-

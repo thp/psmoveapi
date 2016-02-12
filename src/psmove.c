@@ -31,6 +31,7 @@
 #include "psmove_private.h"
 #include "psmove_calibration.h"
 #include "psmove_orientation.h"
+#include "psmove_vector_math.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -304,6 +305,19 @@ struct _PSMove {
     PSMoveCalibration *calibration;
     PSMoveOrientation *orientation;
 
+
+    /** cax cay caz are in controller coordinates! */
+    float cax, cay, caz;
+    /** gax gay gaz are in global coordinates! */
+    float gax, gay, gaz;
+    /** vx vy vz are in global coordinates! */
+    float vx, vy, vz;
+    /** x y z are in global coordinates! */
+    float px, py, pz;
+
+
+
+
     /* Is orientation tracking currently enabled? */
     enum PSMove_Bool orientation_enabled;
 
@@ -319,6 +333,9 @@ struct _PSMove {
     unsigned char led_write_thread_write_queued;
     unsigned char led_write_last_result;
 #endif
+HANDLE dead_reckoning_thread;
+unsigned int dead_reckoning_running;
+
 
 #ifdef _WIN32
     /* Nonzero if this device is a Bluetooth device (on Windows only) */
@@ -1942,6 +1959,160 @@ psmove_get_orientation(PSMove *move,
     psmove_orientation_get_quaternion(move->orientation, w, x, y, z);
 }
 
+DWORD WINAPI
+_psmove_dead_reckoning_thread_proc(void *data)
+{
+    PSMove *move = (PSMove*)data;
+    long intended_tick_length = 40;
+    long ticks = 0;
+    long diff;
+
+    float orientation[4];
+    float global_gravity[3] = {0, 1, 0};
+
+    float measured_ax, measured_ay, measured_az;
+
+    while (move->dead_reckoning_running) {  // "Gameloop"-like structure with fixed framerate
+        diff = psmove_util_get_ticks() - ticks;
+        ticks = ticks + diff;
+        printf("\nTicks Passed [ms]: %ld / now at %ld\n", diff, ticks);
+
+        // resetting the values, this can be deleted at a later time
+        if (psmove_get_buttons(move) & Btn_CIRCLE) {
+          psmove_reset_orientation(move);
+          global_gravity[0] = measured_ax;
+          global_gravity[1] = measured_ay;
+          global_gravity[2] = measured_az;
+          move->vx = 0;
+          move->vy = 0;
+          move->vz = 0;
+          move->px = 0;
+          move->py = 0;
+          move->pz = 0;
+        }
+        printf("gravity vector: %3f %3f %3f\n", global_gravity[0], global_gravity[1], global_gravity[2]);
+
+
+        // orientation and orientation_conjugate for later use
+        psmove_get_orientation(move, &orientation[0], &orientation[1], &orientation[2], &orientation[3]);
+        printf("heading: %3f %3f %3f %3f\n", orientation[0], orientation[1], orientation[2], orientation[3]);
+        float orientation_conjugate[4];
+        psmove_quaternion_conjugate(orientation, orientation_conjugate);
+
+        // getting gravity to controller
+        float controller_gravity[3];
+        psmove_vector_rotate(global_gravity, orientation_conjugate, controller_gravity);
+        float total;
+        total = sqrt(controller_gravity[0]*controller_gravity[0] + controller_gravity[1]*controller_gravity[1] + controller_gravity[2]*controller_gravity[2]);
+        printf("rotated gravity %05f %05f %05f (%05f)\n", controller_gravity[0], controller_gravity[1], controller_gravity[2], total);
+
+
+        int frame;
+        for (frame = 0; frame<2; frame++) {
+          // getting an acceleration measurement from the controller
+          psmove_get_accelerometer_frame(move, frame, &measured_ax, &measured_ay, &measured_az);
+          total = sqrt(measured_ax*measured_ax + measured_ay*measured_ay + measured_az*measured_az);
+          printf("raw acceleration %05f %05f %05f (%05f)\n", measured_ax, measured_ay, measured_az, total);
+          float measured_a[3] = {measured_ax, measured_ay, measured_az};
+
+          // getting the pure acceleration without gravity from that controller
+          float acceleration_only[3];
+          psmove_vector_minus_vector(measured_a, controller_gravity, acceleration_only);
+          total = sqrt(acceleration_only[0]*acceleration_only[0] + acceleration_only[1]*acceleration_only[1] + acceleration_only[2]*acceleration_only[2]);
+          printf("CA %05f %05f %05f (%05f)\n", acceleration_only[0], acceleration_only[1], acceleration_only[2], total);
+          move->cax = acceleration_only[0];
+          move->cay = acceleration_only[1];
+          move->caz = acceleration_only[2];
+
+          // pure acceleration converted to global coordinates
+          float global_acceleration_only[3];
+          psmove_vector_rotate(acceleration_only, orientation, global_acceleration_only);
+          total = sqrt(global_acceleration_only[0]*global_acceleration_only[0] + global_acceleration_only[1]*global_acceleration_only[1] + global_acceleration_only[2]*global_acceleration_only[2]);
+          printf("GA %05f %05f %05f (%05f)\n", global_acceleration_only[0], global_acceleration_only[1], global_acceleration_only[2], total);
+          move->gax = global_acceleration_only[0];
+          move->gay = global_acceleration_only[1];
+          move->gaz = global_acceleration_only[2];
+
+          // first integration for speed
+          float g = 9.80665f; // [m/s²]
+          float dt = 0.5f * diff / 1000; // [s] for each frame
+          move->vx += move->gax * g * dt;
+          move->vy += move->gay * g * dt;
+          move->vz += move->gaz * g * dt;
+          printf("velocity: %3f %3f %3f\n", move->vx, move->vy, move->vz);
+
+          // second integration for position [m]
+          move->px += move->vx * dt;
+          move->py += move->vy * dt;
+          move->pz += move->vz * dt;
+          printf("position: %3f %3f %3f\n", move->px, move->py, move->pz);
+        }
+
+        // sleeping for fixed framerate
+        Sleep(intended_tick_length - (ticks % intended_tick_length));
+    }
+
+    return 0;
+}
+
+
+
+void
+psmove_enable_background_dead_reckoning(PSMove *move)
+{
+    printf("Trying to create a thread");
+
+    move->dead_reckoning_running = 1;
+    move->dead_reckoning_thread = CreateThread(
+        NULL, // LPSec
+        0, // SizeT
+        _psmove_dead_reckoning_thread_proc, // routine
+        (void*)move, // parameter
+        0, // creation flags
+        NULL // out opt
+    );
+}
+
+void
+psmove_disable_background_dead_reckoning(PSMove *move)
+{
+    if (move->dead_reckoning_thread) {
+        printf("Trying to stop and join the thread");
+        move->dead_reckoning_running = 0;
+        WaitForSingleObject(&(move->dead_reckoning_thread), INFINITE);
+        move->dead_reckoning_thread = NULL;
+        printf("joined.");
+    }
+    Sleep(200);
+}
+
+void
+psmove_get_dead_reckoning_position(PSMove *move, float *out_x, float *out_y, float *out_z)
+{
+    *out_x = move->px;
+    *out_y = move->py;
+    *out_z = move->pz;
+}
+
+void
+psmove_get_dead_reckoning_velocity(PSMove *move, float *out_x, float *out_y, float *out_z)
+{
+    *out_x = move->vx;
+    *out_y = move->vy;
+    *out_z = move->vz;
+}
+
+void
+psmove_get_dead_reckoning_acceleration(PSMove *move, float *out_cx, float *out_cy, float *out_cz, float *out_gx, float *out_gy, float *out_gz)
+{
+    *out_cx = move->cax;
+    *out_cy = move->cay;
+    *out_cz = move->caz;
+    *out_gx = move->gax;
+    *out_gy = move->gay;
+    *out_gz = move->gaz;
+}
+
 void
 psmove_reset_orientation(PSMove *move)
 {
@@ -2084,6 +2255,8 @@ psmove_disconnect(PSMove *move)
         pthread_cond_destroy(&(move->led_write_new_data));
     }
 #endif
+
+    psmove_disable_background_dead_reckoning(move);
 
     switch (move->type) {
         case PSMove_HIDAPI:
@@ -2350,4 +2523,3 @@ _psmove_wait_for_button(PSMove *move, int button)
         psmove_update_leds(move);
     }
 }
-

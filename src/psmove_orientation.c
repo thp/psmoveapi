@@ -142,18 +142,18 @@ psmove_orientation_update(PSMoveOrientation *orientation)
 
                 /* Accelerometer */
                 orientation->output[0],
+                orientation->output[1],
                 orientation->output[2],
-                -orientation->output[1],
 
                 /* Gyroscope */
                 orientation->output[3],
+                orientation->output[4],
                 orientation->output[5],
-                -orientation->output[4],
 
                 /* Magnetometer */
                 orientation->output[6],
-                orientation->output[8],
-                orientation->output[7]
+                orientation->output[7],
+                orientation->output[8]
         );
 #else
         psmove_DEBUG("Built without Madgwick AHRS - no orientation tracking");
