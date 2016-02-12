@@ -4,6 +4,8 @@ include(${ROOT_DIR}/cmake/common.cmake)
 
 # Language bindings
 
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bindings/swig)
+
 option(PSMOVE_BUILD_JAVA_BINDINGS "Build the Java bindings" OFF)
 option(PSMOVE_BUILD_CSHARP_BINDINGS "Build the C# bindings" OFF)
 option(PSMOVE_BUILD_PROCESSING_BINDINGS "Build the Processing bindings" OFF)
