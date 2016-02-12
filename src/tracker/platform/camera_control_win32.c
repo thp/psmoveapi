@@ -130,7 +130,7 @@ void camera_control_restore_system_settings(CameraControl* cc, const char* file)
 #endif
 }
 
-void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast, int brightness) 
+void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast, int brightness, enum PSMove_Bool h_flip)
 {
 #if defined(CAMERA_CONTROL_USE_CL_DRIVER)
 	if (autoE >= 0)
@@ -149,6 +149,8 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 		CLEyeSetCameraParameter(cc->camera, CLEYE_WHITEBALANCE_GREEN, round((255 * wbGreen) / 0xFFFF));
 	if (wbBlue >= 0)
 		CLEyeSetCameraParameter(cc->camera, CLEYE_WHITEBALANCE_BLUE, round((255 * wbBlue) / 0xFFFF));
+
+	CLEyeSetCameraParameter(cc->camera, CLEYE_HFLIP, h_flip)
 #elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
 	//autoE... setAutoExposure not defined in ps3eye.h
 	ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN,				autoG > 0);
@@ -156,7 +158,8 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE,				(int)round((511 * exposure) / 0xFFFF));
 	ps3eye_set_parameter(cc->eye, PS3EYE_GAIN,					(int)round((79 * gain) / 0xFFFF));
 	ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS,			(int)round((255 * brightness) / 0xFFFF));
-
+	ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, 				h_flip);
+	
 	//ps3eye_set_parameter(cc->eye, PS3EYE_REDBALANCE, round((255 * wbRed) / 0xFFFF));
 	//wbGreen... setGreenBalance not defined in ps3eye.h
 	//ps3eye_set_parameter(cc->eye, PS3EYE_BLUEBALANCE, round((255 * wbBlue) / 0xFFFF));

@@ -43,6 +43,12 @@ typedef struct _CameraControl CameraControl;
 CameraControl *
 camera_control_new(int cameraID);
 
+CameraControl *
+camera_control_new_with_settings(int cameraID, int width, int height, int framerate);
+
+int
+camera_control_count_connected();
+
 void
 camera_control_read_calibration(CameraControl* cc,
         char* intrinsicsFile, char* distortionFile);
@@ -89,7 +95,7 @@ camera_control_set_parameters(CameraControl* cc,
         int autoE, int autoG, int autoWB,
         int exposure, int gain,
         int wbRed, int wbGreen, int wbBlue,
-        int contrast, int brightness);
+		int contrast, int brightness, enum PSMove_Bool h_flip);
 
 void
 camera_control_backup_system_settings(CameraControl* cc,
