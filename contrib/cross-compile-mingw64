@@ -9,92 +9,87 @@
 #
 
 export PSMOVEAPI_CHECKOUT=$(pwd)
-export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/contrib/toolchain-mingw64.cmake
-export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/opencv
-export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
-
-# For parallel builds
-MAKE_ARGS=-j4
-
-# Take version from Debian package info
-PSMOVEAPI_VERSION=$(dpkg-parsechangelog | grep ^Version: | cut -d' ' -f2-)
-
-# Git revision identifier
-PSMOVEAPI_REVISION=$(git describe --long --tags)
-
-# By default, we build a snapshot. If "release" is the first argument, we
-# build a release (do not add date and Git revision information to version)
-if [ "$1" != "release" ]; then
-    PSMOVEAPI_VERSION=${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
-fi
-
 
 if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     echo "ERROR: You have to run this script in the PS Move API source root."
     exit 1
 fi
 
-# Build OpenCV
-if [ ! -d $OPENCV_INSTALL_DIR ]; then
-    if [ ! -d opencv ]; then
-        git clone git://github.com/Itseez/opencv.git
+OPENCV_VERSION=3.1.0
+PSMOVEAPI_VERSION=$(git describe --tags)
+
+MAKE_ARGS="$@"
+
+for PSMOVEAPI_PLATFORM in i686-w64-mingw32 x86_64-w64-mingw32; do
+    export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/cmake/${PSMOVEAPI_PLATFORM}.toolchain
+    export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
+    export OPENCV_BUILD_DIR=$OPENCV_CHECKOUT_DIR/build-${PSMOVEAPI_PLATFORM}
+
+    # Build OpenCV
+    if [ ! -d $OPENCV_BUILD_DIR ]; then
+        if [ ! -d external/opencv ]; then
+            if [ ! -f ${OPENCV_VERSION}.zip ]; then
+                curl -O https://github.com/Itseez/opencv/archive/${OPENCV_VERSION}.zip
+            fi
+            unzip ${OPENCV_VERSION}.zip
+            mv opencv-${OPENCV_VERSION} external/opencv
+        fi
+        cd external/opencv
+        rm -rf ${OPENCV_BUILD_DIR}
+        mkdir -p ${OPENCV_BUILD_DIR}
+        cd ${OPENCV_BUILD_DIR}
+        cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
+              -DBUILD_SHARED_LIBS=OFF \
+              -DBUILD_PERF_TESTS=OFF \
+              -DBUILD_TESTS=OFF \
+              -DBUILD_DOCS=OFF \
+              -DBUILD_opencv_flann=OFF \
+              -DBUILD_opencv_features2d=OFF \
+              -DBUILD_opencv_objdetect=OFF \
+              -DBUILD_opencv_photo=OFF \
+              -DBUILD_opencv_ts=OFF \
+              -DBUILD_opencv_ml=OFF \
+              -DBUILD_opencv_video=OFF \
+              -DWITH_OPENEXR=OFF \
+              -DWITH_FFMPEG=OFF \
+              -DWITH_JASPER=OFF \
+              -DWITH_TIFF=OFF \
+              ${OPENCV_CHECKOUT_DIR}
+        make ${MAKE_ARGS}
     fi
-    cd opencv
+
+    cd $PSMOVEAPI_CHECKOUT
+
+    # Build PS Move API
     rm -rf build
-    mkdir -p build
+    mkdir build
     cd build
-    cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
-          -DBUILD_SHARED_LIBS=OFF \
-          -DBUILD_PERF_TESTS=OFF \
-          -DBUILD_TESTS=OFF \
-          -DBUILD_DOCS=OFF \
-          -DBUILD_opencv_flann=OFF \
-          -DBUILD_opencv_features2d=OFF \
-          -DBUILD_opencv_objdetect=OFF \
-          -DBUILD_opencv_photo=OFF \
-          -DBUILD_opencv_ts=OFF \
-          -DBUILD_opencv_ml=OFF \
-          -DBUILD_opencv_video=OFF \
-          -DWITH_OPENEXR=OFF \
-          -DWITH_FFMPEG=OFF \
-          -DWITH_JASPER=OFF \
-          -DWITH_TIFF=OFF \
-          ..
+    cmake -DPSMOVE_BUILD_TRACKER=ON \
+          -DOpenCV_DIR=${OPENCV_BUILD_DIR} \
+          -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
+          ${PSMOVEAPI_CHECKOUT}
     make ${MAKE_ARGS}
-    make install
-fi
 
-cd $PSMOVEAPI_CHECKOUT
+    cd $PSMOVEAPI_CHECKOUT
 
-# Build PS Move API
-rm -rf build
-mkdir build
-cd build
-cmake -DPSMOVE_USE_LOCAL_OPENCV=ON \
-      -DPSMOVE_BUILD_TRACKER=OFF \
-      -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN ..
-make ${MAKE_ARGS}
+    # Packaging
+    rm -rf dist
+    mkdir -p dist/bin
+    cp README COPYING dist/
+    cp -r docs dist/
+    cp build/*.exe dist/bin/
+    cp build/libpsmoveapi.dll dist/bin/
+    cp build/libpsmoveapi_tracker.dll dist/bin/
+    mkdir -p dist/include
+    cp include/*.h dist/include/
 
-cd $PSMOVEAPI_CHECKOUT
+    cd $PSMOVEAPI_CHECKOUT
 
-# Packaging
-rm -rf dist
-mkdir -p dist/bin
-echo $PSMOVEAPI_REVISION >dist/revision.txt
-cp README COPYING README.win32 README.moved dist/
-cp build/*.exe dist/bin/
-cp build/libpsmoveapi.dll dist/bin/
-cp build/libpsmoveapi_tracker.dll dist/bin/
-mkdir -p dist/include
-cp include/*.h dist/include/
-
-cd $PSMOVEAPI_CHECKOUT
-
-# Zip it up
-PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_win32
-rm -rf $PACKAGE_NAME
-mv dist $PACKAGE_NAME
-mkdir -p upload
-zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
-rm -rf $PACKAGE_NAME
-
+    # Zip it up
+    PACKAGE_NAME=psmoveapi-${PSMOVEAPI_VERSION}-${PSMOVEAPI_PLATFORM}
+    rm -rf $PACKAGE_NAME
+    mv dist $PACKAGE_NAME
+    mkdir -p upload
+    zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
+    rm -rf $PACKAGE_NAME
+done

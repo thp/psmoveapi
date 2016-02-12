@@ -1,0 +1,23 @@
+To cross-compile for Windows on Ubuntu:
+
+    sudo apt-get install nsis mingw-w64-i686-dev mingw-w64-x86-64-dev
+
+To build manually without the tracker:
+
+    mkdir build-win32
+    cd build-win32
+    cmake \
+        -DCMAKE_TOOLCHAIN_FILE=../cmake/i686-w64-mingw32.toolchain \
+        -DPSMOVE_BUILD_TRACKER=OFF \
+        ..
+
+    mkdir build-win64
+    cd build-win64
+    cmake \
+        -DCMAKE_TOOLCHAIN_FILE=../cmake/x86_64-w64-mingw32.toolchain \
+        -DPSMOVE_BUILD_TRACKER=OFF \
+        ..
+
+Or use:
+
+    sh -x contrib/cross-compile-mingw64

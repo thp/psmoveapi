@@ -132,8 +132,10 @@ moved_client_create(const char *hostname)
 
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);
-	result = inet_pton(AF_INET, hostname, &(client->moved_addr.sin_addr));
-    assert(result != 0);
+
+
+    client->moved_addr.sin_addr.s_addr = inet_addr(hostname);
+    assert(client->moved_addr.sin_addr.s_addr != INADDR_NONE);
 
     return client;
 }
