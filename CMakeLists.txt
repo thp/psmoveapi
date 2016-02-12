@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-project(PSMoveAPI LANGUAGES C CXX)
+project(PSMoveAPI)
 
 # Step into the subdirectories
 include("src/CMakeLists.txt")
