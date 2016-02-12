@@ -117,7 +117,7 @@ void
 camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB,
         int exposure, int gain,
         int wbRed, int wbGreen, int wbBlue,
-        int contrast, int brightness)
+        int contrast, int brightness, enum PSMove_Bool h_flip)
 {
     int fd = open_v4l2_device(cc->cameraID);
 
@@ -132,6 +132,7 @@ camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoW
         v4l2_set_control(fd, V4L2_CID_CONTRAST, contrast);
         v4l2_set_control(fd, V4L2_CID_BRIGHTNESS, brightness);
 #endif
+        v4l2_set_control(fd, V4L2_CID_HFLIP, h_flip);
         v4l2_close(fd);
     }
 }
