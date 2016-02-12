@@ -228,7 +228,7 @@ TcpEventSender::TcpEventSender(const char *target, int port)
 
     memset(m_state, 0, sizeof(m_state));
 
-    SOCKET sock;
+    int sock;
     struct sockaddr_in addr;
 
     sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);

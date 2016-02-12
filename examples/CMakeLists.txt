@@ -5,9 +5,9 @@ include(${ROOT_DIR}/cmake/common.cmake)
 # Additional applications that can be used to test the library
 
 option(PSMOVE_BUILD_EXAMPLES "Build the C examples" ON)
-option(PSMOVE_BUILD_OPENGL_EXAMPLES "Build the OpenGL examples" OFF)
+option(PSMOVE_BUILD_OPENGL_EXAMPLES "Build the OpenGL examples" ON)
 option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
-option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" OFF)
+option(PSMOVE_BUILD_TUIO_SERVER "Build the TUIO server" ON)
 
 include_directories(${MSVC_INCLUDES})
 # C examples

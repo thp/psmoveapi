@@ -163,7 +163,7 @@ void
 moved_server_handle_request(moved_server *server)
 {
     struct sockaddr_in si_other;
-    unsigned int si_len = sizeof(si_other);
+    socklen_t si_len = sizeof(si_other);
 
     psmove_dev *dev = NULL;
     int send_response = 0;
@@ -172,8 +172,8 @@ moved_server_handle_request(moved_server *server)
     unsigned char request[MOVED_SIZE_REQUEST] = {0};
     unsigned char response[MOVED_SIZE_READ_RESPONSE] = {0};
 
-    assert(recvfrom(server->socket, (char*)request, sizeof(request),
-                0, (struct sockaddr *)&si_other, (int*)&si_len) != -1);
+    assert(recvfrom(server->socket, request, sizeof(request),
+                0, (struct sockaddr *)&si_other, &si_len) != -1);
 
     request_id = request[0];
     device_id = request[1];

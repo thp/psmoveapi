@@ -35,7 +35,8 @@ Building the PS Move API
        libudev-dev libbluetooth-dev libv4l-dev libopencv-dev \
        openjdk-7-jdk ant liblwjgl-java \
        python-dev \
-       mono-mcs
+       mono-mcs \
+       libsdl2-dev freeglut3-dev
 
 5. Build the API (standalone - if you want to make changes)
 

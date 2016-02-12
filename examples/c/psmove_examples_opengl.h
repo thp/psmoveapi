@@ -27,7 +27,7 @@
 	#pragma warning (disable:4305)  /* VC++ 5.0 version of above warning. */
 #endif
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 
 static GLUquadricObj *g_quadObj;
 
