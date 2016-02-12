@@ -4,7 +4,7 @@ include(${ROOT_DIR}/cmake/common.cmake)
 
 # Language bindings
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bindings/swig)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bindings)
 
 option(PSMOVE_BUILD_JAVA_BINDINGS "Build the Java bindings" OFF)
 option(PSMOVE_BUILD_CSHARP_BINDINGS "Build the C# bindings" OFF)
@@ -16,14 +16,12 @@ find_package(SWIG QUIET)
 if(SWIG_FOUND)
     include(${SWIG_USE_FILE})
 
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/swig)
-
     if(PSMOVE_BUILD_PYTHON_BINDINGS)
         find_package(PythonLibs QUIET)
         if(PYTHONLIBS_FOUND)
             unset(CMAKE_SWIG_FLAGS)
             include_directories(${PYTHON_INCLUDE_PATH})
-            swig_add_module(psmove python ${CMAKE_CURRENT_LIST_DIR}/swig/psmove.i)
+            swig_add_module(psmove python ${CMAKE_CURRENT_LIST_DIR}/psmove.i)
             swig_link_libraries(psmove psmoveapi_static ${PYTHON_LIBRARIES})
             if (PSMOVE_BUILD_TRACKER)
                 swig_link_libraries(psmove psmoveapi_tracker_static)
@@ -46,7 +44,7 @@ if(SWIG_FOUND)
 
             set(CMAKE_SWIG_FLAGS -package ${PSMOVEAPI_JAVA_PKG})
             include_directories(${JNI_INCLUDE_DIRS})
-            swig_add_module(psmove_java java ${CMAKE_CURRENT_LIST_DIR}/swig/psmove.i)
+            swig_add_module(psmove_java java ${CMAKE_CURRENT_LIST_DIR}/psmove.i)
             swig_link_libraries(psmove_java psmoveapi_static ${JNI_LIBRARIES})
             if (PSMOVE_BUILD_TRACKER)
                 swig_link_libraries(psmove_java psmoveapi_tracker_static)
@@ -129,7 +127,7 @@ if(SWIG_FOUND)
         set(PSMOVEAPI_CSHARP_NS "io.thp.psmove")
 
         set(CMAKE_SWIG_FLAGS -namespace ${PSMOVEAPI_CSHARP_NS})
-        swig_add_module(psmoveapi_csharp csharp ${CMAKE_CURRENT_LIST_DIR}/swig/psmove.i)
+        swig_add_module(psmoveapi_csharp csharp ${CMAKE_CURRENT_LIST_DIR}/psmove.i)
         swig_link_libraries(psmoveapi_csharp psmoveapi_static)
         if (PSMOVE_BUILD_TRACKER)
             swig_link_libraries(psmoveapi_csharp psmoveapi_tracker_static)

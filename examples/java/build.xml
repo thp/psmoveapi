@@ -19,11 +19,15 @@
     </target>
 
     <target name="run-tracker" depends="compile">
-        <java classname="Tracker" classpathref="classpath"/>
+        <java classname="Tracker" classpathref="classpath" fork="true">
+            <sysproperty key="java.library.path" path="../../build/:/usr/lib/jni/"/>
+        </java>
     </target>
 
     <target name="run-sensorreading" depends="compile">
-        <java classname="SensorReading" classpathref="classpath"/>
+        <java classname="SensorReading" classpathref="classpath" fork="true">
+            <sysproperty key="java.library.path" path="../../build/:/usr/lib/jni/"/>
+        </java>
     </target>
 
     <target name="run-fusion" depends="compile">
