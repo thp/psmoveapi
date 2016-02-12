@@ -205,7 +205,7 @@ camera_control_count_connected()
 	return ps3eye_count_connected();
 #else
 	// Don't know how to get number of connected cameras through opencv...
-	return 0;
+	return -1;
 #endif
 }
 

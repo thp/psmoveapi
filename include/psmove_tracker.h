@@ -220,7 +220,7 @@ ADDCALL psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSet
 /**
 * \brief Get the number of available cameras
 *
-* \return Number of cameras available
+* \return Number of cameras available, or -1 if unknown
 **/
 ADDAPI int
 ADDCALL psmove_tracker_count_connected();
