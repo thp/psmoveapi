@@ -4,6 +4,7 @@
 #ifdef __APPLE__
     #include <OpenGL/gl.h>
     #include <GLUT/glut.h>
+	#include <SDL.h>
 #elif _WIN32
 	#ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
@@ -13,9 +14,11 @@
 
 	#include <GL/gl.h>
 	#include <GL/glu.h>
+	#include <SDL.h>
 #else
     #include <GL/gl.h>
     #include <GL/glut.h>
+	#include <SDL2/SDL.h>
 #endif
 
 #ifdef _WIN32
@@ -26,8 +29,6 @@
 	#pragma warning (disable:4244)	/* Disable bogus conversion warnings. */
 	#pragma warning (disable:4305)  /* VC++ 5.0 version of above warning. */
 #endif
-
-#include <SDL2/SDL.h>
 
 static GLUquadricObj *g_quadObj;
 
