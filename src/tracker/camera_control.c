@@ -238,11 +238,8 @@ camera_control_read_calibration(CameraControl* cc,
                     camera_control_query_frame(cc, NULL, NULL));
         }
 
-        int width, height;
-        get_metrics(&width, &height);
-
-        cc->mapx = cvCreateImage(cvSize(width, height), IPL_DEPTH_32F, 1);
-        cc->mapy = cvCreateImage(cvSize(width, height), IPL_DEPTH_32F, 1);
+		cc->mapx = cvCreateImage(cvSize(cc->width, cc->height), IPL_DEPTH_32F, 1);
+		cc->mapy = cvCreateImage(cvSize(cc->width, cc->height), IPL_DEPTH_32F, 1);
 
         cvInitUndistortMap(intrinsic, distortion, cc->mapx, cc->mapy);
 
