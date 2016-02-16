@@ -63,7 +63,6 @@ int pair(const char *custom_addr)
 
         if (psmove_connection_type(move) != Conn_Bluetooth) {
             printf("PSMove #%d connected via USB.\n", i+1);
-            int result = 0;
 
             if (custom_addr != NULL) {
                 result = psmove_pair_custom(move, custom_addr);
