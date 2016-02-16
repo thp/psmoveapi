@@ -2,8 +2,8 @@ Requirements
 ------------
 
 - Visual Studio (either of these versions):
-	- Community 2013 (http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx)
-	- Community 2015 (https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
+    - Community 2013 (http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx)
+    - Community 2015 (https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
 - CMake
   http://www.cmake.org/cmake/resources/software.html
 - OpenCV
@@ -12,80 +12,106 @@ Requirements
   http://code.google.com/p/msysgit/
 
 1. Clone the PS Move API repository
-    `git clone --recursive https://github.com/cboulay/psmoveapi.git`
-    `cd psmoveapi`
+
+   `git clone --recursive https://github.com/thp/psmoveapi.git`
+   `cd psmoveapi`
     
 2. Build libusb-1.0
-    Open the correct solution:
-		- VS2013: psmoveapi\external\libusb-1.0\msvc\libusb_2013.sln
-		- VS2015: psmoveapi\external\libusb-1.0\msvc\libusb_2015.sln
-    Change the target to Release x64 (at the top of the Visual Studio window).
-    Right-click on libusb-1.0 (static) and select Properties.
-    In the properties Window, make sure the Platform is set to Active or All Platforms.
-    In the properties Window, navigate to Configuration Properties > C/C++ > Code Generation
-    Change "Runtime Library" to Multi-threaded DLL (/MD)
-    Click OK
-    Right-click on libusb-1.0 (static) and Build.
+
+   Open the correct solution:
+       - VS2013: psmoveapi\external\libusb-1.0\msvc\libusb_2013.sln
+       - VS2015: psmoveapi\external\libusb-1.0\msvc\libusb_2015.sln
+   Change the target to Release x64 (at the top of the Visual Studio window).
+   Right-click on libusb-1.0 (static) and select Properties.
+   In the properties Window, make sure the Platform is set to Active or All Platforms.
+   In the properties Window, navigate to Configuration Properties > C/C++ > Code Generation
+   Change "Runtime Library" to Multi-threaded DLL (/MD)
+   Click OK
+   Right-click on libusb-1.0 (static) and Build.
     
 3. OpenCV (Optional -- only needed to build the positional tracker)
-    Still in `psmoveapi/external`
-    git clone --depth 1 --branch 2.4.11 git://github.com/Itseez/opencv.git
-    `cd opencv`
-    `mkdir build`
-    `cd build`
-	VS2013: `cmake .. -G "Visual Studio 12 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
-	VS2015: `cmake .. -G "Visual Studio 14 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
 
-    Open the solution in psmoveapi\external\opencv\build\OpenCV.sln
-    Change the target to Release (at the top of the Visual Studio window).
-    Build the solution (Press F7).
-	
-4. SDL2 (Optional -- only needed to build the opengl examples)
-	Still in `psmoveapi/external`
-	`cd SDL2`
-    `mkdir build`
-    `cd build`
-	VS2013: `cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF`
-	VS2015: `cmake .. -G "Visual Studio 14 Win64" -DDIRECTX=OFF`
+   In `psmoveapi/external`
+   git clone --depth 1 --branch 2.4.11 git://github.com/Itseez/opencv.git
+   `cd opencv`
+   `mkdir build`
+   `cd build`
+   VS2013: `cmake .. -G "Visual Studio 12 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
+   VS2015: `cmake .. -G "Visual Studio 14 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
+   
+   Open the solution in psmoveapi\external\opencv\build\OpenCV.sln
+   Change the target to Release (at the top of the Visual Studio window).
+   Build the solution (Press F7).
     
-    Open the solution (psmoveapi\external\SDL2\build\SDL2.sln)
-	
-	For VS2015 only:
-		- Go to the Properties of the SDL2 project
-		- Go to Linker -> Input
-		- Select the Debug configuration		
-			- Add ucrtd.lib and vcruntimed.lib to the Additional Dependencies field
-		- Select the Release configuration
-			- Add vcruntime.lib to the Additional Dependences field
-	
-    Build the solution in Debug and Release (Press F7).	
+4. SDL2 (Optional -- only needed to build the opengl examples)
+
+   Still in `psmoveapi/external`
+   `cd SDL2`
+   `mkdir build`
+   `cd build`
+   VS2013: `cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF`
+   VS2015: `cmake .. -G "Visual Studio 14 Win64" -DDIRECTX=OFF`
+   
+   Open the solution (psmoveapi\external\SDL2\build\SDL2.sln)
+   
+   For VS2015 only:
+       - Go to the Properties of the SDL2 project
+       - Go to Linker -> Input
+       - Select the Debug configuration        
+           - Add ucrtd.lib and vcruntimed.lib to the Additional Dependencies field
+       - Select the Release configuration
+           - Add vcruntime.lib to the Additional Dependences field
+   
+   Build the solution in Debug and Release (Press F7). 
 
 5. Build psmoveapi
-
-    Still in the command prompt:
-
-    `cd ..\..\..`
-    `mkdir build `
-    `cd build`
-    VS2013: `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON`
-	VS2015: `cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON`
-
-    Open the `build\PSMoveAPI.sln` solution file.
-    Change the target to Release or Debug as desired.
-    Build the solution (Press F7).
+   
+   Still in the command prompt:
+   
+   `cd ..\..\..`
+   `mkdir build `
+   `cd build`
+   VS2013: `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/` 
+   VS2015: `cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/`
+   
+   Open the `build\PSMoveAPI.sln` solution file.
+   Change the target to Release or Debug as desired.
+   Build the solution (Press F7).
     
-6. Read [this Wiki](https://github.com/cboulay/psmove-ue4/wiki) for windows-specific information on pairing and connecting the psmove controller and on using the PS3Eye camera.
-
+6. Pairing the controller to the host
+    
+   Using the controllers' Bluetooth capabilities requires you to pair the
+   controller to the host computer first. That is what the psmovepair utility
+   is for. It is automatically built as part of the PS Move API.
+   
+   Make sure that Bluetooth is enabled on your computer, then connect a Move
+   controller via USB and run
+   
+   psmovepair.exe
+   
+   to store the host's Bluetooth device address in the Move and register the
+   controller. Follow the instructions on the screen until the Move's red
+   status LED eventually remains lit to indicate a working Bluetooth
+   connection. Since this step involves modifications of the registry on
+   Windows 8 and later, you will probably have to run psmovepair.exe as
+   Administrator.
+   
+   Note that the pairing step is necessary only once per controller. From that
+   point on you can enable the Bluetooth connection simply by pressing the
+   PS button. Only if you switched to a different Bluetooth adapter or deleted
+   the controller from the list of Bluetooth devices you need to run
+   psmovepair again for that controller.
+ 
 7. Start one of the desired test applications
 
-    If you previously chose to build the example applications (which is the
-    default), you can then run
-
-    example.exe
-
-    for a basic example.
+   If you previously chose to build the example applications (which is the
+   default), you can then run
+   
+   example.exe
+   
+   for a basic example.
 
 For questions, please read the archives of the PS Move Mailing List. If you
 cannot find an answer to your question in the archives, send an e-mail:
 
-   https://groups.google.com/forum/#!aboutgroup/psmove
+https://groups.google.com/forum/#!aboutgroup/psmove

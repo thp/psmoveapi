@@ -8,11 +8,6 @@ set(PSMOVEAPI_TRACKER_PLATFORM_SRC)
 # Build the OpenCV-based camera tracking module? (see psmove_tracker.h)
 option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 
-# The MSVC instructions use a locally built OpenCV. So, we need to add it to the path here when building using MSVC.
-IF(MSVC)
-	set(OpenCV_DIR ${ROOT_DIR}/external/opencv/build CACHE PATH "Path to local OpenCV source tree" FORCE)
-ENDIF()
-
 # Enable tweaks (e.g. registry settings on Windows, ...) for PS Eye
 option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
 
