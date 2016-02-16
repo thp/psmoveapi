@@ -39,7 +39,11 @@ extern "C" {
 #include <stdio.h>
 #include <wchar.h>
 #include <time.h>
-#include <pthread.h> /* for timespec on Windows */
+
+// VS2015 added timespec, no need to include pthread
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+	#include <pthread.h> /* for timespec on Windows */
+#endif
 
     /**
      * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c

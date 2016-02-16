@@ -1,8 +1,9 @@
 Requirements
 ------------
 
-- Visual Studio Community 2013
-  http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
+- Visual Studio (either of these versions):
+	- Community 2013 (http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx)
+	- Community 2015 (https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
 - CMake
   http://www.cmake.org/cmake/resources/software.html
 - OpenCV
@@ -15,7 +16,9 @@ Requirements
     `cd psmoveapi`
     
 2. Build libusb-1.0
-    Open psmoveapi\external\libusb-1.0\msvc\libusb_2013.sln
+    Open the correct solution:
+		- VS2013: psmoveapi\external\libusb-1.0\msvc\libusb_2013.sln
+		- VS2015: psmoveapi\external\libusb-1.0\msvc\libusb_2015.sln
     Change the target to Release x64 (at the top of the Visual Studio window).
     Right-click on libusb-1.0 (static) and select Properties.
     In the properties Window, make sure the Platform is set to Active or All Platforms.
@@ -30,7 +33,8 @@ Requirements
     `cd opencv`
     `mkdir build`
     `cd build`
-    `cmake .. -G "Visual Studio 12 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
+	VS2013: `cmake .. -G "Visual Studio 12 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
+	VS2015: `cmake .. -G "Visual Studio 14 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
 
     Open the solution in psmoveapi\external\opencv\build\OpenCV.sln
     Change the target to Release (at the top of the Visual Studio window).
@@ -41,19 +45,30 @@ Requirements
 	`cd SDL2`
     `mkdir build`
     `cd build`
-    `cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF`
+	VS2013: `cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF`
+	VS2015: `cmake .. -G "Visual Studio 14 Win64" -DDIRECTX=OFF`
     
     Open the solution (psmoveapi\external\SDL2\build\SDL2.sln)
+	
+	For VS2015 only:
+		- Go to the Properties of the SDL2 project
+		- Go to Linker -> Input
+		- Select the Debug configuration		
+			- Add ucrtd.lib and vcruntimed.lib to the Additional Dependencies field
+		- Select the Release configuration
+			- Add vcruntime.lib to the Additional Dependences field
+	
     Build the solution in Debug and Release (Press F7).	
 
 5. Build psmoveapi
 
-    Still in the VS2013 command prompt:
+    Still in the command prompt:
 
     `cd ..\..\..`
     `mkdir build `
     `cd build`
-    `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON`
+    VS2013: `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON`
+	VS2015: `cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON`
 
     Open the `build\PSMoveAPI.sln` solution file.
     Change the target to Release or Debug as desired.

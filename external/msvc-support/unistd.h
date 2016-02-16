@@ -49,7 +49,10 @@ typedef unsigned __int16  uint16_t;
 typedef unsigned __int32  uint32_t;
 typedef unsigned __int64  uint64_t;
 
-#define snprintf _snprintf  // Not exactly the same, but close enough.
+// VS2015 added snprintf
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+	#define snprintf _snprintf  // Not exactly the same, but close enough.
+#endif
 
 int usleep(__int64 useconds);
 
