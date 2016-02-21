@@ -1,10 +1,11 @@
 #ifndef PSMOVE_EXAMPLES_OPENGL_H
 #define PSMOVE_EXAMPLES_OPENGL_H
 
+#include <SDL.h>
+
 #ifdef __APPLE__
     #include <OpenGL/gl.h>
     #include <GLUT/glut.h>
-	#include <SDL.h>
 #elif _WIN32
 	#ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
@@ -14,11 +15,9 @@
 
 	#include <GL/gl.h>
 	#include <GL/glu.h>
-	#include <SDL.h>
 #else
     #include <GL/gl.h>
     #include <GL/glut.h>
-	#include <SDL2/SDL.h>
 #endif
 
 #ifdef _WIN32
