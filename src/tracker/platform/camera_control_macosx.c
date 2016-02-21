@@ -41,7 +41,7 @@ camera_control_set_parameters(CameraControl* cc,
         int autoE, int autoG, int autoWB,
         int exposure, int gain,
         int wbRed, int wbGreen, int wbBlue,
-        int contrast, int brightness)
+        int contrast, int brightness, enum PSMove_Bool h_flip)
 {
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
     //autoE... setAutoExposure not defined in ps3eye.h
@@ -58,9 +58,9 @@ camera_control_set_parameters(CameraControl* cc,
     /** The following parameters could be set but are not passed into this function:
      * ps3eye_set_parameter(cc->eye, PS3EYE_SHARPNESS, ??);
      * ps3eye_set_parameter(cc->eye, PS3EYE_HUE, ??);
-     * ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, ??);
      * ps3eye_set_parameter(cc->eye, PS3EYE_VFLIP, ??);
      **/
+    ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, h_flip);
 #else
     macosx_camera_set_exposure_lock(1);
 #endif
