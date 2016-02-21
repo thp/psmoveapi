@@ -36,6 +36,7 @@ Building the PS Move API
        openjdk-7-jdk ant liblwjgl-java \
        python-dev \
        mono-mcs \
+       swig3.0 \
        libsdl2-dev freeglut3-dev
 
 5. Build the API (standalone - if you want to make changes)
