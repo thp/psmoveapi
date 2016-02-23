@@ -31,6 +31,7 @@
 #include "psmove_private.h"
 #include "psmove_calibration.h"
 #include "psmove_orientation.h"
+#include "math/psmove_vector.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -231,36 +232,6 @@ typedef struct {
     unsigned char extdata[PSMOVE_EXT_DATA_BUF_SIZE]; /* external device data (EXT port) */
 } PSMove_Data_Input;
 
-typedef struct {
-    int x;
-    int y;
-    int z;
-} PSMove_3AxisVector;
-
-int
-psmove_3axisvector_min(PSMove_3AxisVector vector)
-{
-    if (vector.x < vector.y && vector.x < vector.z) {
-        return vector.x;
-    } else if (vector.y < vector.z) {
-        return vector.y;
-    } else {
-        return vector.z;
-    }
-}
-
-int
-psmove_3axisvector_max(PSMove_3AxisVector vector)
-{
-    if (vector.x > vector.y && vector.x > vector.z) {
-        return vector.x;
-    } else if (vector.y > vector.z) {
-        return vector.y;
-    } else {
-        return vector.z;
-    }
-}
-
 struct _PSMove {
     /* Device type (hidapi-based or moved-based */
     enum PSMove_Device_Type type;
@@ -307,6 +278,9 @@ struct _PSMove {
     /* Is orientation tracking currently enabled? */
     enum PSMove_Bool orientation_enabled;
 
+	/* The direction of the magnetic field found during calibration */
+	PSMove_3AxisVector magnetometer_calibration_direction;
+
     /* Minimum and maximum magnetometer values observed this session */
     PSMove_3AxisVector magnetometer_min;
     PSMove_3AxisVector magnetometer_max;
@@ -326,7 +300,7 @@ struct _PSMove {
 #endif
 };
 
-void
+enum PSMove_Bool
 psmove_load_magnetometer_calibration(PSMove *move);
 
 /* End private definitions */
@@ -1824,50 +1798,60 @@ psmove_get_gyroscope_frame(PSMove *move, enum PSMove_Frame frame,
 }
 
 void
+psmove_get_magnetometer_3axisvector(PSMove *move, PSMove_3AxisVector *out_m)
+{
+    psmove_return_if_fail(move != NULL);
+
+	PSMove_3AxisVector m;
+	int mx, my, mz;
+    psmove_get_magnetometer(move, &mx, &my, &mz);
+	m= psmove_3axisvector_xyz((float)mx, (float)my, (float)mz);
+
+    /* Update minimum and max components */
+	move->magnetometer_min = psmove_3axisvector_min_vector(&move->magnetometer_min, &m);
+	move->magnetometer_max = psmove_3axisvector_max_vector(&move->magnetometer_max, &m);
+
+    /* Map [min..max] to [-1..+1] */
+	if (out_m)
+	{
+		PSMove_3AxisVector range = psmove_3axisvector_subtract(&move->magnetometer_max, &move->magnetometer_min);
+		PSMove_3AxisVector offset = psmove_3axisvector_subtract(&m, &move->magnetometer_min);
+		
+		// 2*(raw-move->magnetometer_min)/(move->magnetometer_max - move->magnetometer_min) - <1,1,1>
+		*out_m = psmove_3axisvector_divide_by_vector_with_default(&offset, &range, k_psmove_vector_zero);
+		*out_m = psmove_3axisvector_scale(out_m, 2.f);
+		*out_m = psmove_3axisvector_subtract(out_m, k_psmove_vector_one);
+
+		// The magnetometer y-axis is flipped compared to the accelerometer and gyro.
+		// Flip it back around to get it into the same space.
+		out_m->y = -out_m->y;	
+	}
+}
+
+void
 psmove_get_magnetometer_vector(PSMove *move,
         float *mx, float *my, float *mz)
 {
-    PSMove_3AxisVector raw;
+	psmove_return_if_fail(move != NULL);
 
-    psmove_return_if_fail(move != NULL);
+	PSMove_3AxisVector m;
 
-    psmove_get_magnetometer(move, &raw.x, &raw.y, &raw.z);
+	psmove_get_magnetometer_3axisvector(move, &m);
+	
+	if (mx)
+	{
+		*mx= m.x;
+	}
+	
+	if (my)
+	{
+		*my= m.y;
+	}
 
-    /* Update minimum values */
-    if (raw.x < move->magnetometer_min.x) {
-        move->magnetometer_min.x = raw.x;
-    }
-    if (raw.y < move->magnetometer_min.y) {
-        move->magnetometer_min.y = raw.y;
-    }
-    if (raw.z < move->magnetometer_min.z) {
-        move->magnetometer_min.z = raw.z;
-    }
-
-    /* Update maximum values */
-    if (raw.x > move->magnetometer_max.x) {
-        move->magnetometer_max.x = raw.x;
-    }
-    if (raw.y > move->magnetometer_max.y) {
-        move->magnetometer_max.y = raw.y;
-    }
-    if (raw.z > move->magnetometer_max.z) {
-        move->magnetometer_max.z = raw.z;
-    }
-
-    /* Map [min..max] to [-1..+1] */
-    if (mx) {
-        *mx = -1.f + 2.f * (float)(raw.x - move->magnetometer_min.x) /
-            (float)(move->magnetometer_max.x - move->magnetometer_min.x);
-    }
-    if (my) {
-        *my = -1.f + 2.f * (float)(raw.y - move->magnetometer_min.y) /
-            (float)(move->magnetometer_max.y - move->magnetometer_min.y);
-    }
-    if (mz) {
-        *mz = -1.f + 2.f * (float)(raw.z - move->magnetometer_min.z) /
-            (float)(move->magnetometer_max.z - move->magnetometer_min.z);
-    }
+	if (mz)
+	{
+		*mz= m.z;
+	}
 }
 
 enum PSMove_Bool
@@ -1921,13 +1905,8 @@ psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled)
 enum PSMove_Bool
 psmove_has_orientation(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, 0);
-    psmove_return_val_if_fail(move->orientation != NULL, 0);
-
-#if !defined(PSMOVE_WITH_MADGWICK_AHRS)
-    psmove_WARNING("Built without Madgwick AHRS - no orientation support");
-    return PSMove_False;
-#endif
+    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(move->orientation != NULL, PSMove_False);
 
     return move->orientation_enabled;
 }
@@ -1956,12 +1935,13 @@ psmove_reset_magnetometer_calibration(PSMove *move)
 {
     psmove_return_if_fail(move != NULL);
 
+	move->magnetometer_calibration_direction = *k_psmove_vector_zero;
     move->magnetometer_min.x =
         move->magnetometer_min.y =
-        move->magnetometer_min.z = INT_MAX;
+        move->magnetometer_min.z = FLT_MAX;
     move->magnetometer_max.x =
         move->magnetometer_max.y =
-        move->magnetometer_max.z = INT_MIN;
+        move->magnetometer_max.z = FLT_MIN;
 }
 
 char *
@@ -1996,75 +1976,213 @@ psmove_save_magnetometer_calibration(PSMove *move)
     free(filename);
     psmove_return_if_fail(fp != NULL);
 
+	fprintf(fp, "mx,my,mz\n");
+	fprintf(fp, "%f,%f,%f\n", 
+		move->magnetometer_calibration_direction.x,
+		move->magnetometer_calibration_direction.y, 
+		move->magnetometer_calibration_direction.z);
     fprintf(fp, "axis,min,max\n");
-    fprintf(fp, "x,%d,%d\n", move->magnetometer_min.x, move->magnetometer_max.x);
-    fprintf(fp, "y,%d,%d\n", move->magnetometer_min.y, move->magnetometer_max.y);
-    fprintf(fp, "z,%d,%d\n", move->magnetometer_min.z, move->magnetometer_max.z);
+    fprintf(fp, "x,%f,%f\n", move->magnetometer_min.x, move->magnetometer_max.x);
+    fprintf(fp, "y,%f,%f\n", move->magnetometer_min.y, move->magnetometer_max.y);
+    fprintf(fp, "z,%f,%f\n", move->magnetometer_min.z, move->magnetometer_max.z);
 
     fclose(fp);
 }
 
-void
+enum PSMove_Bool
 psmove_load_magnetometer_calibration(PSMove *move)
 {
-    psmove_return_if_fail(move != NULL);
+	enum PSMove_Bool success = PSMove_False;
+    
+	if (move == NULL) {
+        return success;
+    }
+
     psmove_reset_magnetometer_calibration(move);
     char *filename = psmove_get_magnetometer_calibration_filename(move);
     FILE *fp = fopen(filename, "r");
     free(filename);
 
-    if (fp == NULL) {
+	if (fp == NULL) {
         char *addr = psmove_get_serial(move);
         psmove_WARNING("Magnetometer in %s not yet calibrated.\n", addr);
         free(addr);
-        return;
+		goto finish;
     }
 
-    char s_axis[5], s_min[4], s_max[4];
+	char s_mx[3], s_my[3], s_mz[3];
+	float mx, my, mz;
+	char s_axis[5], s_min[4], s_max[4];
     char c_axis;
-    int i_min, i_max;
+    float f_min, f_max;
     int result;
 
-    result = fscanf(fp, "%4s,%3s,%3s\n", s_axis, s_min, s_max);
+	result = fscanf(fp, "%2s,%2s,%2s\n", s_mx, s_my, s_mz);
+	psmove_goto_if_fail(result == 3, finish);
+	psmove_goto_if_fail(strcmp(s_mx, "mx") == 0, finish);
+	psmove_goto_if_fail(strcmp(s_my, "my") == 0, finish);
+	psmove_goto_if_fail(strcmp(s_mz, "mz") == 0, finish);
+
+	result = fscanf(fp, "%f,%f,%f\n", &mx, &my, &mz);
+	psmove_goto_if_fail(result == 3, finish);
+	move->magnetometer_calibration_direction = psmove_3axisvector_xyz(mx, my, mz);
+
+	result = fscanf(fp, "%4s,%3s,%3s\n", s_axis, s_min, s_max);
     psmove_goto_if_fail(result == 3, finish);
     psmove_goto_if_fail(strcmp(s_axis, "axis") == 0, finish);
     psmove_goto_if_fail(strcmp(s_min, "min") == 0, finish);
     psmove_goto_if_fail(strcmp(s_max, "max") == 0, finish);
 
-    result = fscanf(fp, "%c,%d,%d\n", &c_axis, &i_min, &i_max);
+    result = fscanf(fp, "%c,%f,%f\n", &c_axis, &f_min, &f_max);
     psmove_goto_if_fail(result == 3, finish);
     psmove_goto_if_fail(c_axis == 'x', finish);
-    move->magnetometer_min.x = i_min;
-    move->magnetometer_max.x = i_max;
+    move->magnetometer_min.x = f_min;
+    move->magnetometer_max.x = f_max;
 
-    result = fscanf(fp, "%c,%d,%d\n", &c_axis, &i_min, &i_max);
+    result = fscanf(fp, "%c,%f,%f\n", &c_axis, &f_min, &f_max);
     psmove_goto_if_fail(result == 3, finish);
     psmove_goto_if_fail(c_axis == 'y', finish);
-    move->magnetometer_min.y = i_min;
-    move->magnetometer_max.y = i_max;
+    move->magnetometer_min.y = f_min;
+    move->magnetometer_max.y = f_max;
 
-    result = fscanf(fp, "%c,%d,%d\n", &c_axis, &i_min, &i_max);
+    result = fscanf(fp, "%c,%f,%f\n", &c_axis, &f_min, &f_max);
     psmove_goto_if_fail(result == 3, finish);
     psmove_goto_if_fail(c_axis == 'z', finish);
-    move->magnetometer_min.z = i_min;
-    move->magnetometer_max.z = i_max;
+    move->magnetometer_min.z = f_min;
+    move->magnetometer_max.z = f_max;
+
+	success = PSMove_True;
 
 finish:
-    fclose(fp);
+	if (success == PSMove_False)
+	{
+		psmove_reset_magnetometer_calibration(move);
+	}
+    
+    if (fp != NULL)
+    {
+        fclose(fp);
+    }
+
+	return success;
 }
 
-int
+float
 psmove_get_magnetometer_calibration_range(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    PSMove_3AxisVector diff = {
-        move->magnetometer_max.x - move->magnetometer_min.x,
-        move->magnetometer_max.y - move->magnetometer_min.y,
-        move->magnetometer_max.z - move->magnetometer_min.z,
-    };
+	PSMove_3AxisVector diff = psmove_3axisvector_subtract(&move->magnetometer_max, &move->magnetometer_min);
 
-    return psmove_3axisvector_min(diff);
+    return psmove_3axisvector_min_component(&diff);
+}
+
+void
+psmove_set_orientation_fusion_type(PSMove *move, enum PSMoveOrientation_Fusion_Type fusion_type)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(move->orientation != NULL);
+
+	psmove_orientation_set_fusion_type(move->orientation, fusion_type);
+}
+
+void
+psmove_set_calibration_transform(PSMove *move, const PSMove_3AxisTransform *transform)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(move->orientation != NULL);
+
+	psmove_orientation_set_calibration_transform(move->orientation, transform);
+}
+
+void
+psmove_get_identity_gravity_calibration_direction(PSMove *move, PSMove_3AxisVector *out_a)
+{
+	*out_a= psmove_3axisvector_xyz(0.f, 1.f, 0.f);
+}
+
+void
+psmove_get_transformed_gravity_calibration_direction(PSMove *move, PSMove_3AxisVector *out_a)
+{
+	if (move != NULL)
+	{
+		*out_a= psmove_orientation_get_gravity_calibration_direction(move->orientation);
+	}
+	else
+	{
+		psmove_get_identity_gravity_calibration_direction(move, out_a);
+	}
+}
+
+void
+psmove_get_identity_magnetometer_calibration_direction(PSMove *move, PSMove_3AxisVector *out_m)
+{
+	psmove_return_if_fail(move != NULL);
+	psmove_return_if_fail(out_m != NULL);
+
+	*out_m= move->magnetometer_calibration_direction;
+}
+
+void
+psmove_get_transformed_magnetometer_calibration_direction(PSMove *move, PSMove_3AxisVector *out_m)
+{
+	if (move != NULL)
+	{
+		*out_m= psmove_orientation_get_magnetometer_calibration_direction(move->orientation);
+	}
+	else
+	{
+		psmove_get_identity_magnetometer_calibration_direction(move, out_m);
+	}
+}
+
+void
+psmove_set_magnetometer_calibration_direction(PSMove *move, PSMove_3AxisVector *m)
+{
+	psmove_return_if_fail(move != NULL);
+
+	move->magnetometer_calibration_direction = *m;
+}
+
+void
+psmove_set_sensor_data_transform(PSMove *move, const PSMove_3AxisTransform *transform)
+{
+    psmove_return_if_fail(move != NULL);
+    psmove_return_if_fail(move->orientation != NULL);
+
+	psmove_orientation_set_sensor_data_transform(move->orientation, transform);
+}
+
+void
+psmove_get_transformed_magnetometer_direction(PSMove *move, PSMove_3AxisVector *out_m)
+{
+	psmove_return_if_fail(move != NULL);
+
+	*out_m= psmove_orientation_get_magnetometer_normalized_vector(move->orientation);
+}
+
+void
+psmove_get_transformed_accelerometer_frame_3axisvector(PSMove *move, enum PSMove_Frame frame, PSMove_3AxisVector *out_a)
+{
+	psmove_return_if_fail(move != NULL);
+
+	*out_a= psmove_orientation_get_accelerometer_vector(move->orientation, frame);
+}
+
+void
+psmove_get_transformed_accelerometer_frame_direction(PSMove *move, enum PSMove_Frame frame, PSMove_3AxisVector *out_a)
+{
+	psmove_return_if_fail(move != NULL);
+
+	*out_a= psmove_orientation_get_accelerometer_normalized_vector(move->orientation, frame);
+}
+
+void
+psmove_get_transformed_gyroscope_frame_3axisvector(PSMove *move, enum PSMove_Frame frame, PSMove_3AxisVector *out_w)
+{
+	psmove_return_if_fail(move != NULL);
+
+	*out_w= psmove_orientation_get_gyroscope_vector(move->orientation, frame);
 }
 
 void

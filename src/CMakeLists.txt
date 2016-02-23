@@ -15,29 +15,13 @@ set(PSMOVEAPI_VERSION_SONAME "${PSMOVEAPI_VERSION_MAJOR}")
 set(PSMOVEAPI_REQUIRED_LIBS)   # Container for library dependencies
 set(PSMOVEAPI_PLATFORM_SRC)    # Container for source files
 set(PSMOVEAPI_INSTALL_TARGETS) # Container for build targets to be installed
-
+set(PSMOVEAPI_MATH_SRC)        # Container for math related source files
 
 include_directories(${ROOT_DIR}/external/hidapi/hidapi)
 # Put any other libraries that you might need in here
 link_directories(${ROOT_DIR}/external/libs)
 
 set(INFO_LICENSE "BSD")
-
-# Madgwick's orientation algorithm (GPL-licensed)
-option(PSMOVE_USE_MADGWICK_AHRS "Use AHRS algorithm (GPL license)" OFF)
-
-# AHRS algorithm
-IF(PSMOVE_USE_MADGWICK_AHRS)
-    add_definitions(-DPSMOVE_WITH_MADGWICK_AHRS)
-    set(INFO_LICENSE "GPL")
-    set(INFO_AHRS_ALGORITHM "Madgwick AHRS")
-    set(PSMOVEAPI_ALGORITHM_SRC
-        ${ROOT_DIR}/external/MadgwickAHRS/MadgwickAHRS.c
-    )
-ELSE()
-    set(INFO_AHRS_ALGORITHM "None")
-    set(PSMOVEAPI_ALGORITHM_SRC)
-ENDIF()
 
 # Make a debug build with helpful output for debugging / maintenance
 option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
@@ -154,7 +138,8 @@ source_group("Source Files\\daemon" FILES ${PSMOVEAPI_MOVED_SRC})
 
 file(GLOB PSMOVEAPI_SRC
     "${CMAKE_CURRENT_LIST_DIR}/*.c"
-	"${CMAKE_CURRENT_LIST_DIR}/*.h"
+    "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/*.h"
 )
 
 list(APPEND PSMOVEAPI_SRC 
@@ -165,6 +150,19 @@ file(GLOB PSMOVEAPI_HEADERS
     "${ROOT_DIR}/include/*.h"
 )
 
+file (GLOB PSMOVEAPI_MATH_HEADERS
+    "${CMAKE_CURRENT_LIST_DIR}/math/*.h"
+    "${CMAKE_CURRENT_LIST_DIR}/math/*.hpp"    
+)
+
+file (GLOB PSMOVEAPI_MATH_SRC
+    "${CMAKE_CURRENT_LIST_DIR}/math/*.c"
+    "${CMAKE_CURRENT_LIST_DIR}/math/*.cpp"
+)
+
+source_group("Header Files\\math" FILES ${PSMOVEAPI_MATH_HEADERS})
+source_group("Source Files\\math" FILES ${PSMOVEAPI_MATH_SRC})
+
 # Source files that are needed for both the shared and static library
 
 set(PSMOVEAPI_LIBRARY_SRC)
@@ -174,6 +172,8 @@ list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_MOVED_SRC})
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_MOVED_HEADER})
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_PLATFORM_SRC})
 list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_ALGORITHM_SRC})
+list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_MATH_HEADERS})
+list(APPEND PSMOVEAPI_LIBRARY_SRC ${PSMOVEAPI_MATH_SRC})
 
 # Shared library
 

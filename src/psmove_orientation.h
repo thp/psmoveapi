@@ -35,29 +35,57 @@
 extern "C" {
 #endif
 
+//-- includes -----
 #include "psmove.h"
+#include "math/psmove_vector.h"
 
-
+//-- pre-declarations -----
 struct _PSMoveOrientation;
 typedef struct _PSMoveOrientation PSMoveOrientation;
 
-
+//-- interface -----
 ADDAPI PSMoveOrientation *
 ADDCALL psmove_orientation_new(PSMove *move);
 
 ADDAPI void
-ADDCALL psmove_orientation_update(PSMoveOrientation *orientation);
+ADDCALL psmove_orientation_free(PSMoveOrientation *orientation_state);
 
 ADDAPI void
-ADDCALL psmove_orientation_get_quaternion(PSMoveOrientation *orientation,
+ADDCALL psmove_orientation_set_fusion_type(PSMoveOrientation *orientation_state, enum PSMoveOrientation_Fusion_Type fusion_type);
+
+ADDAPI void
+ADDCALL psmove_orientation_set_calibration_transform(PSMoveOrientation *orientation_state, const PSMove_3AxisTransform *transform);
+
+ADDAPI PSMove_3AxisVector
+ADDCALL psmove_orientation_get_gravity_calibration_direction(PSMoveOrientation *orientation_state);
+
+ADDAPI PSMove_3AxisVector
+ADDCALL psmove_orientation_get_magnetometer_calibration_direction(PSMoveOrientation *orientation_state);
+
+ADDAPI void
+ADDCALL psmove_orientation_set_sensor_data_transform(PSMoveOrientation *orientation_state, const PSMove_3AxisTransform *transform);
+
+ADDAPI PSMove_3AxisVector
+ADDCALL psmove_orientation_get_accelerometer_vector(PSMoveOrientation *orientation_state, enum PSMove_Frame frame);
+
+ADDAPI PSMove_3AxisVector
+ADDCALL psmove_orientation_get_accelerometer_normalized_vector(PSMoveOrientation *orientation_state, enum PSMove_Frame frame);
+
+ADDAPI PSMove_3AxisVector
+ADDCALL psmove_orientation_get_gyroscope_vector(PSMoveOrientation *orientation_state, enum PSMove_Frame frame);
+
+ADDAPI PSMove_3AxisVector
+ADDCALL psmove_orientation_get_magnetometer_normalized_vector(PSMoveOrientation *orientation_state);
+
+ADDAPI void
+ADDCALL psmove_orientation_update(PSMoveOrientation *orientation_state);
+
+ADDAPI void
+ADDCALL psmove_orientation_get_quaternion(PSMoveOrientation *orientation_state,
         float *q0, float *q1, float *q2, float *q3);
 
 ADDAPI void
-ADDCALL psmove_orientation_reset_quaternion(PSMoveOrientation *orientation);
-
-ADDAPI void
-ADDCALL psmove_orientation_free(PSMoveOrientation *orientation);
-
+ADDCALL psmove_orientation_reset_quaternion(PSMoveOrientation *orientation_state);
 
 #ifdef __cplusplus
 }
