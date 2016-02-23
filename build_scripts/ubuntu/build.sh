@@ -14,21 +14,12 @@ cd $PSMOVE_API_ROOT_DIR
 
 echo "Installing prerequisites..."
 sudo apt-get update -qq
-
-if [ -z $TRAVIS ]
-then
-	sudo apt-get install -q  build-essential cmake 			\
-			     	 libudev-dev libbluetooth-dev 		\
-			     	 libv4l-dev libopencv-dev 		\
-			     	 openjdk-7-jdk ant liblwjgl-java 	\
-			     	 python-dev mono-mcs 			\
-			     	 swig3.0 libsdl2-dev freeglut3-dev
-else
-	sudo apt-get install -q  build-essential cmake 			\
-			     	 libudev-dev libbluetooth-dev 		\
-			     	 libv4l-dev libopencv-dev 		\
-			     	 libsdl2-dev freeglut3-dev
-fi
+sudo apt-get install -q -y  build-essential cmake 		\
+		     	    libudev-dev libbluetooth-dev 	\
+		     	    libv4l-dev libopencv-dev 		\
+		     	    openjdk-7-jdk ant liblwjgl-java 	\
+		     	    python-dev mono-mcs 		\
+		     	    swig3.0 libsdl2-dev freeglut3-dev
 
 # Configure
 echo "Configuring build..."

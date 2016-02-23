@@ -8,22 +8,10 @@ language:
 before_install:
   - sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots
   - sudo add-apt-repository --yes ppa:kubuntu-ppa/backports
+  - sudo add-apt-repository --yes ppa:hlprasu/swig-trusty-backports
 
 install:
   - git submodule update --init --recursive
-
-addons:
-  apt:
-    sources:
-    - kubuntu-backports
-    packages:
-    - build-essential
-    - cmake
-    - libudev-dev
-    - libbluetooth-dev
-    - libv4l-dev
-    - libopencv-dev
-    - freeglut3-dev
 
 script:
   - ./build_scripts/ubuntu/build.sh
