@@ -6,6 +6,8 @@ install:
 
 addons:
   apt:
+    sources:
+    - kubuntu-backports
     packages:
     - build-essential
     - cmake
