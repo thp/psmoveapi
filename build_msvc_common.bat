@@ -28,31 +28,31 @@ IF "%MSVC_VERSION%"=="2015" (
 REM Apply libusb patch so that it links against the dynamic (instead of static) CRT
 echo Applying libusb dynamic CRT patch...
 cd %LIBUSB_DIR%
-call git apply %PSMOVE_API_ROOT_DIR%\contrib\msvc\libusb_dynamic_crt.patch
+git apply %PSMOVE_API_ROOT_DIR%\contrib\msvc\libusb_dynamic_crt.patch
 IF %ERRORLEVEL% NEQ 0 ( echo Failed to apply libusb patch. Perhaps it was already applied or libub was not checked out. )
 
 REM Build libusb
 echo.
 echo Building libusb
 IF "%MSVC_VERSION%"=="2015" (
-	call msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
+	msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
 	IF !ERRORLEVEL! NEQ 0 ( 
 		echo Failed to build libusb
 		goto Error
 	)
-	call msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
+	msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
 	IF !ERRORLEVEL! NEQ 0 ( 
 		echo Failed to build libusb
 		goto Error
 	)
 ) ELSE (
 	IF "%MSVC_VERSION%" == "2013" (
-		call msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
+		msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
 		IF !ERRORLEVEL! NEQ 0 (
 			echo Failed to build libusb
 			goto Error
 		)
-		call msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
+		msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
 		IF !ERRORLEVEL! NEQ 0 (
 			echo Failed to build libusb
 			goto Error
@@ -66,7 +66,7 @@ IF "%MSVC_VERSION%"=="2015" (
 	echo.
 	echo Applying SDL2 VS2015 runtime patch
 	cd %SDL2_DIR%
-	call git apply %PSMOVE_API_ROOT_DIR%\contrib\msvc\sdl_vs2015_libs.patch
+	git apply %PSMOVE_API_ROOT_DIR%\contrib\msvc\sdl_vs2015_libs.patch
 	IF !ERRORLEVEL! NEQ 0 ( echo Failed to apply SDL2 patch. Perhaps it was already applied or SDL2 was not checked out. )
 )
 
@@ -202,16 +202,16 @@ goto Done
 cd %PSMOVE_API_ROOT_DIR%
 echo.
 echo There was an error running one of the build commands. Please see the output for more information.
-goto :eof
+exit /B 1
 
 :InvalidArgs
 cd %PSMOVE_API_ROOT_DIR%
 echo.
 echo Invalid arguments specified. Specify either 2013 or 2015 as argument.
-goto :eof
+exit /B 1
 
 :Done
 cd %PSMOVE_API_ROOT_DIR%
 echo.
 echo Build completed successfully
-goto :eof
+exit /B 0
