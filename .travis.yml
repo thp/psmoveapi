@@ -1,5 +1,22 @@
+language:
+  - cpp
+
 sudo:
   - required
+
+install:
+  - git submodule update --init --recursive
+
+addons:
+  apt:
+    packages:
+    - build-essential
+    - cmake
+    - libudev-dev
+    - libbluetooth-dev
+    - libv4l-dev
+    - libopencv-dev
+    - freeglut3-dev
 
 script:
   - ./build_scripts/ubuntu/build.sh
