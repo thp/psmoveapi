@@ -1,5 +1,13 @@
+sudo: required
+
+dist: trusty
+
 language:
   - cpp
+
+before_install:
+  - sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots
+  - sudo add-apt-repository --yes ppa:kubuntu-ppa/backports
 
 install:
   - git submodule update --init --recursive
