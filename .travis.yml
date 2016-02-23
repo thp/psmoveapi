@@ -1,9 +1,6 @@
 language:
   - cpp
 
-sudo:
-  - required
-
 install:
   - git submodule update --init --recursive
 
