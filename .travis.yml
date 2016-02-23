@@ -1,0 +1,5 @@
+sudo:
+  - required
+
+script:
+  - ./build_scripts/ubuntu/build.sh
