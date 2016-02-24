@@ -106,27 +106,30 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
       -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
 make ${MAKE_ARGS}
-mkdir tmp
-DESTDIR=$(pwd)/tmp make install
 
-cd $PSMOVEAPI_CHECKOUT
+if [[ "$TRAVIS" != "true" ]]
+then
+	mkdir tmp
+	DESTDIR=$(pwd)/tmp make install
 
-# Packaging
-rm -rf dist
-mkdir -p dist
-echo $PSMOVEAPI_REVISION >dist/revision.txt
-cp -rpv build/tmp/* dist/
+	cd $PSMOVEAPI_CHECKOUT
 
-cd $PSMOVEAPI_CHECKOUT
+	# Packaging
+	rm -rf dist
+	mkdir -p dist
+	echo $PSMOVEAPI_REVISION >dist/revision.txt
+	cp -rpv build/tmp/* dist/
 
-# Tar it up
-PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_osx108
-rm -rf $PACKAGE_NAME
-mv dist $PACKAGE_NAME
-mkdir -p upload
-tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
-rm -rf $PACKAGE_NAME
+	cd $PSMOVEAPI_CHECKOUT
 
-# Copy the Processing bindings
-cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
+	# Tar it up
+	PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_osx108
+	rm -rf $PACKAGE_NAME
+	mv dist $PACKAGE_NAME
+	mkdir -p upload
+	tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
+	rm -rf $PACKAGE_NAME
 
+	# Copy the Processing bindings
+	cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
+fi
