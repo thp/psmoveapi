@@ -9,8 +9,8 @@ The commands are entered into the Terminal (use Ctrl+Alt+T to open one).
 We assume that you are going to clone the repository into ~/src/psmoveapi/
 
 
-Building the PS Move API
-------------------------
+Preparing to build the PS Move API
+--------------------------------------
 
 1. Upgrade your system to the latest packages
 
@@ -28,7 +28,18 @@ Building the PS Move API
    git clone --recursive git://github.com/thp/psmoveapi.git
    cd psmoveapi
 
-4. Install the build-dependencies
+   
+Automatic build
+----------------------
+A build script is provided which will take care of the build for you. Invoke it as follows.
+
+	$ bash -e -x ./contrib/build_scripts/debian/build-ubuntu
+   
+   
+Manual build
+----------------------   
+   
+1. Install the build-dependencies
 
    sudo apt-get install \
        build-essential cmake \
@@ -39,7 +50,7 @@ Building the PS Move API
        swig3.0 \
        libsdl2-dev freeglut3-dev
 
-5. Build the API (standalone - if you want to make changes)
+2. Build the API (standalone - if you want to make changes)
 
    cd ~/src/psmoveapi/
    mkdir build

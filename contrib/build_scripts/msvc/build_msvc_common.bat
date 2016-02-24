@@ -35,24 +35,24 @@ REM Build libusb
 echo.
 echo Building libusb
 IF "%MSVC_VERSION%"=="2015" (
-	msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
+	msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal /maxcpucount
 	IF !ERRORLEVEL! NEQ 0 ( 
 		echo Failed to build libusb
 		goto Error
 	)
-	msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
+	msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2015.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal /maxcpucount
 	IF !ERRORLEVEL! NEQ 0 ( 
 		echo Failed to build libusb
 		goto Error
 	)
 ) ELSE (
 	IF "%MSVC_VERSION%" == "2013" (
-		msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
+		msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal /maxcpucount
 		IF !ERRORLEVEL! NEQ 0 (
 			echo Failed to build libusb
 			goto Error
 		)
-		msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
+		msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_2013.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal /maxcpucount
 		IF !ERRORLEVEL! NEQ 0 (
 			echo Failed to build libusb
 			goto Error
@@ -98,12 +98,12 @@ IF "%MSVC_VERSION%"=="2015" (
 REM Build SDL2
 echo.
 echo Building SDL2
-msbuild.exe %SDL2_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
+msbuild.exe %SDL2_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build SDL2
 	goto Error
 )
-msbuild.exe %SDL2_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
+msbuild.exe %SDL2_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build SDL2
 	goto Error
@@ -146,12 +146,12 @@ IF "%MSVC_VERSION%"=="2015" (
 REM Build OpenCV
 echo.
 echo Building OpenCV
-msbuild.exe %OPENCV_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
+msbuild.exe %OPENCV_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build OpenCV
 	goto Error
 )
-msbuild.exe %OPENCV_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
+msbuild.exe %OPENCV_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build OpenCV
 	goto Error
@@ -185,12 +185,12 @@ IF "%MSVC_VERSION%"=="2015" (
 REM Build PSMoveAPI
 echo.
 echo Building PSMoveAPI
-msbuild.exe %PSMOVE_API_ROOT_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal
+msbuild.exe %PSMOVE_API_ROOT_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build PSMoveAPI
 	goto Error
 )
-msbuild.exe %PSMOVE_API_ROOT_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal
+msbuild.exe %PSMOVE_API_ROOT_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build PSMoveAPI
 	goto Error

@@ -28,7 +28,7 @@ You will need...
 	$ cd psmoveapi
 
 4. Build all
-	$ bash -e -x contrib/build-osx-snapshot
+	$ bash -e -x contrib/build_scripts/osx/build-osx-snapshot
 
 Note: If the script returns some errors, you might need to build the API step-by-step. See “Building the API manually” for the alternative procedure.
 
