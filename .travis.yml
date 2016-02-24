@@ -6,25 +6,22 @@ matrix:
     - os: linux
       dist: trusty
       sudo: required
-      env: TYPE=debian
-    - os: linux
-      dist: trusty
-      sudo: required
-      env: TYPE=cross
     - os: osx
-      env: TYPE=osx	
 
 before_install:
-  - if [[ "$TYPE" == "debian" ]]; then sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots; fi
-  - if [[ "$TYPE" == "debian" ]]; then sudo add-apt-repository --yes ppa:kubuntu-ppa/backports; fi
-  - if [[ "$TYPE" == "debian" ]]; then sudo add-apt-repository --yes ppa:hlprasu/swig-trusty-backports; fi
-  - if [[ "$TYPE" == "debian" ]]; then sudo apt-get update -qq; fi
-  - if [[ "$TYPE" == "cross"  ]]; then sudo apt-get install -q -y mingw-w64 g++-mingw-w64; fi
-
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:kubuntu-ppa/backports; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:hlprasu/swig-trusty-backports; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -q -y mingw-w64 g++-mingw-w64; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake; fi
+  
+  
 install:
   - git submodule update --init --recursive
 
 script:
-  - if [[ "$TYPE" == "debian" ]]; then ./contrib/build_scripts/debian/build.sh; fi
-  - if [[ "$TYPE" == "cross" ]]; then ./contrib/build_scripts/debian/cross-compile-mingw64; fi
-  - if [[ "$TYPE" == "osx" ]]; then ./contrib/build_scripts/osx/build-osx-snapshot; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -x ./contrib/build_scripts/debian/build.sh; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -x ./contrib/build_scripts/debian/cross-compile-mingw64; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then bash -e -x ./contrib/build_scripts/osx/build-osx-snapshot; fi
