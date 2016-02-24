@@ -1,12 +1,14 @@
-language:
-  - cpp
-  
 matrix:
   include:
     - os: linux
       dist: trusty
       sudo: required
+      language: cpp
+      compiler: clang
     - os: osx
+      osx_image: xcode7.2
+      language: cpp
+      compiler: clang
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots; fi
