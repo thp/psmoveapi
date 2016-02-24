@@ -5,7 +5,7 @@
 #
 
 # Determine PSMoveAPI root dir
-if [[ -v $TRAVIS_BUILD_DIR ]]
+if [[ "$TRAVIS" == "true" ]]
 then
 	export PSMOVEAPI_CHECKOUT=$TRAVIS_BUILD_DIR
 else
