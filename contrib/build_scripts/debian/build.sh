@@ -7,7 +7,7 @@ if [[ -v $TRAVIS_BUILD_DIR ]]
 then
 	PSMOVE_API_ROOT_DIR=$TRAVIS_BUILD_DIR
 else
-	PSMOVE_API_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../"
+	PSMOVE_API_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../../"
 fi
 
 cd $PSMOVE_API_ROOT_DIR

@@ -1,17 +1,30 @@
-sudo: required
-
-dist: trusty
-
 language:
   - cpp
+  
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      env: TYPE=debian
+    - os: linux
+      dist: trusty
+      sudo: required
+      env: TYPE=cross
+    - os: osx
+      env: TYPE=osx	
 
 before_install:
-  - sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots
-  - sudo add-apt-repository --yes ppa:kubuntu-ppa/backports
-  - sudo add-apt-repository --yes ppa:hlprasu/swig-trusty-backports
+  - if [[ "$TYPE" == "debian" ]]; then sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots; fi
+  - if [[ "$TYPE" == "debian" ]]; then sudo add-apt-repository --yes ppa:kubuntu-ppa/backports; fi
+  - if [[ "$TYPE" == "debian" ]]; then sudo add-apt-repository --yes ppa:hlprasu/swig-trusty-backports; fi
+  - if [[ "$TYPE" == "debian" ]]; then sudo apt-get update -qq; fi
+  - if [[ "$TYPE" == "cross"  ]]; then sudo apt-get install -q -y mingw-w64 g++-mingw-w64; fi
 
 install:
   - git submodule update --init --recursive
 
 script:
-  - ./build_scripts/ubuntu/build.sh
+  - if [[ "$TYPE" == "debian" ]]; then ./contrib/build_scripts/debian/build.sh; fi
+  - if [[ "$TYPE" == "cross" ]]; then ./contrib/build_scripts/debian/cross-compile-mingw64; fi
+  - if [[ "$TYPE" == "osx" ]]; then ./contrib/build_scripts/osx/build-osx-snapshot; fi

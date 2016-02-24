@@ -4,7 +4,14 @@
 # Thomas Perl <m@thp.io>; 2012-09-28
 #
 
-export PSMOVEAPI_CHECKOUT=$(pwd)
+# Determine PSMoveAPI root dir
+if [[ -v $TRAVIS_BUILD_DIR ]]
+then
+	export PSMOVEAPI_CHECKOUT=$TRAVIS_BUILD_DIR
+else
+	export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../../"
+fi
+
 export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
 export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 

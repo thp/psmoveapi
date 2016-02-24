@@ -6,6 +6,6 @@ install:
 
 build_script:
 - cmd: >-
-    call build_scripts/msvc/build_msvc_2015.bat
+    call contrib/build_scripts/msvc/build_msvc_2015.bat
 
 test: off

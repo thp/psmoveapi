@@ -8,7 +8,13 @@
 #     sudo apt-get install mingw-w64 g++-mingw-w64
 #
 
-export PSMOVEAPI_CHECKOUT=$(pwd)
+# Determine PSMoveAPI root dir
+if [[ -v $TRAVIS_BUILD_DIR ]]
+then
+	export PSMOVEAPI_CHECKOUT=$TRAVIS_BUILD_DIR
+else
+	export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../../"
+fi
 
 if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     echo "ERROR: You have to run this script in the PS Move API source root."
