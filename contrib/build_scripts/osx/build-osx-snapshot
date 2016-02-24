@@ -107,6 +107,7 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
 make ${MAKE_ARGS}
 
+# Don't package on CI server; it doesn't have enough memory/disk space and fails
 if [[ "$TRAVIS" != "true" ]]
 then
 	mkdir tmp
@@ -132,4 +133,7 @@ then
 
 	# Copy the Processing bindings
 	cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
+else
+	echo "Skipping package step because this is a CI server"
 fi
+

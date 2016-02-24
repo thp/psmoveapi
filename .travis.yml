@@ -24,5 +24,5 @@ install:
 
 script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash -e -x ./contrib/build_scripts/debian/build-ubuntu; fi
-  - #if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash -e -x ./contrib/build_scripts/debian/cross-compile-mingw64; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash -e -x ./contrib/build_scripts/debian/cross-compile-mingw64; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then bash -e -x ./contrib/build_scripts/osx/build-osx-snapshot; fi

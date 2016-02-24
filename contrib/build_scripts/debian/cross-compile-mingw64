@@ -35,7 +35,7 @@ for PSMOVEAPI_PLATFORM in i686-w64-mingw32 x86_64-w64-mingw32; do
     if [ ! -d $OPENCV_BUILD_DIR ]; then
         if [ ! -d external/opencv ]; then
             if [ ! -f ${OPENCV_VERSION}.zip ]; then
-                curl -O https://github.com/Itseez/opencv/archive/${OPENCV_VERSION}.zip
+                curl -O -L https://github.com/Itseez/opencv/archive/${OPENCV_VERSION}.zip
             fi
             unzip ${OPENCV_VERSION}.zip
             mv opencv-${OPENCV_VERSION} external/opencv
@@ -78,24 +78,30 @@ for PSMOVEAPI_PLATFORM in i686-w64-mingw32 x86_64-w64-mingw32; do
 
     cd $PSMOVEAPI_CHECKOUT
 
-    # Packaging
-    rm -rf dist
-    mkdir -p dist/bin
-    cp README COPYING dist/
-    cp -r docs dist/
-    cp build/*.exe dist/bin/
-    cp build/libpsmoveapi.dll dist/bin/
-    cp build/libpsmoveapi_tracker.dll dist/bin/
-    mkdir -p dist/include
-    cp include/*.h dist/include/
+	# Don't package on CI server; it doesn't have enough memory/disk space and fails
+	if [[ "$TRAVIS" != "true" ]]
+	then
+		# Packaging
+		rm -rf dist
+		mkdir -p dist/bin
+		cp README COPYING dist/
+		cp -r docs dist/
+		cp build/*.exe dist/bin/
+		cp build/libpsmoveapi.dll dist/bin/
+		cp build/libpsmoveapi_tracker.dll dist/bin/
+		mkdir -p dist/include
+		cp include/*.h dist/include/
 
-    cd $PSMOVEAPI_CHECKOUT
+		cd $PSMOVEAPI_CHECKOUT
 
-    # Zip it up
-    PACKAGE_NAME=psmoveapi-${PSMOVEAPI_VERSION}-${PSMOVEAPI_PLATFORM}
-    rm -rf $PACKAGE_NAME
-    mv dist $PACKAGE_NAME
-    mkdir -p upload
-    zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
-    rm -rf $PACKAGE_NAME
+		# Zip it up
+		PACKAGE_NAME=psmoveapi-${PSMOVEAPI_VERSION}-${PSMOVEAPI_PLATFORM}
+		rm -rf $PACKAGE_NAME
+		mv dist $PACKAGE_NAME
+		mkdir -p upload
+		zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
+		rm -rf $PACKAGE_NAME
+	else
+		echo "Skipping package step because this is a CI server"
+	fi
 done
