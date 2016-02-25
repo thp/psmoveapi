@@ -36,6 +36,13 @@ if(PSMOVE_BUILD_EXAMPLES)
             ${MSVC_SRCS})
         set_target_properties(tuio_server PROPERTIES
             COMPILE_FLAGS -DOSC_HOST_LITTLE_ENDIAN)
+	
+	# MingW does not define WIN32 but tuio sources rely on it being there
+	IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND MINGW)
+		set_target_properties(tuio_server PROPERTIES
+		    COMPILE_FLAGS -DWIN32)
+	ENDIF()
+
         target_link_libraries(tuio_server psmoveapi psmoveapi_tracker ${MSVC_LIBS})
 		set_property(TARGET tuio_server PROPERTY FOLDER "Utilities") 
     else()
@@ -44,8 +51,16 @@ if(PSMOVE_BUILD_EXAMPLES)
     endif()
 
     if(PSMOVE_BUILD_TRACKER)
-        foreach(EXAMPLE distance_calibration tracker_camera_calibration)
+	# C examples
+        foreach(EXAMPLE distance_calibration)
             add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.c ${MSVC_SRCS})
+            target_link_libraries(${EXAMPLE} psmoveapi psmoveapi_tracker ${MSVC_LIBS})
+			set_property(TARGET ${EXAMPLE} PROPERTY FOLDER "Utilities") 
+        endforeach()
+
+	# C++ examples
+        foreach(EXAMPLE tracker_camera_calibration)
+            add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.cpp ${MSVC_SRCS})
             target_link_libraries(${EXAMPLE} psmoveapi psmoveapi_tracker ${MSVC_LIBS})
 			set_property(TARGET ${EXAMPLE} PROPERTY FOLDER "Utilities") 
         endforeach()
@@ -77,10 +92,11 @@ if(PSMOVE_BUILD_TESTS)
             set(OPENGL_EXAMPLES_LIBRARIES "")
 
             if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		SET(ENV{SDL2DIR} ${SDL2DIR})
                 find_library(OPENGL_FRAMEWORK OpenGL)
                 find_library(GLUT_FRAMEWORK GLUT)
-				FIND_PACKAGE(SDL2 QUIET)
-				include_directories(${SDL2_INCLUDE_DIR})
+		FIND_PACKAGE(SDL2 QUIET)
+		include_directories(${SDL2_INCLUDE_DIR})
                 list(APPEND OPENGL_EXAMPLES_LIBRARIES ${SDL2_LIBRARY}
                     ${OPENGL_FRAMEWORK} ${GLUT_FRAMEWORK})
             ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -89,10 +105,11 @@ if(PSMOVE_BUILD_TESTS)
                 list(APPEND OPENGL_EXAMPLES_LIBRARIES ${SDL2_LIBRARY}
                     GL GLU glut)
             ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-                SET(ENV{SDL2DIR} ${ROOT_DIR}/external/SDL2/)
+               	SET(ENV{SDL2DIR} ${SDL2DIR})
                 FIND_PACKAGE(SDL2 QUIET)
                 include_directories(${SDL2_INCLUDE_DIR})
                 list(APPEND OPENGL_EXAMPLES_LIBRARIES ${SDL2_LIBRARY})
+                list(APPEND OPENGL_EXAMPLES_LIBRARIES glu32 opengl32 winmm)
                 list(GET SDL2_LIBRARY 1 FIRST_SDL2_LIB_RELEASE)
 				list(GET SDL2_LIBRARY 5 FIRST_SDL2_LIB_DEBUG)
                 get_filename_component(SDL_BIN_PATH_RELEASE ${FIRST_SDL2_LIB_RELEASE} DIRECTORY)
@@ -106,7 +123,7 @@ if(PSMOVE_BUILD_TESTS)
                     psmoveapi_tracker
                     ${OPENGL_EXAMPLES_LIBRARIES}
                     ${MSVC_LIBS})
-				IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+				IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT MINGW)
                     add_custom_command(TARGET ${EXAMPLE} POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy_if_different
 							"$<$<CONFIG:debug>:${SDL_BIN_PATH_DEBUG}/SDL2.dll>$<$<CONFIG:release>:${SDL_BIN_PATH_RELEASE}/SDL2.dll>"

@@ -69,16 +69,12 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
           -DBUILD_FAT_JAVA_LIB=OFF \
           -DBUILD_PACKAGE=OFF \
           -DBUILD_opencv_apps=OFF \
-          -DBUILD_opencv_calib3d=OFF \
-          -DBUILD_opencv_flann=OFF \
-          -DBUILD_opencv_features2d=OFF \
           -DBUILD_opencv_objdetect=OFF \
           -DBUILD_opencv_photo=OFF \
           -DBUILD_opencv_shape=OFF \
           -DBUILD_opencv_stitching=OFF \
           -DBUILD_opencv_superres=OFF \
           -DBUILD_opencv_ts=OFF \
-          -DBUILD_opencv_ml=OFF \
           -DBUILD_opencv_video=OFF \
           -DBUILD_opencv_videostab=OFF \
           -DBUILD_opencv_world=OFF \
@@ -96,6 +92,18 @@ fi
 
 cd $PSMOVEAPI_CHECKOUT
 
+# Build SDL2
+export SDL2_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/SDL2
+export SDL2_BUILD_DIR=$SDL2_CHECKOUT_DIR/build
+
+cd ${SDL2_CHECKOUT_DIR}
+mkdir -p ${SDL2_BUILD_DIR}
+cd ${SDL2_BUILD_DIR}
+
+cmake -DDIRECTX=NO -DVIDEO_OPENGLES=NO -DCMAKE_INSTALL_PREFIX=${SDL2_BUILD_DIR} ${SDL2_CHECKOUT_DIR}
+make ${MAKE_ARGS}
+make install
+
 # Build PS Move API
 PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_VERSION}/
 rm -rf build
@@ -105,7 +113,8 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_TRACKER=ON \
       -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
-	  -DOpenCV_DIR=${OPENCV_BUILD_DIR} \
+      -DOpenCV_DIR=${OPENCV_BUILD_DIR} \
+      -DSDL2DIR=${SDL2_BUILD_DIR} \
       -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
 make ${MAKE_ARGS}
 

@@ -88,8 +88,8 @@ Manual build
    `cd ..\..\..`
    `mkdir build `
    `cd build`
-   VS2013: `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/` 
-   VS2015: `cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/`
+   VS2013: `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/` 
+   VS2015: `cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/`
    
    Open the `build\PSMoveAPI.sln` solution file.
    Change the target to Release or Debug as desired.
