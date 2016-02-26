@@ -11,9 +11,9 @@ You will need...
 ... to install Homebrew: http://mxcl.github.com/homebrew/
 	$ ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
 	$ brew doctor
-... to install cmake, and git from Homebrew
-	$ brew install cmake git
-… to download and install Doxygen (http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc) to generate the documentation (optional)
+... to install cmake, git and sdl2 from Homebrew
+	$ brew install cmake git sdl2
+... to download and install Doxygen (http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc) to generate the documentation (optional)
 
 
 1. Get ready
