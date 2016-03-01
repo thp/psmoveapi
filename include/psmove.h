@@ -172,6 +172,18 @@ enum PSMoveOrientation_Fusion_Type {
 	OrientationFusion_ComplementaryMARG,
 };
 
+/*! Common Calibration Poses */
+enum PSMove_CalibrationPose_Type {
+    CalibrationPose_Upright,
+    CalibrationPose_LyingFlat
+};
+
+/*! Coordinate systems to use for the sensor data */
+enum PSMove_SensorDataBasis_Type {
+    SensorDataBasis_Native,
+    SensorDataBasis_OpenGL,
+};
+
 #ifndef SWIG
 struct _PSMove;
 typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
@@ -232,18 +244,6 @@ enum PSMove_Version {
     PSMOVE_CURRENT_VERSION = 0x030001, /*!< Current version, see psmove_init() */
 };
     
-/* Swig complains that the following variable declarations may leak memory. */
-
-ADDAPI extern const PSMove_3AxisTransform *k_psmove_zero_transform;
-
-/*! Transforms used by psmove_set_orientation_calibration_transform */
-ADDAPI extern const PSMove_3AxisTransform *k_psmove_identity_pose_upright;
-ADDAPI extern const PSMove_3AxisTransform *k_psmove_identity_pose_laying_flat;
-
-/*! Transforms used by psmove_set_orientation_sensor_data_transform */
-ADDAPI extern const PSMove_3AxisTransform *k_psmove_sensor_transform_identity;
-ADDAPI extern const PSMove_3AxisTransform *k_psmove_sensor_transform_opengl;
-
 /**
  * \brief Initialize the library and check for the right version
  *
@@ -1174,7 +1174,7 @@ ADDAPI void
 ADDCALL psmove_set_orientation_fusion_type(PSMove *move, enum PSMoveOrientation_Fusion_Type fusion_type);
 
 /**
- * \brief Set the transform used on the calibration data in the psmove_get_transform_<sensor>_... methods
+ * \brief Set a common transform used on the calibration data in the psmove_get_transform_<sensor>_... methods
  *
  * This method sets the transform used to modify the calibration vectors returned by:
  * - psmove_orientation_get_magnetometer_calibration_direction()
@@ -1198,12 +1198,21 @@ ADDCALL psmove_set_orientation_fusion_type(PSMove *move, enum PSMoveOrientation_
  * use this method to set a custom transform.
  *
  * There are the following transforms available:
- * - k_psmove_identity_pose_upright - "identity pose" is the controller standing upright
- * - k_psmove_identity_pose_laying_flat - "identity pose" is the controller laying down pointed at the screen
+ * - CalibrationPose_Upright - "identity pose" is the controller standing upright
+ * - CalibrationPose_LyingFlat - "identity pose" is the controller laying down pointed at the screen
  *
  * \param orientation_state A valid \ref PSMoveOrientation handle
- * \param transform A \ref PSMove_3AxisTransform transform to apply to the calibration data
+ * \param transform A \ref PSMove_CalibrationPose_Type common transform to apply to the calibration data
  **/
+ADDAPI void
+ADDCALL psmove_set_calibration_pose(PSMove *move, enum PSMove_CalibrationPose_Type calibration_pose);
+
+/**
+* \brief Set the custom transform used on the calibration data in the psmove_get_transform_<sensor>_... methods
+*
+* \param orientation_state A valid \ref PSMoveOrientation handle
+* \param transform A \ref PSMove_3AxisTransform transform to apply to the calibration data
+**/
 ADDAPI void
 ADDCALL psmove_set_calibration_transform(PSMove *move, const PSMove_3AxisTransform *transform);
 
@@ -1292,12 +1301,21 @@ ADDCALL psmove_set_magnetometer_calibration_direction(PSMove *move, PSMove_3Axis
  * in order to maintain reverse compatibility
  *
  * There are the following transforms available:
- * - k_psmove_sensor_transform_identity - Keep the sensor data as it was
- * - k_psmove_sensor_transform_opengl - Rotate 90 degrees about the x-axis (historical default)
+ * - SensorDataBasis_Native - Keep the sensor data as it was
+ * - SensorDataBasis_OpenGL - Rotate 90 degrees about the x-axis (historical default)
  *
  * \param orientation_state A valid \ref PSMoveOrientation handle
- * \param transform A \ref PSMove_3AxisTransform transform to apply to the sensor data
+ * \param transform A \ref PSMove_SensorDataBasis_Type transform to apply to the sensor data
  **/
+ADDAPI void
+ADDCALL psmove_set_sensor_data_basis(PSMove *move, enum PSMove_SensorDataBasis_Type basis_type);
+
+/**
+* \brief Set the transform used on the sensor data in the psmove_get_transform_<sensor>_... methods
+*
+* \param orientation_state A valid \ref PSMoveOrientation handle
+* \param transform A \ref PSMove_3AxisTransform transform to apply to the sensor data
+**/
 ADDAPI void
 ADDCALL psmove_set_sensor_data_transform(PSMove *move, const PSMove_3AxisTransform *transform);
 

@@ -2087,6 +2087,20 @@ psmove_set_orientation_fusion_type(PSMove *move, enum PSMoveOrientation_Fusion_T
 }
 
 void
+psmove_set_calibration_pose(PSMove *move, enum PSMove_CalibrationPose_Type calibration_pose)
+{
+    switch (calibration_pose)
+    {
+    case CalibrationPose_Upright:
+        psmove_set_calibration_transform(move, k_psmove_identity_pose_upright);
+        break;
+    case CalibrationPose_LyingFlat:
+        psmove_set_calibration_transform(move, k_psmove_identity_pose_laying_flat);
+        break;
+    }
+}
+
+void
 psmove_set_calibration_transform(PSMove *move, const PSMove_3AxisTransform *transform)
 {
     psmove_return_if_fail(move != NULL);
@@ -2142,6 +2156,20 @@ psmove_set_magnetometer_calibration_direction(PSMove *move, PSMove_3AxisVector *
 	psmove_return_if_fail(move != NULL);
 
 	move->magnetometer_calibration_direction = *m;
+}
+
+void
+psmove_set_sensor_data_basis(PSMove *move, enum PSMove_SensorDataBasis_Type basis_type)
+{
+    switch (basis_type)
+    {
+    case SensorDataBasis_Native:
+        psmove_set_sensor_data_transform(move, k_psmove_sensor_transform_identity);
+        break;
+    case SensorDataBasis_OpenGL:
+        psmove_set_sensor_data_transform(move, k_psmove_sensor_transform_opengl);
+        break;
+    }
 }
 
 void

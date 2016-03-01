@@ -43,6 +43,17 @@ extern "C" {
 struct _PSMoveOrientation;
 typedef struct _PSMoveOrientation PSMoveOrientation;
 
+//-- constants -----
+extern const PSMove_3AxisTransform *k_psmove_zero_transform;
+
+/*! Transforms used by psmove_set_orientation_calibration_transform */
+extern const PSMove_3AxisTransform *k_psmove_identity_pose_upright;
+extern const PSMove_3AxisTransform *k_psmove_identity_pose_laying_flat;
+
+/*! Transforms used by psmove_set_orientation_sensor_data_transform */
+extern const PSMove_3AxisTransform *k_psmove_sensor_transform_identity;
+extern const PSMove_3AxisTransform *k_psmove_sensor_transform_opengl;
+
 //-- interface -----
 ADDAPI PSMoveOrientation *
 ADDCALL psmove_orientation_new(PSMove *move);
