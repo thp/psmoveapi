@@ -4,8 +4,16 @@
 # Thomas Perl <m@thp.io>; 2012-09-28
 #
 
-export PSMOVEAPI_CHECKOUT=$(pwd)
+# Determine PSMoveAPI root dir
+if [[ "$TRAVIS" == "true" ]]
+then
+	export PSMOVEAPI_CHECKOUT=$TRAVIS_BUILD_DIR
+else
+	export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../../"
+fi
+
 export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
+export OPENCV_BUILD_DIR=$PSMOVEAPI_CHECKOUT/external/opencv/build
 export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 
 # For parallel builds
@@ -61,16 +69,12 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
           -DBUILD_FAT_JAVA_LIB=OFF \
           -DBUILD_PACKAGE=OFF \
           -DBUILD_opencv_apps=OFF \
-          -DBUILD_opencv_calib3d=OFF \
-          -DBUILD_opencv_flann=OFF \
-          -DBUILD_opencv_features2d=OFF \
           -DBUILD_opencv_objdetect=OFF \
           -DBUILD_opencv_photo=OFF \
           -DBUILD_opencv_shape=OFF \
           -DBUILD_opencv_stitching=OFF \
           -DBUILD_opencv_superres=OFF \
           -DBUILD_opencv_ts=OFF \
-          -DBUILD_opencv_ml=OFF \
           -DBUILD_opencv_video=OFF \
           -DBUILD_opencv_videostab=OFF \
           -DBUILD_opencv_world=OFF \
@@ -97,29 +101,37 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_TRACKER=ON \
       -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
+      -DOpenCV_DIR=${OPENCV_BUILD_DIR} \
       -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
 make ${MAKE_ARGS}
-mkdir tmp
-DESTDIR=$(pwd)/tmp make install
 
-cd $PSMOVEAPI_CHECKOUT
+# Don't package on CI server; it doesn't have enough memory/disk space and fails
+if [[ "$TRAVIS" != "true" ]]
+then
+	mkdir tmp
+	DESTDIR=$(pwd)/tmp make install
 
-# Packaging
-rm -rf dist
-mkdir -p dist
-echo $PSMOVEAPI_REVISION >dist/revision.txt
-cp -rpv build/tmp/* dist/
+	cd $PSMOVEAPI_CHECKOUT
 
-cd $PSMOVEAPI_CHECKOUT
+	# Packaging
+	rm -rf dist
+	mkdir -p dist
+	echo $PSMOVEAPI_REVISION >dist/revision.txt
+	cp -rpv build/tmp/* dist/
 
-# Tar it up
-PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_osx108
-rm -rf $PACKAGE_NAME
-mv dist $PACKAGE_NAME
-mkdir -p upload
-tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
-rm -rf $PACKAGE_NAME
+	cd $PSMOVEAPI_CHECKOUT
 
-# Copy the Processing bindings
-cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
+	# Tar it up
+	PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_osx108
+	rm -rf $PACKAGE_NAME
+	mv dist $PACKAGE_NAME
+	mkdir -p upload
+	tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
+	rm -rf $PACKAGE_NAME
+
+	# Copy the Processing bindings
+	cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
+else
+	echo "Skipping package step because this is a CI server"
+fi
 

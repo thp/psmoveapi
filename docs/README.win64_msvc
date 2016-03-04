@@ -11,25 +11,46 @@ Requirements
 - Git
   http://code.google.com/p/msysgit/
 
+Preparing to build the PS Move API
+---------------------------------------
+  
 1. Clone the PS Move API repository
 
    `git clone --recursive https://github.com/thp/psmoveapi.git`
    `cd psmoveapi`
-    
-2. Build libusb-1.0
 
+Automatic build
+------------------------
+A build script is provided which will take care of the build for you. The script will generate the Visual Studio solution and build everything in Debug and Release.
+
+Run from the commandline by:
+
+		`cd psmoveapi`
+VS2013: `call contrib/build_scripts/msvc/build_msvc_2013.bat`
+VS2015: `call contrib/build_scripts/msvc/build_msvc_2015.bat`
+
+Or browse to `psmoveapi/contrib/build_scripts/msvc/` in Explorer and double-click on `build_msvc_2013.bat` or `build_msvc_2015.bat` as desired.
+
+The resulting binaries will be placed in `psmoveapi/build/[Debug/Release]`
+
+Manual build
+------------------------
+
+1. Build libusb-1.0
+
+   Open a command prompt in the libusb directory (psmoveapi\external\libusb-1.0)
+   Run the following command:
+   
+   `git apply ..\..\contrib\msvc\libusb_dynamic_crt.patch`
+   
    Open the correct solution:
        - VS2013: psmoveapi\external\libusb-1.0\msvc\libusb_2013.sln
        - VS2015: psmoveapi\external\libusb-1.0\msvc\libusb_2015.sln
-   Change the target to Release x64 (at the top of the Visual Studio window).
-   Right-click on libusb-1.0 (static) and select Properties.
-   In the properties Window, make sure the Platform is set to Active or All Platforms.
-   In the properties Window, navigate to Configuration Properties > C/C++ > Code Generation
-   Change "Runtime Library" to Multi-threaded DLL (/MD)
-   Click OK
-   Right-click on libusb-1.0 (static) and Build.
+
+   Change the target to Release or Debug (as desired) at the top of the Visual Studio window
+   Right-click on libusb-1.0 (static) and Build
     
-3. OpenCV (Optional -- only needed to build the positional tracker)
+2. OpenCV (Optional -- only needed to build the positional tracker)
 
    In `psmoveapi/external`
    git clone --depth 1 --branch 2.4.11 git://github.com/Itseez/opencv.git
@@ -40,13 +61,17 @@ Requirements
    VS2015: `cmake .. -G "Visual Studio 14 Win64" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=OFF -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF`
    
    Open the solution in psmoveapi\external\opencv\build\OpenCV.sln
-   Change the target to Release (at the top of the Visual Studio window).
+   Change the target to Release or Debug (as desired) at the top of the Visual Studio window
    Build the solution (Press F7).
     
-4. SDL2 (Optional -- only needed to build the opengl examples)
+3. SDL2 (Optional -- only needed to build the opengl examples)
 
    Still in `psmoveapi/external`
    `cd SDL2`
+   
+   For VS2015 only:
+      `git apply ..\..\contrib\msvc\sdl_vs2015_libs.patch`
+	
    `mkdir build`
    `cd build`
    VS2013: `cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF`
@@ -54,31 +79,23 @@ Requirements
    
    Open the solution (psmoveapi\external\SDL2\build\SDL2.sln)
    
-   For VS2015 only:
-       - Go to the Properties of the SDL2 project
-       - Go to Linker -> Input
-       - Select the Debug configuration        
-           - Add ucrtd.lib and vcruntimed.lib to the Additional Dependencies field
-       - Select the Release configuration
-           - Add vcruntime.lib to the Additional Dependences field
-   
-   Build the solution in Debug and Release (Press F7). 
+   Build the solution in Debug and Release as desired (Press F7). 
 
-5. Build psmoveapi
+4. Build psmoveapi
    
    Still in the command prompt:
    
    `cd ..\..\..`
    `mkdir build `
    `cd build`
-   VS2013: `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/` 
-   VS2015: `cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/`
+   VS2013: `cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/` 
+   VS2015: `cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/`
    
    Open the `build\PSMoveAPI.sln` solution file.
    Change the target to Release or Debug as desired.
    Build the solution (Press F7).
-    
-6. Pairing the controller to the host
+   
+5. Pairing the controller to the host
     
    Using the controllers' Bluetooth capabilities requires you to pair the
    controller to the host computer first. That is what the psmovepair utility
@@ -102,7 +119,7 @@ Requirements
    the controller from the list of Bluetooth devices you need to run
    psmovepair again for that controller.
  
-7. Start one of the desired test applications
+6. Start one of the desired test applications
 
    If you previously chose to build the example applications (which is the
    default), you can then run

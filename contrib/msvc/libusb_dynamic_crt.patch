@@ -1,0 +1,44 @@
+diff --git a/msvc/libusb_static_2013.vcxproj b/msvc/libusb_static_2013.vcxproj
+index fa3caac..cd8725d 100644
+--- a/msvc/libusb_static_2013.vcxproj
++++ b/msvc/libusb_static_2013.vcxproj
+@@ -98,7 +98,7 @@
+       <Optimization>Disabled</Optimization>
+       <AdditionalIncludeDirectories>.;..\libusb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_WIN32;_WIN64;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+       <WarningLevel>Level4</WarningLevel>
+       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+     </ClCompile>
+@@ -124,7 +124,7 @@
+     <ClCompile>
+       <AdditionalIncludeDirectories>.;..\libusb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_WIN32;_WIN64;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+       <WarningLevel>Level4</WarningLevel>
+     </ClCompile>
+     <Lib>
+diff --git a/msvc/libusb_static_2015.vcxproj b/msvc/libusb_static_2015.vcxproj
+index b9c5850..aa5c1f6 100644
+--- a/msvc/libusb_static_2015.vcxproj
++++ b/msvc/libusb_static_2015.vcxproj
+@@ -99,7 +99,7 @@
+       <Optimization>Disabled</Optimization>
+       <AdditionalIncludeDirectories>.;..\libusb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_WIN32;_WIN64;_DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+       <WarningLevel>Level4</WarningLevel>
+       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
+@@ -127,7 +127,7 @@
+     <ClCompile>
+       <AdditionalIncludeDirectories>.;..\libusb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_WIN32;_WIN64;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+       <WarningLevel>Level4</WarningLevel>
+       <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
+     </ClCompile>

@@ -1,0 +1,117 @@
+#!/bin/bash -xe
+#
+# Script to cross compile PS Move API for Windows on a Linux host
+# Thomas Perl <m@thp.io>; 2012-09-27
+#
+# Dependencies (Ubuntu/Debian):
+#
+#     sudo apt-get install mingw-w64 g++-mingw-w64
+#
+
+# Determine PSMoveAPI root dir
+if [[ -v $TRAVIS_BUILD_DIR ]]
+then
+	export PSMOVEAPI_CHECKOUT=$TRAVIS_BUILD_DIR
+else
+	export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../../"
+fi
+
+if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
+    echo "ERROR: You have to run this script in the PS Move API source root."
+    exit 1
+fi
+
+OPENCV_VERSION=3.1.0
+PSMOVEAPI_VERSION=$(git describe --tags)
+
+MAKE_ARGS="$@"
+
+for PSMOVEAPI_PLATFORM in i686-w64-mingw32 x86_64-w64-mingw32; do
+    export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/cmake/${PSMOVEAPI_PLATFORM}.toolchain
+    export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
+    export OPENCV_BUILD_DIR=$OPENCV_CHECKOUT_DIR/build-${PSMOVEAPI_PLATFORM}
+
+    # Build OpenCV
+    if [ ! -d external/opencv ]; then
+        if [ ! -f ${OPENCV_VERSION}.zip ]; then
+            curl -O -L https://github.com/Itseez/opencv/archive/${OPENCV_VERSION}.zip
+        fi
+        unzip ${OPENCV_VERSION}.zip
+        mv opencv-${OPENCV_VERSION} external/opencv
+    fi
+    cd external/opencv
+    mkdir -p ${OPENCV_BUILD_DIR}
+    cd ${OPENCV_BUILD_DIR}
+    cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_PERF_TESTS=OFF \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_DOCS=OFF \
+          -DBUILD_opencv_objdetect=OFF \
+          -DBUILD_opencv_photo=OFF \
+          -DBUILD_opencv_ts=OFF \
+          -DBUILD_opencv_video=OFF \
+          -DWITH_OPENEXR=OFF \
+          -DWITH_FFMPEG=OFF \
+          -DWITH_JASPER=OFF \
+          -DWITH_TIFF=OFF \
+          ${OPENCV_CHECKOUT_DIR}
+    make ${MAKE_ARGS}
+
+    cd $PSMOVEAPI_CHECKOUT
+
+    # Build SDL2
+    export SDL2_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/SDL2
+    export SDL2_BUILD_DIR=$SDL2_CHECKOUT_DIR/build-${PSMOVEAPI_PLATFORM}
+
+    cd ${SDL2_CHECKOUT_DIR}
+    mkdir -p ${SDL2_BUILD_DIR}
+    cd ${SDL2_BUILD_DIR}
+
+    cmake -DDIRECTX=NO -DVIDEO_OPENGLES=NO -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DCMAKE_INSTALL_PREFIX=${SDL2_BUILD_DIR} ${SDL2_CHECKOUT_DIR}
+    make ${MAKE_ARGS}
+    make install
+    
+    cd $PSMOVEAPI_CHECKOUT    
+
+    # Build PS Move API
+    export PSMOVEAPI_BUILD_DIR=$PSMOVEAPI_CHECKOUT/build-${PSMOVEAPI_PLATFORM}
+
+    mkdir -p ${PSMOVEAPI_BUILD_DIR}
+    cd ${PSMOVEAPI_BUILD_DIR}
+    cmake -DPSMOVE_BUILD_TRACKER=ON \
+          -DOpenCV_DIR=${OPENCV_BUILD_DIR} \
+          -DSDL2DIR=${SDL2_BUILD_DIR} \
+          -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
+          ${PSMOVEAPI_CHECKOUT}
+    make ${MAKE_ARGS}
+
+    cd $PSMOVEAPI_CHECKOUT
+
+    # Don't package on CI server; it doesn't have enough memory/disk space and fails
+    if [[ "$TRAVIS" != "true" ]]
+    then
+	# Packaging
+	rm -rf dist
+	mkdir -p dist/bin
+	cp README COPYING dist/
+	cp -r docs dist/
+	cp ${PSMOVEAPI_BUILD_DIR}/*.exe dist/bin/
+	cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi.dll dist/bin/
+	cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi_tracker.dll dist/bin/
+	mkdir -p dist/include
+	cp include/*.h dist/include/
+
+	cd $PSMOVEAPI_CHECKOUT
+
+	# Zip it up
+	PACKAGE_NAME=psmoveapi-${PSMOVEAPI_VERSION}-${PSMOVEAPI_PLATFORM}
+	rm -rf $PACKAGE_NAME
+	mv dist $PACKAGE_NAME
+	mkdir -p upload
+	zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
+	rm -rf $PACKAGE_NAME
+    else
+	echo "Skipping package step because this is a CI server"
+    fi
+done

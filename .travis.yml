@@ -1,0 +1,29 @@
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      language: cpp
+      compiler: clang
+    - os: osx
+      osx_image: xcode7.2
+      language: cpp
+      compiler: clang
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:zoogie/sdl2-snapshots; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:kubuntu-ppa/backports; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository --yes ppa:hlprasu/swig-trusty-backports; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -q -y mingw-w64 g++-mingw-w64; fi  
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install --force cmake; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install --force sdl2; fi
+
+install:
+  - git submodule update --init --recursive
+
+script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash -e -x ./contrib/build_scripts/debian/build-ubuntu; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash -e -x ./contrib/build_scripts/debian/cross-compile-mingw64; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then bash -e -x ./contrib/build_scripts/osx/build-osx-snapshot; fi

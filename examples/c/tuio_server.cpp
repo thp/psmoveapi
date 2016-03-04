@@ -237,9 +237,10 @@ TcpEventSender::TcpEventSender(const char *target, int port)
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons((u_short)port);
-	int result = inet_pton(AF_INET, target, &(addr.sin_addr));
-	assert(result != 0);
 
+    addr.sin_addr.s_addr = inet_addr(target);
+    assert(addr.sin_addr.s_addr != INADDR_NONE);
+    
     assert(connect(sock, (const struct sockaddr*)&addr, sizeof(addr)) == 0);
 
     m_socket = (int)sock;

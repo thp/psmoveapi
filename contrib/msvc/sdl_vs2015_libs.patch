@@ -1,0 +1,18 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4c75ad6..28b468d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -169,6 +169,13 @@ if(MSVC)
+       endif()
+     endforeach()
+   endif()
++
++  # Add universal runtimes if building with VS2015 on windows
++  if(NOT (MSVC_VERSION LESS 1900))
++   set(MSVC_UNIVERSAL_RUNTIME optimized vcruntime debug ucrtd debug vcruntimed)
++   list(APPEND EXTRA_LIBS ${MSVC_UNIVERSAL_RUNTIME})
++  endif()
++
+ endif()
+ 
+ # Those are used for pkg-config and friends, so that the SDL2.pc, sdl2-config,

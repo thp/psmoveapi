@@ -1,0 +1,11 @@
+version: 1.0.{build}
+
+# AppVeyor clone is not recursive, so we need to to init submodules manually
+install:
+  - git submodule update --init --recursive
+
+build_script:
+- cmd: >-
+    call contrib/build_scripts/msvc/build_msvc_2015.bat
+
+test: off

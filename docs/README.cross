@@ -20,4 +20,4 @@ To build manually without the tracker:
 
 Or use:
 
-    sh -x contrib/cross-compile-mingw64
+    sh -x contrib/build-scripts/debian/cross-compile-mingw64

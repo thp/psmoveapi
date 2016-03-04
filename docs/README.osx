@@ -11,9 +11,9 @@ You will need...
 ... to install Homebrew: http://mxcl.github.com/homebrew/
 	$ ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
 	$ brew doctor
-... to install cmake, and git from Homebrew
-	$ brew install cmake git
-… to download and install Doxygen (http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc) to generate the documentation (optional)
+... to install cmake, git and sdl2 from Homebrew
+	$ brew install cmake git sdl2
+... to download and install Doxygen (http://www.stack.nl/~dimitri/doxygen/download.html#latestsrc) to generate the documentation (optional)
 
 
 1. Get ready
@@ -28,7 +28,7 @@ You will need...
 	$ cd psmoveapi
 
 4. Build all
-	$ bash -e -x contrib/build-osx-snapshot
+	$ bash -e -x contrib/build_scripts/osx/build-osx-snapshot
 
 Note: If the script returns some errors, you might need to build the API step-by-step. See “Building the API manually” for the alternative procedure.
 
