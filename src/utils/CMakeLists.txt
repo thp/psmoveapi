@@ -4,6 +4,7 @@ include(${ROOT_DIR}/cmake/common.cmake)
 
 # Essential utilities
 include_directories(${MSVC_INCLUDES})
+include_directories(${ROOT_DIR}/src)
 foreach(UTILITY moved psmovepair magnetometer_calibration psmove_dfu_mode psmove_auth_response psmove_get_firmware_info)
     add_executable(${UTILITY} ${CMAKE_CURRENT_LIST_DIR}/${UTILITY}.c ${MSVC_SRCS})
     target_link_libraries(${UTILITY} psmoveapi_static ${MSVC_LIBS})
