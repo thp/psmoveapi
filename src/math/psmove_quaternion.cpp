@@ -31,6 +31,19 @@
 
 #include <assert.h>
 
+//-- macros ----
+#ifdef isfinite
+#define is_valid_float(x) (!std::isnan(x) && isfinite(x))
+#else
+#define is_valid_float(x) (!std::isnan(x))
+#endif
+
+#ifdef NDEBUG
+#define assert_valid_float(x) assert(is_valid_float(x))
+#else
+#define assert_valid_float(x)     ((void)0)
+#endif
+
 //-- globals ----
 const glm::quat g_psmove_quaternion_zero = glm::quat(0, 0, 0, 0);
 const glm::quat *k_psmove_quaternion_zero = &g_psmove_quaternion_zero;
