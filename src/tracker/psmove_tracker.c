@@ -110,8 +110,6 @@ static const PSMoveTrackerSettings create_tracker_default_settings()
 	return defaults;
 }
 
-static const PSMoveTrackerSettings tracker_default_settings = create_tracker_default_settings();
-
 /**
  * Syntactic sugar - iterate over all valid controllers of a tracker
  *
@@ -392,7 +390,7 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
 void
 psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
 {
-    *settings = tracker_default_settings; 
+    *settings = create_tracker_default_settings(); 
 }
 
 PSMoveTracker *psmove_tracker_new() {
