@@ -62,53 +62,6 @@
 #define PSEYE_BACKUP_FILE "PSEye_backup.ini"
 #define COLOR_MAPPING_DAT "colormapping.dat"
 
-/**
- * Helper function to create the default tracker settings. Needed so this file can be compiled as both C and C++ (C++ does not support designated initializers)
-**/
-static const PSMoveTrackerSettings create_tracker_default_settings()
-{
-	PSMoveTrackerSettings defaults;
-
-	defaults.camera_frame_width = 0;
-    defaults.camera_frame_height = 0;
-    defaults.camera_frame_rate = 0;
-    defaults.camera_auto_gain = PSMove_False;
-    defaults.camera_gain = 0;
-    defaults.camera_auto_white_balance = PSMove_False;
-    defaults.camera_exposure = (255 * 15) / 0xFFFF;
-    defaults.camera_brightness = 0;
-    defaults.camera_mirror = PSMove_False;
-    defaults.exposure_mode = Exposure_LOW;
-    defaults.calibration_blink_delay = 200;
-    defaults.calibration_diff_t = 20;
-    defaults.calibration_min_size = 50;
-    defaults.calibration_max_distance = 30;
-    defaults.calibration_size_std = 10;
-    defaults.color_mapping_max_age = 2 * 60 * 60;
-    defaults.dimming_factor = 1.f;
-    defaults.color_hue_filter_range = 20;
-    defaults.color_saturation_filter_range = 85;
-    defaults.color_value_filter_range = 85;
-    defaults.tracker_adaptive_xy = 1;
-    defaults.tracker_adaptive_z = 1;
-    defaults.color_adaption_quality_t = 35.f;
-    defaults.color_update_rate = 1.f;
-    defaults.search_tile_width = 0;
-    defaults.search_tile_height = 0;
-    defaults.search_tiles_horizontal = 0;
-    defaults.search_tiles_count = 0;
-    defaults.roi_adjust_fps_t = 160;
-    defaults.tracker_quality_t1 = 0.3f;
-    defaults.tracker_quality_t2 = 0.7f;
-    defaults.tracker_quality_t3 = 4.7f;
-    defaults.color_update_quality_t1 = 0.8f;
-    defaults.color_update_quality_t2 = 0.2f;
-    defaults.color_update_quality_t3 = 6.f;
-	defaults.intrinsics_xml = "intrinsics.xml";
-	defaults.distortion_xml = "distortion.xml";
-
-	return defaults;
-}
 
 /**
  * Syntactic sugar - iterate over all valid controllers of a tracker
@@ -390,7 +343,43 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
 void
 psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
 {
-    *settings = create_tracker_default_settings(); 
+    settings->camera_frame_width = 0;
+    settings->camera_frame_height = 0;
+    settings->camera_frame_rate = 0;
+    settings->camera_auto_gain = PSMove_False;
+    settings->camera_gain = 0;
+    settings->camera_auto_white_balance = PSMove_False;
+    settings->camera_exposure = (255 * 15) / 0xFFFF;
+    settings->camera_brightness = 0;
+    settings->camera_mirror = PSMove_False;
+    settings->exposure_mode = Exposure_LOW;
+    settings->calibration_blink_delay = 200;
+    settings->calibration_diff_t = 20;
+    settings->calibration_min_size = 50;
+    settings->calibration_max_distance = 30;
+    settings->calibration_size_std = 10;
+    settings->color_mapping_max_age = 2 * 60 * 60;
+    settings->dimming_factor = 1.f;
+    settings->color_hue_filter_range = 20;
+    settings->color_saturation_filter_range = 85;
+    settings->color_value_filter_range = 85;
+    settings->tracker_adaptive_xy = 1;
+    settings->tracker_adaptive_z = 1;
+    settings->color_adaption_quality_t = 35.f;
+    settings->color_update_rate = 1.f;
+    settings->search_tile_width = 0;
+    settings->search_tile_height = 0;
+    settings->search_tiles_horizontal = 0;
+    settings->search_tiles_count = 0;
+    settings->roi_adjust_fps_t = 160;
+    settings->tracker_quality_t1 = 0.3f;
+    settings->tracker_quality_t2 = 0.7f;
+    settings->tracker_quality_t3 = 4.7f;
+    settings->color_update_quality_t1 = 0.8f;
+    settings->color_update_quality_t2 = 0.2f;
+    settings->color_update_quality_t3 = 6.f;
+    settings->intrinsics_xml = "intrinsics.xml";
+    settings->distortion_xml = "distortion.xml";
 }
 
 PSMoveTracker *psmove_tracker_new() {
