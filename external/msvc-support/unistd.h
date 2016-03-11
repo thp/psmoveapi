@@ -54,6 +54,15 @@ typedef unsigned __int64  uint64_t;
 	#define snprintf _snprintf  // Not exactly the same, but close enough.
 #endif
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
 int usleep(__int64 useconds);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* unistd.h  */

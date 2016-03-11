@@ -176,6 +176,15 @@ source_group("Source Files\\iniparser" FILES ${INIPARSER_SRC})
 
 
 if(PSMOVE_BUILD_TRACKER)
+	IF(MSVC)
+		# Due to a bug in OpenCV 3.0+, C source files that call cvGetSize will crash when built by MSVC.
+		# psmove_tracker.c is such a file, so we need to force the C++ compiler to be used for it, even though it's a C file. 
+		# Once the OpenCV bug is fixed, this can/should be removed.
+		#
+		# See https://github.com/Itseez/opencv/issues/6221 for more info.
+		set_source_files_properties( ${CMAKE_CURRENT_LIST_DIR}/psmove_tracker.c PROPERTIES LANGUAGE CXX )
+	ENDIF(MSVC)
+	
     include_directories(${ROOT_DIR}/external/glm)
     add_library(psmoveapi_tracker SHARED
         ${PSMOVEAPI_TRACKER_SRC}

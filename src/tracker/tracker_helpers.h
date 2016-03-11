@@ -46,6 +46,10 @@
                                ((a).y - (b).y) * \
                                ((a).y - (b).y))
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Variance and average of an array of doubles
  *
@@ -87,5 +91,9 @@ th_scalar_mul(CvScalar a, double b);
  **/
 CvScalar
 th_brg2hsv(CvScalar bgr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // TRACKER_HELPERS_H

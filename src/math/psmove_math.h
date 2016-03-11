@@ -47,12 +47,6 @@
 #define k_real_half_pi 0.5f*k_real_pi
 
 //-- macros ----
-#ifdef isfinite
-#define is_valid_float(x) (!isnan(x) && isfinite(x))
-#else
-#define is_valid_float(x) (!isnan(x))
-#endif
-
 #define is_nearly_equal(a, b, epsilon) (fabsf(a-b) <= epsilon)
 #define is_nearly_zero(x) is_nearly_equal(x, 0.0f, k_real_epsilon)
 
@@ -64,12 +58,6 @@
 
 #ifndef sqr
 #define sqr(x) (x*x)
-#endif
-
-#ifdef NDEBUG
-#define assert_valid_float(x) assert(is_valid_float(x))
-#else
-#define assert_valid_float(x)     ((void)0)
 #endif
 
 //-- inline -----

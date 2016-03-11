@@ -62,45 +62,6 @@
 #define PSEYE_BACKUP_FILE "PSEye_backup.ini"
 #define COLOR_MAPPING_DAT "colormapping.dat"
 
-static const PSMoveTrackerSettings tracker_default_settings = {
-    .camera_frame_width = 0,
-    .camera_frame_height = 0,
-    .camera_frame_rate = 0,
-    .camera_auto_gain = PSMove_False,
-    .camera_gain = 0,
-    .camera_auto_white_balance = PSMove_False,
-    .camera_exposure = (255 * 15) / 0xFFFF,
-    .camera_brightness = 0,
-    .camera_mirror = PSMove_False,
-    .exposure_mode = Exposure_LOW,
-    .calibration_blink_delay = 200,
-    .calibration_diff_t = 20,
-    .calibration_min_size = 50,
-    .calibration_max_distance = 30,
-    .calibration_size_std = 10,
-    .color_mapping_max_age = 2 * 60 * 60,
-    .dimming_factor = 1.f,
-    .color_hue_filter_range = 20,
-    .color_saturation_filter_range = 85,
-    .color_value_filter_range = 85,
-    .tracker_adaptive_xy = 1,
-    .tracker_adaptive_z = 1,
-    .color_adaption_quality_t = 35.f,
-    .color_update_rate = 1.f,
-    .search_tile_width = 0,
-    .search_tile_height = 0,
-    .search_tiles_horizontal = 0,
-    .search_tiles_count = 0,
-    .roi_adjust_fps_t = 160,
-    .tracker_quality_t1 = 0.3f,
-    .tracker_quality_t2 = 0.7f,
-    .tracker_quality_t3 = 4.7f,
-    .color_update_quality_t1 = 0.8f,
-    .color_update_quality_t2 = 0.2f,
-    .color_update_quality_t3 = 6.f,
-	.intrinsics_xml = "intrinsics.xml",
-	.distortion_xml = "distortion.xml"
-};
 
 /**
  * Syntactic sugar - iterate over all valid controllers of a tracker
@@ -382,7 +343,43 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
 void
 psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
 {
-    *settings = tracker_default_settings; 
+    settings->camera_frame_width = 0;
+    settings->camera_frame_height = 0;
+    settings->camera_frame_rate = 0;
+    settings->camera_auto_gain = PSMove_False;
+    settings->camera_gain = 0;
+    settings->camera_auto_white_balance = PSMove_False;
+    settings->camera_exposure = (255 * 15) / 0xFFFF;
+    settings->camera_brightness = 0;
+    settings->camera_mirror = PSMove_False;
+    settings->exposure_mode = Exposure_LOW;
+    settings->calibration_blink_delay = 200;
+    settings->calibration_diff_t = 20;
+    settings->calibration_min_size = 50;
+    settings->calibration_max_distance = 30;
+    settings->calibration_size_std = 10;
+    settings->color_mapping_max_age = 2 * 60 * 60;
+    settings->dimming_factor = 1.f;
+    settings->color_hue_filter_range = 20;
+    settings->color_saturation_filter_range = 85;
+    settings->color_value_filter_range = 85;
+    settings->tracker_adaptive_xy = 1;
+    settings->tracker_adaptive_z = 1;
+    settings->color_adaption_quality_t = 35.f;
+    settings->color_update_rate = 1.f;
+    settings->search_tile_width = 0;
+    settings->search_tile_height = 0;
+    settings->search_tiles_horizontal = 0;
+    settings->search_tiles_count = 0;
+    settings->roi_adjust_fps_t = 160;
+    settings->tracker_quality_t1 = 0.3f;
+    settings->tracker_quality_t2 = 0.7f;
+    settings->tracker_quality_t3 = 4.7f;
+    settings->color_update_quality_t1 = 0.8f;
+    settings->color_update_quality_t2 = 0.2f;
+    settings->color_update_quality_t3 = 6.f;
+    settings->intrinsics_xml = "intrinsics.xml";
+    settings->distortion_xml = "distortion.xml";
 }
 
 PSMoveTracker *psmove_tracker_new() {
