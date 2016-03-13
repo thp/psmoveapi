@@ -98,9 +98,9 @@ moved_client_create(const char *hostname)
 
     if (!wsa_initialized) {
         WSADATA wsa_data;
-		int result = WSAStartup(MAKEWORD(1, 1), &wsa_data);
-		(void)result;
-		assert(result == 0);
+        int result = WSAStartup(MAKEWORD(1, 1), &wsa_data);
+        (void)result;
+        assert(result == 0);
         wsa_initialized = 1;
     }
 #endif
@@ -126,8 +126,8 @@ moved_client_create(const char *hostname)
         .tv_usec = (MOVED_TIMEOUT_MS % 1000) * 1000,
     };
 #endif
-	int result = setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
-		(char*)&receive_timeout, sizeof(receive_timeout));
+    int result = setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
+        (char*)&receive_timeout, sizeof(receive_timeout));
     assert(result == 0);
 
     client->moved_addr.sin_family = AF_INET;
@@ -136,14 +136,14 @@ moved_client_create(const char *hostname)
 
     client->moved_addr.sin_addr.s_addr = inet_addr(hostname);
 
-	// If hostname failed to convert to an address, it's probably an actual name, so try to resolve the name to IP
-	if (client->moved_addr.sin_addr.s_addr == INADDR_NONE)
-	{
-		struct hostent *remoteHost = gethostbyname(hostname);
+    // If hostname failed to convert to an address, it's probably an actual name, so try to resolve the name to IP
+    if (client->moved_addr.sin_addr.s_addr == INADDR_NONE)
+    {
+        struct hostent *remoteHost = gethostbyname(hostname);
 
-		if (remoteHost->h_addrtype == AF_INET) 
-			client->moved_addr.sin_addr.s_addr = *(u_long *)remoteHost->h_addr_list[0];
-	}
+        if (remoteHost->h_addrtype == AF_INET) 
+            client->moved_addr.sin_addr.s_addr = *(u_long *)remoteHost->h_addr_list[0];
+    }
 
     assert(client->moved_addr.sin_addr.s_addr != INADDR_NONE);
 
