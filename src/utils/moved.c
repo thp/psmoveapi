@@ -140,7 +140,9 @@ moved_server_create()
 
     if (!wsa_initialized) {
         WSADATA wsa_data;
-        assert(WSAStartup(MAKEWORD(1, 1), &wsa_data) == 0);
+        int result = WSAStartup(MAKEWORD(1, 1), &wsa_data);
+        (void)result;
+        assert(result == 0);
         wsa_initialized = 1;
     }
 #endif
@@ -153,8 +155,10 @@ moved_server_create()
     server->server_addr.sin_port = htons(MOVED_UDP_PORT);
     server->server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    assert(bind(server->socket, (struct sockaddr *)&(server->server_addr),
-                sizeof(server->server_addr)) != -1);
+    int result = bind(server->socket, (struct sockaddr *)&(server->server_addr),
+                      sizeof(server->server_addr));
+    (void)result;
+    assert(result != -1);
 
     return server;
 }
@@ -172,8 +176,13 @@ moved_server_handle_request(moved_server *server)
     unsigned char request[MOVED_SIZE_REQUEST] = {0};
     unsigned char response[MOVED_SIZE_READ_RESPONSE] = {0};
 
-    assert(recvfrom(server->socket, request, sizeof(request),
-                0, (struct sockaddr *)&si_other, &si_len) != -1);
+    int bytes_received = recvfrom(server->socket, (char*)request, sizeof(request),
+        0, (struct sockaddr *)&si_other, &si_len);
+    assert(bytes_received != -1);
+
+    // Client disconnected
+    if (bytes_received == 0)
+        return;
 
     request_id = request[0];
     device_id = request[1];
@@ -236,8 +245,10 @@ moved_server_handle_request(moved_server *server)
 
     /* Some requests need a response - send it here */
     if (send_response) {
-        assert(sendto(server->socket, (char*)response, sizeof(response),
-                0, (struct sockaddr *)&si_other, si_len) != -1);
+        int result = sendto(server->socket, (char*)response, sizeof(response),
+                0, (struct sockaddr *)&si_other, si_len);
+        (void)result;
+        assert(result != -1);
     }
 }
 
