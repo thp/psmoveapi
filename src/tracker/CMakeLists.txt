@@ -185,7 +185,6 @@ if(PSMOVE_BUILD_TRACKER)
 		set_source_files_properties( ${CMAKE_CURRENT_LIST_DIR}/psmove_tracker.c PROPERTIES LANGUAGE CXX )
 	ENDIF(MSVC)
 	
-    include_directories(${ROOT_DIR}/external/glm)
     add_library(psmoveapi_tracker SHARED
         ${PSMOVEAPI_TRACKER_SRC}
         ${PSMOVEAPI_TRACKER_PLATFORM_SRC})

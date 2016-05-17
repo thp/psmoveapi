@@ -18,6 +18,8 @@ set(PSMOVEAPI_INSTALL_TARGETS) # Container for build targets to be installed
 set(PSMOVEAPI_MATH_SRC)        # Container for math related source files
 
 include_directories(${ROOT_DIR}/external/hidapi/hidapi)
+include_directories(${ROOT_DIR}/external/glm)
+
 # Put any other libraries that you might need in here
 link_directories(${ROOT_DIR}/external/libs)
 
