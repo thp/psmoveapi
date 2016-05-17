@@ -129,27 +129,7 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
         framerate = PSMOVE_TRACKER_DEFAULT_FPS;
     }
 
-#if defined(CAMERA_CONTROL_USE_CL_DRIVER)
-	int cams = CLEyeGetCameraCount();
-
-	if (cams <= cameraID) {
-            free(cc);
-            return NULL;
-	}
-
-	GUID cguid = CLEyeGetCameraUUID(cameraID);
-	cc->camera = CLEyeCreateCamera(cguid,
-        CLEYE_COLOR_PROCESSED, CLEYE_VGA, framerate);
-
-    CLEyeCameraGetFrameDimensions(cc->camera, &width, &height);
-
-	// Depending on color mode chosen, create the appropriate OpenCV image
-    cc->frame4ch = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 4);
-    cc->frame3ch = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
-
-	CLEyeCameraStart(cc->camera);
-
-#elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
     ps3eye_init();
     int cams = ps3eye_count_connected();
 
@@ -198,9 +178,7 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
 int
 camera_control_count_connected()
 {
-#if defined(CAMERA_CONTROL_USE_CL_DRIVER)
-	return CLEyeGetCameraCount();
-#elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
 	ps3eye_init();
 	return ps3eye_count_connected();
 #else
@@ -255,20 +233,7 @@ camera_control_query_frame( CameraControl* cc,
 {
     IplImage* result;
 
-#if defined(CAMERA_CONTROL_USE_CL_DRIVER)
-    // assign buffer-pointer to address of buffer
-    cvGetRawData(cc->frame4ch, &cc->pCapBuffer, 0, 0);
-
-    CLEyeCameraGetFrame(cc->camera, cc->pCapBuffer, 2000);
-
-    // convert 4ch image to 3ch image
-    const int from_to[] = { 0, 0, 1, 1, 2, 2 };
-    const CvArr** src = (const CvArr**) &cc->frame4ch;
-    CvArr** dst = (CvArr**) &cc->frame3ch;
-    cvMixChannels(src, 1, dst, 1, from_to, 3);
-
-    result = cc->frame3ch;
-#elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
     int stride = 0;
     unsigned char *pixels = ps3eye_grab_frame(cc->eye, &stride);
 
@@ -340,15 +305,7 @@ camera_control_query_frame( CameraControl* cc,
 void
 camera_control_delete(CameraControl* cc)
 {
-#if defined(CAMERA_CONTROL_USE_CL_DRIVER)
-    if (cc->frame3ch != 0x0)
-        cvReleaseImage(&cc->frame3ch);
-
-    if (cc->frame4ch != 0x0)
-		cvReleaseImage(&cc->frame4ch);
-
-    CLEyeDestroyCamera(cc->camera);
-#elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
     cvReleaseImage(&cc->framebgr);
 
     ps3eye_close(cc->eye);
