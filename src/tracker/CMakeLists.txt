@@ -11,9 +11,6 @@ option(PSMOVE_BUILD_TRACKER "Build the Tracker module (needs OpenCV)" ON)
 # Enable tweaks (e.g. registry settings on Windows, ...) for PS Eye
 option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
 
-# Use the CL Eye SDK to interface with the PS Eye camera (Windows only)
-option(PSMOVE_USE_CL_EYE_SDK "Use the CL Eye SDK driver on Windows" OFF)
-
 # Use the PS3EYEDriver to interface with the PS Eye camera (OS X and Windows only)
 option(PSMOVE_USE_PS3EYE_DRIVER "Use the PS3EYEDriver on OS X or Windows" OFF)
 
@@ -124,29 +121,6 @@ IF(PSMOVE_USE_PS3EYE_DRIVER)
     set(INFO_LICENSE "GPL")
 ENDIF()
 
-#CL_EYE_DRIVER
-set(INFO_USE_CL_EYE "No (Windows 32-bit only)")
-IF(PSMOVE_USE_PSEYE
-    AND PSMOVE_USE_CL_EYE_SDK
-    AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows"
-    AND NOT(${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8))
-    find_path(CL_EYE_SDK_PATH Bin/CLEyeMulticam.dll
-        HINTS "C:/Program Files/Code Laboratories/CL-Eye Platform SDK"
-        "C:/Program Files (x86)/Code Laboratories/CL-Eye Platform SDK")
-    IF(CL_EYE_SDK_PATH)
-        add_definitions(-DCAMERA_CONTROL_USE_CL_DRIVER)
-        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS CLEyeMulticam)
-        file(COPY ${CL_EYE_SDK_PATH}/Bin/CLEyeMulticam.dll
-            DESTINATION ${ROOT_DIR}/external/libs)
-        set(INFO_USE_CL_EYE_SDK "Yes (SDK version)")
-        # XXX: If this crashes, disable compiler optimizations
-    ELSE()  # Fall back to registry version
-        set(INFO_USE_CL_EYE_SDK "Yes (registry version)")
-    ENDIF()
-else()
-    SET(INFO_USE_CL_EYE_SDK "No")
-ENDIF()
-
 IF(PSMOVE_USE_DEBUG_CAPTURE)
     add_definitions(-DCAMERA_CONTROL_DEBUG_CAPTURED_IMAGE)
 ENDIF()
@@ -216,5 +190,4 @@ message("  Tracker")
 message("    Tracker library:  " ${INFO_BUILD_TRACKER})
 feature_use_info("PS Eye support:   " PSMOVE_USE_PSEYE)
 feature_use_info("HTML tracing:     " PSMOVE_USE_TRACKER_TRACE)
-message("    Use CL Eye SDK:   " ${INFO_USE_CL_EYE_SDK})
 message("    Use PS3EYEDriver: " ${INFO_USE_PS3EYE_DRIVER})

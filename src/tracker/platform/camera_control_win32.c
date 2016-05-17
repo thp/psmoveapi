@@ -38,7 +38,7 @@
 #include "../camera_control_private.h"
 
 void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
-#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
+#if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
 	HKEY hKey;
 	DWORD l = sizeof(DWORD);
 	DWORD AutoAEC = 0;
@@ -80,7 +80,7 @@ void camera_control_backup_system_settings(CameraControl* cc, const char* file) 
 }
 
 void camera_control_restore_system_settings(CameraControl* cc, const char* file) {
-#if !defined(CAMERA_CONTROL_USE_CL_DRIVER) && !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
+#if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
 	int NOT_FOUND = -1;
 	int val;
 	HKEY hKey;
@@ -132,26 +132,7 @@ void camera_control_restore_system_settings(CameraControl* cc, const char* file)
 
 void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast, int brightness, enum PSMove_Bool h_flip)
 {
-#if defined(CAMERA_CONTROL_USE_CL_DRIVER)
-	if (autoE >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_AUTO_EXPOSURE, autoE > 0);
-	if (autoG >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_AUTO_GAIN, autoG > 0);
-	if (autoWB >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_AUTO_WHITEBALANCE, autoWB > 0);
-	if (exposure >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_EXPOSURE, round((511 * exposure) / 0xFFFF));
-	if (gain >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_GAIN, round((79 * gain) / 0xFFFF));
-	if (wbRed >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_WHITEBALANCE_RED, round((255 * wbRed) / 0xFFFF));
-	if (wbGreen >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_WHITEBALANCE_GREEN, round((255 * wbGreen) / 0xFFFF));
-	if (wbBlue >= 0)
-		CLEyeSetCameraParameter(cc->camera, CLEYE_WHITEBALANCE_BLUE, round((255 * wbBlue) / 0xFFFF));
-
-	CLEyeSetCameraParameter(cc->camera, CLEYE_HFLIP, h_flip)
-#elif defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
 	//autoE... setAutoExposure not defined in ps3eye.h
 	ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN,				autoG > 0);
 	ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_WHITEBALANCE,		autoWB > 0);
