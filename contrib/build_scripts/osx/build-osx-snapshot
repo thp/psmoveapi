@@ -19,18 +19,8 @@ export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 # For parallel builds
 MAKE_ARGS=-j4
 
-# Take version from Debian package info (manual parsing...)
-PSMOVEAPI_VERSION=$(grep -m 1 -o "psmoveapi (.*)" debian/changelog |
-                    sed -e 's/psmoveapi (\(.*\))/\1/')
-
 # Git revision identifier
 PSMOVEAPI_REVISION=$(git describe --long --tags)
-
-# By default, we build a snapshot. If "release" is the first argument, we
-# build a release (do not add date and Git revision information to version)
-if [ "$1" != "release" ]; then
-    PSMOVEAPI_VERSION=${PSMOVEAPI_VERSION}~$(date +%F)+${PSMOVEAPI_REVISION}
-fi
 
 if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     echo "ERROR: You have to run this script in the PS Move API source root."
@@ -93,7 +83,7 @@ fi
 cd $PSMOVEAPI_CHECKOUT
 
 # Build PS Move API
-PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_VERSION}/
+PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_REVISION}/
 rm -rf build
 mkdir build
 cd build
@@ -122,7 +112,7 @@ then
 	cd $PSMOVEAPI_CHECKOUT
 
 	# Tar it up
-	PACKAGE_NAME=psmoveapi_${PSMOVEAPI_VERSION}_osx108
+	PACKAGE_NAME=psmoveapi_${PSMOVEAPI_REVISION}_macosx
 	rm -rf $PACKAGE_NAME
 	mv dist $PACKAGE_NAME
 	mkdir -p upload
