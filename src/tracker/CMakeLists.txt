@@ -14,9 +14,6 @@ option(PSMOVE_USE_PSEYE "Enable tweaks for the PS Eye camera" ON)
 # Use the PS3EYEDriver to interface with the PS Eye camera (OS X and Windows only)
 option(PSMOVE_USE_PS3EYE_DRIVER "Use the PS3EYEDriver on OS X or Windows" OFF)
 
-# To show the OpenCV camera capture window everytime (useful for debugging)
-option(PSMOVE_USE_DEBUG_CAPTURE "Always show camera capture input" OFF)
-
 # Write debugging images for tracking calibration to home directory
 option(PSMOVE_USE_TRACKER_TRACE "Write tracker calibration images to disk" OFF)
 
@@ -119,10 +116,6 @@ ENDIF()
 IF(PSMOVE_USE_PS3EYE_DRIVER)
     # PS3EYEDriver is based on GPL'd code
     set(INFO_LICENSE "GPL")
-ENDIF()
-
-IF(PSMOVE_USE_DEBUG_CAPTURE)
-    add_definitions(-DCAMERA_CONTROL_DEBUG_CAPTURED_IMAGE)
 ENDIF()
 
 file(GLOB PSMOVEAPI_TRACKER_SRC

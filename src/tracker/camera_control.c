@@ -293,12 +293,6 @@ camera_control_query_frame( CameraControl* cc,
         result = cc->frame3chUndistort;
     }
 
-
-#if defined(CAMERA_CONTROL_DEBUG_CAPTURED_IMAGE)
-    cvShowImage("camera input", result);
-    cvWaitKey(1);
-#endif
-
     return result;
 }
 
