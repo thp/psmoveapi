@@ -1,14 +1,3 @@
-
-CLEye
-=====
-
-Header for the CLEye Windows driver
-by Codelaboratories Software
-from http://codelaboratories.com/products/eye/sdk/
-
-Modified by Benjamin Venditti for interoperability with the Tracker
-
-
 hidapi
 ======
 
