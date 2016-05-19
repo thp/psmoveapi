@@ -167,14 +167,14 @@ IF NOT EXIST build mkdir build
 cd build
 
 IF "%MSVC_VERSION%"=="2015" (
-	cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/
+	cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/
 	IF !ERRORLEVEL! NEQ 0 (
 		echo Failed to generate PSMoveAPI solution
 		goto Error
 	)	
 ) ELSE (
 	IF "%MSVC_VERSION%" == "2013" (
-		cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DPSMOVE_BUILD_TUIO_SERVER=ON -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/
+		cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_MADGWICK_AHRS=1 -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/
 		IF !ERRORLEVEL! NEQ 0 ( 
 			echo Failed to generate PSMoveAPI solution
 			goto Error
