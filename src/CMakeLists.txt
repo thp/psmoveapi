@@ -20,9 +20,6 @@ set(PSMOVEAPI_MATH_SRC)        # Container for math related source files
 include_directories(${ROOT_DIR}/external/hidapi/hidapi)
 include_directories(${ROOT_DIR}/external/glm)
 
-# Put any other libraries that you might need in here
-link_directories(${ROOT_DIR}/external/libs)
-
 set(INFO_LICENSE "BSD")
 
 # Make a debug build with helpful output for debugging / maintenance
