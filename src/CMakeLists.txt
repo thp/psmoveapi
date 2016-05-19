@@ -81,12 +81,6 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set(CMAKE_STATIC_LIBRARY_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -static -static-libgcc -static-libstdc++")
     ENDIF(MINGW)
 
-    if (MINGW AND (NOT CMAKE_TOOLCHAIN_FILE))
-        # Only include these if we are NOT cross-compiling on Linux
-        include_directories(${ROOT_DIR}/external/mingw-w64-headers)
-        link_directories(${ROOT_DIR}/external/mingw-w64-headers)
-    endif()
-
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/windows/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
