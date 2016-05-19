@@ -30,12 +30,10 @@
 #include "camera_control.h"
 #include "psmove_tracker.h"
 
-#include "../external/iniparser/dictionary.h"
-#include "../external/iniparser/iniparser.h"
-
 #include "../psmove_private.h"
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "camera_control_private.h"
 

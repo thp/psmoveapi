@@ -132,19 +132,6 @@ list(APPEND PSMOVEAPI_TRACKER_SRC
 	"${ROOT_DIR}/include/psmove_fusion.h" 
 	"${ROOT_DIR}/include/psmove_tracker.h")
 
-file(GLOB INIPARSER_SRC
-    "${ROOT_DIR}/external/iniparser/*.c"
-)
-
-file(GLOB INIPARSER_HEADER
-    "${ROOT_DIR}/external/iniparser/*.h"
-)
-
-list(APPEND PSMOVEAPI_TRACKER_SRC ${INIPARSER_SRC} ${INIPARSER_HEADER})
-
-source_group("Header Files\\iniparser" FILES ${INIPARSER_HEADER})
-source_group("Source Files\\iniparser" FILES ${INIPARSER_SRC})
-
 
 if(PSMOVE_BUILD_TRACKER)
 	IF(MSVC)
