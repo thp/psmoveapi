@@ -45,7 +45,6 @@
 #include "camera_control.h"
 #include "camera_control_private.h"
 #include "tracker_helpers.h"
-#include "tracker_trace.h"
 
 #ifdef __linux
 #  include "platform/psmove_linuxsupport.h"
@@ -882,9 +881,6 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
         psmove_update_leds(tc->move);
     }
 
-    // clear the calibration html trace
-    psmove_html_trace_clear();
-
     IplImage *mask = NULL;
     IplImage *images[BLINKS]; // array of images saved during calibration for estimation of sphere color
     IplImage *diffs[BLINKS]; // array of masks saved during calibration for estimation of sphere color
@@ -898,9 +894,6 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
     float sizeBest = 0;
     CvSeq *contourBest = NULL;
 
-    // DEBUG log the assigned color
-    psmove_html_trace_put_color_var("assignedColor", cvScalar(rgb.b, rgb.g, rgb.r, 0));
-    
     float dimming = 1.0;
     if (tracker->settings.dimming_factor > 0) {
         dimming = tracker->settings.dimming_factor;
@@ -910,22 +903,12 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
             // create a diff image
             psmove_tracker_get_diff(tracker, move, rgb, images[i], diffs[i], tracker->settings.calibration_blink_delay, dimming);
 
-            // DEBUG log the diff image and the image with the lit sphere
-            psmove_html_trace_image_at(images[i], i, "originals");
-            psmove_html_trace_image_at(diffs[i], i, "rawdiffs");
-
             // threshold it to reduce image noise
             cvThreshold(diffs[i], diffs[i], tracker->settings.calibration_diff_t, 0xFF /* white */, CV_THRESH_BINARY);
-
-            // DEBUG log the thresholded diff image
-            psmove_html_trace_image_at(diffs[i], i, "threshdiffs");
 
             // use morphological operations to further remove noise
             cvErode(diffs[i], diffs[i], tracker->kCalib, 1);
             cvDilate(diffs[i], diffs[i], tracker->kCalib, 1);
-
-            // DEBUG log the even more cleaned up diff-image
-            psmove_html_trace_image_at(diffs[i], i, "erodediffs");
         }
 
         // put the diff images together to get hopefully only one intersection region
@@ -942,14 +925,6 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
             cvDrawContours(mask, contourBest, TH_COLOR_WHITE, TH_COLOR_WHITE, -1, CV_FILLED, 8, cvPoint(0, 0));
         }
         cvClearMemStorage(tracker->storage);
-
-        // DEBUG log the final mask used for color estimation
-        psmove_html_trace_image_at(mask, 0, "finaldiff");
-
-        // CHECK if the blob contains a minimum number of pixels
-        if (cvCountNonZero(mask) < tracker->settings.calibration_min_size) {
-            psmove_html_trace_put_log_entry("WARNING", "The final mask my not be representative for color estimation.");
-        }
 
         // calculate the average color from the first image
         *color = cvAvg(images[0], mask);
@@ -971,9 +946,6 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
         dimming *= 0.3f;
     }
 
-    psmove_html_trace_put_color_var("estimatedColor", *color);
-    psmove_html_trace_put_int_var("estimated_hue", (*hsv_color).val[0]);
-
     int valid_countours = 0;
 
     // calculate upper & lower bounds for the color filter
@@ -989,9 +961,6 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
         // use morphological operations to further remove noise
         cvErode(mask, mask, tracker->kCalib, 1);
         cvDilate(mask, mask, tracker->kCalib, 1);
-
-        // DEBUG log the color filter and
-        psmove_html_trace_image_at(mask, i, "filtered");
 
         // find the biggest contour in the image and save its location and size
         psmove_tracker_biggest_contour(mask, tracker->storage, &contourBest, &sizeBest);
@@ -1009,13 +978,12 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
 
         // CHECK for errors (no contour, more than one contour, or contour too small)
         if (!contourBest) {
-            psmove_html_trace_array_item_at(i, "contours", "no contour");
+            // No contour
         } else if (sizes[i] <= tracker->settings.calibration_min_size) {
-            psmove_html_trace_array_item_at(i, "contours", "too small");
+            // Too small
         } else if (dist >= tracker->settings.calibration_max_distance) {
-            psmove_html_trace_array_item_at(i, "contours", "too far apart");
+            // Too far apart
         } else {
-            psmove_html_trace_array_item_at(i, "contours", "OK");
             // all checks passed, increase the number of valid contours
             valid_countours++;
         }
@@ -1031,7 +999,6 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
 
     // CHECK if sphere was found in each BLINK image
     if (valid_countours < BLINKS) {
-        psmove_html_trace_put_log_entry("ERROR", "The sphere could not be found in all images.");
         return PSMove_False;
     }
 
@@ -1039,7 +1006,6 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
     double sizeVariance, sizeAverage;
     th_stats(sizes, BLINKS, &sizeVariance, &sizeAverage);
     if (sqrt(sizeVariance) >= (sizeAverage / 100.0 * tracker->settings.calibration_size_std)) {
-        psmove_html_trace_put_log_entry("ERROR", "The spheres found differ too much in size.");
         return PSMove_False;
     }
 

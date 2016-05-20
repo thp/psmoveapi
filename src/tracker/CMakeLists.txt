@@ -17,9 +17,6 @@ option(PSMOVE_USE_PS3EYE_DRIVER "Use the PS3EYEDriver on OS X or Windows" OFF)
 # To show the OpenCV camera capture window everytime (useful for debugging)
 option(PSMOVE_USE_DEBUG_CAPTURE "Always show camera capture input" OFF)
 
-# Write debugging images for tracking calibration to home directory
-option(PSMOVE_USE_TRACKER_TRACE "Write tracker calibration images to disk" OFF)
-
 IF(PSMOVE_USE_PS3EYE_DRIVER)
     # PS3EYEDriver is based on GPL'd code
     set(INFO_LICENSE "GPL")
@@ -188,5 +185,4 @@ message("")
 message("  Tracker")
 message("    Tracker library:  " ${INFO_BUILD_TRACKER})
 feature_use_info("PS Eye support:   " PSMOVE_USE_PSEYE)
-feature_use_info("HTML tracing:     " PSMOVE_USE_TRACKER_TRACE)
 message("    Use PS3EYEDriver: " ${INFO_USE_PS3EYE_DRIVER})
