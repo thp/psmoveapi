@@ -109,16 +109,9 @@ on your options at configure time.
 In general, all dependencies are under a MIT- or BSD-style license, with the
 exception of the following dependencies:
 
- - Madgwick AHRS: Released under the terms of the GNU GPL
-   For orientation tracking
-   CMake option: PSMOVE_USE_MADGWICK_AHRS (disabled by default)
-
  - PS3EYEDriver: Released under the MIT license, parts based on GPL code
    For interfacing with the PSEye camera on OS X (only in the tracker)
    CMake option: PSMOVE_USE_PS3EYE_DRIVER (disabled by default)
-
-When you enable the Madgwick AHRS algorithm, the resulting library can only
-be used under the terms of the GNU GPL.
 
 More information about the third party modules and licenses:
 

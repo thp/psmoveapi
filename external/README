@@ -6,16 +6,6 @@ by Alan Ott
 from http://www.signal11.us/oss/hidapi/
 
 
-MadgwickAHRS, MahonyAHRS
-========================
-
-Open Source IMU and AHRS algorithms
-by Sebastian Madgwick
-from http://www.x-io.co.uk/node/8
-
-Modified by Thomas Perl for multi-controller tracking (quaternion state)
-
-
 iniparser
 =========
 
