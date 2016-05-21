@@ -37,6 +37,13 @@ extern "C" {
 void
 psmove_port_initialize_sockets();
 
+/**
+ * Check if necessary permissions are available for pairing controllers
+ * Returns non-zero if permissions are available, zero if not
+ **/
+int
+psmove_port_check_pairing_permissions();
+
 #ifdef __cplusplus
 }
 #endif

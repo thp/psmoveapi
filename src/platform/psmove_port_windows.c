@@ -41,3 +41,10 @@ psmove_port_initialize_sockets()
         wsa_initialized = (result == 0);
     }
 }
+
+int
+psmove_port_check_pairing_permissions()
+{
+    // FIXME: Do we need to check for admin privileges here?
+    return 1;
+}

@@ -29,8 +29,27 @@
 
 #include "psmove_port.h"
 
+#include <stdlib.h>
+#include <unistd.h>
+
 void
 psmove_port_initialize_sockets()
 {
     // Nothing to do on Linux
+}
+
+int
+psmove_port_check_pairing_permissions()
+{
+    /**
+     * In order to be able to start/stop bluetoothd and to
+     * add new entries to the Bluez configuration files, we
+     * need to run as root (platform/psmove_linuxsupport.c)
+     **/
+    if (geteuid() != 0) {
+        printf("This program must be run as root (or use sudo).\n");
+        return 0;
+    }
+
+    return 1;
 }

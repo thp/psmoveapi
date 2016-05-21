@@ -34,3 +34,10 @@ psmove_port_initialize_sockets()
 {
     // Nothing to do on OS X
 }
+
+int
+psmove_port_check_pairing_permissions()
+{
+    // Nothing to do on OS X
+    return 1;
+}
