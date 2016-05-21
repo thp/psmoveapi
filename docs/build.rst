@@ -88,13 +88,11 @@ You need to install the following requirements:
 
 - `Visual Studio Community 2013`_ or `Visual Studio Community 2015`_
 - `CMake`_
-- `OpenCV`_
 - `Git`_
 
 .. _`Visual Studio Community 2013`: http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
 .. _`Visual Studio Community 2015`: https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx
 .. _`CMake`: http://www.cmake.org/cmake/resources/software.html
-.. _`OpenCV`: http://sourceforge.net/projects/opencvlibrary/files/opencv-win/
 .. _`Git`: http://code.google.com/p/msysgit/
 
 Preparing to build the PS Move API
@@ -111,6 +109,10 @@ Automatic build
 A build script is provided which will take care of the build for you. The
 script will generate the Visual Studio solution and build everything in Debug
 and Release.
+
+Run the batch files in the "VS2015 x64 Native Tools Command Prompt" (you'll
+find it in your start menu; the VS2013 variant should be named similarly)
+from the PS Move API checkout folder.
 
 For Visual Studio 2013, use::
 
