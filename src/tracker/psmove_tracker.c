@@ -713,11 +713,7 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
         {0x00, 0xFF, 0xFF}, /* cyan */
         {0xFF, 0xFF, 0x00}, /* yellow */
         {0xFF, 0x00, 0x00}, /* red */
-#ifdef __APPLE__
-        {0x00, 0xFF, 0x00}, /* green */
-#else
         {0x00, 0x00, 0xFF}, /* blue */
-#endif
     };
 
     for (i=0; i<ARRAY_LENGTH(preset_colors); i++) {
