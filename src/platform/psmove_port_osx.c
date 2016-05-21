@@ -28,6 +28,7 @@
 
 
 #include "psmove_port.h"
+#include "psmove_sockets.h"
 
 #include <sys/time.h>
 
@@ -63,4 +64,14 @@ psmove_port_get_time_ms()
     }
 
     return (now - startup_time);
+}
+
+void
+psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
+{
+    struct timeval receive_timeout = {
+        .tv_sec = timeout_ms / 1000,
+        .tv_usec = (timeout_ms % 1000) * 1000,
+    };
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
 }

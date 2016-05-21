@@ -28,6 +28,7 @@
 
 
 #include "psmove_port.h"
+#include "psmove_sockets.h"
 
 #include <windows.h>
 
@@ -74,4 +75,11 @@ psmove_port_get_time_ms()
     }
 
     return (uint64_t)((now.QuadPart - startup_time.QuadPart) * 1000 / frequency.QuadPart);
+}
+
+void
+psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
+{
+    DWORD receive_timeout = timeout_ms;
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
 }

@@ -102,23 +102,7 @@ moved_client_create(const char *hostname)
     client->socket = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     assert(client->socket != -1);
 
-    /**
-     * The receiving socket must have a timeout to not block indefinitely
-     *
-     * With Berkeley sockets, SO_RCVTIMEO takes a struct timeval, whereas
-     * Microsoft's WinSock takes a DWORD containing a milliseconds value.
-     **/
-#ifdef _WIN32
-    DWORD receive_timeout = MOVED_TIMEOUT_MS;
-#else
-    struct timeval receive_timeout = {
-        .tv_sec = MOVED_TIMEOUT_MS / 1000,
-        .tv_usec = (MOVED_TIMEOUT_MS % 1000) * 1000,
-    };
-#endif
-    int result = setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
-        (char*)&receive_timeout, sizeof(receive_timeout));
-    assert(result == 0);
+    psmove_port_set_socket_timeout_ms(client->socket, MOVED_TIMEOUT_MS);
 
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);

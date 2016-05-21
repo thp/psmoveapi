@@ -52,6 +52,12 @@ psmove_port_check_pairing_permissions();
 uint64_t
 psmove_port_get_time_ms();
 
+/**
+ * Set the timeout to the specified time in milliseconds for a given socket
+ **/
+void
+psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms);
+
 #ifdef __cplusplus
 }
 #endif
