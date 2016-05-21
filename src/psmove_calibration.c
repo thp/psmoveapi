@@ -36,9 +36,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#ifndef _MSC_VER
-#include <libgen.h>
-#endif
 #include <math.h>
 
 #define PSMOVE_CALIBRATION_EXTENSION ".calibration"
