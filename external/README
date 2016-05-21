@@ -44,10 +44,6 @@ and is public domain.
 getopt.h is from https://gist.github.com/ashelly/7776712
 and is distributed under the LGPL 2.1 (or later).
 
-gettod.h is from http://stackoverflow.com/a/26085827
-and is licensed under cc by-sa 3.0
-
-
 pthreads-w32
 ============
 

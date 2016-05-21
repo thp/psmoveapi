@@ -40,11 +40,6 @@ extern "C" {
 #include <wchar.h>
 #include <time.h>
 
-// VS2015 added timespec, no need to include pthread
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-	#include <pthread.h> /* for timespec on Windows */
-#endif
-
     /**
      * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c
      *
@@ -192,19 +187,6 @@ ADDCALL _psmove_normalize_btaddr(const char *addr, int lowercase, char separator
  **/
 ADDAPI int
 ADDCALL _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller);
-
-
-/* Performance measurement structures and functions */
-typedef struct timespec PSMove_timestamp;
-
-ADDAPI PSMove_timestamp
-ADDCALL _psmove_timestamp();
-
-ADDAPI PSMove_timestamp
-ADDCALL _psmove_timestamp_diff(PSMove_timestamp a, PSMove_timestamp b);
-
-ADDAPI double
-ADDCALL _psmove_timestamp_value(PSMove_timestamp ts);
 
 
 /* Misc utility functions */

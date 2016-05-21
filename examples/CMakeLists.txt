@@ -36,14 +36,14 @@ endif()
 
 # C test programs
 if(PSMOVE_BUILD_TESTS)
-    foreach(TESTNAME led_update read_performance calibration responsiveness extension led_pwm_frequency)
+    foreach(TESTNAME led_update calibration responsiveness extension led_pwm_frequency)
         add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c ${MSVC_SRCS})
         target_link_libraries(test_${TESTNAME} psmoveapi ${MSVC_LIBS})
 		set_property(TARGET test_${TESTNAME} PROPERTY FOLDER "Examples") 
     endforeach(TESTNAME)
 
     if(PSMOVE_BUILD_TRACKER)
-        foreach(TESTNAME capture_performance record_video roi_size end2end_latency)
+        foreach(TESTNAME record_video)
             add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c ${MSVC_SRCS})
             target_link_libraries(test_${TESTNAME} psmoveapi psmoveapi_tracker ${MSVC_LIBS})
 			set_property(TARGET test_${TESTNAME} PROPERTY FOLDER "Examples") 

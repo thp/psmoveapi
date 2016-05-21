@@ -42,7 +42,6 @@
 #include <unistd.h>
 #ifdef _MSC_VER
 #include <WinSock2.h>
-#include "gettod.h"
 #else
 #include <sys/time.h>
 #endif
@@ -2434,51 +2433,6 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
 
     result[count] = '\0';
     return result;
-}
-
-#if defined(__APPLE__) || defined(_MSC_VER)
-
-#define CLOCK_MONOTONIC 0
-
-static int
-clock_gettime(int unused, struct timespec *ts)
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-
-    ts->tv_sec = tv.tv_sec;
-    ts->tv_nsec = tv.tv_usec * 1000;
-
-    return 0;
-}
-#endif /* __APPLE__ || _MSC_VER */
-
-PSMove_timestamp
-_psmove_timestamp()
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts;
-}
-
-PSMove_timestamp
-_psmove_timestamp_diff(PSMove_timestamp a, PSMove_timestamp b)
-{
-    struct timespec ts;
-    if (a.tv_nsec >= b.tv_nsec) {
-        ts.tv_sec = a.tv_sec - b.tv_sec;
-        ts.tv_nsec = a.tv_nsec - b.tv_nsec;
-    } else {
-        ts.tv_sec = a.tv_sec - b.tv_sec - 1;
-        ts.tv_nsec = 1000000000 + a.tv_nsec - b.tv_nsec;
-    }
-    return ts;
-}
-
-double
-_psmove_timestamp_value(PSMove_timestamp ts)
-{
-    return ts.tv_sec + ts.tv_nsec * 0.000000001;
 }
 
 void
