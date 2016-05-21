@@ -27,14 +27,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-# This examples is the same as test_fusion.py, but uses pygame intead of pyglet
+# Test the sensor fusion part of PS Move API with PyGame (tracker + orientation)
 
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'build'))
 
-#import pyglet
-#from pyglet.gl import *
 import pygame
 from pygame.locals import *
 from OpenGL.GL import *
