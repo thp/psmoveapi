@@ -30,6 +30,7 @@
 
 #include "psmove.h"
 #include "../psmove_private.h"
+#include "../psmove_port.h"
 #include "moved_client.h"
 
 moved_client_list *
@@ -92,18 +93,7 @@ moved_client_list_destroy(moved_client_list *client_list)
 moved_client *
 moved_client_create(const char *hostname)
 {
-#ifdef _WIN32
-    /* "wsa" = Windows Sockets API, not a misspelling of "was" */
-    static int wsa_initialized = 0;
-
-    if (!wsa_initialized) {
-        WSADATA wsa_data;
-        int result = WSAStartup(MAKEWORD(1, 1), &wsa_data);
-        (void)result;
-        assert(result == 0);
-        wsa_initialized = 1;
-    }
-#endif
+    psmove_port_initialize_sockets();
 
     moved_client *client = (moved_client*)calloc(1, sizeof(moved_client));
 
