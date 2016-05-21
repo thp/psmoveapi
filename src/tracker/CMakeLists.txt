@@ -69,10 +69,9 @@ IF(PSMOVE_BUILD_TRACKER)
             ${QTKIT}
             ${AVFOUNDATION})
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        include_directories(${MSVC_INCLUDES})
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
-            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_win32.c ${MSVC_SRCS})
-        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS vfw32 comctl32 ${MSVC_LIBS})
+            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_win32.c)
+        list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS vfw32 comctl32)
         #OpenCV extra dependencies: comctl32 gdi32 ole32 setupapi ws2_32 vfw32
         IF(MINGW)
             list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS stdc++)

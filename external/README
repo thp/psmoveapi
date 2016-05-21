@@ -44,14 +44,6 @@ and is public domain.
 getopt.h is from https://gist.github.com/ashelly/7776712
 and is distributed under the LGPL 2.1 (or later).
 
-pthreads-w32
-============
-
-A Windows implementation of posix-threads. Also for struct timespec
-https://www.sourceware.org/pthreads-win32/
-It is distributed under the LGPL 2.1 (or later).
-
-
 SDL2
 ====
 

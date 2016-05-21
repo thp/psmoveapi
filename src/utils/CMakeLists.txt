@@ -3,11 +3,10 @@ set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
 include(${ROOT_DIR}/cmake/common.cmake)
 
 # Essential utilities
-include_directories(${MSVC_INCLUDES})
 include_directories(${ROOT_DIR}/src)
 foreach(UTILITY moved psmovepair magnetometer_calibration)
-    add_executable(${UTILITY} ${CMAKE_CURRENT_LIST_DIR}/${UTILITY}.c ${MSVC_SRCS})
-    target_link_libraries(${UTILITY} psmoveapi_static ${MSVC_LIBS})
+    add_executable(${UTILITY} ${CMAKE_CURRENT_LIST_DIR}/${UTILITY}.c)
+    target_link_libraries(${UTILITY} psmoveapi_static)
     set_target_properties(${UTILITY} PROPERTIES
         COMPILE_FLAGS -DUSING_STATIC_LIBRARY)
     set_property(TARGET ${UTILITY} PROPERTY FOLDER "Utilities")
