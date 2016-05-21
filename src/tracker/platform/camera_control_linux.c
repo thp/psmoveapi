@@ -30,8 +30,6 @@
 #include "../camera_control.h"
 #include "../camera_control_private.h"
 
-#include "../../../external/iniparser/iniparser.h"
-
 #include <linux/videodev2.h>
 #include <libv4l2.h>
 #include <fcntl.h>
@@ -44,73 +42,57 @@ int open_v4l2_device(int id)
     return v4l2_open(device_file, O_RDWR, 0);
 }
 
+struct CameraControlSystemSettings {
+    int AutoAEC;
+    int AutoAGC;
+    int Gain;
+    int Exposure;
+    int Contrast;
+    int Brightness;
+};
 
-void camera_control_backup_system_settings(CameraControl* cc, const char* file) {
-	int AutoAEC = 0;
-	int AutoAGC = 0;
-	int Gain = 0;
-	int Exposure = 0;
-	int Contrast = 0;
-	int Brightness = 0;
+struct CameraControlSystemSettings *
+camera_control_backup_system_settings(CameraControl *cc)
+{
+    struct CameraControlSystemSettings *settings = NULL;
 
-	int fd = open_v4l2_device(cc->cameraID);
+    int fd = open_v4l2_device(cc->cameraID);
+    if (fd != -1) {
+        struct CameraControlSystemSettings *settings = calloc(1, sizeof(struct CameraControlSystemSettings));
+        settings->AutoAEC = v4l2_get_control(fd, V4L2_CID_EXPOSURE_AUTO);
+        settings->AutoAGC = v4l2_get_control(fd, V4L2_CID_AUTOGAIN);
+        settings->Gain = v4l2_get_control(fd, V4L2_CID_GAIN);
+        settings->Exposure = v4l2_get_control(fd, V4L2_CID_EXPOSURE);
+        settings->Contrast = v4l2_get_control(fd, V4L2_CID_CONTRAST);
+        settings->Brightness = v4l2_get_control(fd, V4L2_CID_BRIGHTNESS);
 
-	if (fd != -1) {
-		AutoAEC = v4l2_get_control(fd, V4L2_CID_EXPOSURE_AUTO);
-		AutoAGC = v4l2_get_control(fd, V4L2_CID_AUTOGAIN);
-		Gain = v4l2_get_control(fd, V4L2_CID_GAIN);
-		Exposure = v4l2_get_control(fd, V4L2_CID_EXPOSURE);
-		Contrast = v4l2_get_control(fd, V4L2_CID_CONTRAST);
-		Brightness = v4l2_get_control(fd, V4L2_CID_BRIGHTNESS);
-		v4l2_close(fd);
+        v4l2_close(fd);
+    }
 
-		dictionary* ini = dictionary_new(0);
-		iniparser_set(ini, "PSEye", 0);
-		iniparser_set_int(ini, "PSEye:AutoAEC", AutoAEC);
-		iniparser_set_int(ini, "PSEye:AutoAGC", AutoAGC);
-		iniparser_set_int(ini, "PSEye:Gain", Gain);
-		iniparser_set_int(ini, "PSEye:Exposure", Exposure);
-		iniparser_set_int(ini, "PSEye:Contrast", Contrast);
-		iniparser_set_int(ini, "PSEye:Brightness", Brightness);
-		iniparser_save_ini(ini, file);
-		dictionary_del(ini);
-	}
+    return settings;
 }
 
-void camera_control_restore_system_settings(CameraControl* cc, const char* file) {
-	int NOT_FOUND = -1;
-	int AutoAEC = 0;
-	int AutoAGC = 0;
-	int Gain = 0;
-	int Exposure = 0;
-	int Contrast = 0;
-	int Brightness = 0;
+void
+camera_control_restore_system_settings(CameraControl *cc,
+        struct CameraControlSystemSettings *settings)
+{
+    if (!settings) {
+        return;
+    }
 
-	int fd = open_v4l2_device(cc->cameraID);
+    int fd = open_v4l2_device(cc->cameraID);
+    if (fd != -1) {
+        v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, settings->AutoAEC);
+        v4l2_set_control(fd, V4L2_CID_AUTOGAIN, settings->AutoAGC);
+        v4l2_set_control(fd, V4L2_CID_GAIN, settings->Gain);
+        v4l2_set_control(fd, V4L2_CID_EXPOSURE, settings->Exposure);
+        v4l2_set_control(fd, V4L2_CID_CONTRAST, settings->Contrast);
+        v4l2_set_control(fd, V4L2_CID_BRIGHTNESS, settings->Brightness);
 
-	if (fd != -1) {
-		dictionary* ini = iniparser_load(file);
-		AutoAEC = iniparser_getint(ini, "PSEye:AutoAEC", NOT_FOUND);
-		AutoAGC = iniparser_getint(ini, "PSEye:AutoAGC", NOT_FOUND);
-		Gain = iniparser_getint(ini, "PSEye:Gain", NOT_FOUND);
-		Exposure = iniparser_getint(ini, "PSEye:Exposure", NOT_FOUND);
-		Contrast = iniparser_getint(ini, "PSEye:Contrast", NOT_FOUND);
-		Brightness = iniparser_getint(ini, "PSEye:Brightness", NOT_FOUND);
-		iniparser_freedict(ini);
+        v4l2_close(fd);
+    }
 
-		if (AutoAEC != NOT_FOUND)
-		v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, AutoAEC);
-		if (AutoAGC != NOT_FOUND)
-		v4l2_set_control(fd, V4L2_CID_AUTOGAIN, AutoAGC);
-		if (Gain != NOT_FOUND)
-		v4l2_set_control(fd, V4L2_CID_GAIN, Gain);
-		if (Exposure != NOT_FOUND)
-		v4l2_set_control(fd, V4L2_CID_EXPOSURE, Exposure);
-		if (Contrast != NOT_FOUND)
-		v4l2_set_control(fd, V4L2_CID_CONTRAST, Contrast);
-		if (Brightness != NOT_FOUND)
-		v4l2_set_control(fd, V4L2_CID_BRIGHTNESS, Brightness);
-	}
+    free(settings);
 }
 
 void

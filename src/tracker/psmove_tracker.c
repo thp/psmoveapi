@@ -58,7 +58,6 @@
 #define ROIS 4                          // the number of levels of regions of interest (roi)
 #define BLINKS 2                        // number of diff images to create during calibration
 #define COLOR_MAPPING_RING_BUFFER_SIZE 256  /* Has to be 256, so that next_slot automatically wraps */
-#define PSEYE_BACKUP_FILE "PSEye_backup.ini"
 #define COLOR_MAPPING_DAT "colormapping.dat"
 
 
@@ -153,6 +152,7 @@ pseye_distance_parameters = {
 
 struct _PSMoveTracker {
     CameraControl* cc;
+    struct CameraControlSystemSettings *cc_settings;
 
     PSMoveTrackerSettings settings;  // Camera and tracker algorithm settings. Generally do not change after startup & calibration.
 
@@ -570,15 +570,12 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 	free(intrinsics_xml);
 	free(distortion_xml);
 
-    // backup the systems settings, if not already backuped
-    char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
-    camera_control_backup_system_settings(tracker->cc, filename);
-    free(filename);
+    tracker->cc_settings = camera_control_backup_system_settings(tracker->cc);
 
 #if !defined(__APPLE__) || defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
     // try to load color mapping data (not on Mac OS X for now, because the
     // automatic white balance means we get different colors every time)
-    filename = psmove_util_get_file_path(COLOR_MAPPING_DAT);
+    char *filename = psmove_util_get_file_path(COLOR_MAPPING_DAT);
     FILE *fp = NULL;
     time_t now = time(NULL);
     struct stat st;
@@ -1507,9 +1504,7 @@ psmove_tracker_free(PSMoveTracker *tracker)
         cvReleaseImage(&tracker->frame_rgb);
     }
 
-    char *filename = psmove_util_get_file_path(PSEYE_BACKUP_FILE);
-    camera_control_restore_system_settings(tracker->cc, filename);
-    free(filename);
+    camera_control_restore_system_settings(tracker->cc, tracker->cc_settings);
 
     cvReleaseMemStorage(&tracker->storage);
 

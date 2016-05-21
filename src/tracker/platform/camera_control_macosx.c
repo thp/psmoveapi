@@ -66,16 +66,15 @@ camera_control_set_parameters(CameraControl* cc,
 #endif
 }
 
-void
-camera_control_backup_system_settings(CameraControl* cc,
-        const char* file)
+struct CameraControlSystemSettings *
+camera_control_backup_system_settings(CameraControl* cc)
 {
-    // Do nothing
+    // Not implemented yet
+    return NULL;
 }
 
 void camera_control_restore_system_settings(CameraControl* cc,
-        const char* file)
+        struct CameraControlSystemSettings *settings)
 {
-    // Do nothing
+    // Not implemented yet
 }
-
