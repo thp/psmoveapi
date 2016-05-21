@@ -29,6 +29,8 @@
 
 #include "psmove_port.h"
 
+#include <windows.h>
+
 void
 psmove_port_initialize_sockets()
 {
@@ -47,4 +49,29 @@ psmove_port_check_pairing_permissions()
 {
     // FIXME: Do we need to check for admin privileges here?
     return 1;
+}
+
+uint64_t
+psmove_port_get_time_ms()
+{
+    static LARGE_INTEGER startup_time = { .QuadPart = 0 };
+    static LARGE_INTEGER frequency = { .QuadPart = 0 };
+    LARGE_INTEGER now;
+
+    if (frequency.QuadPart == 0) {
+        if (!QueryPerformanceFrequency(&frequency)) {
+            return 0;
+        }
+    }
+
+    if (!QueryPerformanceCounter(&now)) {
+        return 0;
+    }
+
+    /* The first time this function gets called, we init startup_time */
+    if (startup_time.QuadPart == 0) {
+        startup_time.QuadPart = now.QuadPart;
+    }
+
+    return (uint64_t)((now.QuadPart - startup_time.QuadPart) * 1000 / frequency.QuadPart);
 }

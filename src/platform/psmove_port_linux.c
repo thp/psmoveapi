@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 
 void
 psmove_port_initialize_sockets()
@@ -52,4 +53,25 @@ psmove_port_check_pairing_permissions()
     }
 
     return 1;
+}
+
+uint64_t
+psmove_port_get_time_ms()
+{
+    static uint64_t startup_time = 0;
+    uint64_t now;
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+        return 0;
+    }
+
+    now = (ts.tv_sec * 1000 + ts.tv_nsec / (1000 * 1000));
+
+    /* The first time this function gets called, we init startup_time */
+    if (startup_time == 0) {
+        startup_time = now;
+    }
+
+    return (now - startup_time);
 }

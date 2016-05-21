@@ -29,6 +29,8 @@
 #ifndef PSMOVE_PORT_H
 #define PSMOVE_PORT_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,6 +45,12 @@ psmove_port_initialize_sockets();
  **/
 int
 psmove_port_check_pairing_permissions();
+
+/**
+ * Get the current time in milliseconds since the first call
+ **/
+uint64_t
+psmove_port_get_time_ms();
 
 #ifdef __cplusplus
 }

@@ -29,6 +29,8 @@
 
 #include "psmove_port.h"
 
+#include <sys/time.h>
+
 void
 psmove_port_initialize_sockets()
 {
@@ -40,4 +42,25 @@ psmove_port_check_pairing_permissions()
 {
     // Nothing to do on OS X
     return 1;
+}
+
+uint64_t
+psmove_port_get_time_ms()
+{
+    static uint64_t startup_time = 0;
+    uint64_t now;
+    struct timeval tv;
+
+    if (gettimeofday(&tv, NULL) != 0) {
+        return 0;
+    }
+
+    now = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+
+    /* The first time this function gets called, we init startup_time */
+    if (startup_time == 0) {
+        startup_time = now;
+    }
+
+    return (now - startup_time);
 }

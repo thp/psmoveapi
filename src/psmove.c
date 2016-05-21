@@ -2265,39 +2265,7 @@ psmove_disconnect(PSMove *move)
 long
 psmove_util_get_ticks()
 {
-#ifdef WIN32
-    static LARGE_INTEGER startup_time = { .QuadPart = 0 };
-    static LARGE_INTEGER frequency = { .QuadPart = 0 };
-    LARGE_INTEGER now;
-
-    if (frequency.QuadPart == 0) {
-        psmove_return_val_if_fail(QueryPerformanceFrequency(&frequency), 0);
-    }
-
-    psmove_return_val_if_fail(QueryPerformanceCounter(&now), 0);
-
-    /* The first time this function gets called, we init startup_time */
-    if (startup_time.QuadPart == 0) {
-        startup_time.QuadPart = now.QuadPart;
-    }
-
-    return (long)((now.QuadPart - startup_time.QuadPart) * 1000 /
-            frequency.QuadPart);
-#else
-    static long startup_time = 0;
-    long now;
-    struct timeval tv;
-
-    psmove_return_val_if_fail(gettimeofday(&tv, NULL) == 0, 0);
-    now = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
-
-    /* The first time this function gets called, we init startup_time */
-    if (startup_time == 0) {
-        startup_time = now;
-    }
-
-    return (now - startup_time);
-#endif
+    return psmove_port_get_time_ms();
 }
 
 const char *
