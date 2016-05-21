@@ -44,10 +44,6 @@
 #include "math/psmove_alignment.hpp"
 #include "math/psmove_vector.h"
 
-#ifdef CMAKE_BUILD
-#include <unistd.h>
-#endif
-
 //-- constants -----
 #define SAMPLE_FREQUENCY 120.f
 
