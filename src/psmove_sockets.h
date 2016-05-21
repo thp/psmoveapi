@@ -1,7 +1,7 @@
 
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2016 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,50 +28,19 @@
  **/
 
 
-#ifndef MOVED_CLIENT_H
-#define MOVED_CLIENT_H
+#ifndef PSMOVE_SOCKETS_H
+#define PSMOVE_SOCKETS_H
 
-
-#include "../psmove_sockets.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <assert.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-
-#include "psmove_moved_protocol.h"
-
-typedef struct {
-    char *hostname;
-
-    int socket;
-    struct sockaddr_in moved_addr;
-
-    unsigned char request_buf[MOVED_SIZE_REQUEST];
-    unsigned char read_response_buf[MOVED_SIZE_READ_RESPONSE];
-} moved_client;
-
-typedef struct _moved_client_list {
-    moved_client *client;
-    struct _moved_client_list *next;
-} moved_client_list;
-
-moved_client_list *
-moved_client_list_open();
-
-void
-moved_client_list_destroy(moved_client_list *client_list);
-
-moved_client *
-moved_client_create(const char *hostname);
-
-int
-moved_client_send(moved_client *client, char req, char id, const unsigned char *data);
-
-void
-moved_client_destroy(moved_client *client);
-
+#ifdef _WIN32
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
+#  include <fcntl.h>
+#  include <netdb.h>
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <sys/types.h>
 #endif
+
+#endif /* PSMOVE_SOCKETS_H */

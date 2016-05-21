@@ -40,11 +40,6 @@
 #include <string.h>
 #include <wchar.h>
 #include <unistd.h>
-#ifdef _MSC_VER
-#include <WinSock2.h>
-#else
-#include <sys/time.h>
-#endif
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
