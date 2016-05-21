@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 2.8.12)
+set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
+include(${ROOT_DIR}/cmake/common.cmake)
+
+option(PSMOVE_BUILD_DEVTOOLS "Build tools for PS Move API development" OFF)
+
+if (PSMOVE_BUILD_DEVTOOLS)
+    include_directories(${MSVC_INCLUDES})
+    include_directories(${ROOT_DIR}/src)
+    foreach(UTILITY psmove_dfu_mode psmove_auth_response psmove_get_firmware_info)
+        add_executable(${UTILITY} ${CMAKE_CURRENT_LIST_DIR}/${UTILITY}.c ${MSVC_SRCS})
+        target_link_libraries(${UTILITY} psmoveapi ${MSVC_LIBS})
+        set_property(TARGET ${UTILITY} PROPERTY FOLDER "Dev Tools")
+        list(APPEND PSMOVEAPI_INSTALL_TARGETS ${UTILITY})
+    endforeach()
+endif()
