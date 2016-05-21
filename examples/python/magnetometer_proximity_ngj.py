@@ -78,22 +78,12 @@ while True:
             lastmeans.pop(0)
 
         rx, ry, rz = list(zip(*readings))
-        #print max(map(abs, reading))
-
-        #means = mean(readings)
-        #devs = stddev(readings, means)
-        #dx, dy, dz = zip(*devs)
-        #print sum(dx), sum(dy), sum(dz)
-
         l = [abs(x) for x in (move.mx, move.my, move.mz) if x != 0]
         length = math.sqrt(move.mx**2 + move.my**2 + move.mz**2)
-        #print length
 
         print(('%10.3f '*3) % reading, length)
         diffsums = calc_diffsums(lastmeans, mean(readings))
         change = sum(map(abs, diffsums))
-        #print change
-        #print ('%10.3f '*3) % diffsums
 
         cutoff = 400
         if length > cutoff:
@@ -101,18 +91,9 @@ while True:
             if factor > .5:
                 move.set_leds(255, 0, 0)
             else:
-                move.set_leds(0, 0, 0) #int(255 * factor**2), 0)
-        else:
-            pass
-            #move.set_leds(0, 0, 0)
+                move.set_leds(0, 0, 0)
 
-        if len(l) != 3:
-            #move.set_leds(int(proximity*255), 0, 0)
-            pass
-        else:
+        if len(l) == 3:
             proximity = math.pow(float(sum(l))/len(l)/2048, 3)
-            #print 'proximity:', proximity
-            #move.set_leds(0, int(proximity*255), 0)
 
         move.update_leds()
-

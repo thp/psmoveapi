@@ -32,13 +32,12 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'build'))
 
 
-# EuroPython 2013: "distance" PS Move API Example
+# EuroPython 2013: "Whack a Cube" PS Move API Example
 
 import pygame
 from pygame.locals import *
 
 from OpenGL.GL import *
-from OpenGL.GLUT import *
 from ctypes import c_void_p
 
 import math
