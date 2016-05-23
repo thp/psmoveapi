@@ -31,7 +31,6 @@
 #include <stdio.h>
 
 #include <time.h>
-#include <unistd.h>
 #include <assert.h>
 
 #include "opencv2/core/core_c.h"

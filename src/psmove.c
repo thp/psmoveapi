@@ -39,7 +39,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <wchar.h>
-#include <unistd.h>
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
@@ -47,6 +46,7 @@
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
 #  include "platform/psmove_osxsupport.h"
+#  include <unistd.h>
 #  include <sys/syslimits.h>
 #  include <sys/stat.h>
 #endif

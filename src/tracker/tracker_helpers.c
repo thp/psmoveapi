@@ -28,7 +28,6 @@
  **/
 
 #include <stdio.h>
-#include <unistd.h>
 
 #include "tracker_helpers.h"
 

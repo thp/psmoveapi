@@ -39,7 +39,6 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
-#include <unistd.h>
 #include <errno.h>
 
 #include "psmove_moved_protocol.h"
