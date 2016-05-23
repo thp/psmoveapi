@@ -29,6 +29,7 @@
 
 #include "psmove_osxsupport.h"
 #include "../psmove_private.h"
+#include "../psmove_port.h"
 
 #include <IOBluetooth/objc/IOBluetoothHostController.h>
 
@@ -54,7 +55,7 @@ macosx_bluetooth_set_powered(int powered)
     IOBluetoothPreferenceSetControllerPowerState(powered);
 
     // Wait a bit for Bluetooth to be (de-)activated
-    usleep(2000000);
+    psmove_port_sleep_ms(2000);
 
     if (IOBluetoothPreferenceGetControllerPowerState() != powered) {
         // Happened to me once while Bluetooth devices were connected
@@ -202,7 +203,7 @@ macosx_blued_register_psmove(char *addr)
         int i = 0;
         OSXPAIR_DEBUG("Waiting for blued shutdown (takes ca. 42s) ...\n");
         while (macosx_blued_running()) {
-            usleep(1000000);
+            psmove_port_sleep_ms(1000);
             i++;
         }
         OSXPAIR_DEBUG("blued successfully shutdown.\n");

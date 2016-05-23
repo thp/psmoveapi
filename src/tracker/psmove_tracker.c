@@ -39,6 +39,7 @@
 
 #include "psmove_tracker.h"
 #include "../psmove_private.h"
+#include "../psmove_port.h"
 
 #include "camera_control.h"
 #include "camera_control_private.h"
@@ -756,7 +757,7 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
             (unsigned char)(rgb.g * tracker->settings.dimming_factor),
             (unsigned char)(rgb.b * tracker->settings.dimming_factor));
         psmove_update_leds(move);
-        usleep(1000 * 10); // wait 10ms - ok, since we're not blinking
+        psmove_port_sleep_ms(10); // wait 10ms - ok, since we're not blinking
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, move);
 
@@ -1576,7 +1577,7 @@ psmove_tracker_wait_for_frame(PSMoveTracker *tracker, IplImage **frame, int dela
     int step = 10;
 
     while (elapsed_time < delay) {
-        usleep(1000 * step);
+        psmove_port_sleep_ms(step);
         *frame = camera_control_query_frame(tracker->cc);
         elapsed_time += step;
     }

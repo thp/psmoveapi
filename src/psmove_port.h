@@ -29,6 +29,8 @@
 #ifndef PSMOVE_PORT_H
 #define PSMOVE_PORT_H
 
+#include "psmove.h"
+
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -49,8 +51,14 @@ psmove_port_check_pairing_permissions();
 /**
  * Get the current time in milliseconds since the first call
  **/
-uint64_t
-psmove_port_get_time_ms();
+ADDAPI uint64_t
+ADDCALL psmove_port_get_time_ms();
+
+/**
+ * Sleep for a specified amount of milliseconds
+ **/
+ADDAPI void
+ADDCALL psmove_port_sleep_ms(uint32_t duration_ms);
 
 /**
  * Set the timeout to the specified time in milliseconds for a given socket

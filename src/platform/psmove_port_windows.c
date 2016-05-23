@@ -83,3 +83,18 @@ psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
     DWORD receive_timeout = timeout_ms;
     setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
 }
+
+void
+psmove_port_sleep_ms(uint32_t duration_ms)
+{
+    HANDLE timer;
+    LARGE_INTEGER ft;
+
+    // Convert to 100 nanosecond interval, negative value indicates relative time
+    ft.QuadPart = -(10 * 1000 * duration_ms);
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+}

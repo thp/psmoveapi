@@ -131,7 +131,7 @@ int run_daemon()
 #else
     // On non-Linux systems we just try to pair every 5 seconds for now
     for(;;) {
-        usleep(5000000);
+        psmove_port_sleep_ms(5000);
         pair(NULL);
     }
 #endif // __linux

@@ -86,3 +86,9 @@ psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
     };
     setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
 }
+
+void
+psmove_port_sleep_ms(uint32_t duration_ms)
+{
+    usleep(duration_ms * 1000);
+}
