@@ -26,12 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
 #include "psmove.h"
+
+// Private header for psmove_port_sleep_ms()
+#include "../../src/psmove_port.h"
 
 typedef struct
 {
@@ -87,7 +89,7 @@ int main(int argc, char* argv[])
             if(buttons & Btn_PS)
                 running = false;
         }
-        usleep(1000000);
+        psmove_port_sleep_ms(1000);
     }
 
     for(i=0; i<c; i++) {

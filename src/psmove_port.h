@@ -1,7 +1,6 @@
-
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2016 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,47 +26,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#ifndef PSMOVE_PORT_H
+#define PSMOVE_PORT_H
 
 #include "psmove.h"
 
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Initialize sockets API (if required) -- call before using sockets */
+void
+psmove_port_initialize_sockets();
+
+/**
+ * Check if necessary permissions are available for pairing controllers
+ * Returns non-zero if permissions are available, zero if not
+ **/
 int
-main(int argc, char* argv[])
-{
-    PSMove *move;
+psmove_port_check_pairing_permissions();
 
-    move = psmove_connect();
+/**
+ * Get the current time in milliseconds since the first call
+ **/
+ADDAPI uint64_t
+ADDCALL psmove_port_get_time_ms();
 
-    if (move == NULL) {
-        fprintf(stderr, "Could not connect to controller.\n");
-        return EXIT_FAILURE;
-    }
+/**
+ * Sleep for a specified amount of milliseconds
+ **/
+ADDAPI void
+ADDCALL psmove_port_sleep_ms(uint32_t duration_ms);
 
-    assert(psmove_has_calibration(move));
+/**
+ * Set the timeout to the specified time in milliseconds for a given socket
+ **/
+void
+psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms);
 
-    if (psmove_connection_type(move) == Conn_Bluetooth) {
-        float ax, ay, az, gx, gy, gz;
-
-        for(;;) {
-            int res = psmove_poll(move);
-            if (res) {
-                psmove_get_accelerometer_frame(move, Frame_SecondHalf,
-                        &ax, &ay, &az);
-                psmove_get_gyroscope_frame(move, Frame_SecondHalf,
-                        &gx, &gy, &gz);
-
-                printf("A: %5.2f %5.2f %5.2f ", ax, ay, az);
-                printf("G: %6.2f %6.2f %6.2f ", gx, gy, gz);
-                printf("\n");
-            }
-        }
-    }
-
-    psmove_disconnect(move);
-
-    return EXIT_SUCCESS;
+#ifdef __cplusplus
 }
+#endif
 
+#endif /* PSMOVE_PORT_H */

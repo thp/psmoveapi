@@ -30,13 +30,13 @@
 
 
 
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "psmove.h"
 #include "../psmove_private.h"
+#include "../psmove_port.h"
 
 #ifdef __linux
 #include "../daemon/moved_monitor.h"
@@ -131,7 +131,7 @@ int run_daemon()
 #else
     // On non-Linux systems we just try to pair every 5 seconds for now
     for(;;) {
-        usleep(5000000);
+        psmove_port_sleep_ms(5000);
         pair(NULL);
     }
 #endif // __linux
@@ -159,17 +159,9 @@ int main(int argc, char* argv[])
         }
     }
 
-#ifdef __linux
-    /**
-     * In order to be able to start/stop bluetoothd and to
-     * add new entries to the Bluez configuration files, we
-     * need to run as root (platform/psmove_linuxsupport.c)
-     **/
-    if (geteuid() != 0) {
-        printf("This program must be run as root (or use sudo).\n");
+    if (!psmove_port_check_pairing_permissions()) {
         return 1;
     }
-#endif
 
     if (daemon_mode == 0) {
         if (custom_addr != 0) {

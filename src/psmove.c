@@ -39,13 +39,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <wchar.h>
-#include <unistd.h>
-#ifdef _MSC_VER
-#include <WinSock2.h>
-#include "gettod.h"
-#else
-#include <sys/time.h>
-#endif
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
@@ -53,6 +46,7 @@
 /* OS-specific includes, for getting the Bluetooth address */
 #ifdef __APPLE__
 #  include "platform/psmove_osxsupport.h"
+#  include <unistd.h>
 #  include <sys/syslimits.h>
 #  include <sys/stat.h>
 #endif
@@ -2266,39 +2260,7 @@ psmove_disconnect(PSMove *move)
 long
 psmove_util_get_ticks()
 {
-#ifdef WIN32
-    static LARGE_INTEGER startup_time = { .QuadPart = 0 };
-    static LARGE_INTEGER frequency = { .QuadPart = 0 };
-    LARGE_INTEGER now;
-
-    if (frequency.QuadPart == 0) {
-        psmove_return_val_if_fail(QueryPerformanceFrequency(&frequency), 0);
-    }
-
-    psmove_return_val_if_fail(QueryPerformanceCounter(&now), 0);
-
-    /* The first time this function gets called, we init startup_time */
-    if (startup_time.QuadPart == 0) {
-        startup_time.QuadPart = now.QuadPart;
-    }
-
-    return (long)((now.QuadPart - startup_time.QuadPart) * 1000 /
-            frequency.QuadPart);
-#else
-    static long startup_time = 0;
-    long now;
-    struct timeval tv;
-
-    psmove_return_val_if_fail(gettimeofday(&tv, NULL) == 0, 0);
-    now = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
-
-    /* The first time this function gets called, we init startup_time */
-    if (startup_time == 0) {
-        startup_time = now;
-    }
-
-    return (now - startup_time);
-#endif
+    return psmove_port_get_time_ms();
 }
 
 const char *
@@ -2434,51 +2396,6 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
 
     result[count] = '\0';
     return result;
-}
-
-#if defined(__APPLE__) || defined(_MSC_VER)
-
-#define CLOCK_MONOTONIC 0
-
-static int
-clock_gettime(int unused, struct timespec *ts)
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-
-    ts->tv_sec = tv.tv_sec;
-    ts->tv_nsec = tv.tv_usec * 1000;
-
-    return 0;
-}
-#endif /* __APPLE__ || _MSC_VER */
-
-PSMove_timestamp
-_psmove_timestamp()
-{
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts;
-}
-
-PSMove_timestamp
-_psmove_timestamp_diff(PSMove_timestamp a, PSMove_timestamp b)
-{
-    struct timespec ts;
-    if (a.tv_nsec >= b.tv_nsec) {
-        ts.tv_sec = a.tv_sec - b.tv_sec;
-        ts.tv_nsec = a.tv_nsec - b.tv_nsec;
-    } else {
-        ts.tv_sec = a.tv_sec - b.tv_sec - 1;
-        ts.tv_nsec = 1000000000 + a.tv_nsec - b.tv_nsec;
-    }
-    return ts;
-}
-
-double
-_psmove_timestamp_value(PSMove_timestamp ts)
-{
-    return ts.tv_sec + ts.tv_nsec * 0.000000001;
 }
 
 void

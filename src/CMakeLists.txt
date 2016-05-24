@@ -59,7 +59,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/mac/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${ROOT_DIR}/src/platform/psmove_osxsupport.m)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_osx.c
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_osxsupport.m)
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
@@ -67,9 +68,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_STATIC_LIBRARY_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -stdlib=libc++")
 		
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm version imm32 ${MSVC_LIBS})
-    include_directories(${MSVC_INCLUDES})
-    list(APPEND PSMOVEAPI_PLATFORM_SRC ${MSVC_SRCS})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm version imm32)
 
     IF(MINGW)
         # http://stackoverflow.com/questions/4702732/the-program-cant-start-because-libgcc-s-dw2-1-dll-is-missing
@@ -81,8 +80,9 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/windows/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_windows.c
         ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_winsupport.c
-		${CMAKE_CURRENT_LIST_DIR}/platform/psmove_winsupport.h)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_winsupport.h)
 
 ELSE()
     # Linux
@@ -111,8 +111,9 @@ ELSE()
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/linux/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_linux.c
         ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c
-		${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.h)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.h)
 
 ENDIF()
 

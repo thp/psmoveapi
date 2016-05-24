@@ -1,7 +1,6 @@
-
 /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2016 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,29 +26,69 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef PSMOVE_TRACKER_PRIVATE_H
-#define PSMOVE_TRACKER_PRIVATE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "psmove_port.h"
+#include "psmove_sockets.h"
 
-#include "psmove.h"
-#include "psmove_tracker.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 
-#include "../psmove_private.h"
-
-/* Performance measurement private APIs (used in tests) */
-ADDAPI void
-ADDCALL _psmove_tracker_retrieve_stats(PSMoveTracker *tracker,
-        PSMove_timestamp *ts_begin, PSMove_timestamp *ts_grab,
-        PSMove_timestamp *ts_retrieve, PSMove_timestamp *ts_converted);
-
-ADDAPI void
-ADDCALL _psmove_tracker_fix_roi_size(PSMoveTracker *tracker);
-
-#ifdef __cplusplus
+void
+psmove_port_initialize_sockets()
+{
+    // Nothing to do on Linux
 }
-#endif
 
-#endif
+int
+psmove_port_check_pairing_permissions()
+{
+    /**
+     * In order to be able to start/stop bluetoothd and to
+     * add new entries to the Bluez configuration files, we
+     * need to run as root (platform/psmove_linuxsupport.c)
+     **/
+    if (geteuid() != 0) {
+        printf("This program must be run as root (or use sudo).\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+uint64_t
+psmove_port_get_time_ms()
+{
+    static uint64_t startup_time = 0;
+    uint64_t now;
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) {
+        return 0;
+    }
+
+    now = (ts.tv_sec * 1000 + ts.tv_nsec / (1000 * 1000));
+
+    /* The first time this function gets called, we init startup_time */
+    if (startup_time == 0) {
+        startup_time = now;
+    }
+
+    return (now - startup_time);
+}
+
+void
+psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
+{
+    struct timeval receive_timeout = {
+        .tv_sec = timeout_ms / 1000,
+        .tv_usec = (timeout_ms % 1000) * 1000,
+    };
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
+}
+
+void
+psmove_port_sleep_ms(uint32_t duration_ms)
+{
+    usleep(duration_ms * 1000);
+}

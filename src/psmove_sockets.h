@@ -1,7 +1,7 @@
 
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2016 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,46 +28,19 @@
  **/
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#ifndef PSMOVE_SOCKETS_H
+#define PSMOVE_SOCKETS_H
 
-#include "psmove.h"
+#ifdef _WIN32
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#else
+#  include <arpa/inet.h>
+#  include <fcntl.h>
+#  include <netdb.h>
+#  include <netinet/in.h>
+#  include <sys/socket.h>
+#  include <sys/types.h>
+#endif
 
-int
-main(int argc, char* argv[])
-{
-    PSMove *move;
-
-    move = psmove_connect();
-
-    if (move == NULL) {
-        fprintf(stderr, "Could not connect to controller.\n");
-        return EXIT_FAILURE;
-    }
-
-    assert(psmove_has_calibration(move));
-
-    if (psmove_connection_type(move) == Conn_Bluetooth) {
-        float ax, ay, az, gx, gy, gz;
-
-        for(;;) {
-            int res = psmove_poll(move);
-            if (res) {
-                psmove_get_accelerometer_frame(move, Frame_SecondHalf,
-                        &ax, &ay, &az);
-                psmove_get_gyroscope_frame(move, Frame_SecondHalf,
-                        &gx, &gy, &gz);
-
-                printf("A: %5.2f %5.2f %5.2f ", ax, ay, az);
-                printf("G: %6.2f %6.2f %6.2f ", gx, gy, gz);
-                printf("\n");
-            }
-        }
-    }
-
-    psmove_disconnect(move);
-
-    return EXIT_SUCCESS;
-}
-
+#endif /* PSMOVE_SOCKETS_H */

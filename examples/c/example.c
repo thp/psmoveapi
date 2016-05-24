@@ -29,11 +29,13 @@
 
 
 
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "psmove.h"
+
+// Private header for psmove_port_sleep_ms()
+#include "../../src/psmove_port.h"
 
 int main(int argc, char* argv[])
 {
@@ -78,7 +80,7 @@ int main(int argc, char* argv[])
         psmove_set_leds(move, 0, 255*(i%3==0), 0);
         psmove_set_rumble(move, 255*(i%2));
         psmove_update_leds(move);
-        usleep(10000*(i%10));
+        psmove_port_sleep_ms(10*(i%10));
     }
 
     for (i=250; i>=0; i-=5) {

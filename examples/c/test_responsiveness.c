@@ -35,7 +35,6 @@
  * 3) Rumbles for 1 second in every 5. For controller to controller comparison.
  **/
 
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

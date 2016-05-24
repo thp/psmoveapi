@@ -30,6 +30,7 @@
 
 #include "psmove.h"
 #include "../psmove_private.h"
+#include "../psmove_port.h"
 #include "moved_client.h"
 
 moved_client_list *
@@ -92,18 +93,7 @@ moved_client_list_destroy(moved_client_list *client_list)
 moved_client *
 moved_client_create(const char *hostname)
 {
-#ifdef _WIN32
-    /* "wsa" = Windows Sockets API, not a misspelling of "was" */
-    static int wsa_initialized = 0;
-
-    if (!wsa_initialized) {
-        WSADATA wsa_data;
-        int result = WSAStartup(MAKEWORD(1, 1), &wsa_data);
-        (void)result;
-        assert(result == 0);
-        wsa_initialized = 1;
-    }
-#endif
+    psmove_port_initialize_sockets();
 
     moved_client *client = (moved_client*)calloc(1, sizeof(moved_client));
 
@@ -112,23 +102,7 @@ moved_client_create(const char *hostname)
     client->socket = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     assert(client->socket != -1);
 
-    /**
-     * The receiving socket must have a timeout to not block indefinitely
-     *
-     * With Berkeley sockets, SO_RCVTIMEO takes a struct timeval, whereas
-     * Microsoft's WinSock takes a DWORD containing a milliseconds value.
-     **/
-#ifdef _WIN32
-    DWORD receive_timeout = MOVED_TIMEOUT_MS;
-#else
-    struct timeval receive_timeout = {
-        .tv_sec = MOVED_TIMEOUT_MS / 1000,
-        .tv_usec = (MOVED_TIMEOUT_MS % 1000) * 1000,
-    };
-#endif
-    int result = setsockopt(client->socket, SOL_SOCKET, SO_RCVTIMEO,
-        (char*)&receive_timeout, sizeof(receive_timeout));
-    assert(result == 0);
+    psmove_port_set_socket_timeout_ms(client->socket, MOVED_TIMEOUT_MS);
 
     client->moved_addr.sin_family = AF_INET;
     client->moved_addr.sin_port = htons(MOVED_UDP_PORT);

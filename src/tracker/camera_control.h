@@ -58,8 +58,7 @@ camera_control_set_deinterlace(CameraControl *cc,
         enum PSMove_Bool enabled);
 
 IplImage *
-camera_control_query_frame(CameraControl* cc,
-        PSMove_timestamp *ts_grab, PSMove_timestamp *ts_retrieve);
+camera_control_query_frame(CameraControl* cc);
 
 void
 camera_control_delete(CameraControl* cc);

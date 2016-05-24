@@ -28,9 +28,6 @@
  **/
 
 //-- includes -----
-#ifndef _MSC_VER
-#include <unistd.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -43,10 +40,6 @@
 #include "math/psmove_quaternion.hpp"
 #include "math/psmove_alignment.hpp"
 #include "math/psmove_vector.h"
-
-#ifdef CMAKE_BUILD
-#include <unistd.h>
-#endif
 
 //-- constants -----
 #define SAMPLE_FREQUENCY 120.f

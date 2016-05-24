@@ -30,32 +30,6 @@ by Eugene Zatepyakin, modified by Thomas Perl
 from https://github.com/thp/PS3EYEDriver
 
 
-msvc-support
-============
-
-Work-arounds for MSVC's non-compliant C and a few unix-like libraries.
-
-unistd.h is from a community wiki located at http://stackoverflow.com/questions/341817/is-there-a-replacement-for-unistd-h-for-windows-visual-c
-and is licensed under cc by-sa 3.0
-
-stdint.h is from http://snipplr.com/view.php?codeview&id=18199
-and is public domain.
-
-getopt.h is from https://gist.github.com/ashelly/7776712
-and is distributed under the LGPL 2.1 (or later).
-
-gettod.h is from http://stackoverflow.com/a/26085827
-and is licensed under cc by-sa 3.0
-
-
-pthreads-w32
-============
-
-A Windows implementation of posix-threads. Also for struct timespec
-https://www.sourceware.org/pthreads-win32/
-It is distributed under the LGPL 2.1 (or later).
-
-
 SDL2
 ====
 

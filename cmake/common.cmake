@@ -104,30 +104,6 @@ IF(MSVC)
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ENDIF()
 
-# Targets requiring symbols not present by default in MSVC
-# can include ${MSVC_INCLUDES}, link ${MSVC_LIBS}, and
-# add ${MSVC_SRCS} to their list of sources.
-IF(MSVC_INCLUDES AND MSVC_LIBS AND MSVC_SRCS) #pragma once guard
-ELSE()
-    set(MSVC_INCLUDES)
-    set(MSVC_LIBS)
-    set(MSVC_SRCS)
-    IF(MSVC)
-        list(APPEND MSVC_INCLUDES ${CMAKE_CURRENT_LIST_DIR}/../external/pthreads-w32/include ${CMAKE_CURRENT_LIST_DIR}/../external/msvc-support)
-        list(APPEND MSVC_SRCS ${CMAKE_CURRENT_LIST_DIR}/../external/msvc-support/getopt.c ${CMAKE_CURRENT_LIST_DIR}/../external/msvc-support/unistd.c)
-        IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            find_library(PThreadLib
-                NAMES pthreadVC2
-                PATHS ${CMAKE_CURRENT_LIST_DIR}/../external/pthreads-w32/lib/x64)
-        ELSE()
-            find_library(PThreadLib
-                NAMES pthreadVC2
-                PATHS ${CMAKE_CURRENT_LIST_DIR}/../external/pthreads-w32/lib/x86)
-        ENDIF()
-        list(APPEND MSVC_LIBS ${PThreadLib})
-    ENDIF(MSVC)
-ENDIF()
-
 # Pretty-print if a "use" feature has been enabled
 macro(feature_use_info CAPTION FEATURE)
     if(${FEATURE})

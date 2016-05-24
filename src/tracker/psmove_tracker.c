@@ -29,7 +29,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <time.h>
 #include <math.h>
 #include <sys/stat.h>
@@ -40,7 +39,7 @@
 
 #include "psmove_tracker.h"
 #include "../psmove_private.h"
-#include "psmove_tracker_private.h"
+#include "../psmove_port.h"
 
 #include "camera_control.h"
 #include "camera_control_private.h"
@@ -91,7 +90,6 @@ struct _TrackedController {
 
     int roi_x, roi_y;			// x/y - Coordinates of the ROI
     int roi_level; 	 			// the current index for the level of ROI
-    enum PSMove_Bool roi_level_fixed;    // true if the ROI level should be fixed
     float mx, my;				// x/y - Coordinates of center of mass of the blob
     float x, y, r;				// x/y - Coordinates of the controllers sphere and its radius
     int search_tile; 			// current search quadrant when controller is not found (reset to 0 if found)
@@ -155,12 +153,6 @@ struct _PSMoveTracker {
     struct CameraControlSystemSettings *cc_settings;
 
     PSMoveTrackerSettings settings;  // Camera and tracker algorithm settings. Generally do not change after startup & calibration.
-
-    /* Timestamps for performance measurements */
-    PSMove_timestamp ts_camera_begin; // when the capture was started
-    PSMove_timestamp ts_camera_grab; // when the image was grabbed
-    PSMove_timestamp ts_camera_retrieve; // when the image was retrieved
-    PSMove_timestamp ts_camera_converted; // when the image was converted
 
     IplImage* frame; // the current frame of the camera
     IplImage *frame_rgb; // the frame as tightly packed RGB data
@@ -615,7 +607,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
     // just query a frame so that we know the camera works
     IplImage* frame = NULL;
 	while (!frame) {
-		frame = camera_control_query_frame(tracker->cc, NULL, NULL);
+		frame = camera_control_query_frame(tracker->cc);
     }
 
     // prepare ROI data structures
@@ -721,11 +713,7 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
         {0x00, 0xFF, 0xFF}, /* cyan */
         {0xFF, 0xFF, 0x00}, /* yellow */
         {0xFF, 0x00, 0x00}, /* red */
-#ifdef __APPLE__
-        {0x00, 0xFF, 0x00}, /* green */
-#else
         {0x00, 0x00, 0xFF}, /* blue */
-#endif
     };
 
     for (i=0; i<ARRAY_LENGTH(preset_colors); i++) {
@@ -769,7 +757,7 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
             (unsigned char)(rgb.g * tracker->settings.dimming_factor),
             (unsigned char)(rgb.b * tracker->settings.dimming_factor));
         psmove_update_leds(move);
-        usleep(1000 * 10); // wait 10ms - ok, since we're not blinking
+        psmove_port_sleep_ms(10); // wait 10ms - ok, since we're not blinking
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, move);
 
@@ -1184,9 +1172,7 @@ psmove_tracker_get_image(PSMoveTracker *tracker)
 void psmove_tracker_update_image(PSMoveTracker *tracker) {
     psmove_return_if_fail(tracker != NULL);
 
-    tracker->ts_camera_begin = _psmove_timestamp();
-    tracker->frame = camera_control_query_frame(tracker->cc,
-            &(tracker->ts_camera_grab), &(tracker->ts_camera_retrieve));
+    tracker->frame = camera_control_query_frame(tracker->cc);
 
 #if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
 	// We only need to flip here if we're using OpenCV to capture, since the PS3EyeDriver and CLEyeDriver support flipping in hardware (see camera_control_set_parameters)
@@ -1202,7 +1188,6 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
         cvFlip(tracker->frame, NULL, 1);
     }
 #endif
-    tracker->ts_camera_converted = _psmove_timestamp();
 }
 
 int
@@ -1376,11 +1361,8 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
 					if (br.width > tracker->roiI[i]->width && br.height > tracker->roiI[i]->height)
 						break;
 
-                                        if (tc->roi_level_fixed) {
-                                            tc->roi_level = 0;
-                                        } else {
-                                            tc->roi_level = i;
-                                        }
+                                        tc->roi_level = i;
+
 					// update easy accessors
 					roi_i = tracker->roiI[tc->roi_level];
 					roi_m = tracker->roiM[tc->roi_level];
@@ -1402,11 +1384,8 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
 			tc->roi_x += roi_i->width / 2;
 			tc->roi_y += roi_i->height / 2;
 
-                        if (tc->roi_level_fixed) {
-                            tc->roi_level = 0;
-                        } else {
-                            tc->roi_level = tc->roi_level - 1;
-                        }
+                        tc->roi_level = tc->roi_level - 1;
+
 			// update easy accessors
 			roi_i = tracker->roiI[tc->roi_level];
 			roi_m = tracker->roiM[tc->roi_level];
@@ -1598,8 +1577,8 @@ psmove_tracker_wait_for_frame(PSMoveTracker *tracker, IplImage **frame, int dela
     int step = 10;
 
     while (elapsed_time < delay) {
-        usleep(1000 * step);
-        *frame = camera_control_query_frame(tracker->cc, NULL, NULL);
+        psmove_port_sleep_ms(step);
+        *frame = camera_control_query_frame(tracker->cc);
         elapsed_time += step;
     }
 }
@@ -1879,28 +1858,3 @@ psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue colo
 
     return 0;
 }
-
-void
-_psmove_tracker_retrieve_stats(PSMoveTracker *tracker,
-        PSMove_timestamp *ts_begin, PSMove_timestamp *ts_grab,
-        PSMove_timestamp *ts_retrieve, PSMove_timestamp *ts_converted)
-{
-    psmove_return_if_fail(tracker != NULL);
-
-    *ts_begin = tracker->ts_camera_begin;
-    *ts_grab = tracker->ts_camera_grab;
-    *ts_retrieve = tracker->ts_camera_retrieve;
-    *ts_converted = tracker->ts_camera_converted;
-}
-
-void
-_psmove_tracker_fix_roi_size(PSMoveTracker *tracker)
-{
-    psmove_return_if_fail(tracker != NULL);
-
-    TrackedController *tc;
-    for_each_controller (tracker, tc) {
-        tc->roi_level_fixed = PSMove_True;
-    }
-}
-
