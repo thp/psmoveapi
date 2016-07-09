@@ -37,64 +37,6 @@
 
 #include "camera_control_private.h"
 
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-
-/**
- * Taken from the PS3EYEDriver OpenFrameworks example
- * written by Eugene Zatepyakin, MIT license
- **/
-
-static const int ITUR_BT_601_CY = 1220542;
-static const int ITUR_BT_601_CUB = 2116026;
-static const int ITUR_BT_601_CUG = -409993;
-static const int ITUR_BT_601_CVG = -852492;
-static const int ITUR_BT_601_CVR = 1673527;
-static const int ITUR_BT_601_SHIFT = 20;
-
-static void
-yuv422_to_bgr(const uint8_t *yuv_src, const int stride, uint8_t *dst, const int width, const int height)
-{
-    const int bIdx = 2;
-    const int uIdx = 0;
-    const int yIdx = 0;
-
-    const int uidx = 1 - yIdx + uIdx * 2;
-    const int vidx = (2 + uidx) % 4;
-    int j, i;
-
-#define _max(a, b) (((a) > (b)) ? (a) : (b))
-#define _saturate(v) (uint8_t)((uint32_t)(v) <= 0xff ? v : v > 0 ? 0xff : 0)
-
-    for (j = 0; j < height; j++, yuv_src += stride)
-    {
-        uint8_t* row = dst + (width * 3) * j;
-
-        for (i = 0; i < 2 * width; i += 4, row += 6)
-        {
-            int u = (int)(yuv_src[i + uidx]) - 128;
-            int v = (int)(yuv_src[i + vidx]) - 128;
-
-            int ruv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CVR * v;
-            int guv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CVG * v + ITUR_BT_601_CUG * u;
-            int buv = (1 << (ITUR_BT_601_SHIFT - 1)) + ITUR_BT_601_CUB * u;
-
-            int y00 = _max(0, (int)(yuv_src[i + yIdx]) - 16) * ITUR_BT_601_CY;
-            row[2-bIdx] = _saturate((y00 + buv) >> ITUR_BT_601_SHIFT);
-            row[1]      = _saturate((y00 + guv) >> ITUR_BT_601_SHIFT);
-            row[bIdx]   = _saturate((y00 + ruv) >> ITUR_BT_601_SHIFT);
-
-            int y01 = _max(0, (int)(yuv_src[i + yIdx + 2]) - 16) * ITUR_BT_601_CY;
-            row[5-bIdx] = _saturate((y01 + buv) >> ITUR_BT_601_SHIFT);
-            row[4]      = _saturate((y01 + guv) >> ITUR_BT_601_SHIFT);
-            row[3+bIdx] = _saturate((y01 + ruv) >> ITUR_BT_601_SHIFT);
-        }
-    }
-}
-#undef _max
-#undef _saturate
-
-#endif /* defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) */
-
 void
 get_metrics(int *width, int *height)
 {
@@ -140,7 +82,7 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
         get_metrics(&width, &height);
     }
 
-    cc->eye = ps3eye_open(cameraID, width, height, framerate);
+    cc->eye = ps3eye_open(cameraID, width, height, framerate, PS3EYE_FORMAT_BGR);
 
     if (cc->eye == NULL) {
         free(cc);
@@ -231,13 +173,12 @@ camera_control_query_frame( CameraControl* cc)
     IplImage* result;
 
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    int stride = 0;
-    unsigned char *pixels = ps3eye_grab_frame(cc->eye, &stride);
-
-    // Convert pixels from camera to BGR
+    // Get raw data pointer
     unsigned char *cvpixels;
     cvGetRawData(cc->framebgr, &cvpixels, 0, 0);
-        yuv422_to_bgr(pixels, stride, cvpixels, cc->width, cc->height);
+
+	// Grab frame to buffer
+	ps3eye_grab_frame(cc->eye, cvpixels);
 
     result = cc->framebgr;
 #else

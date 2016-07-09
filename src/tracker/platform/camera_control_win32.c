@@ -112,9 +112,9 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	//autoE... setAutoExposure not defined in ps3eye.h
 	ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN,				autoG > 0);
 	ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_WHITEBALANCE,		autoWB > 0);
-	ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE,				(int)round((511 * exposure) / 0xFFFF));
-	ps3eye_set_parameter(cc->eye, PS3EYE_GAIN,					(int)round((79 * gain) / 0xFFFF));
-	ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS,			(int)round((255 * brightness) / 0xFFFF));
+	ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE,				(int)((511 * exposure) / 0xFFFF));
+	ps3eye_set_parameter(cc->eye, PS3EYE_GAIN,					(int)((79 * gain) / 0xFFFF));
+	ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS,			(int)((255 * brightness) / 0xFFFF));
 	ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, 				h_flip);
 	
 	//ps3eye_set_parameter(cc->eye, PS3EYE_REDBALANCE, round((255 * wbRed) / 0xFFFF));
