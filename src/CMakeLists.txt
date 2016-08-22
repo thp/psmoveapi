@@ -19,6 +19,7 @@ set(PSMOVEAPI_MATH_SRC)        # Container for math related source files
 
 include_directories(${ROOT_DIR}/external/hidapi/hidapi)
 include_directories(${ROOT_DIR}/external/glm)
+include_directories(${CMAKE_BINARY_DIR})
 
 set(INFO_LICENSE "BSD")
 
@@ -136,12 +137,9 @@ file(GLOB PSMOVEAPI_SRC
     "${CMAKE_CURRENT_LIST_DIR}/*.h"
 )
 
-list(APPEND PSMOVEAPI_SRC 
-	"${ROOT_DIR}/include/psmove.h" 
-	"${ROOT_DIR}/include/psmove_config.h")
-
 file(GLOB PSMOVEAPI_HEADERS
     "${ROOT_DIR}/include/*.h"
+    "${CMAKE_BINARY_DIR}/*.h"
 )
 
 file (GLOB PSMOVEAPI_MATH_HEADERS
@@ -206,7 +204,7 @@ configure_file(${ROOT_DIR}/contrib/psmoveapi.pc.in
     @ONLY)
 
 configure_file(${ROOT_DIR}/include/psmove_config.h.in
-    ${ROOT_DIR}/include/psmove_config.h
+    ${CMAKE_BINARY_DIR}/psmove_config.h
     @ONLY)
 
 include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
