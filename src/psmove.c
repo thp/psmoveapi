@@ -820,6 +820,25 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
     return move;
 }
 
+static int
+compare_hid_device_info_ptr(const void *a, const void *b)
+{
+    struct hid_device_info *dev_a = *(struct hid_device_info **)a;
+    struct hid_device_info *dev_b = *(struct hid_device_info **)b;
+
+    if ((dev_a->serial_number != NULL) && (wcslen(dev_a->serial_number) != 0) &&
+        (dev_b->serial_number != NULL) && (wcslen(dev_b->serial_number) != 0)) {
+        return wcscmp(dev_a->serial_number, dev_b->serial_number);
+    }
+
+    if (dev_a->path != NULL && dev_b->path != NULL) {
+        return strcmp(dev_a->path, dev_b->path);
+    }
+
+    psmove_WARNING("Cannot compare serial number or path when sorting devices");
+    return 0;
+}
+
 PSMove *
 psmove_connect_by_id(int id)
 {
@@ -851,25 +870,52 @@ psmove_connect_by_id(int id)
     PSMove *move = NULL;
 
     devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+
+    // Count available devices
+    int available = 0;
+    for (cur_dev=devs, available=0; cur_dev != NULL; cur_dev = cur_dev->next, available++);
+
+    // Sort list of devices to have stable ordering of devices
+    struct hid_device_info **devs_sorted = calloc(available, sizeof(struct hid_device_info *));
     cur_dev = devs;
-    while (cur_dev) {
+    for (int i=0; i<available; i++) {
+        devs_sorted[i] = cur_dev;
+        cur_dev = cur_dev->next;
+    }
+    qsort((void *)devs_sorted, available, sizeof(struct hid_device_info *), compare_hid_device_info_ptr);
+#if defined(PSMOVE_DEBUG)
+    for (int i=0; i<available; i++) {
+        cur_dev = devs_sorted[i];
+        char tmp[64];
+        wcstombs(tmp, cur_dev->serial_number, sizeof(tmp));
+        printf("devs_sorted[%d]: (handle=%p, serial=%s, path=%s)\n", i, cur_dev, tmp, cur_dev->path);
+    }
+#endif /* defined(PSMOVE_DEBUG) */
+
+
 #ifdef _WIN32
+    for (int i=0; i<available; i++) {
+        cur_dev = devs_sorted[i];
+
         if (strstr(cur_dev->path, "&col01#") != NULL) {
-#endif
             if (count == id) {
-                move = psmove_connect_internal(cur_dev->serial_number,
-                        cur_dev->path, id);
+                move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id);
                 break;
             }
-#ifdef _WIN32
         } else {
             count--;
         }
-#endif
 
         count++;
-        cur_dev = cur_dev->next;
     }
+#else
+    if (id < available) {
+        cur_dev = devs_sorted[id];
+        move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id);
+    }
+#endif
+
+    free(devs_sorted);
     hid_free_enumeration(devs);
 
     return move;
