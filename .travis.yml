@@ -17,7 +17,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -q -y mingw-w64 g++-mingw-w64; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install --force cmake sdl2 automake autoconf libtool; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install --force cmake sdl2 automake autoconf libtool || true; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew link --overwrite libtool || true; fi
 
 install:
   - git submodule update --init --recursive
