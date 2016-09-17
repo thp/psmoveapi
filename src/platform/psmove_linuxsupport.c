@@ -324,7 +324,8 @@ void linux_info_init(struct linux_info_t *info)
             *q = 0;
 
             if ((!strcmp(value, "openSUSE")) ||
-                (!strcmp(value, "Fedora"))) {
+                (!strcmp(value, "Fedora")) ||
+                (!strcmp(value, "Arch Linux"))) {
                     // all recent versions of openSUSE and Fedora use
                     // systemd
                     info->init_type = LINUX_SYSTEMD;
