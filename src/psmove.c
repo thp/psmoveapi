@@ -2316,8 +2316,7 @@ psmove_util_get_data_dir()
     static char dir[PATH_MAX];
 
     if (strlen(dir) == 0) {
-        strncpy(dir, getenv(ENV_USER_HOME), sizeof(dir));
-        strncat(dir, PATH_SEP ".psmoveapi", sizeof(dir));
+        snprintf(dir, sizeof(dir), "%s" PATH_SEP ".psmoveapi", getenv(ENV_USER_HOME));
     }
 
     return dir;
