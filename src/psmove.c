@@ -866,7 +866,6 @@ psmove_connect_by_id(int id)
     }
 
     struct hid_device_info *devs, *cur_dev;
-    int count = 0;
     PSMove *move = NULL;
 
     devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
@@ -895,6 +894,8 @@ psmove_connect_by_id(int id)
 
 
 #ifdef _WIN32
+    int count = 0;
+
     for (int i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
 
