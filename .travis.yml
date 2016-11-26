@@ -6,7 +6,7 @@ matrix:
       language: cpp
       compiler: clang
     - os: osx
-      osx_image: xcode7.2
+      osx_image: xcode8
       language: cpp
       compiler: clang
 
@@ -18,7 +18,9 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -q -y mingw-w64 g++-mingw-w64; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install --force cmake sdl2 automake autoconf libtool || true; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew link --overwrite libtool || true; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew unlink libtool ; brew link --overwrite libtool; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "\$PATH"; find /usr/local/bin; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then glibtoolize --version ; echo "RESULT=$?"; fi
 
 install:
   - git submodule update --init --recursive
