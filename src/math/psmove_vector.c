@@ -34,26 +34,26 @@
 #include <stdlib.h>
 
 //-- globals ----
-const PSMove_3AxisVector g_psmove_vector_zero = {0, 0, 0};
+const PSMove_3AxisVector g_psmove_vector_zero = {{ {0, 0, 0} }};
 const PSMove_3AxisVector *k_psmove_vector_zero = &g_psmove_vector_zero;
 
-const PSMove_3AxisVector g_psmove_vector_one = {1, 1, 1};
+const PSMove_3AxisVector g_psmove_vector_one = {{ {1, 1, 1} }};
 const PSMove_3AxisVector *k_psmove_vector_one = &g_psmove_vector_one;
 
-const PSMove_3AxisVector g_psmove_vector_i = {1, 0, 0}; 
+const PSMove_3AxisVector g_psmove_vector_i = {{ {1, 0, 0} }};
 const PSMove_3AxisVector *k_psmove_vector_i = &g_psmove_vector_i;
 
-const PSMove_3AxisVector g_psmove_vector_j = {0, 1, 0};
+const PSMove_3AxisVector g_psmove_vector_j = {{ {0, 1, 0} }};
 const PSMove_3AxisVector *k_psmove_vector_j = &g_psmove_vector_j;
 
-const PSMove_3AxisVector g_psmove_vector_k = {0, 0, 1};
+const PSMove_3AxisVector g_psmove_vector_k = {{ {0, 0, 1} }};
 const PSMove_3AxisVector *k_psmove_vector_k = &g_psmove_vector_k;
 
 //-- public methods ----
 PSMove_3AxisVector
 psmove_3axisvector_xyz(const float x, const float y, const float z)
 {
-	PSMove_3AxisVector v = { x, y, z };
+	PSMove_3AxisVector v = {{ { x, y, z } }};
 
 	return v;
 }
