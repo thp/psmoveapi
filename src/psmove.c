@@ -31,6 +31,7 @@
 #include "psmove_private.h"
 #include "psmove_calibration.h"
 #include "psmove_orientation.h"
+#include "psmove_port.h"
 #include "math/psmove_vector.h"
 
 #include <stdio.h>

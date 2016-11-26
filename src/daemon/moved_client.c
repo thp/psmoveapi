@@ -33,6 +33,8 @@
 #include "../psmove_port.h"
 #include "moved_client.h"
 
+#include <unistd.h>
+
 moved_client_list *
 moved_client_list_insert(moved_client_list *list, moved_client *client)
 {

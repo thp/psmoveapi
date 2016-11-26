@@ -32,6 +32,7 @@
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
+#include <unistd.h>
 
 
 /* For now, monitoring is only supported on Linux */

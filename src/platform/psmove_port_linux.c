@@ -30,6 +30,7 @@
 #include "psmove_port.h"
 #include "psmove_sockets.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
