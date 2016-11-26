@@ -244,7 +244,7 @@ moved_server_handle_request(moved_server *server)
 void
 moved_server_destroy(moved_server *server)
 {
-    close(server->socket);
+    psmove_port_close_socket(server->socket);
     free(server);
 }
 

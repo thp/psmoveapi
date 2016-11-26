@@ -66,6 +66,12 @@ ADDCALL psmove_port_sleep_ms(uint32_t duration_ms);
 void
 psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms);
 
+/**
+ * Close a socket
+ **/
+void
+psmove_port_close_socket(int socket);
+
 #ifdef __cplusplus
 }
 #endif

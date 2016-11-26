@@ -31,6 +31,7 @@
 #include "psmove_sockets.h"
 
 #include <windows.h>
+#include <winsock2.h>
 
 void
 psmove_port_initialize_sockets()
@@ -97,4 +98,10 @@ psmove_port_sleep_ms(uint32_t duration_ms)
     SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
     WaitForSingleObject(timer, INFINITE);
     CloseHandle(timer);
+}
+
+void
+psmove_port_close_socket(int socket)
+{
+    closesocket(socket);
 }

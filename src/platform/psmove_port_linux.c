@@ -92,3 +92,9 @@ psmove_port_sleep_ms(uint32_t duration_ms)
 {
     usleep(duration_ms * 1000);
 }
+
+void
+psmove_port_close_socket(int socket)
+{
+    close(socket);
+}

@@ -192,7 +192,7 @@ moved_client_send(moved_client *client, char req, char id, const unsigned char *
 void
 moved_client_destroy(moved_client *client)
 {
-    close(client->socket);
+    psmove_port_close_socket(client->socket);
     free(client);
 }
 
