@@ -49,7 +49,15 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
 		git clone --depth 1 --branch 3.1.0 git://github.com/Itseez/opencv.git
     fi
     cd opencv
-    rm -rf build
+
+		# Patch for Mac OS X deprecation of QTKit & adoption of AVFoundation
+		git fetch https://github.com/opencv/opencv.git +pull/7266/head:pr7266
+		git checkout pr7266 # instread of 3.0.0 or 3.1.0
+		# End Patch - Eventually, once this pull request is fully merged with
+		# the opencv master branch, this can be removed and the above git clone
+		# command updated to pull the newer version of opencv
+
+		rm -rf build
     mkdir -p build
     cd build
     cmake -DBUILD_SHARED_LIBS=OFF \
@@ -72,7 +80,7 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
           -DWITH_OPENEXR=OFF \
           -DWITH_FFMPEG=OFF \
           -DWITH_JASPER=OFF \
-          -DWITH_TIFF=OFF \
+          #-DWITH_TIFF=OFF \
           -DWITH_GPHOTO2=OFF \
           -DCMAKE_OSX_ARCHITECTURES="x86_64" \
           -DCMAKE_INSTALL_PREFIX=$(pwd)/install ..
@@ -124,4 +132,3 @@ then
 else
 	echo "Skipping package step because this is a CI server"
 fi
-
