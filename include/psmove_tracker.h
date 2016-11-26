@@ -37,8 +37,6 @@
 extern "C" {
 #endif
 
-#ifdef PSMOVE_BUILD_TRACKER
-
 /* Defines the range of x/y values for the position getting, etc.. */
 #define PSMOVE_TRACKER_DEFAULT_WIDTH 640
 #define PSMOVE_TRACKER_DEFAULT_HEIGHT 480
@@ -666,8 +664,6 @@ ADDCALL psmove_tracker_set_distance_parameters(PSMoveTracker *tracker,
  **/
 ADDAPI void
 ADDCALL psmove_tracker_free(PSMoveTracker *tracker);
-
-#endif /* PSMOVE_BUILD_TRACKER */
 
 #ifdef __cplusplus
 }
