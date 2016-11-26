@@ -38,6 +38,7 @@
 extern "C" {
 #endif
 
+#ifdef PSMOVE_BUILD_TRACKER
 
 /* Field of view of the PS Eye */
 #define PSEYE_FOV_BLUE_DOT 75
@@ -131,6 +132,8 @@ ADDCALL psmove_fusion_get_position(PSMoveFusion *fusion, PSMove *move,
  **/
 ADDAPI void
 ADDCALL psmove_fusion_free(PSMoveFusion *fusion);
+
+#endif /* PSMOVE_BUILD_TRACKER */
 
 #ifdef __cplusplus
 };
