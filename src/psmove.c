@@ -879,13 +879,14 @@ psmove_connect_by_id(int id)
     // Sort list of devices to have stable ordering of devices
     struct hid_device_info **devs_sorted = calloc(available, sizeof(struct hid_device_info *));
     cur_dev = devs;
-    for (int i=0; i<available; i++) {
+    int i;
+    for (i=0; i<available; i++) {
         devs_sorted[i] = cur_dev;
         cur_dev = cur_dev->next;
     }
     qsort((void *)devs_sorted, available, sizeof(struct hid_device_info *), compare_hid_device_info_ptr);
 #if defined(PSMOVE_DEBUG)
-    for (int i=0; i<available; i++) {
+    for (i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
         char tmp[64];
         wcstombs(tmp, cur_dev->serial_number, sizeof(tmp));
@@ -893,9 +894,8 @@ psmove_connect_by_id(int id)
     }
 #endif /* defined(PSMOVE_DEBUG) */
 
-
 #ifdef _WIN32
-    for (int i=0; i<available; i++) {
+    for (i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
 
         if (strstr(cur_dev->path, "&col01#") != NULL) {
