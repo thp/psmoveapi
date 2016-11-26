@@ -27,6 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#include "psmove_config.h"
 #include "camera_control.h"
 #include "psmove_tracker.h"
 

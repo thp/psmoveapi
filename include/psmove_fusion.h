@@ -31,6 +31,7 @@
 #ifndef PSMOVE_FUSION_H
 #define PSMOVE_FUSION_H
 
+#include "psmove_config.h"
 #include "psmove.h"
 #include "psmove_tracker.h"
 
