@@ -49,6 +49,11 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
 		git clone --depth 1 --branch 3.1.0 git://github.com/Itseez/opencv.git
     fi
     cd opencv
+
+    # Patch for Mac OS X deprecation of QTKit & adoption of AVFoundation
+    git fetch https://github.com/opencv/opencv.git +pull/7266/head:pr7266
+    git checkout pr7266
+
     rm -rf build
     mkdir -p build
     cd build
@@ -72,7 +77,6 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
           -DWITH_OPENEXR=OFF \
           -DWITH_FFMPEG=OFF \
           -DWITH_JASPER=OFF \
-          -DWITH_TIFF=OFF \
           -DWITH_GPHOTO2=OFF \
           -DCMAKE_OSX_ARCHITECTURES="x86_64" \
           -DCMAKE_INSTALL_PREFIX=$(pwd)/install ..
