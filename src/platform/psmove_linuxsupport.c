@@ -394,7 +394,7 @@ void linux_bluetoothd_control(struct linux_info_t *info, int start)
 }
 
 int
-linux_bluez_register_psmove(char *addr, char *host)
+linux_bluez_register_psmove(const char *addr, const char *host)
 {
     int errors = 0;
     char *base = NULL;

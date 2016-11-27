@@ -53,10 +53,6 @@
 #endif
 
 #ifdef __linux
-#  include <bluetooth/bluetooth.h>
-#  include <bluetooth/hci.h>
-#  include <bluetooth/hci_lib.h>
-#  include <sys/ioctl.h>
 #  include <linux/limits.h>
 #  include <pthread.h>
 #  include <unistd.h>
@@ -306,26 +302,6 @@ static int psmove_remote_disabled = 0;
 
 /* Number of valid, open PSMove* handles "in the wild" */
 static int psmove_num_open_handles = 0;
-
-/* Private functionality needed by the Linux version */
-#if defined(__linux)
-
-int _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
-{
-    struct hci_dev_info di = { .dev_id = dev_id };
-    unsigned char *btaddr = (void*)arg;
-    int i;
-
-    if (ioctl(s, HCIGETDEVINFO, (void *) &di) == 0) {
-        for (i=0; i<6; i++) {
-            btaddr[i] = di.bdaddr.b[i];
-        }
-    }
-
-    return 0;
-}
-
-#endif /* defined(__linux) */
 
 
 #if defined(PSMOVE_USE_PTHREADS)
@@ -1086,60 +1062,19 @@ psmove_pair(PSMove *move)
         return PSMove_False;
     }
 
-
-#if defined(__APPLE__)
-    char *btaddr_string = macosx_get_btaddr();
-    if (btaddr_string == NULL) {
+    char *host = psmove_port_get_host_bluetooth_address();
+    if (host == NULL) {
         fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
                 "Make sure Bluetooth is turned on.\n");
     }
-    psmove_return_val_if_fail(btaddr_string != NULL, PSMove_False);
-    if (!_psmove_btaddr_from_string(btaddr_string, &btaddr)) {
-        free(btaddr_string);
+
+    psmove_return_val_if_fail(host != NULL, PSMove_False);
+    if (!_psmove_btaddr_from_string(host, &btaddr)) {
         return PSMove_False;
     }
-    free(btaddr_string);
-#elif defined(__linux)
-    PSMove_Data_BTAddr blank;
-    memset(blank, 0, sizeof(PSMove_Data_BTAddr));
-    memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
-    hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
-    if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
-        fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
-                "Make sure Bluetooth is turned on.\n");
-        return PSMove_False;
-    }
-#elif defined(_WIN32)
-    HANDLE hRadio;
-    if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
-        psmove_WARNING("Failed to find a Bluetooth radio");
-        return PSMove_False;
-    }
-
-    BLUETOOTH_RADIO_INFO radioInfo;
-    radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
-
-    if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
-        psmove_CRITICAL("BluetoothGetRadioInfo");
-        CloseHandle(hRadio);
-        return PSMove_False;
-    }
-
-    int i;
-    for (i=0; i<6; i++) {
-        btaddr[i] = radioInfo.address.rgBytes[i];
-    }
-
-#else
-    /* TODO: Implement for other OSes (if any?) */
-    return PSMove_False;
-#endif
 
     if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
         if (!psmove_set_btaddr(move, &btaddr)) {
-#if defined(_WIN32)
-            CloseHandle(hRadio);
-#endif
             return PSMove_False;
         }
     } else {
@@ -1147,24 +1082,24 @@ psmove_pair(PSMove *move)
     }
 
     char *addr = psmove_get_serial(move);
-    char *host = _psmove_btaddr_to_string(btaddr);
 
-#if defined(__linux)
-    /* Add entry to Bluez' bluetoothd state file */
-    linux_bluez_register_psmove(addr, host);
-#endif
-
-#if defined(__APPLE__)
-    /* Add entry to the com.apple.Bluetooth.plist file */
-    macosx_blued_register_psmove(addr);
-#endif
-
-#if defined(_WIN32)
-    windows_register_psmove(addr, &radioInfo.address, hRadio);
-    CloseHandle(hRadio);
-#endif
+    psmove_port_register_psmove(addr, host);
 
     free(addr);
+    free(host);
+
+    return PSMove_True;
+}
+
+enum PSMove_Bool
+psmove_host_pair_custom(const char *addr)
+{
+    char *host = psmove_port_get_host_bluetooth_address();
+
+    psmove_return_val_if_fail(host != NULL, PSMove_False);
+
+    psmove_port_register_psmove(addr, host);
+
     free(host);
 
     return PSMove_True;
@@ -1197,15 +1132,7 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
     char *addr = psmove_get_serial(move);
     char *host = _psmove_btaddr_to_string(new_host);
 
-#if defined(__linux)
-    /* Add entry to Bluez' bluetoothd state file */
-    linux_bluez_register_psmove(addr, host);
-#endif
-
-#if defined(__APPLE__)
-    /* Add entry to the com.apple.Bluetooth.plist file */
-    macosx_blued_register_psmove(addr);
-#endif
+    psmove_port_register_psmove(addr, host);
 
     free(addr);
     free(host);

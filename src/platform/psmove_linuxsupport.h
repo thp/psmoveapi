@@ -4,6 +4,6 @@
 #include "psmove.h"
 
 int
-linux_bluez_register_psmove(char *addr, char *host);
+linux_bluez_register_psmove(const char *addr, const char *host);
 
 #endif

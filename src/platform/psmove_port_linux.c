@@ -29,10 +29,17 @@
 
 #include "psmove_port.h"
 #include "psmove_sockets.h"
+#include "psmove_private.h"
+#include "psmove_linuxsupport.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+
+#include <bluetooth/bluetooth.h>
+#include <bluetooth/hci.h>
+#include <bluetooth/hci_lib.h>
+#include <sys/ioctl.h>
 
 void
 psmove_port_initialize_sockets()
@@ -97,4 +104,46 @@ void
 psmove_port_close_socket(int socket)
 {
     close(socket);
+}
+
+static int
+_psmove_linux_bt_dev_info(int s, int dev_id, long arg)
+{
+    struct hci_dev_info di = { .dev_id = dev_id };
+    unsigned char *btaddr = (void*)arg;
+    int i;
+
+    if (ioctl(s, HCIGETDEVINFO, (void *) &di) == 0) {
+        for (i=0; i<6; i++) {
+            btaddr[i] = di.bdaddr.b[i];
+        }
+    }
+
+    return 0;
+}
+
+char *
+psmove_port_get_host_bluetooth_address()
+{
+    PSMove_Data_BTAddr btaddr;
+    PSMove_Data_BTAddr blank;
+
+    memset(blank, 0, sizeof(PSMove_Data_BTAddr));
+    memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
+
+    hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
+    if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
+        fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
+                "Make sure Bluetooth is turned on.\n");
+        return NULL;
+    }
+
+    return _psmove_btaddr_to_string(btaddr);
+}
+
+void
+psmove_port_register_psmove(const char *addr, const char *host)
+{
+    /* Add entry to Bluez' bluetoothd state file */
+    linux_bluez_register_psmove(addr, host);
 }
