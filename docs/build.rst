@@ -2,8 +2,8 @@ Building PS Move API from source
 ================================
 
 
-Building on Mac OS X 10.11
---------------------------
+Building on macOS 10.12
+-----------------------
 
 You need to install the following requirements:
 
@@ -13,7 +13,7 @@ You need to install the following requirements:
 
 Install the dependencies and clone the source repository::
 
-    brew install cmake git sdl2
+    brew install cmake git sdl2 libtool automake
     git clone --recursive git://github.com/thp/psmoveapi.git
     cd psmoveapi
 
