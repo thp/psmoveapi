@@ -29,6 +29,8 @@
 
 #include "psmove_port.h"
 #include "psmove_sockets.h"
+#include "psmove_osxsupport.h"
+#include "psmove_private.h"
 
 #include <unistd.h>
 #include <sys/time.h>
@@ -87,4 +89,17 @@ void
 psmove_port_close_socket(int socket)
 {
     close(socket);
+}
+
+char *
+psmove_port_get_host_bluetooth_address()
+{
+    return macosx_get_btaddr();
+}
+
+void
+psmove_port_register_psmove(const char *addr, const char *host)
+{
+    /* Add entry to the com.apple.Bluetooth.plist file */
+    macosx_blued_register_psmove(addr);
 }

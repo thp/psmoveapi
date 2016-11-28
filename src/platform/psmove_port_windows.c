@@ -29,9 +29,12 @@
 
 #include "psmove_port.h"
 #include "psmove_sockets.h"
+#include "psmove_private.h"
 
 #include <windows.h>
 #include <winsock2.h>
+#include <bthsdpdef.h>
+#include <bluetoothapis.h>
 
 void
 psmove_port_initialize_sockets()
@@ -104,4 +107,57 @@ void
 psmove_port_close_socket(int socket)
 {
     closesocket(socket);
+}
+
+char *
+psmove_port_get_host_bluetooth_address()
+{
+    PSMove_Data_BTAddr btaddr;
+
+    HANDLE hRadio;
+    if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
+        psmove_WARNING("Failed to find a Bluetooth radio");
+        return NULL;
+    }
+
+    BLUETOOTH_RADIO_INFO radioInfo;
+    radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
+
+    if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
+        psmove_CRITICAL("BluetoothGetRadioInfo");
+        CloseHandle(hRadio);
+        return NULL;
+    }
+
+    int i;
+    for (i=0; i<6; i++) {
+        btaddr[i] = radioInfo.address.rgBytes[i];
+    }
+
+    CloseHandle(hRadio);
+    return _psmove_btaddr_to_string(btaddr);
+}
+
+void
+psmove_port_register_psmove(const char *addr, const char *host)
+{
+    // FIXME: Host is ignored for now
+
+    HANDLE hRadio;
+    if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
+        psmove_WARNING("Failed to find a Bluetooth radio");
+        return NULL;
+    }
+
+    BLUETOOTH_RADIO_INFO radioInfo;
+    radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
+
+    if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
+        psmove_CRITICAL("BluetoothGetRadioInfo");
+        CloseHandle(hRadio);
+        return NULL;
+    }
+
+    windows_register_psmove(addr, &radioInfo.address, hRadio);
+    CloseHandle(hRadio);
 }
