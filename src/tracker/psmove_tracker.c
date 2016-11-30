@@ -53,7 +53,6 @@
 #include <Windows.h>
 #endif
 
-//#define DEBUG_WINDOWS 			// shall additional windows be shown
 #define ROIS 4                          // the number of levels of regions of interest (roi)
 #define BLINKS 2                        // number of diff images to create during calibration
 #define COLOR_MAPPING_RING_BUFFER_SIZE 256  /* Has to be 256, so that next_slot automatically wraps */
@@ -1229,11 +1228,6 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
 
 		// apply color filter
 		cvInRangeS(roi_i, min, max, roi_m);
-
-		#ifdef DEBUG_WINDOWS
-        cvShowImage("binary:0", roi_m);
-        cvShowImage("hsv:0", roi_i);
-#endif
 
 		// find the biggest contour in the image
 		float sizeBest = 0;
