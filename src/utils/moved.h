@@ -98,7 +98,7 @@ psmove_dev_destroy(move_daemon *moved, psmove_dev *dev);
 /* move_daemon */
 
 move_daemon *
-moved_init();
+moved_init(moved_server *server);
 
 void
 moved_handle_connection(move_daemon *moved, const char *path, const wchar_t *serial);

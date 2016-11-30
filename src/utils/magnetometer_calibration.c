@@ -64,6 +64,8 @@ main(int arg, char** args)
     int i;
     int count = psmove_count_connected();
 
+    printf("Connected controllers for calibration: %d\n", count);
+
     for (i=0; i<count; i++) 
 	{
         PSMove *move = psmove_connect_by_id(i);

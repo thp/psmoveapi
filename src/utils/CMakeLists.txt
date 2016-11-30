@@ -12,3 +12,10 @@ foreach(UTILITY moved psmovepair magnetometer_calibration psmoveregister)
     set_property(TARGET ${UTILITY} PROPERTY FOLDER "Utilities")
     list(APPEND PSMOVEAPI_INSTALL_TARGETS ${UTILITY})
 endforeach()
+
+# New command line interface
+add_executable(psmove ${CMAKE_CURRENT_LIST_DIR}/psmovecli.cpp)
+target_link_libraries(psmove psmoveapi_static)
+set_target_properties(psmove PROPERTIES COMPILE_FLAGS -DUSING_STATIC_LIBRARY)
+set_property(TARGET psmove PROPERTY FOLDER "Utilities")
+list(APPEND PSMOVEAPI_INSTALL_TARGETS psmove)

@@ -252,7 +252,7 @@ moved_server_destroy(moved_server *server)
 psmove_dev *
 psmove_dev_create(move_daemon *moved, const char *path, const wchar_t *serial)
 {
-    psmove_dev *dev = calloc(1, sizeof(psmove_dev));
+    psmove_dev *dev = (psmove_dev *)calloc(1, sizeof(psmove_dev));
     assert(dev != NULL);
 
     if (path != NULL) {
@@ -263,7 +263,7 @@ psmove_dev_create(move_daemon *moved, const char *path, const wchar_t *serial)
     dev->assigned_id = moved_get_next_id(moved);
     moved->count++;
 
-    psmove_set_rate_limiting(dev->move, 0);
+    psmove_set_rate_limiting(dev->move, PSMove_False);
     return dev;
 }
 
