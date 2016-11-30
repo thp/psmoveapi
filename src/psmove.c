@@ -44,9 +44,8 @@
 #include <math.h>
 #include <limits.h>
 
-/* OS-specific includes, for getting the Bluetooth address */
+/* OS-specific includes */
 #ifdef __APPLE__
-#  include "platform/psmove_osxsupport.h"
 #  include <unistd.h>
 #  include <sys/syslimits.h>
 #  include <sys/stat.h>
@@ -57,14 +56,10 @@
 #  include <pthread.h>
 #  include <unistd.h>
 #  define PSMOVE_USE_PTHREADS
-#  include "platform/psmove_linuxsupport.h"
 #endif
 
 #ifdef _WIN32
 #  include <windows.h>
-#  include <bthsdpdef.h>
-#  include <bluetoothapis.h>
-#  include "platform/psmove_winsupport.h"
 #ifndef PATH_MAX
 #  define PATH_MAX MAX_PATH
 #endif
