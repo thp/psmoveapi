@@ -10,7 +10,7 @@ option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
 
 # C examples
 if(PSMOVE_BUILD_EXAMPLES)
-    foreach(EXAMPLE example multiple dump_calibration battery_check)
+    foreach(EXAMPLE example multiple)
         add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.c)
         target_link_libraries(${EXAMPLE} psmoveapi)
 		set_property(TARGET ${EXAMPLE} PROPERTY FOLDER "Examples") 

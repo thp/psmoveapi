@@ -43,13 +43,21 @@ struct SubCommand {
 #include "psmove_auth_response.c"
 #undef main
 
+#define main battery_check_main
+#include "battery_check.c"
+#undef main
+
+#define main dump_calibration_main
+#include "dump_calibration.c"
+#undef main
+
 static int
 usage(const char *progname, std::vector<SubCommand> &subcommands)
 {
-    printf("Usage: %s <cmd>\n\nWhere <cmd> is one of:\n", progname);
+    printf("Usage: %s <cmd>\n\nWhere <cmd> is one of:\n\n", progname);
 
     for (auto &cmd: subcommands) {
-        printf("    %-15s ... %s\n", cmd.cmd, cmd.help);
+        printf("    %-20s ... %s\n", cmd.cmd, cmd.help);
     }
     printf("\n");
 
@@ -68,6 +76,8 @@ main(int argc, char *argv[])
     subcommands.emplace_back("dfu-mode", "Switch to DFU mode (potentially dangerous)", dfu_mode_main);
     subcommands.emplace_back("firmware-info", "Show information about the controller firmware", get_firmware_info_main);
     subcommands.emplace_back("auth-response", "Challenge-response authentication dev tool", auth_response_main);
+    subcommands.emplace_back("battery-check", "Visualize the battery charge on connected controllers", battery_check_main);
+    subcommands.emplace_back("dump-calibration", "Show the stored calibration information", dump_calibration_main);
 
     if (argc == 1 || strcmp(argv[1], "help") == 0) {
         return usage(argv[0], subcommands);
