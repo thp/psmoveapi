@@ -49,10 +49,6 @@
 #  include "platform/psmove_linuxsupport.h"
 #endif
 
-#ifdef _MSC_VER
-#include <Windows.h>
-#endif
-
 #define ROIS 4                          // the number of levels of regions of interest (roi)
 #define BLINKS 2                        // number of diff images to create during calibration
 #define COLOR_MAPPING_RING_BUFFER_SIZE 256  /* Has to be 256, so that next_slot automatically wraps */
