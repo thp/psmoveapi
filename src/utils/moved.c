@@ -27,10 +27,96 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#include "moved.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <wchar.h>
+
+#include "../psmove_sockets.h"
 #include "../psmove_private.h"
 #include "../psmove_port.h"
+
+#include "../daemon/psmove_moved_protocol.h"
+
+#include "psmove.h"
+
+
+#define each(name,set) (name=set; name; name=name->next)
+
+typedef struct _psmove_dev {
+    PSMove *move;
+    int assigned_id;
+
+    unsigned char input[MOVED_SIZE_READ_RESPONSE];
+    unsigned char output[7];
+
+    int dirty_output;
+
+    struct _psmove_dev *next;
+} psmove_dev;
+
+
+typedef struct _move_daemon {
+    psmove_dev *devs;
+    int count;
+} move_daemon;
+
+
+typedef struct {
+    int socket;
+    struct sockaddr_in server_addr;
+    move_daemon *moved;
+} moved_server;
+
+
+/* moved_server */
+
+moved_server *
+moved_server_create();
+
+void
+moved_server_handle_request(moved_server *server);
+
+void
+moved_server_destroy(moved_server *server);
+
+
+/* psmove_dev */
+
+psmove_dev *
+psmove_dev_create(move_daemon *moved, const char *path, const wchar_t *serial);
+
+void
+psmove_dev_set_output(psmove_dev *dev, const unsigned char *output);
+
+void
+psmove_dev_destroy(move_daemon *moved, psmove_dev *dev);
+
+
+/* move_daemon */
+
+move_daemon *
+moved_init(moved_server *server);
+
+void
+moved_handle_connection(move_daemon *moved, const char *path, const wchar_t *serial);
+
+void
+moved_handle_disconnect(move_daemon *moved, const char *path);
+
+void
+moved_write_reports(move_daemon *moved);
+
+void
+moved_dump_devices(move_daemon *moved);
+
+int
+moved_get_next_id(move_daemon *moved);
+
+void
+moved_destroy(move_daemon *moved);
 
 
 
