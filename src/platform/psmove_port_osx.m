@@ -1,7 +1,6 @@
-
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2016 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,13 +26,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#include "psmove_osxsupport.h"
-#include "../psmove_private.h"
-#include "../psmove_port.h"
+
+#include "psmove_port.h"
+#include "psmove_sockets.h"
+#include "psmove_private.h"
+
+#include <unistd.h>
+#include <sys/time.h>
+
 
 #include <IOBluetooth/objc/IOBluetoothHostController.h>
 
 #import <Foundation/NSAutoreleasePool.h>
+
 
 /* Location for the plist file that we want to modify */
 #define OSX_BT_CONFIG_PATH "/Library/Preferences/com.apple.Bluetooth"
@@ -45,7 +50,7 @@ int IOBluetoothPreferenceGetControllerPowerState();
 #define OSXPAIR_DEBUG(msg, ...) \
         psmove_PRINTF("PAIRING OSX", msg, ## __VA_ARGS__)
 
-int
+static int
 macosx_bluetooth_set_powered(int powered)
 {
     // Inspired by blueutil from Frederik Seiffert <ego@frederikseiffert.de>
@@ -65,7 +70,7 @@ macosx_bluetooth_set_powered(int powered)
     return 1;
 }
 
-char *
+static char *
 macosx_get_btaddr()
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -86,7 +91,7 @@ macosx_get_btaddr()
     return result;
 }
 
-int
+static int
 macosx_blued_running()
 {
     FILE *fp = popen("ps -axo comm", "r");
@@ -107,7 +112,7 @@ macosx_blued_running()
     return running;
 }
 
-int
+static int
 macosx_blued_is_paired(char *btaddr)
 {
     FILE *fp = popen("defaults read " OSX_BT_CONFIG_PATH " HIDDevices", "r");
@@ -143,7 +148,7 @@ macosx_blued_is_paired(char *btaddr)
     return found;
 }
 
-int
+static int
 macosx_get_minor_version()
 {
     char tmp[1024];
@@ -169,7 +174,7 @@ macosx_get_minor_version()
     return minor;
 }
 
-int
+static int
 macosx_blued_register_psmove(char *addr)
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -208,7 +213,7 @@ macosx_blued_register_psmove(char *addr)
         }
         OSXPAIR_DEBUG("blued successfully shutdown.\n");
     }
-    
+
     snprintf(cmd, sizeof(cmd), "osascript -e 'do shell script "
             "\"defaults write " OSX_BT_CONFIG_PATH
                 " HIDDevices -array-add \\\"%s\\\"\""
@@ -233,3 +238,71 @@ end:
     return result;
 }
 
+void
+psmove_port_initialize_sockets()
+{
+    // Nothing to do on OS X
+}
+
+int
+psmove_port_check_pairing_permissions()
+{
+    // Nothing to do on OS X
+    return 1;
+}
+
+uint64_t
+psmove_port_get_time_ms()
+{
+    static uint64_t startup_time = 0;
+    uint64_t now;
+    struct timeval tv;
+
+    if (gettimeofday(&tv, NULL) != 0) {
+        return 0;
+    }
+
+    now = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+
+    /* The first time this function gets called, we init startup_time */
+    if (startup_time == 0) {
+        startup_time = now;
+    }
+
+    return (now - startup_time);
+}
+
+void
+psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
+{
+    struct timeval receive_timeout = {
+        .tv_sec = timeout_ms / 1000,
+        .tv_usec = (timeout_ms % 1000) * 1000,
+    };
+    setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
+}
+
+void
+psmove_port_sleep_ms(uint32_t duration_ms)
+{
+    usleep(duration_ms * 1000);
+}
+
+void
+psmove_port_close_socket(int socket)
+{
+    close(socket);
+}
+
+char *
+psmove_port_get_host_bluetooth_address()
+{
+    return macosx_get_btaddr();
+}
+
+void
+psmove_port_register_psmove(const char *addr, const char *host)
+{
+    /* Add entry to the com.apple.Bluetooth.plist file */
+    macosx_blued_register_psmove(addr);
+}
