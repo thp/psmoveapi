@@ -238,12 +238,12 @@ main(int arg, char** args)
 
 			if (serial != NULL)
 			{
-				printf("Please delete %s.calibration and re-run psmovepair.exe with the controller plugged into usb.", serial);
+				printf("Please delete %s.calibration and re-run \"psmove pair\" with the controller plugged into usb.", serial);
 				free(serial);
 			}
 			else
 			{
-				printf("Please re-run psmovepair.exe with the controller plugged into usb.");
+				printf("Please re-run \"psmove pair\" with the controller plugged into usb.");
 			}
 		}
 
