@@ -24,7 +24,7 @@ struct SubCommand {
 #undef main
 
 #define main moved_main
-#include "moved.c"
+#include "moved.cpp"
 #undef main
 
 #define main magnetometer_calibration_main

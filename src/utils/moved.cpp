@@ -42,10 +42,16 @@
 
 #include "psmove.h"
 
+#include <vector>
 
-#define each(name,set) (name=set; name; name=name->next)
+struct move_daemon;
 
-typedef struct _psmove_dev {
+struct psmove_dev {
+    psmove_dev(move_daemon *moved, const char *path, const wchar_t *serial);
+    ~psmove_dev();
+
+    void set_output(const unsigned char *output);
+
     PSMove *move;
     int assigned_id;
 
@@ -53,71 +59,34 @@ typedef struct _psmove_dev {
     unsigned char output[7];
 
     int dirty_output;
+};
 
-    struct _psmove_dev *next;
-} psmove_dev;
+struct moved_server {
+    moved_server();
+    ~moved_server();
 
+    void handle_request();
 
-typedef struct _move_daemon {
-    psmove_dev *devs;
-    int count;
-} move_daemon;
+    int count() { return devs.size(); }
 
-
-typedef struct {
+protected:
     int socket;
     struct sockaddr_in server_addr;
     move_daemon *moved;
-} moved_server;
+    std::vector<psmove_dev *> devs;
+};
 
+struct move_daemon : public moved_server {
+    move_daemon();
+    ~move_daemon();
 
-/* moved_server */
+    void handle_connection(const char *path, const wchar_t *serial);
+    void handle_disconnect(const char *path);
 
-moved_server *
-moved_server_create();
-
-void
-moved_server_handle_request(moved_server *server);
-
-void
-moved_server_destroy(moved_server *server);
-
-
-/* psmove_dev */
-
-psmove_dev *
-psmove_dev_create(move_daemon *moved, const char *path, const wchar_t *serial);
-
-void
-psmove_dev_set_output(psmove_dev *dev, const unsigned char *output);
-
-void
-psmove_dev_destroy(move_daemon *moved, psmove_dev *dev);
-
-
-/* move_daemon */
-
-move_daemon *
-moved_init(moved_server *server);
-
-void
-moved_handle_connection(move_daemon *moved, const char *path, const wchar_t *serial);
-
-void
-moved_handle_disconnect(move_daemon *moved, const char *path);
-
-void
-moved_write_reports(move_daemon *moved);
-
-void
-moved_dump_devices(move_daemon *moved);
-
-int
-moved_get_next_id(move_daemon *moved);
-
-void
-moved_destroy(move_daemon *moved);
-
+    void write_reports();
+    void dump_devices();
+    int get_next_id();
+};
 
 
 /* For now, monitoring is only supported on Linux */
@@ -131,8 +100,7 @@ on_monitor_update(enum MonitorEvent event,
         const char *path, const wchar_t *serial,
         void *user_data)
 {
-    moved_server *server = (moved_server*)user_data;
-    move_daemon *moved = server->moved;
+    move_daemon *moved = static_cast<move_daemon *>(user_data);
 
     if (event == EVENT_DEVICE_ADDED) {
         if (device_type == EVENT_DEVICE_TYPE_USB) {
@@ -147,9 +115,9 @@ on_monitor_update(enum MonitorEvent event,
             psmove_disconnect(move);
         }
 
-        moved_handle_connection(moved, path, serial);
+        moved->handle_connection(path, serial);
     } else if (event == EVENT_DEVICE_REMOVED) {
-        moved_handle_disconnect(moved, path);
+        moved->handle_disconnect(path);
     }
 }
 
@@ -160,26 +128,25 @@ on_monitor_update(enum MonitorEvent event,
 int
 main(int argc, char *argv[])
 {
-    moved_server *server = moved_server_create();
-    move_daemon *moved = moved_init(server);
+    move_daemon moved;
 
 #ifdef __linux
-    moved_monitor *monitor = moved_monitor_new(on_monitor_update, server);
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update, &moved);
 #endif
 
     /* Never act as a client in "moved" mode */
     psmove_set_remote_config(PSMove_OnlyLocal);
 
-    moved_dump_devices(moved);
+    moved.dump_devices();
 
     int id, count = psmove_count_connected();
     for (id=0; id<count; id++) {
-        moved_handle_connection(moved, NULL, NULL);
+        moved.handle_connection(NULL, NULL);
     }
 
 #ifdef __linux
     fd_set fds;
-    int server_fd = server->socket;
+    int server_fd = moved.socket;
     int monitor_fd = moved_monitor_get_fd(monitor);
     int nfds = ((server_fd > monitor_fd)?(server_fd):(monitor_fd)) + 1;
 #endif
@@ -196,50 +163,42 @@ main(int argc, char *argv[])
             }
 
             if (FD_ISSET(server_fd, &fds))  {
-                moved_server_handle_request(server);
+                moved.handle_request();
             }
         }
 #else
-        moved_server_handle_request(server);
+        moved.handle_request();
 #endif
 
-        moved_write_reports(moved);
+        moved.write_reports();
     }
 
 #ifdef __linux
     moved_monitor_free(monitor);
 #endif
 
-    moved_server_destroy(server);
-    moved_destroy(moved);
-
     return 0;
 }
 
-moved_server *
-moved_server_create()
+moved_server::moved_server()
 {
-    moved_server *server = (moved_server*)calloc(1, sizeof(moved_server));
-
     psmove_port_initialize_sockets();
 
-    server->socket = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    assert(server->socket != -1);
+    socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    assert(socket != -1);
 
-    server->server_addr.sin_family = AF_INET;
-    server->server_addr.sin_port = htons(MOVED_UDP_PORT);
-    server->server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(MOVED_UDP_PORT);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    int result = bind(server->socket, (struct sockaddr *)&(server->server_addr),
-                      sizeof(server->server_addr));
-    (void)result;
-    assert(result != -1);
-
-    return server;
+    if (bind(socket, (struct sockaddr *)&(server_addr), sizeof(server_addr)) == -1) {
+        fprintf(stderr, "Could not bind to UDP port %d", MOVED_UDP_PORT);
+        exit(1);
+    }
 }
 
 void
-moved_server_handle_request(moved_server *server)
+moved_server::handle_request()
 {
     struct sockaddr_in si_other;
     socklen_t si_len = sizeof(si_other);
@@ -251,7 +210,7 @@ moved_server_handle_request(moved_server *server)
     unsigned char request[MOVED_SIZE_REQUEST] = {0};
     unsigned char response[MOVED_SIZE_READ_RESPONSE] = {0};
 
-    int bytes_received = recvfrom(server->socket, (char*)request, sizeof(request),
+    int bytes_received = recvfrom(socket, (char*)request, sizeof(request),
         0, (struct sockaddr *)&si_other, &si_len);
     assert(bytes_received != -1);
 
@@ -262,32 +221,30 @@ moved_server_handle_request(moved_server *server)
     request_id = request[0];
     device_id = request[1];
 
+    for (psmove_dev *dev: devs) {
+        if (dev->assigned_id == device_id) {
+            break;
+        }
+    }
+
+    if (dev != NULL && dev->assigned_id != device_id) {
+        dev = NULL;
+    }
+
     switch (request_id) {
         case MOVED_REQ_COUNT_CONNECTED:
-            response[0] = (unsigned char)server->moved->count;
+            response[0] = (unsigned char)moved->count();
 
             send_response = 1;
             break;
         case MOVED_REQ_WRITE:
-            for each (dev, server->moved->devs) {
-                if (dev->assigned_id == device_id) {
-                    break;
-                }
-            }
-
             if (dev != NULL) {
-                psmove_dev_set_output(dev, request+2);
+                dev->set_output(request+2);
             } else {
                 printf("Cannot write to device %d.\n", device_id);
             }
             break;
         case MOVED_REQ_READ:
-            for each (dev, server->moved->devs) {
-                if (dev->assigned_id == device_id) {
-                    break;
-                }
-            }
-
             if (dev != NULL) {
                 _psmove_read_data(dev->move, dev->input, sizeof(dev->input));
                 memcpy(response, dev->input, sizeof(dev->input));
@@ -298,12 +255,6 @@ moved_server_handle_request(moved_server *server)
             send_response = 1;
             break;
         case MOVED_REQ_SERIAL:
-            for each (dev, server->moved->devs) {
-                if (dev->assigned_id == device_id) {
-                    break;
-                }
-            }
-
             if (dev != NULL) {
                 char *serial = psmove_get_serial(dev->move);
                 memcpy(response, serial, strlen(serial)+1);
@@ -320,81 +271,63 @@ moved_server_handle_request(moved_server *server)
 
     /* Some requests need a response - send it here */
     if (send_response) {
-        int result = sendto(server->socket, (char*)response, sizeof(response),
+        int result = sendto(socket, (char*)response, sizeof(response),
                 0, (struct sockaddr *)&si_other, si_len);
         (void)result;
         assert(result != -1);
     }
 }
 
-void
-moved_server_destroy(moved_server *server)
+moved_server::~moved_server()
 {
-    psmove_port_close_socket(server->socket);
-    free(server);
+    psmove_port_close_socket(socket);
 }
 
 
-psmove_dev *
-psmove_dev_create(move_daemon *moved, const char *path, const wchar_t *serial)
+psmove_dev::psmove_dev(move_daemon *moved, const char *path, const wchar_t *serial)
 {
-    psmove_dev *dev = (psmove_dev *)calloc(1, sizeof(psmove_dev));
-    assert(dev != NULL);
-
     if (path != NULL) {
-        dev->move = psmove_connect_internal((wchar_t*)serial, (char*)path, moved->count);
+        move = psmove_connect_internal((wchar_t *)serial, (char *)path, moved->count());
     } else {
-        dev->move = psmove_connect_by_id(moved->count);
+        move = psmove_connect_by_id(moved->count());
     }
-    dev->assigned_id = moved_get_next_id(moved);
-    moved->count++;
 
-    psmove_set_rate_limiting(dev->move, PSMove_False);
-    return dev;
+    assigned_id = moved->get_next_id();
+
+    psmove_set_rate_limiting(move, PSMove_False);
 }
 
 void
-psmove_dev_set_output(psmove_dev *dev, const unsigned char *output)
+psmove_dev::set_output(const unsigned char *output)
 {
-    memcpy(dev->output, output, sizeof(dev->output));
-    dev->dirty_output = 1;
+    memcpy(this->output, output, sizeof(this->output));
+    dirty_output++;
+}
+
+psmove_dev::~psmove_dev()
+{
+    psmove_disconnect(move);
+}
+
+
+move_daemon::move_daemon()
+    : moved_server()
+{
 }
 
 void
-psmove_dev_destroy(move_daemon *moved, psmove_dev *dev)
+move_daemon::handle_connection(const char *path, const wchar_t *serial)
 {
-    psmove_disconnect(dev->move);
-    free(dev);
-
-    moved->count--;
-}
-
-
-move_daemon *
-moved_init(moved_server *server)
-{
-    move_daemon *moved = (move_daemon *)calloc(1, sizeof(move_daemon));
-    server->moved = moved;
-    return moved;
+    devs.push_back(new psmove_dev(this, path, serial));
+    dump_devices();
 }
 
 void
-moved_handle_connection(move_daemon *moved, const char *path, const wchar_t *serial)
+move_daemon::dump_devices()
 {
-    psmove_dev *dev = psmove_dev_create(moved, path, serial);
-    dev->next = moved->devs;
-    moved->devs = dev;
-
-    moved_dump_devices(moved);
-}
-
-void
-moved_dump_devices(move_daemon *moved)
-{
-    printf("%d connected\n", moved->count);
+    printf("%d connected\n", count());
 #ifdef PSMOVE_DEBUG
-    psmove_dev *dev;
-    for each(dev, moved->devs) {
+    for (psmove_dev *dev: devs) {
         char *serial = psmove_get_serial(dev->move);
         printf("Device %d: %s\n", dev->assigned_id, serial);
         free(serial);
@@ -404,7 +337,7 @@ moved_dump_devices(move_daemon *moved)
 }
 
 int
-moved_get_next_id(move_daemon *moved)
+move_daemon::get_next_id()
 {
     int next_id = 0;
     int available = 0;
@@ -412,8 +345,7 @@ moved_get_next_id(move_daemon *moved)
     while (!available) {
         available = 1;
 
-        psmove_dev *dev;
-        for each(dev, moved->devs) {
+        for (psmove_dev *dev: devs) {
             if (dev->assigned_id == next_id) {
                 available = 0;
                 next_id++;
@@ -425,36 +357,25 @@ moved_get_next_id(move_daemon *moved)
 }
 
 void
-moved_handle_disconnect(move_daemon *moved, const char *path)
+move_daemon::handle_disconnect(const char *path)
 {
-    psmove_dev *prev = NULL;
-
-    psmove_dev *dev;
-    for each(dev, moved->devs) {
-        const char *dev_path = _psmove_get_device_path(dev->move);
+    std::vector<psmove_dev *>::iterator it;
+    for (it = devs.begin(); it != devs.end(); ++it) {
+        const char *dev_path = _psmove_get_device_path((*it)->move);
         if (strcmp(path, dev_path) == 0) {
-            if (prev != NULL) {
-                prev->next = dev->next;
-            } else {
-                moved->devs = dev->next;
-            }
-
-            psmove_dev_destroy(moved, dev);
+            delete (*it);
+            it = devs.erase(it);
             break;
         }
-
-        prev = dev;
     }
 
-    moved_dump_devices(moved);
+    dump_devices();
 }
 
 void
-moved_write_reports(move_daemon *moved)
+move_daemon::write_reports()
 {
-    psmove_dev *dev;
-
-    for each(dev, moved->devs) {
+    for (psmove_dev *dev: devs) {
         /* Send new outputs for devices with "dirty" output */
         if (dev->dirty_output) {
             _psmove_write_data(dev->move, dev->output, sizeof(dev->output));
@@ -463,14 +384,9 @@ moved_write_reports(move_daemon *moved)
     }
 }
 
-void
-moved_destroy(move_daemon *moved)
+move_daemon::~move_daemon()
 {
-    while (moved->devs != NULL) {
-        psmove_dev *next_dev = moved->devs->next;
-        psmove_dev_destroy(moved, moved->devs);
-        moved->devs = next_dev;
+    for (psmove_dev *dev: devs) {
+        delete dev;
     }
-    free(moved);
 }
-
