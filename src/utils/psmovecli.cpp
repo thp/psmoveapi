@@ -16,11 +16,15 @@ struct SubCommand {
 };
 
 #define main psmovepair_main
+extern "C" {
 #include "psmovepair.c"
+}
 #undef main
 
 #define main psmoveregister_main
+extern "C" {
 #include "psmoveregister.c"
+}
 #undef main
 
 #define main moved_main
@@ -28,27 +32,39 @@ struct SubCommand {
 #undef main
 
 #define main magnetometer_calibration_main
+extern "C" {
 #include "magnetometer_calibration.c"
+}
 #undef main
 
 #define main dfu_mode_main
+extern "C" {
 #include "psmove_dfu_mode.c"
+}
 #undef main
 
 #define main get_firmware_info_main
+extern "C" {
 #include "psmove_get_firmware_info.c"
+}
 #undef main
 
 #define main auth_response_main
+extern "C" {
 #include "psmove_auth_response.c"
+}
 #undef main
 
 #define main battery_check_main
+extern "C" {
 #include "battery_check.c"
+}
 #undef main
 
 #define main dump_calibration_main
+extern "C" {
 #include "dump_calibration.c"
+}
 #undef main
 
 static int
