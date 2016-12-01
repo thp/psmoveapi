@@ -1,5 +1,8 @@
 # Some platform-specific but target-agnostic settings
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
+
 # We recommend using MinGW-w64 for the Windows builds which generates
 # position-independent code by default, so skip this for Windows builds.
 IF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
