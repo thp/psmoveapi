@@ -68,6 +68,7 @@ struct moved_server {
     void handle_request();
 
     int count() { return devs.size(); }
+    int get_socket() { return socket; }
 
 protected:
     int socket;
@@ -94,8 +95,8 @@ struct move_daemon : public moved_server {
 
 #include "../daemon/moved_monitor.h"
 
-void
-on_monitor_update(enum MonitorEvent event,
+static void
+on_monitor_update_moved(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type,
         const char *path, const wchar_t *serial,
         void *user_data)
@@ -131,7 +132,7 @@ main(int argc, char *argv[])
     move_daemon moved;
 
 #ifdef __linux
-    moved_monitor *monitor = moved_monitor_new(on_monitor_update, &moved);
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update_moved, &moved);
 #endif
 
     /* Never act as a client in "moved" mode */
@@ -146,7 +147,7 @@ main(int argc, char *argv[])
 
 #ifdef __linux
     fd_set fds;
-    int server_fd = moved.socket;
+    int server_fd = moved.get_socket();
     int monitor_fd = moved_monitor_get_fd(monitor);
     int nfds = ((server_fd > monitor_fd)?(server_fd):(monitor_fd)) + 1;
 #endif
