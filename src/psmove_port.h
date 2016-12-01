@@ -33,6 +33,36 @@
 
 #include <stdint.h>
 
+
+#ifdef __APPLE__
+#  include <unistd.h>
+#  include <sys/syslimits.h>
+#  include <sys/stat.h>
+#endif
+
+#ifdef __linux
+#  include <unistd.h>
+#  include <linux/limits.h>
+#  include <pthread.h>
+#endif
+
+#ifdef _WIN32
+#  include <windows.h>
+#ifndef PATH_MAX
+#  define PATH_MAX MAX_PATH
+#endif
+#  define ENV_USER_HOME "APPDATA"
+#  define PATH_SEP "\\"
+#else
+#  define ENV_USER_HOME "HOME"
+#  define PATH_SEP "/"
+#endif
+
+#ifdef _MSC_VER
+#define inline __inline
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

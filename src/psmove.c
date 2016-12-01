@@ -44,46 +44,12 @@
 #include <math.h>
 #include <limits.h>
 
-/* OS-specific includes, for getting the Bluetooth address */
-#ifdef __APPLE__
-#  include "platform/psmove_osxsupport.h"
-#  include <unistd.h>
-#  include <sys/syslimits.h>
-#  include <sys/stat.h>
-#endif
-
 #ifdef __linux
-#  include <linux/limits.h>
-#  include <pthread.h>
-#  include <unistd.h>
-#  define PSMOVE_USE_PTHREADS
-#  include "platform/psmove_linuxsupport.h"
-#endif
-
-#ifdef _WIN32
-#  include <windows.h>
-#  include <bthsdpdef.h>
-#  include <bluetoothapis.h>
-#  include "platform/psmove_winsupport.h"
-#ifndef PATH_MAX
-#  define PATH_MAX MAX_PATH
-#endif
-#  define ENV_USER_HOME "APPDATA"
-#  define PATH_SEP "\\"
-#else
-#  define ENV_USER_HOME "HOME"
-#  define PATH_SEP "/"
+#define PSMOVE_USE_PTHREADS
 #endif
 
 #include "daemon/moved_client.h"
 #include "hidapi.h"
-
-#ifdef _MSC_VER
-#define STIN static __inline  // Used in psmove_decode_16bit
-#else
-#define STIN static inline
-#endif
-
 
 /* Begin private definitions */
 
@@ -166,7 +132,7 @@ typedef struct {
 #define TWELVE_BIT_SIGNED(x) (((x) & 0x800)?(-(((~(x)) & 0xFFF) + 1)):(x))
 
 /* Decode 16-bit signed value from data pointer and offset */
-STIN int
+static inline int
 psmove_decode_16bit(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
@@ -285,10 +251,7 @@ struct _PSMove {
     unsigned char led_write_last_result;
 #endif
 
-#ifdef _WIN32
-    /* Nonzero if this device is a Bluetooth device (on Windows only) */
-    unsigned char is_bluetooth;
-#endif
+    enum PSMove_Connection_Type connection_type;
 };
 
 enum PSMove_Bool
@@ -515,6 +478,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_HIDAPI;
+    move->connection_type = Conn_Unknown;
 
     /* Make sure the first LEDs update will go through (+ init get_ticks) */
     move->last_leds_update = psmove_util_get_ticks() - PSMOVE_MAX_LED_INHIBIT_MS;
@@ -522,7 +486,9 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
 #ifdef _WIN32
     /* Windows Quirk: USB devices have "0" as serial, BT devices their addr */
     if (serial != NULL && wcslen(serial) > 1) {
-        move->is_bluetooth = 1;
+        move->connection_type = Conn_Bluetooth;
+    } else {
+        move->connection_type = Conn_USB;
     }
     serial = NULL;  // Set the serial to NULL, even if BT device, to use psmove_get_serial below.
 
@@ -596,6 +562,12 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
         }
         free(move);
         return NULL;
+    } else if (move->connection_type == Conn_Unknown) {
+        if (strlen(move->serial_number) == 0) {
+            move->connection_type = Conn_USB;
+        } else {
+            move->connection_type = Conn_Bluetooth;
+        }
     }
 
     /**
@@ -763,6 +735,9 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
 {
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_MOVED;
+
+    // By default, all moved-provided controllers are considered Bluetooth
+    move->connection_type = Conn_Bluetooth;
 
     move->client = client;
     move->remote_id = remote_id;
@@ -1145,27 +1120,7 @@ psmove_connection_type(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, Conn_Unknown);
 
-    if (move->type == PSMove_MOVED) {
-        return Conn_Bluetooth;
-    }
-
-#if defined(_WIN32)
-    if (move->is_bluetooth) {
-        return Conn_Bluetooth;
-    } else {
-        return Conn_USB;
-    }
-#else
-    if (move->serial_number == NULL) {
-        return Conn_Unknown;
-    }
-
-    if (strlen(move->serial_number) == 0) {
-        return Conn_USB;
-    }
-
-    return Conn_Bluetooth;
-#endif
+    return move->connection_type;
 }
 
 int
