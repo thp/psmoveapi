@@ -430,6 +430,56 @@ linux_bluetoothd_control(struct linux_info_t *info, int start)
     }
 }
 
+static int
+linux_bluez5_write_entry(char *path, char *contents)
+{
+    FILE *fp = NULL;
+    int errors = 0;
+
+    fp = fopen(path, "w");
+    if (fp == NULL) {
+        LINUXPAIR_DEBUG("Cannot open file for writing: %s\n", path);
+        errors++;
+    }
+    else {
+        fwrite((const void *)contents, 1, strlen(contents), fp);
+        fclose(fp);
+    }
+
+    return errors;
+}
+
+static int
+linux_bluez5_write_info(char *info_dir)
+{
+    int errors = 0;
+    char *info_file = bt_path_join(info_dir, BLUEZ5_INFO_FILE);
+
+    errors = linux_bluez5_write_entry(info_file, BLUEZ5_INFO_ENTRY);
+
+    free(info_file);
+    return errors;
+}
+
+static int
+linux_bluez5_write_cache(struct linux_info_t *linux_info, char *cache_dir, char *addr)
+{
+    int errors = 0;
+    char *cache_file = bt_path_join(cache_dir, addr);
+    struct stat st;
+
+    // if cache file already exists, do nothing
+    if (stat(cache_file, &st) != 0) {
+        linux_bluetoothd_control(linux_info, 0);
+
+        // no cache file, create it
+        errors = linux_bluez5_write_entry(cache_file, BLUEZ5_CACHE_ENTRY);
+    }
+
+    free(cache_file);
+    return errors;
+}
+
 // Bluez 5.x has new storage structure, incompatible with Bluez 4.x
 static int
 linux_bluez5_register_psmove(struct linux_info_t *linux_info, char *addr, char *bluetooth_dir)
@@ -542,56 +592,6 @@ cleanup:
     free(controller_addr);
 
     return (errors == 0);
-}
-
-static int
-linux_bluez5_write_entry(char *path, char *contents)
-{
-    FILE *fp = NULL;
-    int errors = 0;
-
-    fp = fopen(path, "w");
-    if (fp == NULL) {
-        LINUXPAIR_DEBUG("Cannot open file for writing: %s\n", path);
-        errors++;
-    }
-    else {
-        fwrite((const void *)contents, 1, strlen(contents), fp);
-        fclose(fp);
-    }
-
-    return errors;
-}
-
-static int
-linux_bluez5_write_info(char *info_dir)
-{
-    int errors = 0;
-    char *info_file = bt_path_join(info_dir, BLUEZ5_INFO_FILE);
-
-    errors = linux_bluez5_write_entry(info_file, BLUEZ5_INFO_ENTRY);
-
-    free(info_file);
-    return errors;
-}
-
-static int
-linux_bluez5_write_cache(struct linux_info_t *linux_info, char *cache_dir, char *addr)
-{
-    int errors = 0;
-    char *cache_file = bt_path_join(cache_dir, addr);
-    struct stat st;
-
-    // if cache file already exists, do nothing
-    if (stat(cache_file, &st) != 0) {
-        linux_bluetoothd_control(linux_info, 0);
-
-        // no cache file, create it
-        errors = linux_bluez5_write_entry(cache_file, BLUEZ5_CACHE_ENTRY);
-    }
-
-    free(cache_file);
-    return errors;
 }
 
 void
