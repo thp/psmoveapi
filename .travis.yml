@@ -24,8 +24,10 @@ before_install:
 
 install:
   - git submodule update --init --recursive
+  - git fetch --tags
+  - git fetch --unshallow || true
 
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash -e -x ./contrib/build_scripts/debian/build-ubuntu; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export PATH=$PATH:$JAVA_HOME/bin; bash -e -x ./contrib/build_scripts/debian/build-ubuntu; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then bash -e -x ./contrib/build_scripts/debian/cross-compile-mingw64; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then bash -e -x ./contrib/build_scripts/osx/build-osx-snapshot; fi
