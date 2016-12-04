@@ -174,18 +174,16 @@ macosx_get_minor_version()
     return minor;
 }
 
-static int
-macosx_blued_register_psmove(char *addr)
+void
+psmove_port_register_psmove(const char *addr, const char *host)
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    int result = 1;
     char cmd[1024];
     char *btaddr = _psmove_normalize_btaddr(addr, 1, '-');
 
     int minor_version = macosx_get_minor_version();
     if (minor_version == -1) {
         OSXPAIR_DEBUG("Cannot detect Mac OS X version.\n");
-        result = 0;
         goto end;
     } else if (minor_version < 7) {
         OSXPAIR_DEBUG("No need to add entry for OS X before 10.7.\n");
@@ -234,8 +232,6 @@ macosx_blued_register_psmove(char *addr)
 
 end:
     [pool release];
-
-    return result;
 }
 
 void
@@ -298,11 +294,4 @@ char *
 psmove_port_get_host_bluetooth_address()
 {
     return macosx_get_btaddr();
-}
-
-void
-psmove_port_register_psmove(const char *addr, const char *host)
-{
-    /* Add entry to the com.apple.Bluetooth.plist file */
-    macosx_blued_register_psmove(addr);
 }
