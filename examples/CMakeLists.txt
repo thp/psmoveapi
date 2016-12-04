@@ -35,12 +35,6 @@ endif()
 
 # C test programs
 if(PSMOVE_BUILD_TESTS)
-    foreach(TESTNAME led_update calibration responsiveness extension led_pwm_frequency)
-        add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c)
-        target_link_libraries(test_${TESTNAME} psmoveapi)
-		set_property(TARGET test_${TESTNAME} PROPERTY FOLDER "Examples") 
-    endforeach(TESTNAME)
-
     if(PSMOVE_BUILD_TRACKER)
         foreach(TESTNAME record_video)
             add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.c)
