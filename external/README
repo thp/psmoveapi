@@ -30,13 +30,6 @@ by Eugene Zatepyakin, modified by Thomas Perl
 from https://github.com/thp/PS3EYEDriver
 
 
-SDL2
-====
-
-Simple DirectMedia Layer; version 2; used for building the examples.
-from http://libsdl.org/
-
-
 glfw
 ====
 

@@ -7,6 +7,3 @@
 [submodule "external/libusb-1.0"]
 	path = external/libusb-1.0
 	url = https://github.com/libusb/libusb.git
-[submodule "external/SDL2"]
-	path = external/SDL2
-	url = https://github.com/spurious/SDL-mirror
