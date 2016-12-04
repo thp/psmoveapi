@@ -1,3 +1,4 @@
+#pragma once
 /**
 * PS Move API - An interface for the PS Move Motion Controller
 * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
@@ -27,8 +28,6 @@
 **/
 
 /* Math functions related to 3d vectors */
-#ifndef __PSMOVE_VECTOR_H
-#define __PSMOVE_VECTOR_H
 
 //-- includes -----
 #include <stdbool.h>
@@ -105,5 +104,3 @@ ADDCALL psmove_3axisvector_apply_transform(const PSMove_3AxisVector *v, const PS
 //-- macros -----
 #define assert_vector_is_normalized(v) assert(is_nearly_equal(psmove_vector_length_squared(v), 1.f, k_normal_epsilon))
 #define assert_vectors_are_perpendicular(a, b) assert(is_nearly_equal(psmove_vector_dot(a,b), 0.f, k_normal_epsilon))
-
-#endif // __PSMOVE_VECTOR_H

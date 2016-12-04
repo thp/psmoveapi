@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -27,8 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef __PSMOVE_H
-#define __PSMOVE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -1508,6 +1507,3 @@ ADDCALL psmove_util_get_env_string(const char *name);
 #ifdef __cplusplus
 }
 #endif
-
-#endif
-

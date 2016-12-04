@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
  **/
 
 
-#ifndef MOVED_MONITOR_H
-#define MOVED_MONITOR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -81,5 +80,3 @@ moved_monitor_free(moved_monitor *monitor);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* MOVED_MONITOR_H */

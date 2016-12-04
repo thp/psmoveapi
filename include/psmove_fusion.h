@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
  **/
 
 
-#ifndef PSMOVE_FUSION_H
-#define PSMOVE_FUSION_H
 
 #include "psmove_config.h"
 #include "psmove.h"
@@ -135,5 +134,3 @@ ADDCALL psmove_fusion_free(PSMoveFusion *fusion);
 #ifdef __cplusplus
 };
 #endif
-
-#endif /* PSMOVE_FUSION_H */

@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -27,8 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef MOVED_PROTOCOL_H
-#define MOVED_PROTOCOL_H
 
 #define MOVED_UDP_PORT 17777
 
@@ -48,5 +47,3 @@
 
 /* Maximum number of retries for client requests */
 #define MOVED_MAX_RETRIES 5
-
-#endif

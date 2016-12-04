@@ -1,3 +1,4 @@
+#pragma once
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
@@ -27,8 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef PSMOVE_PRIVATE_H
-#define PSMOVE_PRIVATE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -234,6 +233,4 @@ ADDCALL _psmove_get_auth_response(PSMove *move);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

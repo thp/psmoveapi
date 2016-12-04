@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
  **/
 
 
-#ifndef PSMOVE_TRACKER_OSXSUPPORT_H
-#define PSMOVE_TRACKER_OSXSUPPORT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +42,4 @@ macosx_camera_set_exposure_lock(int locked);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

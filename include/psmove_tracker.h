@@ -1,3 +1,4 @@
+#pragma once
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
@@ -27,8 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef PSMOVE_TRACKER_H
-#define PSMOVE_TRACKER_H
 
 #include "psmove_config.h"
 #include "psmove.h"
@@ -667,6 +666,4 @@ ADDCALL psmove_tracker_free(PSMoveTracker *tracker);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

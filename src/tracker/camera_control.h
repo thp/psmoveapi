@@ -1,3 +1,4 @@
+#pragma once
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
@@ -26,8 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef CAMERA_CONTROL_H_
-#define CAMERA_CONTROL_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +110,3 @@ camera_control_restore_system_settings(CameraControl* cc,
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif /* CAMERA_CONTROL_H_ */

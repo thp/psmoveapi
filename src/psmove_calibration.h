@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
  **/
 
 
-#ifndef PSMOVE_CALIBRATION_H
-#define PSMOVE_CALIBRATION_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -108,6 +107,4 @@ ADDCALL psmove_calibration_free(PSMoveCalibration *calibration);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
