@@ -42,7 +42,9 @@ typedef struct
 
 Color convert_battery_to_col(enum PSMove_Battery_Level level)
 {
-    Color out = { .r = 0, .g = 0, .b = 0 };
+    Color out;
+    out.r = out.g = out.b = 0;
+
     switch(level)
     {
         case Batt_MIN: out.r = 255; out.g =   0; out.b =   0; break;
@@ -74,7 +76,7 @@ int main(int argc, char* argv[])
 
     for(i=0; i<c; i++) {
         moves[i] = psmove_connect_by_id(i);
-        psmove_set_rate_limiting(moves[i], 1);
+        psmove_set_rate_limiting(moves[i], PSMove_True);
     }
 
     bool running = true;

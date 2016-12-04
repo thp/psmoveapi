@@ -31,6 +31,10 @@
 #ifndef MOVED_MONITOR_H
 #define MOVED_MONITOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* For now, monitoring is only supported on Linux */
 #ifdef __linux
 
@@ -73,5 +77,9 @@ void
 moved_monitor_free(moved_monitor *monitor);
 
 #endif /* __linux */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MOVED_MONITOR_H */

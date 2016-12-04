@@ -405,7 +405,7 @@ ADDCALL psmove_get_serial(PSMove *move);
  * is a mobile device), you can use psmove_pair_custom() on a
  * different computer and specify the Bluetooth address of the
  * mobile device instead. For most use cases, you can use the
- * \c psmovepair command-line utility.
+ * \c psmove pair command-line utility.
  *
  * \param move A valid \ref PSMove handle
  *

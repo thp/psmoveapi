@@ -10,7 +10,7 @@ The PS Move connects via two methods:
 Bluetooth pairing
 -----------------
 
-The ``psmovepair`` utility is used for Bluetooth pairing -- it will write the
+The ``psmove pair`` utility is used for Bluetooth pairing -- it will write the
 Bluetooth host address of the computer it's running on to PS Move controllers
 connected via USB.
 
@@ -18,7 +18,7 @@ It optionally takes a single command-line parameter that is an alternative
 Bluetooth host address. For example, if you want to pair your PS Move controller
 to your phone, but it does not have USB Host Mode, you can use this on your PC::
 
-    ./psmovepair aa:bb:cc:dd:ee:ff
+    ./psmove pair aa:bb:cc:dd:ee:ff
 
 Where ``aa:bb:cc:dd:ee:ff`` is the Bluetooth host address of your phone. Note
 that depending on the phone, you also need to run pairing code there.
@@ -47,7 +47,7 @@ check the Bluetooth devices list of your computer and see if there is an
 entry for "Motion Controller".
 
 On recent versions of OS X, a dialog might pop up asking for a PIN. Close it
-and pair the controller again using ``psmovepair``. After that, it should
+and pair the controller again using ``psmove pair``. After that, it should
 connect successfully.
 
 
@@ -59,10 +59,10 @@ Here are some advanced tips if you can't get pairing working out of the box:
 Mac OS X
 ~~~~~~~~
 
-If ``psmovepair`` doesn't work or you get a PIN prompt when you press the PS
+If ``psmove pair`` doesn't work or you get a PIN prompt when you press the PS
 button on your controller, follow these steps:
 
-* Right after you run ``psmovepair`` write down the adress you find after
+* Right after you run ``psmove pair`` write down the adress you find after
   "controller address:" in the form "aa:bb:cc:dd:ee:ff"
 * Disable Bluetooth (or the modifications that follow won’t work)
 * Wait for the Bluetooth process to quit (``pgrep blued``); repeat until nothing

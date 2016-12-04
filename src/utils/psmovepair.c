@@ -95,8 +95,8 @@ int pair(const char *custom_addr)
 }
 
 #ifdef __linux
-void
-on_monitor_update(enum MonitorEvent event,
+static void
+on_monitor_update_pair(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type,
         const char *path, const wchar_t *serial,
         void *user_data)
@@ -114,7 +114,7 @@ int run_daemon()
     // On Linux we use moved_monitor, which is based on udev, to detect
     // controller connection
 #ifdef __linux
-    moved_monitor *monitor = moved_monitor_new(on_monitor_update, NULL);
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update_pair, NULL);
     int monitor_fd = moved_monitor_get_fd(monitor);
     struct pollfd pfd;
 

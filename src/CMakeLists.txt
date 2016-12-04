@@ -204,7 +204,6 @@ configure_file(${ROOT_DIR}/include/psmove_config.h.in
 
 include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)
-include(${CMAKE_CURRENT_LIST_DIR}/devtools/CMakeLists.txt)
 
 install(FILES ${CMAKE_BINARY_DIR}/psmoveapi.pc
     DESTINATION ${PSMOVEAPI_LIB_DEST}/pkgconfig)
