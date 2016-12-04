@@ -1,3 +1,4 @@
+#pragma once
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2016 Thomas Perl <m@thp.io>
@@ -26,8 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef PSMOVE_PORT_H
-#define PSMOVE_PORT_H
 
 #include "psmove.h"
 
@@ -117,5 +116,3 @@ psmove_port_register_psmove(const char *addr, const char *host);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* PSMOVE_PORT_H */

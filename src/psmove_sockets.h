@@ -1,3 +1,4 @@
+#pragma once
 
 /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
  **/
 
 
-#ifndef PSMOVE_SOCKETS_H
-#define PSMOVE_SOCKETS_H
 
 #ifdef _WIN32
 #  include <winsock2.h>
@@ -42,5 +41,3 @@
 #  include <sys/socket.h>
 #  include <sys/types.h>
 #endif
-
-#endif /* PSMOVE_SOCKETS_H */

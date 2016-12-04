@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
  **/
 
 
-#ifndef MOVED_CLIENT_H
-#define MOVED_CLIENT_H
 
 
 #include "../psmove_sockets.h"
@@ -72,5 +71,3 @@ moved_client_send(moved_client *client, char req, char id, const unsigned char *
 
 void
 moved_client_destroy(moved_client *client);
-
-#endif

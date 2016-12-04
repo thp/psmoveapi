@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
@@ -27,8 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef CAMERA_CONTROL_PRIV_H
-#define CAMERA_CONTROL_PRIV_H
 
 #include "opencv2/core/core_c.h"
 #include "opencv2/highgui/highgui_c.h"
@@ -62,8 +62,6 @@ struct _CameraControl {
         int height;
         enum PSMove_Bool deinterlace;
 };
-
-#endif
 
 void
 get_metrics(int *width, int *height);

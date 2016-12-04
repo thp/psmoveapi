@@ -1,3 +1,4 @@
+#pragma once
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
@@ -27,8 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef TRACKER_HELPERS_H
-#define TRACKER_HELPERS_H
 
 #include "opencv2/core/core_c.h"
 
@@ -95,5 +94,3 @@ th_brg2hsv(CvScalar bgr);
 #ifdef __cplusplus
 }
 #endif
-
-#endif // TRACKER_HELPERS_H

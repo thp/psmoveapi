@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
  **/
 
 
-#ifndef PSMOVE_ORIENTATION_H
-#define PSMOVE_ORIENTATION_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -100,6 +99,4 @@ ADDCALL psmove_orientation_reset_quaternion(PSMoveOrientation *orientation_state
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

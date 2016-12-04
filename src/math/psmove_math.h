@@ -1,3 +1,4 @@
+#pragma once
 /**
 * PS Move API - An interface for the PS Move Motion Controller
 * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
@@ -27,8 +28,6 @@
 **/
 
 /* General math utility functions */
-#ifndef __PSMOVE_MATH_H
-#define __PSMOVE_MATH_H
 
 //-- includes -----
 #include <float.h>
@@ -76,6 +75,4 @@ float radians_to_degrees(float x);
 
 #ifdef __cplusplus
 }
-#endif	
-
-#endif // __PSMOVE_MATH_H
+#endif

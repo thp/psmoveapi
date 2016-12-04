@@ -1,3 +1,4 @@
+#pragma once
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
@@ -27,8 +28,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef PSMOVE_TRACKER_LINUXSUPPORT_H
-#define PSMOVE_TRACKER_LINUXSUPPORT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,6 +41,4 @@ linux_find_pseye();
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
