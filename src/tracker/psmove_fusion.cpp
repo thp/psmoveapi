@@ -139,7 +139,7 @@ psmove_fusion_get_position(PSMoveFusion *fusion, PSMove *move,
         glm::vec3 right = glm::project(glm::vec3(obj.x + .5, obj.y, obj.z),
                 glm::mat4(), fusion->projection, fusion->viewport);
 
-        float width = (right.x - left.x);
+        float width = std::abs(right.x - left.x);
         if (width > targetWidth) {
             /* Too near */
             winZ += step;
