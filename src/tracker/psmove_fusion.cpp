@@ -88,16 +88,10 @@ psmove_fusion_get_modelview_matrix(PSMoveFusion *fusion, PSMove *move)
     psmove_return_val_if_fail(fusion != NULL, NULL);
     psmove_return_val_if_fail(move != NULL, NULL);
 
-    float q0, q1, q2, q3;
-    psmove_get_orientation(move, &q0, &q1, &q2, &q3);
-    if (psmove_tracker_get_mirror(fusion->tracker)) {
-        /* Need to invert these two axes if mirroring is enabled */
-        q3 *= -1.;
-        q2 *= -1.;
-    }
-    glm::quat quaternion(q3, q2, q1, q0);
+    float w, x, y, z;
+    psmove_get_orientation(move, &w, &x, &y, &z);
+    glm::quat quaternion(w, x, y, z);
 
-    float x, y, z;
     psmove_fusion_get_position(fusion, move, &x, &y, &z);
 
     fusion->modelview = glm::translate(glm::mat4(),
