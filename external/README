@@ -35,3 +35,10 @@ SDL2
 
 Simple DirectMedia Layer; version 2; used for building the examples.
 from http://libsdl.org/
+
+
+glfw
+====
+
+GLFW; used for OpenGL in the examples.
+from http://www.glfw.org
