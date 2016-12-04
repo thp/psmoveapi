@@ -14,7 +14,6 @@ IF "%MSVC_VERSION%" NEQ "2015" (
 set PSMOVE_API_ROOT_DIR=%~dp0..\..\..\
 set PSMOVE_API_EXTERNAL_DIR=%PSMOVE_API_ROOT_DIR%\external
 set LIBUSB_DIR=%PSMOVE_API_EXTERNAL_DIR%\libusb-1.0
-set SDL2_DIR=%PSMOVE_API_EXTERNAL_DIR%\SDL2
 set OPENCV_DIR=%PSMOVE_API_EXTERNAL_DIR%\opencv
 
 IF "%MSVC_VERSION%"=="2015" (
@@ -58,55 +57,6 @@ IF "%MSVC_VERSION%"=="2015" (
 			goto Error
 		)
 	)
-)
-
-IF "%MSVC_VERSION%"=="2015" (
-	REM The version of SDL2 used by PSMoveAPI does not build under VS2015. A newer version does, but they fixed the problem in the wrong way (using /NODEFAULTLIB and hackery like that).
-	REM So, apply a patch that fixes the SDL2 cmake files in the correct way. Once the main SDL2 branch fixes this correctly, we can remove this patch.
-	echo.
-	echo Applying SDL2 VS2015 runtime patch
-	cd %SDL2_DIR%
-	git apply --ignore-space-change --ignore-whitespace %PSMOVE_API_ROOT_DIR%\contrib\msvc\sdl_vs2015_libs.patch
-	IF !ERRORLEVEL! NEQ 0 ( echo Failed to apply SDL2 patch. Perhaps it was already applied or SDL2 was not checked out. )
-)
-
-REM Generate SDL2 solution
-
-echo.
-echo Generating SDL2 solution
-
-cd %SDL2_DIR%
-IF NOT EXIST build mkdir build
-cd build
-	
-IF "%MSVC_VERSION%"=="2015" (	
-	cmake .. -G "Visual Studio 14 Win64" -DDIRECTX=OFF
-	IF !ERRORLEVEL! NEQ 0 ( 
-		echo Failed to generate SDL2 solution
-		goto Error
-	)
-) ELSE (
-	IF "%MSVC_VERSION%" == "2013" (
-		cmake .. -G "Visual Studio 12 Win64" -DDIRECTX=OFF
-		IF !ERRORLEVEL! NEQ 0 ( 
-			echo Failed to generate SDL2 solution
-			goto Error
-		)
-	)
-)
-
-REM Build SDL2
-echo.
-echo Building SDL2
-msbuild.exe %SDL2_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=x64 /verbosity:minimal /maxcpucount
-IF %ERRORLEVEL% NEQ 0 (
-	echo Failed to build SDL2
-	goto Error
-)
-msbuild.exe %SDL2_DIR%/build/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=x64 /verbosity:minimal /maxcpucount
-IF %ERRORLEVEL% NEQ 0 (
-	echo Failed to build SDL2
-	goto Error
 )
 
 REM Clone OpenCV
@@ -167,14 +117,14 @@ IF NOT EXIST build mkdir build
 cd build
 
 IF "%MSVC_VERSION%"=="2015" (
-	cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/
+	cmake .. -G "Visual Studio 14 Win64" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DOpenCV_DIR=./external/opencv/build/
 	IF !ERRORLEVEL! NEQ 0 (
 		echo Failed to generate PSMoveAPI solution
 		goto Error
 	)	
 ) ELSE (
 	IF "%MSVC_VERSION%" == "2013" (
-		cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DOpenCV_DIR=./external/opencv/build/ -DSDL2DIR=./external/SDL2/
+		cmake .. -G "Visual Studio 12 Win64" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DOpenCV_DIR=./external/opencv/build/
 		IF !ERRORLEVEL! NEQ 0 ( 
 			echo Failed to generate PSMoveAPI solution
 			goto Error

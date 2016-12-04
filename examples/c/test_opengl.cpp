@@ -269,48 +269,26 @@ Tracker::render()
     }
 }
 
+class Renderer : public GLFWRenderer {
+public:
+    Renderer(Tracker &tracker);
+    ~Renderer();
 
-class Renderer {
-    public:
-        Renderer(Tracker &tracker);
-        ~Renderer();
+    void init();
+    virtual void render();
 
-        void init();
-        void render();
-    private:
-		SDL_Window *m_window;
-		SDL_GLContext m_glContext;
-        Tracker &m_tracker;
+private:
+    Tracker &m_tracker;
 };
 
 Renderer::Renderer(Tracker &tracker)
-	: m_window(NULL),
-      m_tracker(tracker)
+    : GLFWRenderer()
+    , m_tracker(tracker)
 {
-    SDL_Init(SDL_INIT_VIDEO);
-	if (SDL_Init(SDL_INIT_VIDEO) < 0)
-	{
-		sdlDie("Unable to initialize SDL");
-	}
-
-	m_window = SDL_CreateWindow("OpenGL Test1",
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
-		640, 480,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-	if (m_window == NULL)
-	{
-		sdlDie("Unable to initialize SDL");
-	}
-	checkSDLError(__LINE__);
-
-	m_glContext = SDL_GL_CreateContext(m_window);
-	checkSDLError(__LINE__);
 }
 
 Renderer::~Renderer()
 {
-    SDL_Quit();
 }
 
 void
@@ -328,7 +306,6 @@ void
 Renderer::render()
 {
     m_tracker.render();
-	SDL_GL_SwapWindow(m_window);
 }
 
 class Main {
@@ -352,16 +329,10 @@ Main::exec()
     m_renderer.init();
     m_tracker.init();
 
-    SDL_Event e;
-    for(;;) {
-        if (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) {
-                break;
-            }
-        }
+    m_renderer.mainloop([&] () {
         m_tracker.update();
         m_renderer.render();
-    }
+    });
 
     return 0;
 }

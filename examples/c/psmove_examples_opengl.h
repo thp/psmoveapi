@@ -1,7 +1,7 @@
-#ifndef PSMOVE_EXAMPLES_OPENGL_H
-#define PSMOVE_EXAMPLES_OPENGL_H
+#pragma once
 
-#include <SDL.h>
+#include <GLFW/glfw3.h>
+#include <functional>
 
 #ifdef __APPLE__
     #include <OpenGL/gl.h>
@@ -22,32 +22,13 @@
 
 static GLUquadricObj *g_quadObj;
 
-void sdlDie(const char *msg)
-{
-	printf("%s: %s\n", msg, SDL_GetError());
-	SDL_Quit();
-	exit(1);
-}
-
-void checkSDLError(int line = -1)
-{
-#ifndef NDEBUG
-	const char *error = SDL_GetError();
-	if (*error != '\0')
-	{
-		printf("SDL Error: %s\n", error);
-		if (line != -1)
-			printf(" + line: %i\n", line);
-		SDL_ClearError();
-	}
-#endif
-}
-
 void initGLUQuadricObject(void)
 {
 	g_quadObj = gluNewQuadric();
-	if (!g_quadObj)
-		sdlDie("out of memory.");
+	if (!g_quadObj) {
+            fprintf(stderr, "out of mempry");
+            exit(1);
+        }
 }
 #define QUADRIC_OBJECT_INIT() { if(!g_quadObj) initGLUQuadricObject(); }
 
@@ -119,4 +100,48 @@ void drawSolidSphere(float radius, int slices, int stacks)
 	gluSphere(g_quadObj, radius, slices, stacks);
 }
 
-#endif /* PSMOVE_EXAMPLES_OPENGL_H */
+class GLFWRenderer {
+public:
+    GLFWRenderer();
+    ~GLFWRenderer();
+
+    void mainloop(std::function<void()> func);
+
+private:
+    GLFWwindow *m_window;
+};
+
+GLFWRenderer::GLFWRenderer()
+{
+    if (!glfwInit()) {
+        fprintf(stderr, "Could not initialize glfw\n");
+        exit(1);
+    }
+
+    m_window = glfwCreateWindow(640, 480, "PS Move API -- OpenGL", NULL, NULL);
+    if (m_window == NULL)
+    {
+        fprintf(stderr, "Could not create GLFW window\n");
+        glfwTerminate();
+        exit(1);
+    }
+
+    glfwMakeContextCurrent(m_window);
+}
+
+GLFWRenderer::~GLFWRenderer()
+{
+    glfwTerminate();
+}
+
+void
+GLFWRenderer::mainloop(std::function<void()> func)
+{
+    while (!glfwWindowShouldClose(m_window)) {
+        func();
+
+        glfwSwapBuffers(m_window);
+        glfwPollEvents();
+    }
+}
+
