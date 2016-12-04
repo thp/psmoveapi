@@ -19,7 +19,7 @@ sudo apt-get install -q -y  build-essential cmake 		\
 		     	    libv4l-dev libopencv-dev 		\
 		     	    openjdk-7-jdk ant liblwjgl-java 	\
 		     	    python-dev mono-mcs 		\
-		     	    swig3.0 libsdl2-dev freeglut3-dev
+		     	    swig3.0 freeglut3-dev
 
 # Configure
 echo "Configuring build..."

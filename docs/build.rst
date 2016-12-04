@@ -13,7 +13,7 @@ You need to install the following requirements:
 
 Install the dependencies and clone the source repository::
 
-    brew install cmake git sdl2 libtool automake
+    brew install cmake git libtool automake
     git clone --recursive git://github.com/thp/psmoveapi.git
     cd psmoveapi
 
@@ -70,7 +70,7 @@ Manual build
         python-dev \
         mono-mcs \
         swig3.0 \
-        libsdl2-dev freeglut3-dev
+        freeglut3-dev
 
 2. Build the API (standalone - if you want to make changes)::
 
