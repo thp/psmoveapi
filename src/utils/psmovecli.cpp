@@ -1,5 +1,7 @@
 #include <vector>
 
+#include "psmoveapi.h"
+
 typedef int (*subcommand_func_t)(int argc, char *argv[]);
 
 struct SubCommand {
@@ -56,9 +58,7 @@ extern "C" {
 #undef main
 
 #define main battery_check_main
-extern "C" {
-#include "battery_check.c"
-}
+#include "battery_check.cpp"
 #undef main
 
 #define main dump_calibration_main
@@ -102,6 +102,81 @@ usage(const char *progname, std::vector<SubCommand> &subcommands)
     return 0;
 }
 
+namespace {
+
+class ListHandler : public psmoveapi::Handler {
+public:
+    ListHandler() : waiting(0), done(0) {}
+
+    void report(Controller *controller) {
+        const char *connection_type_str = "unknown";
+        if (controller->usb && controller->bluetooth) {
+            connection_type_str = "USB+Bluetooth";
+        } else if (controller->usb) {
+            connection_type_str = "USB";
+        } else if (controller->bluetooth) {
+            connection_type_str = "Bluetooth";
+        }
+
+        const char *battery_str = "unknown";
+        switch (controller->battery) {
+            case Batt_20Percent: battery_str = "20%"; break;
+            case Batt_40Percent: battery_str = "40%"; break;
+            case Batt_60Percent: battery_str = "60%"; break;
+            case Batt_80Percent: battery_str = "80%"; break;
+            case Batt_MAX: battery_str = "100%"; break;
+            case Batt_CHARGING: battery_str = "charging"; break;
+            case Batt_CHARGING_DONE: battery_str = "charged"; break;
+        }
+
+        printf("Controller %d: %s (%s, battery: %s)\n", controller->index, controller->serial, connection_type_str, battery_str);
+
+        // Mark this controller as reported
+        controller->user_data = this;
+    }
+
+    virtual void connect(Controller *controller) {
+        if (controller->usb && !controller->bluetooth) {
+            // Need to report this controller straight away, since we don't get any updates
+            report(controller);
+        } else if (controller->bluetooth) {
+            // Can wait for controller to get the first sensor reading and report then
+            waiting++;
+        } else {
+            printf("Controller with invalid connection type: %d\n", controller->index);
+        }
+    }
+
+    virtual void update(Controller *controller) {
+        if (controller->user_data == this) {
+            // Already handled this controller
+            return;
+        }
+
+        // Can now report this controller, as battery data is available
+        report(controller);
+        done++;
+    }
+
+    int waiting;
+    int done;
+};
+
+};
+
+int
+list_main(int argc, char *argv[])
+{
+    ListHandler handler;
+    psmoveapi::PSMoveAPI api(&handler);
+
+    do {
+        api.update();
+    } while (handler.done < handler.waiting);
+
+    return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -113,6 +188,7 @@ main(int argc, char *argv[])
     subcommands.emplace_back("calibrate", "Calibrate magnetometers of controllers", magnetometer_calibration_main);
     subcommands.emplace_back("battery", "Visualize the battery charge on connected controllers", battery_check_main);
     subcommands.emplace_back("extensions", "Show sharp shooter and racing wheel extension data", test_extension_main);
+    subcommands.emplace_back("list", "List connected controllers", list_main);
 
     subcommands.emplace_back(nullptr, "Debugging Tools (for developers)", nullptr);
 
