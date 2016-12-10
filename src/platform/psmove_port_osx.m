@@ -91,6 +91,15 @@ macosx_get_btaddr()
     result = strdup([addr UTF8String]);
     psmove_return_val_if_fail(result != NULL, NULL);
 
+    char *tmp = result;
+    while (*tmp) {
+        if (*tmp == '-') {
+            *tmp = ':';
+        }
+
+        tmp++;
+    }
+
     [pool release];
     return result;
 }
