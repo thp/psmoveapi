@@ -124,7 +124,13 @@ ansi_color_table = {
 
 class ListHandler : public psmoveapi::Handler {
 public:
-    ListHandler() : waiting(0), done(0) {}
+    ListHandler()
+        : waiting(0)
+        , done(0)
+    {
+        char *host_address = psmove_port_get_host_bluetooth_address();
+        printf("Host address: %s\n", host_address ?: "unknown");
+    }
 
     virtual void connect(Controller *controller) {
         waiting++;
