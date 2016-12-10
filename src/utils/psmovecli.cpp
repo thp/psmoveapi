@@ -104,11 +104,39 @@ usage(const char *progname, std::vector<SubCommand> &subcommands)
 
 namespace {
 
+struct AnsiMapping {
+    AnsiMapping(int index, float r, float g, float b) : index{index}, color{r, g, b} {}
+
+    int index;
+    RGB color;
+};
+
+std::vector<AnsiMapping>
+ansi_color_table = {
+    AnsiMapping(1, 1.f, 0.f, 0.f), // red
+    AnsiMapping(2, 0.f, 1.f, 0.f), // green
+    AnsiMapping(3, 1.f, 1.f, 0.f), // yellow
+    AnsiMapping(4, 0.f, 0.f, 1.f), // blue
+    AnsiMapping(5, 1.f, 0.f, 1.f), // magenta
+    AnsiMapping(6, 0.f, 1.f, 1.f), // cyan
+    AnsiMapping(7, 1.f, 1.f, 1.f), // white
+};
+
 class ListHandler : public psmoveapi::Handler {
 public:
     ListHandler() : waiting(0), done(0) {}
 
-    void report(Controller *controller) {
+    virtual void connect(Controller *controller) {
+        waiting++;
+    }
+
+    virtual void update(Controller *controller) {
+        if (controller->user_data == this) {
+            // Already handled this controller
+            return;
+        }
+
+        // Can now report this controller, as battery data is available
         const char *connection_type_str = "unknown";
         if (controller->usb && controller->bluetooth) {
             connection_type_str = "USB+Bluetooth";
@@ -129,33 +157,24 @@ public:
             case Batt_CHARGING_DONE: battery_str = "charged"; break;
         }
 
-        printf("Controller %d: %s (%s, battery: %s)\n", controller->index, controller->serial, connection_type_str, battery_str);
+        auto &ansi = ansi_color_table[controller->index % ansi_color_table.size()];
+
+        printf("Controller %d: \033[9%dm%s\033[0m (%s, battery: %s)\n",
+                controller->index, ansi.index, controller->serial,
+                connection_type_str, battery_str);
+        controller->color = ansi.color;
 
         // Mark this controller as reported
         controller->user_data = this;
-    }
-
-    virtual void connect(Controller *controller) {
-        if (controller->usb && !controller->bluetooth) {
-            // Need to report this controller straight away, since we don't get any updates
-            report(controller);
-        } else if (controller->bluetooth) {
-            // Can wait for controller to get the first sensor reading and report then
-            waiting++;
-        } else {
-            printf("Controller with invalid connection type: %d\n", controller->index);
-        }
-    }
-
-    virtual void update(Controller *controller) {
-        if (controller->user_data == this) {
-            // Already handled this controller
-            return;
-        }
-
-        // Can now report this controller, as battery data is available
-        report(controller);
         done++;
+    }
+
+    virtual void disconnect(Controller *controller) {
+        if (controller->user_data == this) {
+            done--;
+        }
+
+        waiting--;
     }
 
     int waiting;
