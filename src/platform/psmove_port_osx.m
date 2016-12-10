@@ -56,6 +56,10 @@ macosx_bluetooth_set_powered(int powered)
     // Inspired by blueutil from Frederik Seiffert <ego@frederikseiffert.de>
     int state = IOBluetoothPreferenceGetControllerPowerState();
 
+    if (state == powered) {
+        return 1;
+    }
+
     OSXPAIR_DEBUG("Switching Bluetooth %s...\n", powered?"on":"off");
     IOBluetoothPreferenceSetControllerPowerState(powered);
 
