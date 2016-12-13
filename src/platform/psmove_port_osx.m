@@ -56,6 +56,10 @@ macosx_bluetooth_set_powered(int powered)
     // Inspired by blueutil from Frederik Seiffert <ego@frederikseiffert.de>
     int state = IOBluetoothPreferenceGetControllerPowerState();
 
+    if (state == powered) {
+        return 1;
+    }
+
     OSXPAIR_DEBUG("Switching Bluetooth %s...\n", powered?"on":"off");
     IOBluetoothPreferenceSetControllerPowerState(powered);
 
@@ -86,6 +90,15 @@ macosx_get_btaddr()
 
     result = strdup([addr UTF8String]);
     psmove_return_val_if_fail(result != NULL, NULL);
+
+    char *tmp = result;
+    while (*tmp) {
+        if (*tmp == '-') {
+            *tmp = ':';
+        }
+
+        tmp++;
+    }
 
     [pool release];
     return result;
