@@ -77,6 +77,7 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
           -DWITH_OPENEXR=OFF \
           -DWITH_FFMPEG=OFF \
           -DWITH_JASPER=OFF \
+          -DWITH_GSTREAMER=OFF \
           -DWITH_GPHOTO2=OFF \
           -DCMAKE_OSX_ARCHITECTURES="x86_64" \
           -DCMAKE_INSTALL_PREFIX=$(pwd)/install ..
