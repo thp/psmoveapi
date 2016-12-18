@@ -57,6 +57,8 @@ struct Controller {
     float rumble;
 
     int buttons;
+    int pressed;
+    int released;
     float trigger;
     struct Vec3 accelerometer;
     struct Vec3 gyroscope;

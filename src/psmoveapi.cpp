@@ -197,7 +197,10 @@ PSMoveAPI::update()
         } else {
             while (psmove_poll(read_move)) {
                 if (receiver->update != nullptr) {
+                    int previous = c->controller.buttons;
                     c->controller.buttons = psmove_get_buttons(read_move);
+                    c->controller.pressed = c->controller.buttons & ~previous;
+                    c->controller.released = previous & ~c->controller.buttons;
                     c->controller.trigger = float(psmove_get_trigger(read_move)) / 255.f;
 
                     psmove_get_accelerometer_frame(read_move, Frame_SecondHalf,

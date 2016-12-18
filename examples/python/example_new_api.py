@@ -26,7 +26,7 @@ class RedTrigger(psmoveapi.PSMoveAPI):
         print(controller.accelerometer, '->', controller.color, 'usb:', controller.usb, 'bt:', controller.bluetooth)
         up_pointing = min(1, max(0, 0.5 + 0.5 * controller.accelerometer.y))
         controller.color = psmoveapi.RGB(controller.trigger, up_pointing, 1.0 if controller.usb else 0.0)
-        if controller.pressed(psmoveapi.Button.PS):
+        if controller.now_pressed(psmoveapi.Button.PS):
             self.quit = True
 
     def on_disconnect(self, controller):

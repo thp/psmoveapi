@@ -76,6 +76,8 @@ class ControllerStruct(Structure):
         ('rumble', c_float),
 
         ('buttons', c_int),
+        ('pressed', c_int),
+        ('released', c_int),
         ('trigger', c_float),
         ('accelerometer', Vec3),
         ('gyroscope', Vec3),
@@ -116,8 +118,14 @@ class Controller(object):
     def __repr__(self):
         return '<Controller #{} {}>'.format(self.index, self.serial)
 
-    def pressed(self, button):
+    def now_pressed(self, button):
+        return (self._controller.pressed & button) != 0
+
+    def still_pressed(self, button):
         return (self._controller.buttons & button) != 0
+
+    def now_released(self, button):
+        return (self._controller.released & button) != 0
 
     def __setattr__(self, name, value):
         if name != '_controller' and hasattr(self._controller, name):
