@@ -34,9 +34,6 @@
 
 #include "psmoveapi.h"
 
-// Private header for psmove_port_sleep_ms()
-#include "../../src/psmove_port.h"
-
 
 struct ExampleHandler : public psmoveapi::Handler {
     ExampleHandler() : color{0.f, 0.f, 0.f} , bt_controllers(0), rumble(0.f), quit(false), interactive(false) {}
@@ -97,7 +94,7 @@ main(int argc, char* argv[])
         handler.color.g = float(i % 3 == 0);
         handler.rumble = float(i % 2);
         api.update();
-        psmove_port_sleep_ms(10*(i%10));
+        psmove_util_sleep_ms(10*(i%10));
     }
 
     for (int i=250; i>=0; i-=5) {

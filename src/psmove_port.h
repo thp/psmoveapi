@@ -30,8 +30,6 @@
 
 #include "psmove.h"
 
-#include <stdint.h>
-
 
 #ifdef __APPLE__
 #  include <unistd.h>
