@@ -129,7 +129,7 @@ public:
         , done(0)
     {
         char *host_address = psmove_port_get_host_bluetooth_address();
-        printf("Host address: %s\n", host_address ?: "unknown");
+        printf("Host address: %s\n", host_address ? host_address : "unknown");
     }
 
     virtual void connect(Controller *controller) {
