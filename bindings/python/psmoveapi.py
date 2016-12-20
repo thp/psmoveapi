@@ -30,6 +30,7 @@
 from ctypes import *
 import sys
 import os
+import math
 
 library_path = os.environ.get('PSMOVEAPI_LIBRARY_PATH', None)
 if library_path:
@@ -55,6 +56,16 @@ class RGB(Structure):
     def __repr__(self):
         return '<%s (%.2f, %.2f, %.2f)>' % (type(self).__name__, self.r, self.g, self.b)
 
+    def __mul__(self, factor):
+        return RGB(self.r * factor, self.g * factor, self.b * factor)
+
+    def __add__(self, other):
+        return RGB(self.r + other.r, self.g + other.g, self.b + other.b)
+
+    def __truediv__(self, factor):
+        return RGB(self.r / factor, self.g / factor, self.b / factor)
+
+
 class Vec3(Structure):
     _fields_ = [
         ('x', c_float),
@@ -64,6 +75,9 @@ class Vec3(Structure):
 
     def __repr__(self):
         return '<%s (%.2f, %.2f, %.2f)>' % (type(self).__name__, self.x, self.y, self.z)
+
+    def length(self):
+        return math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
 
 class ControllerStruct(Structure):
     _fields_ = [
@@ -99,6 +113,8 @@ class Button(object):
     PS = 1 << 16
     MOVE = 1 << 19
     T = 1 << 20
+
+    VALUES = [TRIANGLE, CIRCLE, CROSS, SQUARE, SELECT, START, PS, MOVE, T]
 
 ControllerFunc = CFUNCTYPE(None, POINTER(ControllerStruct), c_void_p)
 
