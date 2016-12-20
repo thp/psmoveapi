@@ -47,7 +47,7 @@ struct ControllerGlue {
     Controller &operator=(const ControllerGlue &other) = delete;
 
     PSMove *read_move() { return move_bluetooth; }
-    PSMove *write_move() { return move_usb ?: move_bluetooth; }
+    PSMove *write_move() { return move_usb ? move_usb : move_bluetooth; }
 
     PSMove *move_bluetooth;
     PSMove *move_usb;
