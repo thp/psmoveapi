@@ -35,6 +35,8 @@ extern "C" {
 
 #include "psmove_config.h"
 
+#include <stdint.h>
+
 #ifdef _WIN32
 #  define ADDCALL __cdecl
 #  if defined(BUILDING_STATIC_LIBRARY)
@@ -1502,6 +1504,14 @@ ADDCALL psmove_util_get_env_int(const char *name);
  **/
 ADDAPI char *
 ADDCALL psmove_util_get_env_string(const char *name);
+
+/**
+ * \brief Sleep for a specific amount of milliseconds.
+ *
+ * \param ms The amount of milliseconds to sleep
+ **/
+ADDAPI void
+ADDCALL psmove_util_sleep_ms(uint32_t ms);
 
 
 #ifdef __cplusplus

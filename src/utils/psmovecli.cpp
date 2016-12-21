@@ -1,5 +1,7 @@
 #include <vector>
 
+#include "psmoveapi.h"
+
 typedef int (*subcommand_func_t)(int argc, char *argv[]);
 
 struct SubCommand {
@@ -56,9 +58,7 @@ extern "C" {
 #undef main
 
 #define main battery_check_main
-extern "C" {
-#include "battery_check.c"
-}
+#include "battery_check.cpp"
 #undef main
 
 #define main dump_calibration_main
@@ -102,6 +102,106 @@ usage(const char *progname, std::vector<SubCommand> &subcommands)
     return 0;
 }
 
+namespace {
+
+struct AnsiMapping {
+    AnsiMapping(int index, float r, float g, float b) : index{index}, color{r, g, b} {}
+
+    int index;
+    RGB color;
+};
+
+std::vector<AnsiMapping>
+ansi_color_table = {
+    AnsiMapping(1, 1.f, 0.f, 0.f), // red
+    AnsiMapping(2, 0.f, 1.f, 0.f), // green
+    AnsiMapping(3, 1.f, 1.f, 0.f), // yellow
+    AnsiMapping(4, 0.f, 0.f, 1.f), // blue
+    AnsiMapping(5, 1.f, 0.f, 1.f), // magenta
+    AnsiMapping(6, 0.f, 1.f, 1.f), // cyan
+    AnsiMapping(7, 1.f, 1.f, 1.f), // white
+};
+
+class ListHandler : public psmoveapi::Handler {
+public:
+    ListHandler()
+        : waiting(0)
+        , done(0)
+    {
+        char *host_address = psmove_port_get_host_bluetooth_address();
+        printf("Host address: %s\n", host_address ? host_address : "unknown");
+    }
+
+    virtual void connect(Controller *controller) {
+        waiting++;
+    }
+
+    virtual void update(Controller *controller) {
+        if (controller->user_data == this) {
+            // Already handled this controller
+            return;
+        }
+
+        // Can now report this controller, as battery data is available
+        const char *connection_type_str = "unknown";
+        if (controller->usb && controller->bluetooth) {
+            connection_type_str = "USB+Bluetooth";
+        } else if (controller->usb) {
+            connection_type_str = "USB";
+        } else if (controller->bluetooth) {
+            connection_type_str = "Bluetooth";
+        }
+
+        const char *battery_str = "unknown";
+        switch (controller->battery) {
+            case Batt_20Percent: battery_str = "20%"; break;
+            case Batt_40Percent: battery_str = "40%"; break;
+            case Batt_60Percent: battery_str = "60%"; break;
+            case Batt_80Percent: battery_str = "80%"; break;
+            case Batt_MAX: battery_str = "100%"; break;
+            case Batt_CHARGING: battery_str = "charging"; break;
+            case Batt_CHARGING_DONE: battery_str = "charged"; break;
+        }
+
+        auto &ansi = ansi_color_table[controller->index % ansi_color_table.size()];
+
+        printf("Controller %d: \033[9%dm%s\033[0m (%s, battery: %s)\n",
+                controller->index, ansi.index, controller->serial,
+                connection_type_str, battery_str);
+        controller->color = ansi.color;
+
+        // Mark this controller as reported
+        controller->user_data = this;
+        done++;
+    }
+
+    virtual void disconnect(Controller *controller) {
+        if (controller->user_data == this) {
+            done--;
+        }
+
+        waiting--;
+    }
+
+    int waiting;
+    int done;
+};
+
+};
+
+int
+list_main(int argc, char *argv[])
+{
+    ListHandler handler;
+    psmoveapi::PSMoveAPI api(&handler);
+
+    do {
+        api.update();
+    } while (handler.done < handler.waiting);
+
+    return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -113,6 +213,7 @@ main(int argc, char *argv[])
     subcommands.emplace_back("calibrate", "Calibrate magnetometers of controllers", magnetometer_calibration_main);
     subcommands.emplace_back("battery", "Visualize the battery charge on connected controllers", battery_check_main);
     subcommands.emplace_back("extensions", "Show sharp shooter and racing wheel extension data", test_extension_main);
+    subcommands.emplace_back("list", "List connected controllers", list_main);
 
     subcommands.emplace_back(nullptr, "Debugging Tools (for developers)", nullptr);
 

@@ -2,3 +2,4 @@ include/psmove_config.h
 build/*
 bindings/processing
 external/opencv
+__pycache__

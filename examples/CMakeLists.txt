@@ -16,6 +16,12 @@ if(PSMOVE_BUILD_EXAMPLES)
 		set_property(TARGET ${EXAMPLE} PROPERTY FOLDER "Examples") 
     endforeach()
 
+    foreach(EXAMPLE example_new_api)
+        add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.cpp)
+        target_link_libraries(${EXAMPLE} psmoveapi)
+        set_property(TARGET ${EXAMPLE} PROPERTY FOLDER "Examples")
+    endforeach()
+
     if(PSMOVE_BUILD_TRACKER)
         # Build GLFW as dependency
         set(GLFW_BUILD_DOCS OFF CACHE BOOL "")

@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stddef.h>
 #include <ctype.h>
 #include <string.h>
@@ -2342,3 +2343,8 @@ _psmove_wait_for_button(PSMove *move, int button)
     }
 }
 
+void
+psmove_util_sleep_ms(uint32_t ms)
+{
+    psmove_port_sleep_ms(ms);
+}
