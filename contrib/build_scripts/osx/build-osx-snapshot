@@ -88,7 +88,7 @@ fi
 cd $PSMOVEAPI_CHECKOUT
 
 # Build PS Move API
-PSMOVEAPI_PREFIX=/opt/psmoveapi_${PSMOVEAPI_REVISION}/
+PSMOVEAPI_PREFIX=/opt/psmoveapi/
 rm -rf build
 mkdir build
 cd build
@@ -108,8 +108,9 @@ cd $PSMOVEAPI_CHECKOUT
 # Packaging
 rm -rf dist
 mkdir -p dist
+
 echo $PSMOVEAPI_REVISION >dist/revision.txt
-cp -rpv build/tmp/* dist/
+cp -rpv build/tmp/opt/psmoveapi/* dist/
 
 cd $PSMOVEAPI_CHECKOUT
 
