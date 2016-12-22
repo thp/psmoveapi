@@ -100,33 +100,26 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
 make ${MAKE_ARGS}
 
-# Don't package on CI server; it doesn't have enough memory/disk space and fails
-if [[ "$TRAVIS" != "true" ]]
-then
-	mkdir tmp
-	DESTDIR=$(pwd)/tmp make install
+mkdir tmp
+DESTDIR=$(pwd)/tmp make install
 
-	cd $PSMOVEAPI_CHECKOUT
+cd $PSMOVEAPI_CHECKOUT
 
-	# Packaging
-	rm -rf dist
-	mkdir -p dist
-	echo $PSMOVEAPI_REVISION >dist/revision.txt
-	cp -rpv build/tmp/* dist/
+# Packaging
+rm -rf dist
+mkdir -p dist
+echo $PSMOVEAPI_REVISION >dist/revision.txt
+cp -rpv build/tmp/* dist/
 
-	cd $PSMOVEAPI_CHECKOUT
+cd $PSMOVEAPI_CHECKOUT
 
-	# Tar it up
-	PACKAGE_NAME=psmoveapi_${PSMOVEAPI_REVISION}_macosx
-	rm -rf $PACKAGE_NAME
-	mv dist $PACKAGE_NAME
-	mkdir -p upload
-	tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
-	rm -rf $PACKAGE_NAME
+# Tar it up
+PACKAGE_NAME=psmoveapi_${PSMOVEAPI_REVISION}_macosx
+rm -rf $PACKAGE_NAME
+mv dist $PACKAGE_NAME
+mkdir -p upload
+tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
+rm -rf $PACKAGE_NAME
 
-	# Copy the Processing bindings
-	cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
-else
-	echo "Skipping package step because this is a CI server"
-fi
-
+# Copy the Processing bindings
+cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
