@@ -146,6 +146,9 @@ IF %ERRORLEVEL% NEQ 0 (
 	goto Error
 )
 
+cd %PSMOVE_API_ROOT_DIR%
+bash contrib\build_scripts\msvc\package.sh
+
 goto Done
 
 :Error
