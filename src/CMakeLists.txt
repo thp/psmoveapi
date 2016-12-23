@@ -186,7 +186,9 @@ if(NOT PSMOVEAPI_LIB_DEST)
     if(CMAKE_LIBRARY_ARCHITECTURE)
         set(PSMOVEAPI_LIB_DEST "lib/${CMAKE_LIBRARY_ARCHITECTURE}")
     else()
-        if (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
+        if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+            set(PSMOVEAPI_LIB_DEST "lib")
+        elseif(${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
             set(PSMOVEAPI_LIB_DEST "lib64")
         else()
             set(PSMOVEAPI_LIB_DEST "lib")
@@ -205,8 +207,10 @@ configure_file(${ROOT_DIR}/include/psmove_config.h.in
 include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)
 
-install(FILES ${CMAKE_BINARY_DIR}/psmoveapi.pc
-    DESTINATION ${PSMOVEAPI_LIB_DEST}/pkgconfig)
+if (NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+    install(FILES ${CMAKE_BINARY_DIR}/psmoveapi.pc
+        DESTINATION ${PSMOVEAPI_LIB_DEST}/pkgconfig)
+endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # Only install the udev configuration file on Linux
