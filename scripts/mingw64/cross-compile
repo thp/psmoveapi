@@ -1,0 +1,98 @@
+#!/bin/bash -xe
+#
+# Script to cross compile PS Move API for Windows on a Linux host
+# Thomas Perl <m@thp.io>; 2012-09-27
+#
+# Dependencies (Ubuntu/Debian):
+#
+#     sudo apt-get install mingw-w64 g++-mingw-w64
+#
+
+export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../"
+
+if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
+    echo "ERROR: You have to run this script in the PS Move API source root."
+    exit 1
+fi
+
+PSMOVEAPI_PLATFORM="$1"
+shift
+
+if [[ "$PSMOVEAPI_PLATFORM" != "i686-w64-mingw32" -a "$PSMOVEAPI_PLATFORM" != "x86_64-w64-mingw32" ]]; then
+    echo "Invalid platform spec: '$PSMOVEAPI_PLATFORM'"
+    echo "Valid specs: i686-w64-mingw32 OR x86_64-w64-mingw32"
+    exit 1
+fi
+
+OPENCV_VERSION=3.1.0
+PSMOVEAPI_VERSION=$(git describe --tags)
+
+MAKE_ARGS="$@"
+
+export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/cmake/${PSMOVEAPI_PLATFORM}.toolchain
+export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
+export OPENCV_BUILD_DIR=$OPENCV_CHECKOUT_DIR/build-${PSMOVEAPI_PLATFORM}
+
+# Build OpenCV
+if [ ! -d external/opencv ]; then
+    if [ ! -f ${OPENCV_VERSION}.zip ]; then
+        curl -O -L https://github.com/Itseez/opencv/archive/${OPENCV_VERSION}.zip
+    fi
+    unzip ${OPENCV_VERSION}.zip
+    mv opencv-${OPENCV_VERSION} external/opencv
+fi
+cd external/opencv
+mkdir -p ${OPENCV_BUILD_DIR}
+cd ${OPENCV_BUILD_DIR}
+cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_PERF_TESTS=OFF \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_DOCS=OFF \
+      -DBUILD_opencv_objdetect=OFF \
+      -DBUILD_opencv_photo=OFF \
+      -DBUILD_opencv_ts=OFF \
+      -DBUILD_opencv_video=OFF \
+      -DWITH_OPENEXR=OFF \
+      -DWITH_FFMPEG=OFF \
+      -DWITH_JASPER=OFF \
+      -DWITH_TIFF=OFF \
+      ${OPENCV_CHECKOUT_DIR}
+make ${MAKE_ARGS}
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Build PS Move API
+export PSMOVEAPI_BUILD_DIR=$PSMOVEAPI_CHECKOUT/build-${PSMOVEAPI_PLATFORM}
+
+mkdir -p ${PSMOVEAPI_BUILD_DIR}
+cd ${PSMOVEAPI_BUILD_DIR}
+cmake -DPSMOVE_BUILD_TRACKER=ON \
+      -DOpenCV_DIR=${OPENCV_BUILD_DIR} \
+      -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
+      ${PSMOVEAPI_CHECKOUT}
+make ${MAKE_ARGS}
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Packaging
+rm -rf dist
+mkdir -p dist/bin
+cp README COPYING dist/
+cp -r docs dist/
+cp ${PSMOVEAPI_BUILD_DIR}/psmove.exe dist/bin/
+cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi.dll dist/bin/
+cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi_tracker.dll dist/bin/
+mkdir -p dist/include
+cp ${PSMOVEAPI_BUILD_DIR}/psmove_config.h dist/include/
+cp include/*.h dist/include/
+
+cd $PSMOVEAPI_CHECKOUT
+
+# Zip it up
+PACKAGE_NAME=psmoveapi-${PSMOVEAPI_VERSION}-${PSMOVEAPI_PLATFORM}
+rm -rf $PACKAGE_NAME
+mv dist $PACKAGE_NAME
+mkdir -p upload
+zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
+rm -rf $PACKAGE_NAME

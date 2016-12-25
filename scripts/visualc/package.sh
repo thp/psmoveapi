@@ -4,7 +4,7 @@ set -e
 set -x
 
 # Git revision identifier
-PSMOVEAPI_REVISION=$(git describe --long --tags)
+PSMOVEAPI_REVISION=$(git describe --tags)
 
 DEST="psmoveapi-${PSMOVEAPI_REVISION}-msvc"
 

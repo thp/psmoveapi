@@ -5,12 +5,7 @@
 #
 
 # Determine PSMoveAPI root dir
-if [[ "$TRAVIS" == "true" ]]
-then
-	export PSMOVEAPI_CHECKOUT=$TRAVIS_BUILD_DIR
-else
-	export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../../"
-fi
+export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../"
 
 export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
 export OPENCV_BUILD_DIR=$PSMOVEAPI_CHECKOUT/external/opencv/build
@@ -20,7 +15,7 @@ export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
 MAKE_ARGS=-j4
 
 # Git revision identifier
-PSMOVEAPI_REVISION=$(git describe --long --tags)
+PSMOVEAPI_REVISION=$(git describe --tags)
 
 if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
     echo "ERROR: You have to run this script in the PS Move API source root."
