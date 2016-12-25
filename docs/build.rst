@@ -19,7 +19,7 @@ Install the dependencies and clone the source repository::
 
 To build from source, you can use the build script::
 
-    bash -e -x contrib/build_scripts/osx/build-osx-snapshot
+    bash -e -x scripts/macos/build-macos
 
 
 Building on Ubuntu 14.04
@@ -56,7 +56,7 @@ Automatic build
 
 A build script is provided which will take care of the build for you::
 
-    bash -e -x ./contrib/build_scripts/debian/build-ubuntu
+    bash -e -x scripts/linux/build-debian
 
 Manual build
 ~~~~~~~~~~~~
@@ -116,13 +116,13 @@ from the PS Move API checkout folder.
 
 For Visual Studio 2013, use::
 
-    call contrib/build_scripts/msvc/build_msvc_2013.bat
+    call scripts/visualc/build_msvc_2013.bat
 
 For Visual Studio 2015, use::
 
-    call contrib/build_scripts/msvc/build_msvc_2015.bat
+    call scripts/visualc/build_msvc_2015.bat
 
-Or browse to ``contrib/build_scripts/msvc/`` in Explorer and
+Or browse to ``scripts/visualc/`` in Explorer and
 double-click on ``build_msvc_2013.bat`` or ``build_msvc_2015.bat`` as desired.
 
 The resulting binaries will be placed in ``build/[Debug/Release]``
@@ -153,6 +153,7 @@ To build manually without the tracker::
 
 Or use the ready-made build script::
 
-    sh -x contrib/build_scripts/debian/cross-compile-mingw64
+    sh -x scripts/mingw64/cross-compile x86_64-w64-mingw32
+    sh -x scripts/mingw64/cross-compile i686-w64-mingw32
 
 

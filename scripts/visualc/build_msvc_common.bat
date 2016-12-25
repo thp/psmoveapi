@@ -11,7 +11,7 @@ IF "%MSVC_VERSION%" NEQ "2015" (
 	)
 )
 
-set PSMOVE_API_ROOT_DIR=%~dp0..\..\..\
+set PSMOVE_API_ROOT_DIR=%~dp0..\..\
 set PSMOVE_API_EXTERNAL_DIR=%PSMOVE_API_ROOT_DIR%\external
 set LIBUSB_DIR=%PSMOVE_API_EXTERNAL_DIR%\libusb-1.0
 set OPENCV_DIR=%PSMOVE_API_EXTERNAL_DIR%\opencv
@@ -27,7 +27,7 @@ IF "%MSVC_VERSION%"=="2015" (
 REM Apply libusb patch so that it links against the dynamic (instead of static) CRT
 echo Applying libusb dynamic CRT patch...
 cd %LIBUSB_DIR%
-git apply --ignore-space-change --ignore-whitespace %PSMOVE_API_ROOT_DIR%\contrib\msvc\libusb_dynamic_crt.patch
+git apply --ignore-space-change --ignore-whitespace %PSMOVE_API_ROOT_DIR%\scripts\visualc\libusb_dynamic_crt.patch
 IF %ERRORLEVEL% NEQ 0 ( echo Failed to apply libusb patch. Perhaps it was already applied or libub was not checked out. )
 
 REM Build libusb
@@ -147,7 +147,7 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 
 cd %PSMOVE_API_ROOT_DIR%
-bash contrib\build_scripts\msvc\package.sh
+bash scripts\visualc\package.sh
 
 goto Done
 

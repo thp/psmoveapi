@@ -151,9 +151,6 @@ if(PSMOVE_BUILD_TRACKER)
         ${PSMOVEAPI_REQUIRED_LIBS}
         ${PSMOVEAPI_TRACKER_REQUIRED_LIBS})
     set_target_properties(psmoveapi_tracker PROPERTIES
-        VERSION ${PSMOVEAPI_VERSION}
-        SOVERSION ${PSMOVEAPI_VERSION_SONAME})
-    set_target_properties(psmoveapi_tracker PROPERTIES
         COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
     list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi_tracker)
 
