@@ -18,12 +18,6 @@ fi
 PSMOVEAPI_PLATFORM="$1"
 shift
 
-if [[ "$PSMOVEAPI_PLATFORM" != "i686-w64-mingw32" -a "$PSMOVEAPI_PLATFORM" != "x86_64-w64-mingw32" ]]; then
-    echo "Invalid platform spec: '$PSMOVEAPI_PLATFORM'"
-    echo "Valid specs: i686-w64-mingw32 OR x86_64-w64-mingw32"
-    exit 1
-fi
-
 OPENCV_VERSION=3.1.0
 PSMOVEAPI_VERSION=$(git describe --tags)
 
@@ -32,6 +26,11 @@ MAKE_ARGS="$@"
 export TOOLCHAIN=$PSMOVEAPI_CHECKOUT/cmake/${PSMOVEAPI_PLATFORM}.toolchain
 export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
 export OPENCV_BUILD_DIR=$OPENCV_CHECKOUT_DIR/build-${PSMOVEAPI_PLATFORM}
+
+if [ ! -f $TOOLCHAIN ]; then
+    echo "Invalid platform spec: '$PSMOVEAPI_PLATFORM'"
+    exit 1
+fi
 
 # Build OpenCV
 if [ ! -d external/opencv ]; then
