@@ -138,5 +138,6 @@ if [ ! -z "$PLATFORM_LIB" ]; then
     cp -v $PLATFORM_LIB "$DEST/lib/"
 fi
 
+mkdir -p upload
 $PLATFORM_PKG "upload/${DEST}${PLATFORM_PKG_EXT}" "$DEST"
 rm -rf "$DEST"
