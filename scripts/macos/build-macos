@@ -83,7 +83,6 @@ fi
 cd $PSMOVEAPI_CHECKOUT
 
 # Build PS Move API
-PSMOVEAPI_PREFIX=/opt/psmoveapi/
 rm -rf build
 mkdir build
 cd build
@@ -91,31 +90,5 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_TRACKER=ON \
       -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
-      -DOpenCV_DIR=${OPENCV_BUILD_DIR} \
-      -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
+      -DOpenCV_DIR=${OPENCV_BUILD_DIR} ..
 make ${MAKE_ARGS}
-
-mkdir tmp
-DESTDIR=$(pwd)/tmp make install
-
-cd $PSMOVEAPI_CHECKOUT
-
-# Packaging
-rm -rf dist
-mkdir -p dist
-
-echo $PSMOVEAPI_REVISION >dist/revision.txt
-cp -rpv build/tmp/opt/psmoveapi/* dist/
-
-cd $PSMOVEAPI_CHECKOUT
-
-# Tar it up
-PACKAGE_NAME=psmoveapi_${PSMOVEAPI_REVISION}_macosx
-rm -rf $PACKAGE_NAME
-mv dist $PACKAGE_NAME
-mkdir -p upload
-tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
-rm -rf $PACKAGE_NAME
-
-# Copy the Processing bindings
-cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip

@@ -146,9 +146,6 @@ IF %ERRORLEVEL% NEQ 0 (
 	goto Error
 )
 
-cd %PSMOVE_API_ROOT_DIR%
-bash scripts\visualc\package.sh
-
 goto Done
 
 :Error

@@ -24,6 +24,16 @@ matrix:
       compiler: clang
       env: BUILD_TYPE=macos-native-clang
 
+deploy:
+  provider: releases
+  api_key:
+    secure: JJqUUa2GqLYCswpro9s5zRFYC3G4G1Dy8XdyGqsnMkb5UCYuQZRjDWAEvdDFzsQ226bA8zHjl6qisqno9IrJq5xmRi5deqihEm9Z+iUIziTZwFk11dYl3UzA+7XnIufcbPYb3YvJymejtI53VGk2SaO8SCs9nvkQsGAxO1jkRpI=
+  file: upload/*
+  file_glob: true
+  on:
+    tags: true
+  skip_cleanup: true
+
 before_install:
   - bash -e -x scripts/install_dependencies.sh
 

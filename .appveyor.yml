@@ -4,9 +4,12 @@ version: 1.0.{build}
 install:
   - git submodule update --init --recursive
 
+environment:
+  BUILD_TYPE: windows-native-msvc
+
 build_script:
 - cmd: >-
-    call scripts/visualc/build_msvc_2015.bat
+    bash -e -x scripts/build_package.sh
 
 artifacts:
 - path: 'upload\psmoveapi-*.zip'
