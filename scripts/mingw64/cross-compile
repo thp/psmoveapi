@@ -78,7 +78,6 @@ cd $PSMOVEAPI_CHECKOUT
 rm -rf dist
 mkdir -p dist/bin
 cp README COPYING dist/
-cp -r docs dist/
 cp ${PSMOVEAPI_BUILD_DIR}/psmove.exe dist/bin/
 cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi.dll dist/bin/
 cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi_tracker.dll dist/bin/

@@ -95,27 +95,24 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DCMAKE_INSTALL_PREFIX=$PSMOVEAPI_PREFIX ..
 make ${MAKE_ARGS}
 
-mkdir tmp
-DESTDIR=$(pwd)/tmp make install
-
 cd $PSMOVEAPI_CHECKOUT
 
 # Packaging
-rm -rf dist
-mkdir -p dist
-
-echo $PSMOVEAPI_REVISION >dist/revision.txt
-cp -rpv build/tmp/opt/psmoveapi/* dist/
-
-cd $PSMOVEAPI_CHECKOUT
-
-# Tar it up
-PACKAGE_NAME=psmoveapi_${PSMOVEAPI_REVISION}_macosx
-rm -rf $PACKAGE_NAME
-mv dist $PACKAGE_NAME
-mkdir -p upload
-tar czvf upload/${PACKAGE_NAME}.tgz $PACKAGE_NAME
-rm -rf $PACKAGE_NAME
+DEST=psmoveapi-${PSMOVEAPI_REVISION}-macos
+rm -rf "$DEST"
+mkdir -p "$DEST"
+cp -rv \
+    README COPYING \
+    include \
+    bindings/python \
+    build/psmove \
+    build/libpsmoveapi.dylib \
+    build/libpsmoveapi_tracker.dylib \
+    "$DEST"
+rm -f "$DEST"/include/*.h.in
+cp build/psmove_config.h "$DEST"/include/
+tar czvf upload/"$DEST".tar.gz "$DEST"
+rm -rf "$DEST"
 
 # Copy the Processing bindings
-cp build/psmove_processing_macosx.zip upload/${PACKAGE_NAME}_processing.zip
+cp build/psmove_processing_macosx.zip upload/${DEST}-processing.zip
