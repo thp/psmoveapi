@@ -32,25 +32,3 @@ echo "Building..."
 make -j4
 
 echo "Build completed successfully"
-
-# Git revision identifier
-PSMOVEAPI_REVISION=$(git describe --tags)
-
-cd $PSMOVE_API_ROOT_DIR
-
-DEST="psmoveapi-${PSMOVEAPI_REVISION}-linux"
-
-mkdir -p "$DEST"
-cp -rv \
-    README COPYING \
-    include \
-    bindings/python \
-    build/psmove \
-    build/libpsmoveapi.so \
-    build/libpsmoveapi_tracker.so \
-    "$DEST"
-rm -f "$DEST"/include/*.h.in
-cp build/psmove_config.h "$DEST"/include/
-mkdir -p upload
-tar czvf upload/"$DEST".zip "$DEST"
-rm -rf "$DEST"

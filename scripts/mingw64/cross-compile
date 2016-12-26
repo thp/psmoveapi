@@ -71,26 +71,3 @@ cmake -DPSMOVE_BUILD_TRACKER=ON \
       -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
       ${PSMOVEAPI_CHECKOUT}
 make ${MAKE_ARGS}
-
-cd $PSMOVEAPI_CHECKOUT
-
-# Packaging
-rm -rf dist
-mkdir -p dist/bin
-cp README COPYING dist/
-cp ${PSMOVEAPI_BUILD_DIR}/psmove.exe dist/bin/
-cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi.dll dist/bin/
-cp ${PSMOVEAPI_BUILD_DIR}/libpsmoveapi_tracker.dll dist/bin/
-mkdir -p dist/include
-cp ${PSMOVEAPI_BUILD_DIR}/psmove_config.h dist/include/
-cp include/*.h dist/include/
-
-cd $PSMOVEAPI_CHECKOUT
-
-# Zip it up
-PACKAGE_NAME=psmoveapi-${PSMOVEAPI_VERSION}-${PSMOVEAPI_PLATFORM}
-rm -rf $PACKAGE_NAME
-mv dist $PACKAGE_NAME
-mkdir -p upload
-zip -r upload/${PACKAGE_NAME}.zip $PACKAGE_NAME
-rm -rf $PACKAGE_NAME
