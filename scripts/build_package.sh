@@ -126,8 +126,10 @@ mkdir -p "$DEST"
 
 cp -v README COPYING "$DEST/"
 
-make -C docs html
-cp -rv docs/_build/html "$DEST/docs/"
+make -C docs html || echo "Not building docs"
+if [ ! -d docs/_build/html ]; then
+    cp -rv docs/_build/html "$DEST/docs/"
+fi
 
 mkdir -p "$DEST/include"
 cp -v include/*.h build/psmove_config.h "$DEST/include/"
