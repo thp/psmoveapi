@@ -169,7 +169,7 @@ suitable for portable PS Move applications.
 To build on a Pocket C.H.I.P, ``ssh`` into your device (or use the Terminal)
 and then clone the repository and build the release tarball::
 
-    git clone git://github.com/thp/psmoveapi.git
+    git clone --recursive git://github.com/thp/psmoveapi.git
     cd psmoveapi
     bash -e -x scripts/pocketchip/install_dependencies.sh
     bash -e -x scripts/pocketchip/build.sh
