@@ -249,7 +249,7 @@ struct _PSMove {
     pthread_mutex_t led_write_mutex;
     pthread_cond_t led_write_new_data;
     unsigned char led_write_thread_write_queued;
-    unsigned char led_write_last_result;
+    int led_write_failures_since_last_success;
 #endif
 
     enum PSMove_Connection_Type connection_type;
@@ -286,28 +286,19 @@ _psmove_led_write_thread_proc(void *data)
             break;
         }
 
-        do {
-            /* Create a local copy of the LED state */
-            memcpy(&leds, &(move->leds), sizeof(leds));
-            move->led_write_thread_write_queued = 0;
+        psmove_util_sleep_ms(16);
 
-            long started = psmove_util_get_ticks();
+        /* Create a local copy of the LED state */
+        memcpy(&leds, &(move->leds), sizeof(leds));
+        move->led_write_thread_write_queued = 0;
 
-            int res = hid_write(move->handle, (unsigned char*)(&leds),
-                    sizeof(leds));
-            if (res== sizeof(leds)) {
-                move->led_write_last_result = Update_Success;
-            } else {
-                psmove_DEBUG("Threaded LED update failed (wrote %d)\n", res);
-                move->led_write_last_result = Update_Failed;
-            }
-
-            psmove_DEBUG("hid_write(%d) = %ld ms\n",
-                    move->id,
-                    psmove_util_get_ticks() - started);
-
-            pthread_yield();
-        } while (memcmp(&leds, &(move->leds), sizeof(leds)) != 0);
+        int res = hid_write(move->handle, (unsigned char*)(&leds), sizeof(leds));
+        // FIXME: On Linux-on-ARM at least, res is always zero!?
+        if (res != sizeof(leds) && res != 0) {
+            move->led_write_failures_since_last_success++;
+        } else {
+            move->led_write_failures_since_last_success = 0;
+        }
     }
 
     return NULL;
@@ -594,8 +585,7 @@ psmove_connect_internal(wchar_t *serial, char *path, int id)
             NULL,
             _psmove_led_write_thread_proc,
             (void*)move) == 0, NULL);
-    /* Assume that the first LED write will succeed */
-    move->led_write_last_result = Update_Success;
+    move->led_write_failures_since_last_success = 0;
 #endif
 
     /* Bookkeeping of open handles (for psmove_reinit) */
@@ -1255,7 +1245,7 @@ psmove_update_leds(PSMove *move)
              * Can only return the last result, but assume that we can either
              * write successfully or not at all, this should be good enough.
              **/
-            return move->led_write_last_result;
+            return (move->led_write_failures_since_last_success < 100) ? Update_Success : Update_Failed;
 #else
             if (hid_write(move->handle, (unsigned char*)(&(move->leds)),
                     sizeof(move->leds)) == sizeof(move->leds)) {
