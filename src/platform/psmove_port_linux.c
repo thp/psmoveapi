@@ -27,6 +27,7 @@
  **/
 
 
+#include "psmove_config.h"
 #include "psmove_port.h"
 #include "psmove_sockets.h"
 #include "psmove_private.h"
@@ -402,6 +403,32 @@ linux_bluetoothd_control(struct linux_info_t *info, int start)
         LINUXPAIR_DEBUG("Trying to stop bluetoothd...\n");
     }
 
+#if defined(PSMOVE_USE_POCKET_CHIP)
+    const char *start_services[] = {
+        "bt_rtk_hciattach@ttyS1.service",
+        "bluetooth.service",
+        NULL,
+    };
+    const char *stop_services[] = {
+        "bluetooth.service",
+        "bt_rtk_hciattach@ttyS1.service",
+        NULL,
+    };
+
+    const char **services = start ? start_services : stop_services;
+    const char *verb = start ? "start" : "stop";
+
+    LINUXPAIR_DEBUG("Using systemd with Pocket C.H.I.P quirk...\n");
+    for (int i=0; services[i] != NULL; i++) {
+        asprintf(&cmd, "systemctl %s %s", verb, services[i]);
+        LINUXPAIR_DEBUG("Running: '%s'\n", cmd);
+        if (system(cmd) != 0) {
+            LINUXPAIR_DEBUG("Automatic %s of %s failed.\n", verb, services[i]);
+        }
+        free(cmd), cmd = NULL;
+        usleep(500000);
+    }
+#else
     switch (info->init_type) {
     case LINUX_SYSTEMD:
         cmd = start ? "systemctl start bluetooth.service" :
@@ -428,6 +455,7 @@ linux_bluetoothd_control(struct linux_info_t *info, int start)
     else {
         LINUXPAIR_DEBUG("Succeeded\n");
     }
+#endif
 }
 
 static int

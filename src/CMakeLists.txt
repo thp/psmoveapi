@@ -25,6 +25,15 @@ set(INFO_LICENSE "BSD")
 # Make a debug build with helpful output for debugging / maintenance
 option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
 
+# This restarts "bt_rtk_hciattach@ttyS1.service" before "bluetooth.service" on Pocket C.H.I.P
+option(PSMOVE_USE_POCKET_CHIP "Enable workarounds for Pocket C.H.I.P" OFF)
+
+if (PSMOVE_USE_POCKET_CHIP)
+    set(INFO_POCKET_CHIP "Yes")
+else()
+    set(INFO_POCKET_CHIP "No")
+endif()
+
 # Debugging output
 IF(PSMOVE_USE_DEBUG)
     add_definitions(-DPSMOVE_DEBUG)
@@ -228,3 +237,4 @@ message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
 message("    Library license:  " ${INFO_LICENSE} " (see README for details)")
 message("    BlueZ 5 support:  " ${INFO_BLUEZ5_SUPPORT} " (for pairing on Linux only)")
+message("    Pocket C.H.I.P:   " ${INFO_POCKET_CHIP})
