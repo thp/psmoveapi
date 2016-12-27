@@ -9,14 +9,13 @@
                                    http://thp.io/2010/psmove/
 
 
-The PS Move API is an open source[1] library for Linux, Mac OS X and Windows
+The PS Move API is an open source[1] library for Linux, macOS and Windows
 to access the Sony Move Motion Controller via Bluetooth and USB directly from
 your PC without the need for a PS3. Tracking in 3D space is possible using a
-PS Eye (on Linux and Windows), an iSight camera (on Mac OS X) or any other
+PS Eye (on Linux, Windows and macOS), an iSight camera (on macOS) or any other
 suitable camera source.
 
-The PS Move API is used as the library implementation of the MoveOnPC[2]
-project, and has successfully participated in Google Summer of Code 2012[3].
+PS Move API has successfully participated in Google Summer of Code 2012[3].
 Detailed documentation can be found in my master's thesis[4] about sensor
 fusion.
 
@@ -36,6 +35,7 @@ Supported Languages
 
  * Core library written in C for portability and performance
  * SWIG-based bindings for Python, Java, Processing and C#
+ * ctypes-based bindings for Python 3
 
 Need Help?
 ----------
@@ -43,20 +43,9 @@ Need Help?
  * Free community-based support via the PS Move Mailing List[5]
  * Professional support and custom development upon request[6]
 
-Building and Installation
--------------------------
-
- * See the INSTALL and README.* files for details on building and
-   installing the PS Move API on your system
- * Build scripts that we use for building binary releases can be found
-   in the contrib/ folder
- * A debian/ folder is provided for building .deb packages
- * Contributions (.spec files, etc..) for other distributions welcome
-
 Hacking the Source
 ------------------
 
- * See the LAYOUT file for information on how the source tree is laid out
  * Coding style: No strict rules; keep consistent with the surrounding code
  * Patches should be submitted on Github as pull request[7]
  * Bug reports and feature requests can be added to the issue tracker[8]
@@ -110,7 +99,7 @@ In general, all dependencies are under a MIT- or BSD-style license, with the
 exception of the following dependencies:
 
  - PS3EYEDriver: Released under the MIT license, parts based on GPL code
-   For interfacing with the PSEye camera on OS X (only in the tracker)
+   For interfacing with the PSEye camera on macOS (only in the tracker)
    CMake option: PSMOVE_USE_PS3EYE_DRIVER (disabled by default)
 
 More information about the third party modules and licenses:
@@ -127,17 +116,15 @@ More Information
  * Website: http://thp.io/2010/psmove/
  * Git repository: https://github.com/thp/psmoveapi
  * Mailing list: psmove@googlegroups.com (see [5] for details)
+ * Documentation: https://psmoveapi.readthedocs.io/
 
 
-This README file was last updated on 2012-12-12 by thp
-
+This README file was last updated on 2016-12-27 by thp
 
 [1] https://github.com/thp/psmoveapi/blob/master/COPYING
-[2] http://code.google.com/p/moveonpc/
 [3] http://www.google-melange.com/gsoc/homepage/google/gsoc2012
 [4] http://thp.io/2012/thesis/
 [5] https://groups.google.com/forum/#!aboutgroup/psmove
 [6] http://thp.io/about
 [7] https://github.com/thp/psmoveapi/pulls
 [8] https://github.com/thp/psmoveapi/issues
-
