@@ -675,8 +675,8 @@ _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
     return 0;
 }
 
-char *
-psmove_port_get_host_bluetooth_address()
+static char *
+_psmove_linux_get_bluetooth_address(int try_restart)
 {
     PSMove_Data_BTAddr btaddr;
     PSMove_Data_BTAddr blank;
@@ -686,12 +686,28 @@ psmove_port_get_host_bluetooth_address()
 
     hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
     if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
+        if (try_restart) {
+            struct linux_info_t linux_info;
+            linux_info_init(&linux_info);
+
+            // Force bluetooth restart
+            linux_bluetoothd_control(&linux_info, 0);
+            linux_bluetoothd_control(&linux_info, 1);
+            return _psmove_linux_get_bluetooth_address(0);
+        }
+
         fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
                 "Make sure Bluetooth is turned on.\n");
         return NULL;
     }
 
     return _psmove_btaddr_to_string(btaddr);
+}
+
+char *
+psmove_port_get_host_bluetooth_address()
+{
+    return _psmove_linux_get_bluetooth_address(1);
 }
 
 void
