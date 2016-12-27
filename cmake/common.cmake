@@ -1,7 +1,14 @@
 # Some platform-specific but target-agnostic settings
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 11)
+if (NOT MSVC)
+    if (${CMAKE_VERSION} VERSION_LESS "3.1")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    else()
+        set(CMAKE_C_STANDARD 11)
+        set(CMAKE_CXX_STANDARD 11)
+    endif()
+endif()
 
 # We recommend using MinGW-w64 for the Windows builds which generates
 # position-independent code by default, so skip this for Windows builds.
@@ -24,11 +31,6 @@ ENDIF()
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # Build Universal Binaries for OS X
     set(CMAKE_OSX_ARCHITECTURES "x86_64")
-ENDIF()
-
-# This should be on by default in latest MinGW, but just in case.
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ENDIF()
 
 # Windows' math include does not define constants by default.
