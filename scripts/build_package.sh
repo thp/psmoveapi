@@ -127,7 +127,7 @@ mkdir -p "$DEST"
 cp -v README COPYING "$DEST/"
 
 make -C docs html || echo "Not building docs"
-if [ ! -d docs/_build/html ]; then
+if [ -d docs/_build/html ]; then
     cp -rv docs/_build/html "$DEST/docs/"
 fi
 
