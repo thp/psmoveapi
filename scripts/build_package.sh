@@ -114,6 +114,10 @@ case "$BUILD_TYPE" in
         ;;
 esac
 
+if [ ! -z "$PSMOVEAPI_CUSTOM_PLATFORM_NAME" ]; then
+    PLATFORM_NAME="$PSMOVEAPI_CUSTOM_PLATFORM_NAME"
+fi
+
 # Git revision identifier
 PSMOVEAPI_REVISION=$(git describe --tags)
 
