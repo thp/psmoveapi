@@ -491,9 +491,10 @@ psmove_calibration_load(PSMoveCalibration *calibration)
         // use system file in case local is not available
         fp = fopen(calibration->system_filename, "rb");
         if (fp == NULL) {
+            psmove_WARNING("No calibration file found (%s or %s)\n",
+                    calibration->filename, calibration->system_filename);
             return 0;
         }
-        return 0;
     }
 
     if (fread(calibration->usb_calibration,
