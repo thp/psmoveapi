@@ -8,7 +8,7 @@
 int main(int argc, char* argv[])
 {
     PSMove *move;
-    int i;
+    size_t i;
     
     if (psmove_count_connected() == 0) {
         printf("No controllers connected.\n");
