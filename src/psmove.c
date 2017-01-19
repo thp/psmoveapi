@@ -895,7 +895,7 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
         res = hid_get_feature_report(move->handle, btg, sizeof(btg));
     }
 
-    if (res == sizeof(btg)) {
+    if (res == sizeof(btg) || res == sizeof(btg) + 1) {
         if (controller != NULL) {
             memcpy(*controller, btg+1, 6);
         }
