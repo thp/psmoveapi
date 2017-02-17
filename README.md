@@ -9,7 +9,7 @@
                                    http://thp.io/2010/psmove/
 
 
-PS Move API
+PS Move API [![Documentation Status](https://readthedocs.org/projects/psmoveapi/badge/?version=latest)](https://psmoveapi.readthedocs.io/en/latest)  [![Build Status](https://travis-ci.org/thp/psmoveapi.svg?branch=master)](https://travis-ci.org/thp/psmoveapi)  [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/thp/psmoveapi?branch=master&svg=true)](https://ci.appveyor.com/project/thp/psmoveapi)
 ===========
 
 The PS Move API is an [open source](https://github.com/thp/psmoveapi/blob/master/COPYING) library for Linux, macOS and Windows to access the Sony Move Motion Controller via Bluetooth and USB directly from your PC without the need for a PS3. Tracking in 3D space is possible using a PS Eye (on Linux, Windows and macOS), an iSight camera (on macOS) or any other suitable camera source.
