@@ -124,7 +124,7 @@ PSMOVEAPI_REVISION=$(git describe --tags)
 DEST="psmoveapi-${PSMOVEAPI_REVISION}-${PLATFORM_NAME}"
 mkdir -p "$DEST"
 
-cp -v README COPYING "$DEST/"
+cp -v README.md COPYING "$DEST/"
 
 mkdir -p "$DEST/include"
 cp -v include/*.h build/psmove_config.h "$DEST/include/"
