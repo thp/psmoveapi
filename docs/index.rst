@@ -8,6 +8,7 @@ PS Move API Documentation
    Pairing <pairing.rst>
    Camera <camera.rst>
    Network (Move Daemon) <moved.rst>
+   Configuration <config.rst>
 
 
 Mailing List
