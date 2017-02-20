@@ -116,10 +116,10 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	ps3eye_set_parameter(cc->eye, PS3EYE_GAIN,					(int)((79 * gain) / 0xFFFF));
 	ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS,			(int)((255 * brightness) / 0xFFFF));
 	ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, 				h_flip);
-	
-	//ps3eye_set_parameter(cc->eye, PS3EYE_REDBALANCE, round((255 * wbRed) / 0xFFFF));
+
+	//ps3eye_set_parameter(cc->eye, PS3EYE_REDBALANCE, (int)((255 * wbRed) / 0xFFFF));
 	//wbGreen... setGreenBalance not defined in ps3eye.h
-	//ps3eye_set_parameter(cc->eye, PS3EYE_BLUEBALANCE, round((255 * wbBlue) / 0xFFFF));
+	//ps3eye_set_parameter(cc->eye, PS3EYE_BLUEBALANCE, (int)((255 * wbBlue) / 0xFFFF));
 	//ps3eye_set_parameter(cc->eye, PS3EYE_CONTRAST, contrast);  // Transform unknown.
 	//ps3eye_set_parameter(cc->eye, PS3EYE_BRIGHTNESS, brightness);  // Transform unknown.
 
@@ -145,15 +145,15 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	RegSetValueExA(hKey, "AutoAGC", 0, REG_DWORD, (CONST BYTE*) &val, l);
 	val = autoWB > 0;
 	RegSetValueExA(hKey, "AutoAWB", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = round((511 * exposure) / 0xFFFF);
+	val = (int)((511 * exposure) / 0xFFFF);
 	RegSetValueExA(hKey, "Exposure", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = round((79 * gain) / 0xFFFF);
+	val = (int)((79 * gain) / 0xFFFF);
 	RegSetValueExA(hKey, "Gain", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = round((255 * wbRed) / 0xFFFF);
+	val = (int)((255 * wbRed) / 0xFFFF);
 	RegSetValueExA(hKey, "WhiteBalanceR", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = round((255 * wbGreen) / 0xFFFF);
+	val = (int)((255 * wbGreen) / 0xFFFF);
 	RegSetValueExA(hKey, "WhiteBalanceG", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = round((255 * wbBlue) / 0xFFFF);
+	val = (int)((255 * wbBlue) / 0xFFFF);
 	RegSetValueExA(hKey, "WhiteBalanceB", 0, REG_DWORD, (CONST BYTE*) &val, l);
 
 	// restart the camera capture with openCv
