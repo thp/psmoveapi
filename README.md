@@ -41,13 +41,9 @@ Hacking the Source
 Licensing
 ---------
 
-The PS Move API source code is released under the terms of a Simplified BSD-style license, the exact license text can be found in [COPYING](https://github.com/thp/psmoveapi/blob/master/COPYING) and "Licensing" above) file.
+The PS Move API source code is released under the terms of a Simplified BSD-style license, the exact license text can be found in the [COPYING](https://github.com/thp/psmoveapi/blob/master/COPYING) file.
 
-Some third party code under ["external/"](https://github.com/thp/psmoveapi/blob/master/external) and "Licensing" above)) might be licensed under a different
-license. Compiling PS Move API with these modules is optional, you can use
-CMake options to configure which features you need. CMake will give you a
-hint about the library licensing for your current configuration depending
-on your options at configure time.
+Some third party code under ["external/"](https://github.com/thp/psmoveapi/blob/master/external) might be licensed under a different license. Compiling PS Move API with these modules is optional, you can use CMake options to configure which features you need. CMake will give you a hint about the library licensing for your current configuration depending on your options at configure time.
 
 In general, all dependencies are under a MIT- or BSD-style license, with the
 exception of the following dependencies:
@@ -55,6 +51,7 @@ exception of the following dependencies:
  - PS3EYEDriver: Released under the MIT license, parts based on GPL code
 
    For interfacing with the PSEye camera on macOS (only in the tracker)
+
    CMake option: `PSMOVE_USE_PS3EYE_DRIVER` (disabled by default)
 
 More information about the third party modules and licenses:
