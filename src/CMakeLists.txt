@@ -123,6 +123,11 @@ ENDIF()
 
 include_directories(${ROOT_DIR}/include)
 
+configure_file(${ROOT_DIR}/include/psmove_config.h.in
+    ${CMAKE_BINARY_DIR}/psmove_config.h
+    @ONLY)
+
+
 file(GLOB PSMOVEAPI_MOVED_SRC
     "${CMAKE_CURRENT_LIST_DIR}/daemon/*.c"
 )
@@ -203,10 +208,6 @@ endif()
 
 configure_file(${ROOT_DIR}/contrib/psmoveapi.pc.in
     ${CMAKE_BINARY_DIR}/psmoveapi.pc
-    @ONLY)
-
-configure_file(${ROOT_DIR}/include/psmove_config.h.in
-    ${CMAKE_BINARY_DIR}/psmove_config.h
     @ONLY)
 
 include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
