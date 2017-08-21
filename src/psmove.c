@@ -325,15 +325,6 @@ void
 psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
         enum PSMove_Frame frame, int *x, int *y, int *z);
 
-/**
- * Set the Host Bluetooth address that is used to connect via
- * Bluetooth. You should set this to the local computer's
- * Bluetooth address when connected via USB, then disconnect
- * and press the PS button to connect the controller via BT.
- **/
-int
-psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
-
 
 /* Start implementation of the API */
 
@@ -375,13 +366,14 @@ void
 _psmove_read_data(PSMove *move, unsigned char *data, int length)
 {
     assert(data != NULL);
-    assert(length >= (sizeof(move->input) + 1));
+    assert(length >= (sizeof(move->input) + 4));
 
-	int res = psmove_poll(move);
-	assert(res <= 0xFF);
+    int32_t res = psmove_poll(move);
+    assert(res <= 0xFF);
 
-    data[0] = (unsigned char)res;
-    memcpy(data+1, &(move->input), sizeof(move->input));
+    *((int32_t *)data) = res;
+
+    memcpy(data + sizeof(int32_t), &(move->input), sizeof(move->input));
 }
 
 enum PSMove_Bool
@@ -443,7 +435,11 @@ int
 psmove_count_connected_moved(moved_client *client)
 {
     psmove_return_val_if_fail(client != NULL, 0);
-    return moved_client_send(client, MOVED_REQ_COUNT_CONNECTED, 0, NULL);
+    if (moved_client_send(client, MOVED_REQ_COUNT_CONNECTED, 0, NULL, 0)) {
+        return client->response_buf.count_connected.count;
+    }
+
+    return 0;
 }
 
 int
@@ -740,13 +736,14 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
     move->id = id;
 
     /* Remember the serial number */
-    move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
-
-    if (moved_client_send(move->client, MOVED_REQ_SERIAL,
-                (char)move->remote_id, NULL)) {
+    if (moved_client_send(move->client, MOVED_REQ_GET_SERIAL, (char)move->remote_id, NULL, 0)) {
         /* Retrieve the serial number from the remote host */
-        strncpy(move->serial_number, (char*)move->client->read_response_buf,
-                PSMOVE_MAX_SERIAL_LENGTH);
+        move->serial_number = _psmove_btaddr_to_string(*((PSMove_Data_BTAddr *)
+                move->client->response_buf.get_serial.btaddr));
+    } else {
+        /* No serial number -- FATAL? */
+        psmove_WARNING("Cannot retrieve serial number");
+        move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
     }
 
     move->calibration = psmove_calibration_new(move);
@@ -989,7 +986,7 @@ psmove_get_serial(PSMove *move)
 }
 
 int
-psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
+_psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
 {
     unsigned char bts[PSMOVE_BTADDR_SET_SIZE];
     int res;
@@ -1040,7 +1037,7 @@ psmove_pair(PSMove *move)
     }
 
     if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
-        if (!psmove_set_btaddr(move, &btaddr)) {
+        if (!_psmove_set_btaddr(move, &btaddr)) {
             return PSMove_False;
         }
     } else {
@@ -1088,7 +1085,7 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
     }
 
     if (memcmp(current_host, new_host, sizeof(PSMove_Data_BTAddr)) != 0) {
-        if (!psmove_set_btaddr(move, &new_host)) {
+        if (!_psmove_set_btaddr(move, &new_host)) {
             return PSMove_False;
         }
     } else {
@@ -1256,14 +1253,7 @@ psmove_update_leds(PSMove *move)
 #endif
             break;
         case PSMove_MOVED:
-            /**
-             * XXX: This only tells us that the sending went through, but
-             * as we don't wait for a confirmation, the packet might still
-             * not arrive at the target machine. As we usually send many
-             * updates, a few dropped packets are normally no problem.
-             **/
-            if (moved_client_send(move->client, MOVED_REQ_WRITE,
-                        (char)move->remote_id, (unsigned char*)(&move->leds))) {
+            if (moved_client_send(move->client, MOVED_REQ_SET_LEDS, move->remote_id, (uint8_t *)&move->leds, sizeof(move->leds))) {
                 return Update_Success;
             } else {
                 return Update_Failed;
@@ -1299,25 +1289,14 @@ psmove_poll(PSMove *move)
                 sizeof(move->input));
             break;
         case PSMove_MOVED:
-            if (moved_client_send(move->client, MOVED_REQ_READ,
-                        (char)move->remote_id, NULL)) {
+            if (moved_client_send(move->client, MOVED_REQ_READ_INPUT, (char)move->remote_id, NULL, 0)) {
                 /**
                  * The input buffer is stored at offset 1 (the first byte
                  * contains the return value of the remote psmove_poll())
                  **/
-                memcpy((unsigned char*)(&(move->input)),
-                        move->client->read_response_buf+1,
-                        sizeof(move->input));
+                memcpy(&(move->input), move->client->response_buf.read_input.data, sizeof(move->input));
 
-                /**
-                 * The first byte of the response contains the return value
-                 * of the remote psmove_poll() call - if it is nonzero, we
-                 * want to calculate a non-zero value locally (see below).
-                 *
-                 * See also _psmove_read_data() for how the buffer is filled
-                 * on the remote end of the moved protocol connection.
-                 **/
-                if (move->client->read_response_buf[0] != 0) {
+                if (move->client->response_buf.read_input.poll_return_value != 0) {
                     res = sizeof(move->input);
                 }
             }

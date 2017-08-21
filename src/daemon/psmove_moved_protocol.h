@@ -28,17 +28,82 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#include <stdint.h>
 
-#define MOVED_UDP_PORT 17777
+enum PSMoveUDPPort {
+    // Legacy moved is running on port 17777
+    MOVED_UDP_PORT = 17778,
+};
 
-#define MOVED_REQ_COUNT_CONNECTED 0x01
-/* Request ID 0x02 is reserved / obsolete */
-#define MOVED_REQ_WRITE 0x03
-#define MOVED_REQ_READ 0x04
-#define MOVED_REQ_SERIAL 0x05
+enum PSMoveMovedCmd {
+    MOVED_REQ_DISCOVER = 1,
+    MOVED_REQ_COUNT_CONNECTED = 2,
+    MOVED_REQ_SET_LEDS = 3,
+    MOVED_REQ_READ_INPUT = 4,
+    MOVED_REQ_GET_SERIAL = 5,
+    MOVED_REQ_GET_HOST_BTADDR = 6,
+    MOVED_REQ_REGISTER_CONTROLLER = 7,
+};
 
-#define MOVED_SIZE_REQUEST 9
-#define MOVED_SIZE_READ_RESPONSE 50
+struct __attribute__ ((__packed__)) PSMoveMovedProtocolHeader {
+    // 8-byte packet header
+    uint32_t request_sequence;
+    uint16_t command_id;
+    uint16_t controller_id;
+};
+
+union __attribute__ ((__packed__)) PSMoveMovedRequest {
+    struct {
+        struct PSMoveMovedProtocolHeader header;
+
+        union {
+            uint8_t payload[8];
+
+            struct {
+                uint8_t data[7];
+            } set_leds;
+
+            struct {
+                uint8_t btaddr[6];
+            } register_controller;
+        };
+    };
+
+    uint8_t bytes[16];
+};
+
+union __attribute__ ((__packed__)) PSMoveMovedResponse {
+    struct {
+        struct PSMoveMovedProtocolHeader header;
+
+        union {
+            struct {
+                uint32_t count;
+            } count_connected;
+
+            struct {
+                // nothing
+            } set_leds;
+
+            struct {
+                int32_t poll_return_value;
+                uint8_t data[49];
+            } read_input;
+
+            struct {
+                uint8_t btaddr[6];
+            } get_serial;
+
+            struct {
+                uint8_t btaddr[6];
+            } get_host_btaddr;
+        };
+
+        uint8_t _padding[3];
+    };
+
+    uint8_t bytes[64];
+};
 
 #define MOVED_HOSTS_LIST_FILE "moved_hosts.txt"
 

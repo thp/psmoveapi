@@ -129,7 +129,8 @@ configure_file(${ROOT_DIR}/include/psmove_config.h.in
 
 
 file(GLOB PSMOVEAPI_MOVED_SRC
-    "${CMAKE_CURRENT_LIST_DIR}/daemon/*.c"
+    "${CMAKE_CURRENT_LIST_DIR}/daemon/moved_client.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/daemon/moved_monitor.c"
 )
 
 file(GLOB PSMOVEAPI_MOVED_HEADER

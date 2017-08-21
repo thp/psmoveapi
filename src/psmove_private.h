@@ -215,6 +215,15 @@ ADDCALL _psmove_get_firmware_info(PSMove *move);
 ADDAPI enum PSMove_Bool
 ADDCALL _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode);
 
+/**
+ * Set the Host Bluetooth address that is used to connect via
+ * Bluetooth. You should set this to the local computer's
+ * Bluetooth address when connected via USB, then disconnect
+ * and press the PS button to connect the controller via BT.
+ **/
+ADDAPI int
+ADDCALL _psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
+
 
 /* Authentication-related private APIs */
 
