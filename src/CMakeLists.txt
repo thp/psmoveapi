@@ -68,7 +68,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/mac/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_osx.m)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_osx.mm)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
