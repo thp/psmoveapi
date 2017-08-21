@@ -34,6 +34,11 @@
 #include <unistd.h>
 #include <sys/time.h>
 
+#include <string>
+#include <iostream>
+#include <cstdarg>
+#include <cstdio>
+
 
 #include <IOBluetooth/objc/IOBluetoothHostController.h>
 
@@ -44,11 +49,27 @@
 #define OSX_BT_CONFIG_PATH "/Library/Preferences/com.apple.Bluetooth"
 
 /* Function declarations for IOBluetooth private API */
+extern "C" {
 void IOBluetoothPreferenceSetControllerPowerState(int);
 int IOBluetoothPreferenceGetControllerPowerState();
+};
 
 #define OSXPAIR_DEBUG(msg, ...) \
         psmove_PRINTF("PAIRING OSX", msg, ## __VA_ARGS__)
+
+struct ScopedNSAutoreleasePool {
+    ScopedNSAutoreleasePool()
+        : pool([[NSAutoreleasePool alloc] init])
+    {}
+
+    ~ScopedNSAutoreleasePool()
+    {
+        [pool release];
+    }
+
+private:
+    NSAutoreleasePool *pool;
+};
 
 static int
 macosx_bluetooth_set_powered(int powered)
@@ -77,7 +98,8 @@ macosx_bluetooth_set_powered(int powered)
 static char *
 macosx_get_btaddr()
 {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    ScopedNSAutoreleasePool pool;
+
     char *result;
 
     macosx_bluetooth_set_powered(1);
@@ -100,7 +122,6 @@ macosx_get_btaddr()
         tmp++;
     }
 
-    [pool release];
     return result;
 }
 
@@ -126,7 +147,7 @@ macosx_blued_running()
 }
 
 static int
-macosx_blued_is_paired(char *btaddr)
+macosx_blued_is_paired(const std::string &btaddr)
 {
     FILE *fp = popen("defaults read " OSX_BT_CONFIG_PATH " HIDDevices", "r");
     char line[1024];
@@ -150,7 +171,7 @@ macosx_blued_is_paired(char *btaddr)
             char *delim = strchr(entry, '"');
             if (delim) {
                 *delim = '\0';
-                if (strcmp(entry, btaddr) == 0) {
+                if (strcmp(entry, btaddr.c_str()) == 0) {
                     found = 1;
                 }
             }
@@ -187,27 +208,61 @@ macosx_get_minor_version()
     return minor;
 }
 
+namespace {
+
+std::string format(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+
+std::string
+format(const char *fmt, ...)
+{
+    std::string result;
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    char *tmp = 0;
+    vasprintf(&tmp, fmt, ap);
+    va_end(ap);
+
+    result = tmp;
+    free(tmp);
+
+    return result;
+}
+
+std::string
+cstring_to_stdstring_free(char *cstring)
+{
+    std::string result = cstring;
+    free(cstring);
+    return result;
+}
+
+};
+
 void
 psmove_port_register_psmove(const char *addr, const char *host)
 {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    char cmd[1024];
-    char *btaddr = _psmove_normalize_btaddr(addr, 1, '-');
+    ScopedNSAutoreleasePool pool;
+    std::string btaddr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 1, '-'));
 
     int minor_version = macosx_get_minor_version();
     if (minor_version == -1) {
         OSXPAIR_DEBUG("Cannot detect Mac OS X version.\n");
-        goto end;
+        return;
     } else if (minor_version < 7) {
         OSXPAIR_DEBUG("No need to add entry for OS X before 10.7.\n");
-        goto end;
+        return;
     } else {
         OSXPAIR_DEBUG("Detected: Mac OS X 10.%d\n", minor_version);
     }
 
+    std::string command = format("defaults write %s HIDDevices -array-add %s",
+                                 OSX_BT_CONFIG_PATH, btaddr.c_str());
+
     if (macosx_blued_is_paired(btaddr)) {
-        OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr);
-        goto end;
+        OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr.c_str());
+        return;
     }
 
     if (minor_version < 10)
@@ -225,12 +280,14 @@ psmove_port_register_psmove(const char *addr, const char *host)
         OSXPAIR_DEBUG("blued successfully shutdown.\n");
     }
 
-    snprintf(cmd, sizeof(cmd), "osascript -e 'do shell script "
-            "\"defaults write " OSX_BT_CONFIG_PATH
-                " HIDDevices -array-add \\\"%s\\\"\""
-            " with administrator privileges'", btaddr);
-    OSXPAIR_DEBUG("Running: '%s'\n", cmd);
-    if (system(cmd) != 0) {
+    if (geteuid() != 0) {
+        // Not running using setuid or sudo, must use osascript to gain privileges
+        command = format("osascript -e 'do shell script \"%s\" with administrator privileges'",
+                         command.c_str());
+    }
+
+    OSXPAIR_DEBUG("Running: '%s'\n", command.c_str());
+    if (system(command.c_str()) != 0) {
         OSXPAIR_DEBUG("Could not run the command.");
     }
 
@@ -240,11 +297,6 @@ psmove_port_register_psmove(const char *addr, const char *host)
         // from a fresh process (e.g. like "blueutil 1") to switch Bluetooth on
         macosx_bluetooth_set_powered(1);
     }
-
-    free(btaddr);
-
-end:
-    [pool release];
 }
 
 void
@@ -286,7 +338,7 @@ psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
 {
     struct timeval receive_timeout = {
         .tv_sec = timeout_ms / 1000,
-        .tv_usec = (timeout_ms % 1000) * 1000,
+        .tv_usec = (int)(timeout_ms % 1000) * 1000,
     };
     setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
 }
