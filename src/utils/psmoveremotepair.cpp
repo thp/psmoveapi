@@ -47,6 +47,9 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // Only remote pair locally-connected controllers
+    psmove_set_remote_config(PSMove_OnlyLocal);
+
     moved_client *client = moved_client_create(argv[1]);
 
     while (!moved_client_send(client, MOVED_REQ_GET_HOST_BTADDR, 0, nullptr, 0)) {
