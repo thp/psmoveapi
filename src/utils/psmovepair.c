@@ -38,10 +38,7 @@
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
-#ifdef __linux
 #include "../daemon/moved_monitor.h"
-#include <poll.h>
-#endif
 
 int pair(const char *custom_addr)
 {
@@ -94,7 +91,6 @@ int pair(const char *custom_addr)
     return result;
 }
 
-#ifdef __linux
 static void
 on_monitor_update_pair(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type,
@@ -107,13 +103,10 @@ on_monitor_update_pair(enum MonitorEvent event,
         }
     }
 }
-#endif // __linux
 
 int run_daemon()
 {
-    // On Linux we use moved_monitor, which is based on udev, to detect
-    // controller connection
-#ifdef __linux
+#if defined(__linux) || defined(__APPLE__)
     moved_monitor *monitor = moved_monitor_new(on_monitor_update_pair, NULL);
     int monitor_fd = moved_monitor_get_fd(monitor);
     struct pollfd pfd;
@@ -129,12 +122,11 @@ int run_daemon()
 
     moved_monitor_free(monitor);
 #else
-    // On non-Linux systems we just try to pair every 5 seconds for now
     for(;;) {
         psmove_port_sleep_ms(5000);
         pair(NULL);
     }
-#endif // __linux
+#endif
 
     return 0;
 }

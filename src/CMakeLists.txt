@@ -74,7 +74,9 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++")
     set(CMAKE_STATIC_LIBRARY_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -stdlib=libc++")
-		
+
+    list(APPEND PSMOVEAPI_MOVED_SRC
+        ${CMAKE_CURRENT_LIST_DIR}/daemon/moved_monitor_osx.mm)
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm version imm32)
 
@@ -89,7 +91,6 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
         ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_windows.c)
-
 ELSE()
     # Linux
     find_package(PkgConfig REQUIRED)
@@ -119,6 +120,8 @@ ELSE()
     list(APPEND PSMOVEAPI_PLATFORM_SRC
         ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_linux.c)
 
+    list(APPEND PSMOVEAPI_MOVED_SRC
+        ${CMAKE_CURRENT_LIST_DIR}/daemon/moved_monitor_linux.c)
 ENDIF()
 
 include_directories(${ROOT_DIR}/include)
@@ -128,10 +131,8 @@ configure_file(${ROOT_DIR}/include/psmove_config.h.in
     @ONLY)
 
 
-file(GLOB PSMOVEAPI_MOVED_SRC
-    "${CMAKE_CURRENT_LIST_DIR}/daemon/moved_client.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/daemon/moved_monitor.c"
-)
+list(APPEND PSMOVEAPI_MOVED_SRC
+    "${CMAKE_CURRENT_LIST_DIR}/daemon/moved_client.cpp")
 
 file(GLOB PSMOVEAPI_MOVED_HEADER
 	"${CMAKE_CURRENT_LIST_DIR}/daemon/*.h"

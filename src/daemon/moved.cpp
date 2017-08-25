@@ -38,7 +38,8 @@
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
-#include "../daemon/psmove_moved_protocol.h"
+#include "psmove_moved_protocol.h"
+#include "moved_monitor.h"
 
 #include "psmove.h"
 
@@ -89,11 +90,6 @@ struct move_daemon : public moved_server {
 };
 
 
-/* For now, monitoring is only supported on Linux */
-#ifdef __linux
-
-#include "../daemon/moved_monitor.h"
-
 static void
 on_monitor_update_moved(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type,
@@ -121,18 +117,12 @@ on_monitor_update_moved(enum MonitorEvent event,
     }
 }
 
-#endif /* __linux */
-
 
 
 int
 main(int argc, char *argv[])
 {
     move_daemon moved;
-
-#ifdef __linux
-    moved_monitor *monitor = moved_monitor_new(on_monitor_update_moved, &moved);
-#endif
 
     /* Never act as a client in "moved" mode */
     psmove_set_remote_config(PSMove_OnlyLocal);
@@ -144,37 +134,37 @@ main(int argc, char *argv[])
         moved.handle_connection(NULL, NULL);
     }
 
-#ifdef __linux
-    fd_set fds;
-    int server_fd = moved.get_socket();
-    int monitor_fd = moved_monitor_get_fd(monitor);
-    int nfds = ((server_fd > monitor_fd)?(server_fd):(monitor_fd)) + 1;
-#endif
+#if defined(__linux) || defined(__APPLE__)
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update_moved, &moved);
 
-    for (;;) {
-#ifdef __linux
-        FD_ZERO(&fds);
-        FD_SET(server_fd, &fds);
-        FD_SET(monitor_fd, &fds);
+    struct pollfd pfd[2];
 
-        if (select(nfds, &fds, NULL, NULL, NULL)) {
-            if (FD_ISSET(monitor_fd, &fds)) {
-                moved_monitor_poll(monitor);
-            }
+    pfd[0].fd = moved.get_socket();
+    pfd[0].events = POLLIN;
 
-            if (FD_ISSET(server_fd, &fds))  {
+    pfd[1].fd = moved_monitor_get_fd(monitor);
+    pfd[1].events = POLLIN;
+
+    while (true) {
+        if (poll(pfd, 2, 0) > 0) {
+            if (pfd[0].revents) {
                 moved.handle_request();
             }
+
+            if (pfd[1].revents) {
+                moved_monitor_poll(monitor);
+            }
         }
-#else
-        moved.handle_request();
-#endif
 
         moved.write_reports();
     }
 
-#ifdef __linux
     moved_monitor_free(monitor);
+#else
+    while (true) {
+        moved.handle_request();
+        moved.write_reports();
+    }
 #endif
 
     return 0;
@@ -307,6 +297,7 @@ moved_server::~moved_server()
 
 
 psmove_dev::psmove_dev(move_daemon *moved, const char *path, const wchar_t *serial)
+    : dirty_output(0)
 {
     if (path != NULL) {
         move = psmove_connect_internal((wchar_t *)serial, (char *)path, moved->count());

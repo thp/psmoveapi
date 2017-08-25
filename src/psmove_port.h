@@ -35,12 +35,14 @@
 #  include <unistd.h>
 #  include <sys/syslimits.h>
 #  include <sys/stat.h>
+#  include <sys/poll.h>
 #endif
 
 #ifdef __linux
 #  include <unistd.h>
 #  include <linux/limits.h>
 #  include <pthread.h>
+#  include <sys/poll.h>
 #endif
 
 #ifdef _WIN32
