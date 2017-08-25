@@ -11,19 +11,23 @@ with 20 move controllers distributed over 3 PCs.
 
 .. _`Edgar Rice Soiree`: http://thp.io/2012/tarzan/
 
-moved_hosts.txt
----------------
+moved2_hosts.txt
+----------------
 
-You need to place a file "moved_hosts.txt" into the data directory of PS Move
+You need to place a file "moved2_hosts.txt" into the data directory of PS Move
 API (usually ~/.psmoveapi/, in Windows %APPDATA%/.psmoveapi/) with one IP
 address per line that points to a moved instance.
 
-Example moved_hosts.txt contents::
+Example moved2_hosts.txt contents::
 
     192.168.0.2
 
 This would try to use the moved running on 192.168.0.2. You can have multiple
 IPs listed there (one per line), the servers will be tried in order.
+
+If you add * on a single line, this will enable local network auto-discovery,
+meaning that any running Move Daemon instances can be auto-discovered via UDP
+broadcast.
 
 
 API Usage

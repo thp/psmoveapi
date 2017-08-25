@@ -105,7 +105,7 @@ union __attribute__ ((__packed__)) PSMoveMovedResponse {
     uint8_t bytes[64];
 };
 
-#define MOVED_HOSTS_LIST_FILE "moved_hosts.txt"
+#define MOVED_HOSTS_LIST_FILE "moved2_hosts.txt"
 
 /* Client socket timeout for receiving data (in ms) */
 #define MOVED_TIMEOUT_MS 10
