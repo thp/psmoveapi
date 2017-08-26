@@ -45,14 +45,21 @@ enum PSMoveMovedCmd {
     MOVED_REQ_REGISTER_CONTROLLER = 7,
 };
 
-struct __attribute__ ((__packed__)) PSMoveMovedProtocolHeader {
+#ifdef _WIN32
+#define PACKED
+#pragma pack(push,1)
+#else
+#define PACKED __attribute__ ((__packed__))
+#endif
+
+struct PACKED PSMoveMovedProtocolHeader {
     // 8-byte packet header
     uint32_t request_sequence;
     uint16_t command_id;
     uint16_t controller_id;
 };
 
-union __attribute__ ((__packed__)) PSMoveMovedRequest {
+union PACKED PSMoveMovedRequest {
     struct {
         struct PSMoveMovedProtocolHeader header;
 
@@ -72,7 +79,7 @@ union __attribute__ ((__packed__)) PSMoveMovedRequest {
     uint8_t bytes[16];
 };
 
-union __attribute__ ((__packed__)) PSMoveMovedResponse {
+union PACKED PSMoveMovedResponse {
     struct {
         struct PSMoveMovedProtocolHeader header;
 
@@ -104,6 +111,10 @@ union __attribute__ ((__packed__)) PSMoveMovedResponse {
 
     uint8_t bytes[64];
 };
+
+#ifdef _WIN32
+#pragma pack(pop)
+#else
 
 #define MOVED_HOSTS_LIST_FILE "moved2_hosts.txt"
 
