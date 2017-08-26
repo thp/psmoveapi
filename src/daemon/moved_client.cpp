@@ -62,7 +62,7 @@ moved_client_list_discover(moved_client_list *result)
     psmove_port_set_socket_timeout_ms(fd, 10);
 
     int enabled = 1;
-    setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &enabled, sizeof(enabled));
+    setsockopt(fd, SOL_SOCKET, SO_BROADCAST, (const char *)&enabled, sizeof(enabled));
 
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
