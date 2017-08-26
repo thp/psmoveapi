@@ -115,7 +115,7 @@ union PACKED PSMoveMovedResponse {
 
 #ifdef _WIN32
 #pragma pack(pop)
-#else
+#endif
 
 #define MOVED_HOSTS_LIST_FILE "moved2_hosts.txt"
 
