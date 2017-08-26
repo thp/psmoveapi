@@ -104,9 +104,9 @@ case "$BUILD_TYPE" in
         "
         pkg_zipfile_7z
 
-        PLATFORM_NAME="win64-msvc2015"
-        chmod +x ./scripts/visualc/build_msvc_2015.bat
-        ./scripts/visualc/build_msvc_2015.bat
+        PLATFORM_NAME="win64-msvc2017"
+        chmod +x ./scripts/visualc/build_msvc.bat
+        ./scripts/visualc/build_msvc.bat 2017
         ;;
     *)
         echo "Invalid/unknown \$BUILD_TYPE value: '$BUILD_TYPE'"
