@@ -36,8 +36,6 @@
 #include <map>
 #include <string>
 
-#include <unistd.h>
-
 moved_client_list *
 moved_client_list_insert(moved_client_list *list, moved_client *client)
 {
