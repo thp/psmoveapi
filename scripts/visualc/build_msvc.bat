@@ -6,13 +6,13 @@ IF "%1"=="" GOTO InvalidArgs
 set MSVC_VERSION=%1
 
 if "%MSVC_VERSION%" == "2017" (
-    set MSVC_CMAKE_GENERATOR="Visual Studio 15 2017 Win64"
+    set "MSVC_CMAKE_GENERATOR=Visual Studio 15 2017 Win64"
     call "%VS150COMNTOOLS%..\..\VC\vcvarsall.bat"
 ) ELSE IF "%MSVC_VERSION%" == "2015" (
-    set MSVC_CMAKE_GENERATOR="Visual Studio 14 Win64"
+    set "MSVC_CMAKE_GENERATOR=Visual Studio 14 Win64"
     call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat"
 ) ELSE IF "%MSVC_VERSION%" == "2013" (
-    set MSVC_CMAKE_GENERATOR="Visual Studio 12 Win64"
+    set "MSVC_CMAKE_GENERATOR=Visual Studio 12 Win64"
     call "%VS120COMNTOOLS%..\..\VC\vcvarsall.bat"
 ) ELSE (
     GOTO InvalidArgs
