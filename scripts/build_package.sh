@@ -90,6 +90,9 @@ case "$BUILD_TYPE" in
         "
         pkg_tarball
 
+        # Workaround for macOS to find the sphinx-build binary installed via pip
+        export PATH=$PATH:$HOME/Library/Python/2.7/bin
+
         PLATFORM_NAME="macos"
         bash -e -x scripts/macos/build-macos
         ;;
@@ -125,6 +128,11 @@ DEST="psmoveapi-${PSMOVEAPI_REVISION}-${PLATFORM_NAME}"
 mkdir -p "$DEST"
 
 cp -v README.md COPYING "$DEST/"
+
+make -C docs html || echo "Not building docs"
+if [ -d docs/_build/html ]; then
+    cp -rv docs/_build/html "$DEST/docs/"
+fi
 
 mkdir -p "$DEST/include"
 cp -v include/*.h build/psmove_config.h "$DEST/include/"
