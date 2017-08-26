@@ -32,7 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <thread>
+#include <queue>
 
 #include "moved_monitor.h"
 
@@ -55,51 +55,39 @@ struct _moved_monitor {
     _moved_monitor(moved_event_callback callback, void *user_data)
         : event_callback(callback)
         , event_callback_user_data(user_data)
-        , quit(false)
     {
-        if (pipe(notify_pipe) != 0) {
-            psmove_CRITICAL("Could not create notify pipe");
+        mgr = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+        if (!mgr) {
+            psmove_CRITICAL("Could not create HID manager");
         }
 
-        thread = std::thread([this] () {
-            IOHIDManagerRef mgr = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-            if (!mgr) {
-                psmove_CRITICAL("Could not create HID manager");
-            }
-
-            IOHIDManagerSetDeviceMatching(mgr, NULL);
-            IOHIDManagerRegisterDeviceMatchingCallback(mgr, _moved_monitor::on_device_matching, this);
-            IOHIDManagerRegisterDeviceRemovalCallback(mgr, _moved_monitor::on_device_removal, this);
-            IOHIDManagerOpen(mgr, kIOHIDOptionsTypeNone);
-            IOHIDManagerScheduleWithRunLoop(mgr, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-
-            while (!quit) {
-                SInt32 res;
-                do {
-                    res = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.1, FALSE);
-                } while(res != kCFRunLoopRunFinished && res != kCFRunLoopRunTimedOut);
-            }
-
-            IOHIDManagerClose(mgr, kIOHIDOptionsTypeNone);
-        });
+        IOHIDManagerSetDeviceMatching(mgr, NULL);
+        IOHIDManagerRegisterDeviceMatchingCallback(mgr, _moved_monitor::on_device_matching, this);
+        IOHIDManagerRegisterDeviceRemovalCallback(mgr, _moved_monitor::on_device_removal, this);
+        IOHIDManagerOpen(mgr, kIOHIDOptionsTypeNone);
+        IOHIDManagerScheduleWithRunLoop(mgr, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     }
 
     ~_moved_monitor()
     {
-        quit = true;
-        thread.join();
+        IOHIDManagerClose(mgr, kIOHIDOptionsTypeNone);
     }
 
-    int get_fd()
+    void pump_loop()
     {
-        return notify_pipe[0];
-    }
+        SInt32 res;
+        do {
+            res = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.001, FALSE);
+        } while(res != kCFRunLoopRunFinished && res != kCFRunLoopRunTimedOut);
 
-    void notify(ASyncDeviceEvent *event)
-    {
-        event_callback(event->event, event->device_type,
-                       event->path, event->serial_number,
-                       event_callback_user_data);
+
+        while (!events.empty()) {
+            auto event = events.front();
+            event_callback(event.event, event.device_type,
+                           event.path, event.serial_number,
+                           event_callback_user_data);
+            events.pop();
+        }
     }
 
 private:
@@ -107,25 +95,24 @@ private:
     make_event(enum MonitorEvent event, IOHIDDeviceRef device)
     {
         if (get_vendor_id(device) == PSMOVE_VID && get_product_id(device) == PSMOVE_PID) {
-            auto ade = new ASyncDeviceEvent();
-            ade->event = event;
-            ade->device_type = EVENT_DEVICE_TYPE_UNKNOWN;
+            ASyncDeviceEvent ade;
+            ade.event = event;
+            ade.device_type = EVENT_DEVICE_TYPE_UNKNOWN;
 
             // Example paths:
             // e.g. "USB_054c_03d5_14100000"
             // or: "Bluetooth_054c_03d5_7794a680"
-            make_path(device, ade->path, sizeof(ade->path));
+            make_path(device, ade.path, sizeof(ade.path));
 
-            if (memcmp(ade->path, "USB_", 4) == 0) {
-                ade->device_type = EVENT_DEVICE_TYPE_USB;
-            } else if (memcmp(ade->path, "Bluetooth_", 10) == 0) {
-                ade->device_type = EVENT_DEVICE_TYPE_BLUETOOTH;
+            if (memcmp(ade.path, "USB_", 4) == 0) {
+                ade.device_type = EVENT_DEVICE_TYPE_USB;
+            } else if (memcmp(ade.path, "Bluetooth_", 10) == 0) {
+                ade.device_type = EVENT_DEVICE_TYPE_BLUETOOTH;
             }
 
-            get_serial_number(device, ade->serial_number, sizeof(ade->serial_number));
+            get_serial_number(device, ade.serial_number, sizeof(ade.serial_number));
 
-            // Write the pointer to the pipe
-            ::write(notify_pipe[1], &ade, sizeof(ade));
+            events.push(ade);
         }
     }
 
@@ -143,11 +130,8 @@ private:
 
     moved_event_callback event_callback;
     void *event_callback_user_data;
-    bool quit;
-
-    std::thread thread;
-
-    int notify_pipe[2];
+    IOHIDManagerRef mgr;
+    std::queue<ASyncDeviceEvent> events;
 };
 
 
@@ -162,7 +146,7 @@ moved_monitor_get_fd(moved_monitor *monitor)
 {
     psmove_return_val_if_fail(monitor != NULL, -1);
 
-    return monitor->get_fd();
+    return -1;
 }
 
 void
@@ -170,11 +154,7 @@ moved_monitor_poll(moved_monitor *monitor)
 {
     psmove_return_if_fail(monitor != NULL);
 
-    ASyncDeviceEvent *event = nullptr;
-    if (read(monitor->get_fd(), &event, sizeof(event)) == sizeof(event)) {
-        monitor->notify(event);
-        delete event;
-    }
+    monitor->pump_loop();
 }
 
 void

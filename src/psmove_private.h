@@ -107,6 +107,9 @@ struct PSMove_RGBValue {
 /* System-wide data directory */
 #define PSMOVE_SYSTEM_DATA_DIR "/etc/psmoveapi"
 
+/* Maximum length of the serial string */
+#define PSMOVE_MAX_SERIAL_LENGTH 255
+
 /**
  * [PRIVATE API] Write raw data blob to device
  **/
@@ -124,7 +127,7 @@ ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
  * [PRIVATE API] Internal device open function (hidraw, Linux / for moved)
  **/
 ADDAPI PSMove *
-ADDCALL psmove_connect_internal(wchar_t *serial, char *path, int id);
+ADDCALL psmove_connect_internal(const wchar_t *serial, const char *path, int id);
 
 /**
  * [PRIVATE API] Get device path of a controller (hidraw, Linux / for moved)

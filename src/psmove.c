@@ -66,9 +66,6 @@
 /* Buffer size for sending/retrieving a request to an extension device */
 #define PSMOVE_EXT_DEVICE_REPORT_SIZE 49
 
-/* Maximum length of the serial string */
-#define PSMOVE_MAX_SERIAL_LENGTH 255
-
 /* Maximum milliseconds to inhibit further updates to LEDs if not changed */
 #define PSMOVE_MAX_LED_INHIBIT_MS 4000
 
@@ -460,7 +457,7 @@ psmove_count_connected()
 }
 
 PSMove *
-psmove_connect_internal(wchar_t *serial, char *path, int id)
+psmove_connect_internal(const wchar_t *serial, const char *path, int id)
 {
     char *tmp;
 

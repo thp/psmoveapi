@@ -100,7 +100,7 @@ on_monitor_update_moved(enum MonitorEvent event,
 
     if (event == EVENT_DEVICE_ADDED) {
         if (device_type == EVENT_DEVICE_TYPE_USB) {
-            PSMove *move = psmove_connect_internal((wchar_t*)serial, (char*)path, -1);
+            PSMove *move = psmove_connect_internal(serial, path, -1);
             if (psmove_pair(move)) {
                 // Indicate to the user that pairing was successful
                 psmove_set_leds(move, 0, 255, 0);
