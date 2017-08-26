@@ -124,7 +124,7 @@ PSMOVEAPI_REVISION=$(git describe --tags)
 DEST="psmoveapi-${PSMOVEAPI_REVISION}-${PLATFORM_NAME}"
 mkdir -p "$DEST"
 
-cp -v README COPYING "$DEST/"
+cp -v README.md COPYING "$DEST/"
 
 make -C docs html || echo "Not building docs"
 if [ -d docs/_build/html ]; then

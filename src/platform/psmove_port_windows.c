@@ -656,7 +656,7 @@ psmove_port_register_psmove(const char *addr, const char *host)
     HANDLE hRadio;
     if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
         psmove_WARNING("Failed to find a Bluetooth radio");
-        return NULL;
+        return;
     }
 
     BLUETOOTH_RADIO_INFO radioInfo;
@@ -665,7 +665,7 @@ psmove_port_register_psmove(const char *addr, const char *host)
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
         psmove_CRITICAL("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
-        return NULL;
+        return;
     }
 
     windows_register_psmove(addr, &radioInfo.address, hRadio);

@@ -73,7 +73,6 @@ struct moved_server {
 protected:
     int socket;
     struct sockaddr_in server_addr;
-    move_daemon *moved;
     std::vector<psmove_dev *> devs;
 };
 
@@ -222,8 +221,9 @@ moved_server::handle_request()
     request_id = request[0];
     device_id = request[1];
 
-    for (psmove_dev *dev: devs) {
-        if (dev->assigned_id == device_id) {
+    for (psmove_dev *d: devs) {
+        if (d->assigned_id == device_id) {
+            dev = d;
             break;
         }
     }
@@ -234,7 +234,7 @@ moved_server::handle_request()
 
     switch (request_id) {
         case MOVED_REQ_COUNT_CONNECTED:
-            response[0] = (unsigned char)moved->count();
+            response[0] = (unsigned char)count();
 
             send_response = 1;
             break;

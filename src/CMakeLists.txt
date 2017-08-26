@@ -68,7 +68,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/mac/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_osx.m)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_osx.mm)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
@@ -122,6 +122,11 @@ ELSE()
 ENDIF()
 
 include_directories(${ROOT_DIR}/include)
+
+configure_file(${ROOT_DIR}/include/psmove_config.h.in
+    ${CMAKE_BINARY_DIR}/psmove_config.h
+    @ONLY)
+
 
 file(GLOB PSMOVEAPI_MOVED_SRC
     "${CMAKE_CURRENT_LIST_DIR}/daemon/*.c"
@@ -205,10 +210,6 @@ configure_file(${ROOT_DIR}/contrib/psmoveapi.pc.in
     ${CMAKE_BINARY_DIR}/psmoveapi.pc
     @ONLY)
 
-configure_file(${ROOT_DIR}/include/psmove_config.h.in
-    ${CMAKE_BINARY_DIR}/psmove_config.h
-    @ONLY)
-
 include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)
 
@@ -230,11 +231,11 @@ install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
 )
 
 install(FILES ${PSMOVEAPI_HEADERS} DESTINATION include/psmoveapi)
-install(FILES README COPYING DESTINATION share/psmoveapi)
+install(FILES README.md COPYING DESTINATION share/psmoveapi)
 
 message("")
 message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
-message("    Library license:  " ${INFO_LICENSE} " (see README for details)")
+message("    Library license:  " ${INFO_LICENSE} " (see README.md for details)")
 message("    BlueZ 5 support:  " ${INFO_BLUEZ5_SUPPORT} " (for pairing on Linux only)")
 message("    Pocket C.H.I.P:   " ${INFO_POCKET_CHIP})
