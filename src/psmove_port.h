@@ -57,7 +57,9 @@
 #  define PATH_SEP "/"
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__cplusplus)
+// MSVC only supports the "inline" keyword in C++, but not in C (C89),
+// so if we're on MSVC and we're not compiling C++ code, define this.
 #define inline __inline
 #endif
 
