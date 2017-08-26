@@ -35,6 +35,7 @@
 
 #include <map>
 #include <string>
+#include <algorithm>
 
 moved_client_list *
 moved_client_list_insert(moved_client_list *list, moved_client *client)
@@ -85,10 +86,10 @@ moved_client_list_discover(moved_client_list *result)
             psmove_WARNING("Could not send discovery request");
         }
 
-        usleep(20000);
+        psmove_port_sleep_ms(20);
     }
 
-    usleep(50000);
+    psmove_port_sleep_ms(50);
 
     std::map<std::string, bool> discovered;
 
@@ -114,7 +115,7 @@ moved_client_list_discover(moved_client_list *result)
         }
     }
 
-    close(fd);
+    psmove_port_close_socket(fd);
 
     for (auto it: discovered) {
         const char *hostname = it.first.c_str();

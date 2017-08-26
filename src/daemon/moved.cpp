@@ -284,7 +284,7 @@ moved_server::handle_request()
             return;
     }
 
-    if (sendto(socket, &response, sizeof(response),
+    if (sendto(socket, (const char *)&response, sizeof(response),
             /*flags=*/0, (struct sockaddr *)&si_other, si_len) == -1) {
         psmove_WARNING("Cannot send response");
     }
