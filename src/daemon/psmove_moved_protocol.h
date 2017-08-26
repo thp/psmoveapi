@@ -89,7 +89,8 @@ union PACKED PSMoveMovedResponse {
             } count_connected;
 
             struct {
-                // nothing
+                // VS requres at least one member
+                uint32_t _dummy;
             } set_leds;
 
             struct {
