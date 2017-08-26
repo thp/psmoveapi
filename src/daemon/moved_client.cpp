@@ -79,7 +79,7 @@ moved_client_list_discover(moved_client_list *result)
     for (int i=0; i<5; i++) {
         request.header.request_sequence++;
 
-        int res = sendto(fd, &request, sizeof(request),
+        int res = sendto(fd, (const char *)&request, sizeof(request),
                 /*flags=*/0, (struct sockaddr *)&addr, sizeof(addr));
 
         if (res == -1) {
@@ -100,7 +100,7 @@ moved_client_list_discover(moved_client_list *result)
         memset(&addr_server, 0, sizeof(addr_server));
         addr_server.sin_family = AF_INET;
 
-        int res = recvfrom(fd, &response, sizeof(response), /*flags=*/0,
+        int res = recvfrom(fd, (const char *)&response, sizeof(response), /*flags=*/0,
                 (struct sockaddr *)&addr_server, &addr_server_len);
 
         if (res == sizeof(response)) {
@@ -233,7 +233,7 @@ moved_client_send(moved_client *client, enum PSMoveMovedCmd cmd, int controller_
     }
 
     while (retry_count < MOVED_MAX_RETRIES) {
-        int res = sendto(client->socket, client->request_buf.bytes, sizeof(client->request_buf),
+        int res = sendto(client->socket, (const char *)client->request_buf.bytes, sizeof(client->request_buf),
                 /*flags=*/0, (struct sockaddr *)&(client->moved_addr), sizeof(client->moved_addr));
 
         if (res == sizeof(client->request_buf)) {
