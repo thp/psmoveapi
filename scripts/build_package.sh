@@ -90,6 +90,9 @@ case "$BUILD_TYPE" in
         "
         pkg_tarball
 
+        # Workaround for macOS to find the sphinx-build binary installed via pip
+        export PATH=$PATH:$HOME/Library/Python/2.7/bin
+
         PLATFORM_NAME="macos"
         bash -e -x scripts/macos/build-macos
         ;;
