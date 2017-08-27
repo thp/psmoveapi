@@ -167,12 +167,16 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
         controllers.emplace_back(c);
     }
 
+#ifndef _WIN32
     monitor = moved_monitor_new(PSMoveAPI::on_monitor_event, this);
+#endif
 }
 
 PSMoveAPI::~PSMoveAPI()
 {
+#ifndef _WIN32
     moved_monitor_free(monitor);
+#endif
 
     for (auto &c: controllers) {
         if (c->api_connected) {
