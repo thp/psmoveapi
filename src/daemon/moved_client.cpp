@@ -100,7 +100,7 @@ moved_client_list_discover(moved_client_list *result)
         memset(&addr_server, 0, sizeof(addr_server));
         addr_server.sin_family = AF_INET;
 
-        int res = recvfrom(fd, (const char *)&response, sizeof(response), /*flags=*/0,
+        int res = recvfrom(fd, (char *)&response, sizeof(response), /*flags=*/0,
                 (struct sockaddr *)&addr_server, &addr_server_len);
 
         if (res == sizeof(response)) {

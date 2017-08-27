@@ -198,7 +198,7 @@ moved_server::handle_request()
     PSMoveMovedRequest request;
     PSMoveMovedResponse response;
 
-    int res = recvfrom(socket, (const char *)&request, sizeof(request),
+    int res = recvfrom(socket, (char *)&request, sizeof(request),
             /*flags=*/0, (struct sockaddr *)&si_other, &si_len);
 
     if (res != sizeof(request)) {
