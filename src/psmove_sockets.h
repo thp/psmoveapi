@@ -33,6 +33,7 @@
 #ifdef _WIN32
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
+#  define inet_ntop InetNtop
 #else
 #  include <arpa/inet.h>
 #  include <fcntl.h>
