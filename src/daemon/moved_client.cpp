@@ -31,6 +31,7 @@
 #include "psmove.h"
 #include "../psmove_private.h"
 #include "../psmove_port.h"
+#include "../psmove_sockets.h"
 #include "moved_client.h"
 
 #include <map>
