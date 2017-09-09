@@ -40,7 +40,7 @@ else:
 
 if os.name == 'nt':
     libpsmoveapi = CDLL(library_prefix + 'psmoveapi.dll')
-if sys.platform == 'darwin':
+elif sys.platform == 'darwin':
     libpsmoveapi = CDLL(library_prefix + 'libpsmoveapi.dylib')
 else:
     libpsmoveapi = CDLL(library_prefix + 'libpsmoveapi.so')
