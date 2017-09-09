@@ -5,7 +5,7 @@ install:
   - git submodule update --init --recursive
 
 environment:
-  BUILD_TYPE: windows-native-msvc
+  BUILD_TYPE: windows-native-msvc-x64
 
 build_script:
 - cmd: >-

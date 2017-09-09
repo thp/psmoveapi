@@ -96,7 +96,7 @@ case "$BUILD_TYPE" in
         PLATFORM_NAME="macos"
         bash -e -x scripts/macos/build-macos
         ;;
-    windows-native-msvc)
+    windows-native-msvc-x64)
         PLATFORM_BIN="
         build-x64/Release/psmove.exe
         build-x64/Release/test_tracker.exe
