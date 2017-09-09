@@ -10,7 +10,7 @@ set MSVC_PLATFORM=%2
 IF "%MSVC_PLATFORM%" == "x64" (
     set MSVC_CMAKE_EXTRA=" Win64"
 ) ELSE IF "%MSVC_PLATFORM%" == "x86" (
-    set MSVC_CMAKE_EXTRA=""
+    set MSVC_CMAKE_EXTRA=
 ) ELSE (
     GOTO InvalidArgs
 )
