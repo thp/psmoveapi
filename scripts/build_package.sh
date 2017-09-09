@@ -96,20 +96,21 @@ case "$BUILD_TYPE" in
         PLATFORM_NAME="macos"
         bash -e -x scripts/macos/build-macos
         ;;
-    windows-native-msvc-x64)
+    windows-native-msvc-*)
+        WIN_ARCH=${BUILD_TYPE#windows-native-msvc-}
         PLATFORM_BIN="
-        build-x64/Release/psmove.exe
-        build-x64/Release/test_tracker.exe
+        build-${WIN_ARCH}/Release/psmove.exe
+        build-${WIN_ARCH}/Release/test_tracker.exe
         "
         PLATFORM_LIB="
-        build-x64/Release/psmoveapi.dll
-        build-x64/Release/psmoveapi_tracker.dll
+        build-${WIN_ARCH}/Release/psmoveapi.dll
+        build-${WIN_ARCH}/Release/psmoveapi_tracker.dll
         "
         pkg_zipfile_7z
 
-        PLATFORM_NAME="win64-msvc2017"
+        PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
         chmod +x ./scripts/visualc/build_msvc.bat
-        ./scripts/visualc/build_msvc.bat 2017 x64
+        ./scripts/visualc/build_msvc.bat 2017 ${WIN_ARCH}
         ;;
     *)
         echo "Invalid/unknown \$BUILD_TYPE value: '$BUILD_TYPE'"
