@@ -98,18 +98,18 @@ case "$BUILD_TYPE" in
         ;;
     windows-native-msvc)
         PLATFORM_BIN="
-        build/Release/psmove.exe
-        build/Release/test_tracker.exe
+        build-x64/Release/psmove.exe
+        build-x64/Release/test_tracker.exe
         "
         PLATFORM_LIB="
-        build/Release/psmoveapi.dll
-        build/Release/psmoveapi_tracker.dll
+        build-x64/Release/psmoveapi.dll
+        build-x64/Release/psmoveapi_tracker.dll
         "
         pkg_zipfile_7z
 
         PLATFORM_NAME="win64-msvc2017"
         chmod +x ./scripts/visualc/build_msvc.bat
-        ./scripts/visualc/build_msvc.bat 2017
+        ./scripts/visualc/build_msvc.bat 2017 x64
         ;;
     *)
         echo "Invalid/unknown \$BUILD_TYPE value: '$BUILD_TYPE'"
