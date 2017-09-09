@@ -562,8 +562,22 @@ psmove_port_initialize_sockets()
 int
 psmove_port_check_pairing_permissions()
 {
-    // FIXME: Do we need to check for admin privileges here?
-    return 1;
+    // https://stackoverflow.com/a/8196291/1047040
+    BOOL fRet = FALSE;
+    HANDLE hToken = NULL;
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken)) {
+        TOKEN_ELEVATION Elevation;
+        DWORD cbSize = sizeof( TOKEN_ELEVATION );
+        if (GetTokenInformation(hToken, TokenElevation, &Elevation, sizeof(Elevation), &cbSize)) {
+            fRet = Elevation.TokenIsElevated;
+        }
+    }
+
+    if (hToken) {
+        CloseHandle(hToken);
+    }
+
+    return (fRet != FALSE);
 }
 
 uint64_t
