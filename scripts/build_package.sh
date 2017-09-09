@@ -40,6 +40,7 @@ fi
 
 case "$BUILD_TYPE" in
     linux-native-clang)
+        BUILDDIR=build
         PLATFORM_BIN="
         build/psmove
         build/test_tracker
@@ -54,6 +55,7 @@ case "$BUILD_TYPE" in
         bash -e -x scripts/linux/build-debian
         ;;
     linux-cross-mingw*)
+        BUILDDIR=build
         PLATFORM_BIN="
         build/psmove.exe
         build/test_tracker.exe
@@ -80,6 +82,7 @@ case "$BUILD_TYPE" in
         esac
         ;;
     macos-native-clang)
+        BUILDDIR=build
         PLATFORM_BIN="
         build/psmove
         build/test_tracker
@@ -98,13 +101,14 @@ case "$BUILD_TYPE" in
         ;;
     windows-native-msvc-*)
         WIN_ARCH=${BUILD_TYPE#windows-native-msvc-}
+        BUILDDIR="build-${WIN_ARCH}"
         PLATFORM_BIN="
-        build-${WIN_ARCH}/Release/psmove.exe
-        build-${WIN_ARCH}/Release/test_tracker.exe
+        $BUILDDIR/Release/psmove.exe
+        $BUILDDIR/Release/test_tracker.exe
         "
         PLATFORM_LIB="
-        build-${WIN_ARCH}/Release/psmoveapi.dll
-        build-${WIN_ARCH}/Release/psmoveapi_tracker.dll
+        $BUILDDIR/Release/psmoveapi.dll
+        $BUILDDIR/Release/psmoveapi_tracker.dll
         "
         pkg_zipfile_7z
 
@@ -136,7 +140,7 @@ if [ -d docs/_build/html ]; then
 fi
 
 mkdir -p "$DEST/include"
-cp -v include/*.h build/psmove_config.h "$DEST/include/"
+cp -v include/*.h $BUILDDIR/psmove_config.h "$DEST/include/"
 
 mkdir -p "$DEST/bindings/python"
 cp -rv bindings/python/psmoveapi.py "$DEST/bindings/python/"
