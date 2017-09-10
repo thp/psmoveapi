@@ -108,7 +108,9 @@ case "$BUILD_TYPE" in
         "
         PLATFORM_LIB="
         $BUILDDIR/Release/psmoveapi.dll
+        $BUILDDIR/Release/psmoveapi.lib
         $BUILDDIR/Release/psmoveapi_tracker.dll
+        $BUILDDIR/Release/psmoveapi_tracker.lib
         "
         pkg_zipfile_7z
 
