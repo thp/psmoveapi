@@ -40,6 +40,7 @@ fi
 
 case "$BUILD_TYPE" in
     linux-native-clang)
+        BUILDDIR=build
         PLATFORM_BIN="
         build/psmove
         build/test_tracker
@@ -54,6 +55,7 @@ case "$BUILD_TYPE" in
         bash -e -x scripts/linux/build-debian
         ;;
     linux-cross-mingw*)
+        BUILDDIR=build
         PLATFORM_BIN="
         build/psmove.exe
         build/test_tracker.exe
@@ -80,6 +82,7 @@ case "$BUILD_TYPE" in
         esac
         ;;
     macos-native-clang)
+        BUILDDIR=build
         PLATFORM_BIN="
         build/psmove
         build/test_tracker
@@ -96,20 +99,22 @@ case "$BUILD_TYPE" in
         PLATFORM_NAME="macos"
         bash -e -x scripts/macos/build-macos
         ;;
-    windows-native-msvc)
+    windows-native-msvc-*)
+        WIN_ARCH=${BUILD_TYPE#windows-native-msvc-}
+        BUILDDIR="build-${WIN_ARCH}"
         PLATFORM_BIN="
-        build/Release/psmove.exe
-        build/Release/test_tracker.exe
+        $BUILDDIR/Release/psmove.exe
+        $BUILDDIR/Release/test_tracker.exe
         "
         PLATFORM_LIB="
-        build/Release/psmoveapi.dll
-        build/Release/psmoveapi_tracker.dll
+        $BUILDDIR/Release/psmoveapi.dll
+        $BUILDDIR/Release/psmoveapi_tracker.dll
         "
         pkg_zipfile_7z
 
-        PLATFORM_NAME="win64-msvc2017"
+        PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
         chmod +x ./scripts/visualc/build_msvc.bat
-        ./scripts/visualc/build_msvc.bat 2017
+        ./scripts/visualc/build_msvc.bat 2017 ${WIN_ARCH}
         ;;
     *)
         echo "Invalid/unknown \$BUILD_TYPE value: '$BUILD_TYPE'"
@@ -135,7 +140,7 @@ if [ -d docs/_build/html ]; then
 fi
 
 mkdir -p "$DEST/include"
-cp -v include/*.h build/psmove_config.h "$DEST/include/"
+cp -v include/*.h $BUILDDIR/psmove_config.h "$DEST/include/"
 
 mkdir -p "$DEST/bindings/python"
 cp -rv bindings/python/psmoveapi.py "$DEST/bindings/python/"

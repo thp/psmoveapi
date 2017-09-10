@@ -78,19 +78,18 @@ Run the batch files in the "Developer Command Prompt for VS 2017" (you will
 find it in the start menu folder "Visual Studio 2017", for VS 2013/2015 the
 menu items should be named similarly) from the PS Move API checkout folder.
 
-For Visual Studio 2017, use::
+For Visual Studio 2017 and 64-bit use::
 
-    call scripts/visualc/build_msvc.bat 2017
+    call scripts/visualc/build_msvc.bat 2017 x64
 
-For Visual Studio 2015, use::
+For Visual Studio 2017 and 32-bit use::
 
-    call scripts/visualc/build_msvc.bat 2015
+    call scripts/visualc/build_msvc.bat 2017 x86
 
-For Visual Studio 2013, use::
+For Visual Studio 2015 and 2013, replace 2017 accordingly.
 
-    call scripts/visualc/build_msvc.bat 2013
-
-The resulting binaries will be placed in ``build/[Debug/Release]``
+The resulting binaries will be placed in ``build-x86/[Debug/Release]`` (for
+the 32-bit build) and ``build-x64/[Debug/Release]`` (for the 64-bit build).
 
 
 Cross-Compiling for Windows (MinGW)
