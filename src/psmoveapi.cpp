@@ -30,6 +30,10 @@
 
 #include "psmoveapi.h"
 
+#include "psmove_port.h"
+#include "psmove_private.h"
+#include "daemon/moved_monitor.h"
+
 #include <vector>
 #include <map>
 #include <string>
@@ -40,8 +44,11 @@
 namespace {
 
 struct ControllerGlue {
-    ControllerGlue(int index, const std::string &serial, PSMove *handle_a, PSMove *handle_b);
+    ControllerGlue(int index, const std::string &serial);
     ~ControllerGlue();
+
+    void add_handle(PSMove *handle);
+    void update_connection_flags();
 
     ControllerGlue(const ControllerGlue &other) = delete;
     Controller &operator=(const ControllerGlue &other) = delete;
@@ -54,8 +61,7 @@ struct ControllerGlue {
     std::string serial;
     struct Controller controller;
     bool connected;
-    bool sent_connect;
-    bool sent_disconnect;
+    bool api_connected;
 };
 
 struct PSMoveAPI {
@@ -64,9 +70,12 @@ struct PSMoveAPI {
 
     void update();
 
+    static void on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, void *user_data);
+
     EventReceiver *receiver;
     void *user_data;
     std::vector<ControllerGlue *> controllers;
+    moved_monitor *monitor;
 };
 
 PSMoveAPI *
@@ -74,33 +83,50 @@ g_psmove_api = nullptr;
 
 }; // end anonymous namespace
 
-ControllerGlue::ControllerGlue(int index, const std::string &serial, PSMove *handle_a, PSMove *handle_b)
+ControllerGlue::ControllerGlue(int index, const std::string &serial)
     : move_bluetooth(nullptr)
     , move_usb(nullptr)
     , serial(serial)
     , controller()
-    , connected(true)
-    , sent_connect(false)
-    , sent_disconnect(false)
+    , connected(false)
+    , api_connected(false)
 {
     memset(&controller, 0, sizeof(controller));
     controller.index = index;
     controller.serial = this->serial.c_str();
+}
 
-    if (psmove_connection_type(handle_a) == Conn_USB) {
-        move_bluetooth = handle_b;
-        move_usb = handle_a;
+void
+ControllerGlue::add_handle(PSMove *handle)
+{
+    if (psmove_connection_type(handle) == Conn_USB) {
+        if (move_usb != nullptr) {
+            psmove_WARNING("USB handle already exists for this controller");
+            psmove_disconnect(move_usb);
+        }
+
+        move_usb = handle;
     } else {
-        move_bluetooth = handle_a;
-        move_usb = handle_b;
-    }
+        if (move_bluetooth != nullptr) {
+            psmove_WARNING("Bluetooth handle already exists for this controller -- leaking");
+            psmove_disconnect(move_bluetooth);
+        }
 
+        move_bluetooth = handle;
+    }
+}
+
+void
+ControllerGlue::update_connection_flags()
+{
     controller.usb = (move_usb != nullptr);
     controller.bluetooth = (move_bluetooth != nullptr);
 
-    if (controller.usb) {
+    if (controller.usb && !controller.bluetooth) {
         controller.battery = Batt_CHARGING;
     }
+
+    connected = (controller.usb || controller.bluetooth);
 }
 
 ControllerGlue::~ControllerGlue()
@@ -117,6 +143,7 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
     : receiver(receiver)
     , user_data(user_data)
     , controllers()
+    , monitor(nullptr)
 {
     std::map<std::string, std::vector<PSMove *>> moves;
 
@@ -133,28 +160,32 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
 
     int i = 0;
     for (auto &kv: moves) {
-        if (kv.second.size() == 2) {
-            // Have two handles for this controller (USB + Bluetooth)
-            controllers.emplace_back(new ControllerGlue(i++, kv.first, kv.second[0], kv.second[1]));
-        } else if (kv.second.size() == 1) {
-            // Have only one handle for this controller
-            controllers.emplace_back(new ControllerGlue(i++, kv.first, kv.second[0], nullptr));
-        } else {
-            // FATAL
+        auto c = new ControllerGlue(i++, kv.first);
+        for (auto &handle: kv.second) {
+            c->add_handle(handle);
         }
+        controllers.emplace_back(c);
     }
+
+#ifndef _WIN32
+    monitor = moved_monitor_new(PSMoveAPI::on_monitor_event, this);
+#endif
 }
 
 PSMoveAPI::~PSMoveAPI()
 {
+#ifndef _WIN32
+    moved_monitor_free(monitor);
+#endif
+
     for (auto &c: controllers) {
-        if (!c->sent_disconnect) {
+        if (c->api_connected) {
             if (receiver->disconnect != nullptr) {
                 // Send disconnect event
                 receiver->disconnect(&c->controller, user_data);
             }
 
-            c->sent_disconnect = true;
+            c->api_connected = false;
         }
 
         delete c;
@@ -164,21 +195,36 @@ PSMoveAPI::~PSMoveAPI()
 void
 PSMoveAPI::update()
 {
+#ifndef _WIN32
+    if (moved_monitor_get_fd(monitor) == -1) {
+        moved_monitor_poll(monitor);
+    } else {
+        struct pollfd pfd;
+        pfd.fd = moved_monitor_get_fd(monitor);
+        pfd.events = POLLIN;
+        while (poll(&pfd, 1, 0) > 0) {
+            moved_monitor_poll(monitor);
+        }
+    }
+#endif
+
     for (auto &c: controllers) {
-        if (c->connected && !c->sent_connect) {
+        c->update_connection_flags();
+
+        if (c->connected && !c->api_connected) {
             if (receiver->connect != nullptr) {
                 // Send initial connect event
                 receiver->connect(&c->controller, user_data);
             }
-            c->sent_connect = true;
+            c->api_connected = c->connected;
         }
 
-        if (!c->connected && !c->sent_disconnect) {
+        if (!c->connected && c->api_connected) {
             if (receiver->disconnect != nullptr) {
                 // Send disconnect event
                 receiver->disconnect(&c->controller, user_data);
             }
-            c->sent_disconnect = true;
+            c->api_connected = c->connected;
         }
 
         if (!c->connected) {
@@ -229,19 +275,92 @@ PSMoveAPI::update()
                     uint32_t(255 * c->controller.color.g),
                     uint32_t(255 * c->controller.color.b));
             psmove_set_rumble(write_move, uint32_t(255 * c->controller.rumble));
-            if (psmove_update_leds(write_move) == Update_Failed) {
-                if (read_move != nullptr && write_move != read_move) {
-                    // Disconnected from USB, but we read from Bluetooth, so we
-                    // can just give up the USB connection and use Bluetooth
-                    psmove_disconnect(c->move_usb), c->move_usb = nullptr;
-                    // Now that USB is gone, clear the controller's USB flag
-                    c->controller.usb = 0;
-                } else {
-                    c->connected = false;
-                }
-            }
+            psmove_update_leds(write_move);
         }
     }
+}
+
+void
+PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, void *user_data)
+{
+    auto self = static_cast<PSMoveAPI *>(user_data);
+
+    switch (event) {
+        case EVENT_DEVICE_ADDED:
+            {
+                psmove_DEBUG("on_monitor_event(event=EVENT_DEVICE_ADDED, device_type=0x%08x, path=\"%s\", serial=%p)",
+                       device_type, path, serial);
+
+                for (auto &c: self->controllers) {
+                    if ((c->move_bluetooth != nullptr && strcmp(_psmove_get_device_path(c->move_bluetooth), path) == 0) ||
+                            (c->move_usb != nullptr && strcmp(_psmove_get_device_path(c->move_usb), path) == 0)) {
+                        psmove_WARNING("This controller is already active!");
+                        return;
+                    }
+                }
+
+                PSMove *move = psmove_connect_internal(serial, path, -1);
+                if (move == nullptr) {
+                    psmove_CRITICAL("Cannot open move for retrieving serial!");
+                    return;
+                }
+
+                char *serial_number = psmove_get_serial(move);
+
+                bool found = false;
+                for (auto &c: self->controllers) {
+                    if (strcmp(c->serial.c_str(), serial_number) == 0) {
+                        c->add_handle(move);
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    auto c = new ControllerGlue(self->controllers.size(), std::string(serial_number));
+                    c->add_handle(move);
+                    self->controllers.emplace_back(c);
+                }
+
+                free(serial_number);
+            }
+            break;
+        case EVENT_DEVICE_REMOVED:
+            {
+                psmove_DEBUG("on_monitor_event(event=EVENT_DEVICE_REMOVED, device_type=0x%08x, path=\"%s\", serial=%p)",
+                       device_type, path, serial);
+
+                bool found = false;
+                for (auto &c: self->controllers) {
+                    if (device_type == EVENT_DEVICE_TYPE_BLUETOOTH && c->move_bluetooth != nullptr) {
+                        const char *devpath = _psmove_get_device_path(c->move_bluetooth);
+                        if (devpath != nullptr && strcmp(devpath, path) == 0) {
+                            psmove_disconnect(c->move_bluetooth), c->move_bluetooth = nullptr;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (device_type == EVENT_DEVICE_TYPE_USB && c->move_usb != nullptr) {
+                        const char *devpath = _psmove_get_device_path(c->move_usb);
+                        if (devpath != nullptr && strcmp(devpath, path) == 0) {
+                            psmove_disconnect(c->move_usb), c->move_usb = nullptr;
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found) {
+                    psmove_CRITICAL("Did not find device for removal\n");
+                }
+            }
+            break;
+        default:
+            psmove_CRITICAL("Invalid event");
+            break;
+    }
+
 }
 
 void

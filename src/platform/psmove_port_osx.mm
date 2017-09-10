@@ -308,7 +308,12 @@ psmove_port_initialize_sockets()
 int
 psmove_port_check_pairing_permissions()
 {
-    // Nothing to do on OS X
+    // We also request root permissions on macOS, so that we have GUI-less pairing.
+    if (geteuid() != 0) {
+        printf("This program must be run as root (or use sudo).\n");
+        return 0;
+    }
+
     return 1;
 }
 

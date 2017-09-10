@@ -107,6 +107,9 @@ struct PSMove_RGBValue {
 /* System-wide data directory */
 #define PSMOVE_SYSTEM_DATA_DIR "/etc/psmoveapi"
 
+/* Maximum length of the serial string */
+#define PSMOVE_MAX_SERIAL_LENGTH 255
+
 /**
  * [PRIVATE API] Write raw data blob to device
  **/
@@ -124,7 +127,7 @@ ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
  * [PRIVATE API] Internal device open function (hidraw, Linux / for moved)
  **/
 ADDAPI PSMove *
-ADDCALL psmove_connect_internal(wchar_t *serial, char *path, int id);
+ADDCALL psmove_connect_internal(const wchar_t *serial, const char *path, int id);
 
 /**
  * [PRIVATE API] Get device path of a controller (hidraw, Linux / for moved)
@@ -214,6 +217,15 @@ ADDCALL _psmove_get_firmware_info(PSMove *move);
 
 ADDAPI enum PSMove_Bool
 ADDCALL _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode);
+
+/**
+ * Set the Host Bluetooth address that is used to connect via
+ * Bluetooth. You should set this to the local computer's
+ * Bluetooth address when connected via USB, then disconnect
+ * and press the PS button to connect the controller via BT.
+ **/
+ADDAPI int
+ADDCALL _psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr);
 
 
 /* Authentication-related private APIs */

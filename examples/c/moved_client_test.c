@@ -33,21 +33,27 @@
 int main(int argc, char *argv[])
 {
     moved_client *client = moved_client_create("127.0.0.1");
-    int connected = moved_client_send(client, MOVED_REQ_COUNT_CONNECTED, 0, NULL);
+
+    if (moved_client_send(client, MOVED_REQ_COUNT_CONNECTED, 0, NULL, 0) == 0) {
+        printf("Could not send count connected\n");
+    }
+
     int i;
+
+    int connected = client->response_buf.count_connected.count;
 
     printf("Connected: %d\n", connected);
     unsigned char output[] = {2, 0, 255, 255, 0, 0, 0};
 
     for (i=0; i<connected; i++) {
         printf("Writing to dev %d...\n", i);
-        moved_client_send(client, MOVED_REQ_WRITE, i, output);
+        moved_client_send(client, MOVED_REQ_SET_LEDS, i, output, sizeof(output));
     }
 
-    if (moved_client_send(client, MOVED_REQ_READ, 0, NULL)) {
+    if (moved_client_send(client, MOVED_REQ_READ_INPUT, 0, NULL, 0)) {
         printf("====================\n");
-        for (i=0; i<MOVED_SIZE_READ_RESPONSE; i++) {
-            printf("%02x ", client->read_response_buf[i]);
+        for (i=0; i<sizeof(client->response_buf); i++) {
+            printf("%02x ", client->response_buf.bytes[i]);
         }
         printf("\n====================\n");
     }

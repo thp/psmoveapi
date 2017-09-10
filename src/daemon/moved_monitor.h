@@ -34,11 +34,6 @@
 extern "C" {
 #endif
 
-/* For now, monitoring is only supported on Linux */
-#ifdef __linux
-
-#include <libudev.h>
-#include <linux/input.h>
 #include <wchar.h>
 
 enum MonitorEvent {
@@ -56,12 +51,7 @@ typedef void (*moved_event_callback)(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type, const char *path,
         const wchar_t *serial, void *user_data);
 
-typedef struct _moved_monitor {
-    struct udev *udev_handle;
-    struct udev_monitor *udev_monitor;
-    moved_event_callback event_callback;
-    void *event_callback_user_data;
-} moved_monitor;
+typedef struct _moved_monitor moved_monitor;
 
 moved_monitor *
 moved_monitor_new(moved_event_callback callback, void *user_data);
@@ -74,8 +64,6 @@ moved_monitor_get_fd(moved_monitor *monitor);
 
 void
 moved_monitor_free(moved_monitor *monitor);
-
-#endif /* __linux */
 
 #ifdef __cplusplus
 }

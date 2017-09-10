@@ -38,7 +38,8 @@
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
-#include "../daemon/psmove_moved_protocol.h"
+#include "psmove_moved_protocol.h"
+#include "moved_monitor.h"
 
 #include "psmove.h"
 
@@ -55,8 +56,8 @@ struct psmove_dev {
     PSMove *move;
     int assigned_id;
 
-    unsigned char input[MOVED_SIZE_READ_RESPONSE];
-    unsigned char output[7];
+    unsigned char input[sizeof(PSMoveMovedResponse::read_input)];
+    unsigned char output[sizeof(PSMoveMovedRequest::payload)];
 
     int dirty_output;
 };
@@ -89,11 +90,6 @@ struct move_daemon : public moved_server {
 };
 
 
-/* For now, monitoring is only supported on Linux */
-#ifdef __linux
-
-#include "../daemon/moved_monitor.h"
-
 static void
 on_monitor_update_moved(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type,
@@ -104,7 +100,7 @@ on_monitor_update_moved(enum MonitorEvent event,
 
     if (event == EVENT_DEVICE_ADDED) {
         if (device_type == EVENT_DEVICE_TYPE_USB) {
-            PSMove *move = psmove_connect_internal((wchar_t*)serial, (char*)path, -1);
+            PSMove *move = psmove_connect_internal(serial, path, -1);
             if (psmove_pair(move)) {
                 // Indicate to the user that pairing was successful
                 psmove_set_leds(move, 0, 255, 0);
@@ -121,18 +117,12 @@ on_monitor_update_moved(enum MonitorEvent event,
     }
 }
 
-#endif /* __linux */
-
 
 
 int
 main(int argc, char *argv[])
 {
     move_daemon moved;
-
-#ifdef __linux
-    moved_monitor *monitor = moved_monitor_new(on_monitor_update_moved, &moved);
-#endif
 
     /* Never act as a client in "moved" mode */
     psmove_set_remote_config(PSMove_OnlyLocal);
@@ -144,37 +134,37 @@ main(int argc, char *argv[])
         moved.handle_connection(NULL, NULL);
     }
 
-#ifdef __linux
-    fd_set fds;
-    int server_fd = moved.get_socket();
-    int monitor_fd = moved_monitor_get_fd(monitor);
-    int nfds = ((server_fd > monitor_fd)?(server_fd):(monitor_fd)) + 1;
-#endif
+#if defined(__linux) || defined(__APPLE__)
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update_moved, &moved);
 
-    for (;;) {
-#ifdef __linux
-        FD_ZERO(&fds);
-        FD_SET(server_fd, &fds);
-        FD_SET(monitor_fd, &fds);
+    struct pollfd pfd[2];
 
-        if (select(nfds, &fds, NULL, NULL, NULL)) {
-            if (FD_ISSET(monitor_fd, &fds)) {
-                moved_monitor_poll(monitor);
-            }
+    pfd[0].fd = moved.get_socket();
+    pfd[0].events = POLLIN;
 
-            if (FD_ISSET(server_fd, &fds))  {
+    pfd[1].fd = moved_monitor_get_fd(monitor);
+    pfd[1].events = POLLIN;
+
+    while (true) {
+        if (poll(pfd, 2, 0) > 0) {
+            if (pfd[0].revents) {
                 moved.handle_request();
             }
+
+            if (pfd[1].revents) {
+                moved_monitor_poll(monitor);
+            }
         }
-#else
-        moved.handle_request();
-#endif
 
         moved.write_reports();
     }
 
-#ifdef __linux
     moved_monitor_free(monitor);
+#else
+    while (true) {
+        moved.handle_request();
+        moved.write_reports();
+    }
 #endif
 
     return 0;
@@ -204,78 +194,99 @@ moved_server::handle_request()
     socklen_t si_len = sizeof(si_other);
 
     psmove_dev *dev = NULL;
-    int send_response = 0;
 
-    int request_id = -1, device_id = -1;
-    unsigned char request[MOVED_SIZE_REQUEST] = {0};
-    unsigned char response[MOVED_SIZE_READ_RESPONSE] = {0};
+    PSMoveMovedRequest request;
+    PSMoveMovedResponse response;
 
-    int bytes_received = recvfrom(socket, (char*)request, sizeof(request),
-        0, (struct sockaddr *)&si_other, &si_len);
-    assert(bytes_received != -1);
+    int res = recvfrom(socket, (char *)&request, sizeof(request),
+            /*flags=*/0, (struct sockaddr *)&si_other, &si_len);
 
-    // Client disconnected
-    if (bytes_received == 0)
+    if (res != sizeof(request)) {
         return;
-
-    request_id = request[0];
-    device_id = request[1];
+    }
 
     for (psmove_dev *d: devs) {
-        if (d->assigned_id == device_id) {
+        if (d->assigned_id == request.header.controller_id) {
             dev = d;
             break;
         }
     }
 
-    if (dev != NULL && dev->assigned_id != device_id) {
-        dev = NULL;
-    }
+    memset(&response, 0, sizeof(response));
+    response.header = request.header;
 
-    switch (request_id) {
+    switch (request.header.command_id) {
         case MOVED_REQ_COUNT_CONNECTED:
-            response[0] = (unsigned char)count();
-
-            send_response = 1;
+            response.count_connected.count = count();
             break;
-        case MOVED_REQ_WRITE:
+        case MOVED_REQ_SET_LEDS:
             if (dev != NULL) {
-                dev->set_output(request+2);
+                dev->set_output(request.set_leds.data);
+                return;
             } else {
-                printf("Cannot write to device %d.\n", device_id);
+                printf("Cannot write to device %d.\n", request.header.controller_id);
+                return;
             }
             break;
-        case MOVED_REQ_READ:
+        case MOVED_REQ_READ_INPUT:
             if (dev != NULL) {
                 _psmove_read_data(dev->move, dev->input, sizeof(dev->input));
-                memcpy(response, dev->input, sizeof(dev->input));
+                memcpy(&response.read_input, dev->input, sizeof(dev->input));
             } else {
-                printf("Cannot read from device %d.\n", device_id);
+                printf("Cannot read from device %d.\n", request.header.controller_id);
+                return;
             }
 
-            send_response = 1;
             break;
-        case MOVED_REQ_SERIAL:
+        case MOVED_REQ_GET_SERIAL:
             if (dev != NULL) {
                 char *serial = psmove_get_serial(dev->move);
-                memcpy(response, serial, strlen(serial)+1);
+                if (!_psmove_btaddr_from_string(serial, (PSMove_Data_BTAddr *)&response.get_serial.btaddr)) {
+                    printf("Cannot convert serial\n");
+                    return;
+                }
                 free(serial);
             } else {
-                printf("Cannot read from device %d.\n", device_id);
+                printf("Cannot read from device %d.\n", request.header.controller_id);
+                return;
             }
-            send_response = 1;
+            break;
+        case MOVED_REQ_GET_HOST_BTADDR:
+            {
+                char *serial = psmove_port_get_host_bluetooth_address();
+                if (!_psmove_btaddr_from_string(serial, (PSMove_Data_BTAddr *)&response.get_host_btaddr.btaddr)) {
+                    printf("Cannot convert serial\n");
+                    return;
+                }
+                free(serial);
+            }
+            break;
+        case MOVED_REQ_REGISTER_CONTROLLER:
+            {
+                char *addr = _psmove_btaddr_to_string(*((PSMove_Data_BTAddr *)&request.register_controller.btaddr));
+                char *host = psmove_port_get_host_bluetooth_address();
+
+                psmove_port_register_psmove(addr, host);
+
+                free(addr);
+                free(host);
+            }
+            break;
+        case MOVED_REQ_DISCOVER:
+            {
+                char temp[1024];
+                inet_ntop(si_other.sin_family, &si_other.sin_addr, temp, sizeof(temp));
+                printf("Discovery request 0x%08x received from %s\n", request.header.request_sequence, temp);
+            }
             break;
         default:
-            printf("Unsupported call: %x - ignoring.\n", request_id);
+            printf("Unsupported call: 0x%08x - ignoring.\n", request.header.command_id);
             return;
     }
 
-    /* Some requests need a response - send it here */
-    if (send_response) {
-        int result = sendto(socket, (char*)response, sizeof(response),
-                0, (struct sockaddr *)&si_other, si_len);
-        (void)result;
-        assert(result != -1);
+    if (sendto(socket, (const char *)&response, sizeof(response),
+            /*flags=*/0, (struct sockaddr *)&si_other, si_len) == -1) {
+        psmove_WARNING("Cannot send response");
     }
 }
 
@@ -286,6 +297,7 @@ moved_server::~moved_server()
 
 
 psmove_dev::psmove_dev(move_daemon *moved, const char *path, const wchar_t *serial)
+    : dirty_output(0)
 {
     if (path != NULL) {
         move = psmove_connect_internal((wchar_t *)serial, (char *)path, moved->count());

@@ -23,6 +23,10 @@ extern "C" {
 }
 #undef main
 
+#define main psmoveremotepair_main
+#include "psmoveremotepair.cpp"
+#undef main
+
 #define main psmoveregister_main
 extern "C" {
 #include "psmoveregister.c"
@@ -30,7 +34,7 @@ extern "C" {
 #undef main
 
 #define main moved_main
-#include "moved.cpp"
+#include "daemon/moved.cpp"
 #undef main
 
 #define main magnetometer_calibration_main
@@ -208,6 +212,7 @@ main(int argc, char *argv[])
     std::vector<SubCommand> subcommands;
 
     subcommands.emplace_back("pair", "Pair connected USB controllers to a host", psmovepair_main);
+    subcommands.emplace_back("remote-pair", "Pair connected USB controller to a moved host", psmoveremotepair_main);
     subcommands.emplace_back("daemon", "Serve locally-connected controllers via UDP", moved_main);
     subcommands.emplace_back("register", "Register already-paired controllers", psmoveregister_main);
     subcommands.emplace_back("calibrate", "Calibrate magnetometers of controllers", magnetometer_calibration_main);

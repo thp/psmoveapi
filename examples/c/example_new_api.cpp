@@ -36,13 +36,10 @@
 
 
 struct ExampleHandler : public psmoveapi::Handler {
-    ExampleHandler() : color{0.f, 0.f, 0.f} , bt_controllers(0), rumble(0.f), quit(false), interactive(false) {}
+    ExampleHandler() : color{0.f, 0.f, 0.f} , rumble(0.f), interactive(false) {}
 
     virtual void connect(Controller *controller) {
         printf("Connect: %s\n", controller->serial);
-        if (controller->bluetooth) {
-            bt_controllers++;
-        }
     }
 
     virtual void update(Controller *controller) {
@@ -64,23 +61,14 @@ struct ExampleHandler : public psmoveapi::Handler {
             printf("Magnetometer: %.2f, %.2f, %.2f\n", controller->magnetometer.x, controller->magnetometer.y, controller->magnetometer.z);
             printf("Connection [%c] USB [%c] Bluetooth; Buttons: 0x%04x\n", controller->usb ? 'x' : ' ', controller->bluetooth ? 'x' : ' ', controller->buttons);
         }
-
-        if ((controller->buttons & Btn_PS) != 0) {
-            quit = true;
-        }
     }
 
     virtual void disconnect(Controller *controller) {
         printf("Disconnect: %s\n", controller->serial);
-        if (controller->bluetooth) {
-            bt_controllers--;
-        }
     }
 
     RGB color;
-    int bt_controllers;
     float rumble;
-    bool quit;
     bool interactive;
 };
 
@@ -108,7 +96,7 @@ main(int argc, char* argv[])
     api.update();
 
     handler.interactive = true;
-    while (handler.bt_controllers > 0 && !handler.quit) {
+    while (true) {
         api.update();
     }
 

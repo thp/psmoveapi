@@ -117,8 +117,8 @@ To build manually without the tracker::
 
 Or use the ready-made build script::
 
-    sh -x scripts/mingw64/cross-compile x86_64-w64-mingw32
-    sh -x scripts/mingw64/cross-compile i686-w64-mingw32
+    bash -x scripts/mingw64/cross-compile x86_64-w64-mingw32
+    bash -x scripts/mingw64/cross-compile i686-w64-mingw32
 
 
 

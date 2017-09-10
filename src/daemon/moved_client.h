@@ -42,14 +42,18 @@
 
 #include "psmove_moved_protocol.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     char *hostname;
 
     int socket;
     struct sockaddr_in moved_addr;
 
-    unsigned char request_buf[MOVED_SIZE_REQUEST];
-    unsigned char read_response_buf[MOVED_SIZE_READ_RESPONSE];
+    union PSMoveMovedRequest request_buf;
+    union PSMoveMovedResponse response_buf;
 } moved_client;
 
 typedef struct _moved_client_list {
@@ -67,7 +71,12 @@ moved_client *
 moved_client_create(const char *hostname);
 
 int
-moved_client_send(moved_client *client, char req, char id, const unsigned char *data);
+moved_client_send(moved_client *client, enum PSMoveMovedCmd cmd, int controller_id,
+        const uint8_t *data, size_t len);
 
 void
 moved_client_destroy(moved_client *client);
+
+#ifdef __cplusplus
+}
+#endif

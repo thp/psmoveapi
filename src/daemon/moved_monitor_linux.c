@@ -27,17 +27,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-/* For now, monitoring is only supported on Linux */
-#ifdef __linux
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
+#include <libudev.h>
+#include <linux/input.h>
+
 #include "moved_monitor.h"
 
 #include "../src/psmove_private.h"
+
+
+struct _moved_monitor {
+    struct udev *udev_handle;
+    struct udev_monitor *udev_monitor;
+    moved_event_callback event_callback;
+    void *event_callback_user_data;
+};
 
 
 /*
@@ -218,5 +226,3 @@ moved_monitor_free(moved_monitor *monitor)
 
     free(monitor);
 }
-
-#endif /* __linux */
