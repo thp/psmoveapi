@@ -16,12 +16,14 @@ case "$UNAME" in
                                    libv4l-dev libopencv-dev          \
                                    openjdk-7-jdk ant liblwjgl-java   \
                                    python-dev mono-mcs               \
-                                   swig3.0 freeglut3-dev
+                                   swig3.0 freeglut3-dev             \
+                                   python-sphinx python-pip
         ;;
     Darwin)
         brew update
         brew install --force cmake git libtool automake autoconf swig || true
         brew unlink libtool ; brew link --overwrite libtool
+        pip install --user sphinx
         ;;
     *)
         echo "Unknown OS: $UNAME"
