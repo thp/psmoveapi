@@ -577,6 +577,10 @@ psmove_port_check_pairing_permissions()
         CloseHandle(hToken);
     }
 
+    if (!fRet) {
+        printf("This program must be run as Administrator.\n");
+    }
+
     return (fRet != FALSE);
 }
 
