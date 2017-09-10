@@ -288,21 +288,21 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
     switch (event) {
         case EVENT_DEVICE_ADDED:
             {
-                printf("on_monitor_event(event=EVENT_DEVICE_ADDED, device_type=0x%08x, path=\"%s\", serial=%p)\n",
+                psmove_DEBUG("on_monitor_event(event=EVENT_DEVICE_ADDED, device_type=0x%08x, path=\"%s\", serial=%p)",
                        device_type, path, serial);
 
                 for (auto &c: self->controllers) {
                     if ((c->move_bluetooth != nullptr && strcmp(_psmove_get_device_path(c->move_bluetooth), path) == 0) ||
                             (c->move_usb != nullptr && strcmp(_psmove_get_device_path(c->move_usb), path) == 0)) {
-                        printf("This controller is already active!\n");
+                        psmove_WARNING("This controller is already active!");
                         return;
                     }
                 }
 
                 PSMove *move = psmove_connect_internal(serial, path, -1);
                 if (move == nullptr) {
-                    printf("Cannot open move for retrieving serial!\n");
-                    exit(1);
+                    psmove_CRITICAL("Cannot open move for retrieving serial!");
+                    return;
                 }
 
                 char *serial_number = psmove_get_serial(move);
@@ -310,7 +310,6 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                 bool found = false;
                 for (auto &c: self->controllers) {
                     if (strcmp(c->serial.c_str(), serial_number) == 0) {
-                        printf("Add to existing\n");
                         c->add_handle(move);
                         found = true;
                         break;
@@ -320,7 +319,6 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                 if (!found) {
                     auto c = new ControllerGlue(self->controllers.size(), std::string(serial_number));
                     c->add_handle(move);
-                    printf("Adding new\n");
                     self->controllers.emplace_back(c);
                 }
 
@@ -329,7 +327,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
             break;
         case EVENT_DEVICE_REMOVED:
             {
-                printf("on_monitor_event(event=EVENT_DEVICE_REMOVED, device_type=0x%08x, path=\"%s\", serial=%p)\n",
+                psmove_DEBUG("on_monitor_event(event=EVENT_DEVICE_REMOVED, device_type=0x%08x, path=\"%s\", serial=%p)",
                        device_type, path, serial);
 
                 bool found = false;
@@ -337,7 +335,6 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                     if (device_type == EVENT_DEVICE_TYPE_BLUETOOTH && c->move_bluetooth != nullptr) {
                         const char *devpath = _psmove_get_device_path(c->move_bluetooth);
                         if (devpath != nullptr && strcmp(devpath, path) == 0) {
-                            printf("Disconnected Bluetooth\n");
                             psmove_disconnect(c->move_bluetooth), c->move_bluetooth = nullptr;
                             found = true;
                             break;
@@ -347,7 +344,6 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                     if (device_type == EVENT_DEVICE_TYPE_USB && c->move_usb != nullptr) {
                         const char *devpath = _psmove_get_device_path(c->move_usb);
                         if (devpath != nullptr && strcmp(devpath, path) == 0) {
-                            printf("Disconnected USB\n");
                             psmove_disconnect(c->move_usb), c->move_usb = nullptr;
                             found = true;
                             break;
@@ -357,7 +353,6 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
 
                 if (!found) {
                     psmove_CRITICAL("Did not find device for removal\n");
-                    exit(1);
                 }
             }
             break;
