@@ -1,8 +1,8 @@
- __  __                                                 
-/\ \/\ \          __  /'\_/`\                           
-\ \ \ \ \    ___ /\_\/\      \    ___   __  __     __   
- \ \ \ \ \ /' _ `\/\ \ \ \__\ \  / __`\/\ \/\ \  /'__`\ 
-  \ \ \_\ \/\ \/\ \ \ \ \ \_/\ \/\ \L\ \ \ \_/ |/\  __/ 
+ __  __
+/\ \/\ \          __  /'\_/`\
+\ \ \ \ \    ___ /\_\/\      \    ___   __  __     __
+ \ \ \ \ \ /' _ `\/\ \ \ \__\ \  / __`\/\ \/\ \  /'__`\
+  \ \ \_\ \/\ \/\ \ \ \ \ \_/\ \/\ \L\ \ \ \_/ |/\  __/
    \ \_____\ \_\ \_\ \_\ \_\\ \_\ \____/\ \___/ \ \____\
     \/_____/\/_/\/_/\/_/\/_/ \/_/\/___/  \/__/   \/____/
 
@@ -14,7 +14,7 @@ Unity + PlayStation Move controller == UniMove!
 Introduction
 -------------------------
 
-UniMove is an open-source Unity plugin and set of C# bindings that allows you to use PlayStation Move controllers with your Unity and/or C# application. 
+UniMove is an open-source Unity plugin and set of C# bindings that allows you to use PlayStation Move controllers with your Unity and/or C# application.
 
 UniMove was created by Douglas Wilson of Die Gute Fabrik and Patrick Jarnfelt of the Copenhagen Game Collective, and is based on top of Thomas Perl’s super-nifty C API. The plugin is licensed under the GNU Lesser General Public License (v2.1 or later), and is still under development.
 
@@ -24,14 +24,31 @@ Thomas has updated his library so it works with Windows. However, connecting the
 Features include
 -------------------------
 
- * Read the status of the digital buttons (Bluetooth only)
+ * Setting LEDs and rumble (USB and Bluetooth)
  * Read the status of the analog trigger (Bluetooth only)
- * Read values for the internal sensors (Bluetooth only):
+ * Read values for the inertial sensors and buttons (Bluetooth only):
     * accelorometer
     * gyroscope
     * magnetometer
     * temperature
     * battery level
+* High level orientation calculation
+
+
+Work remaining
+-------------------------
+
+ * Include support for peripherals like the navigation controller and sharp shooter
+ * make a utility tool for visual representation of sensor values
+ * add tracking support
+
+
+Pairing the Move Controllers
+-------------------------
+
+To be able to use the move controllers with you computer, they need to be "paired" with the computer and connected to the bluetooth.
+Find the binaries of your OS from PS Move API here: http://thp.io/2010/psmove/
+Find the "bin" folder inside the zip and open the psmovepair and follow the instructions.
 
 
 Installation instructions
@@ -44,5 +61,9 @@ Installation instructions
 Viola! The assets (code, scene, plugin) should now be extracted and visible in your Project window. Double click the “Test Scene” scene to load it.  You should now be able to press the Play button to run the test program!
 
 
-This README file was last updated on 2013-06-19 by pjarnfelt
+Requirements
+-------------------------
+
+ * Unity Pro license (for including binaries)
+ * OSX 10.8 or later (binary realeases for other OSs can be found here: http://thp.io/2010/psmove/)
 
