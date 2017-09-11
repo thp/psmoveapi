@@ -332,7 +332,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
 
                 bool found = false;
                 for (auto &c: self->controllers) {
-                    if (device_type == EVENT_DEVICE_TYPE_BLUETOOTH && c->move_bluetooth != nullptr) {
+                    if (c->move_bluetooth != nullptr) {
                         const char *devpath = _psmove_get_device_path(c->move_bluetooth);
                         if (devpath != nullptr && strcmp(devpath, path) == 0) {
                             psmove_disconnect(c->move_bluetooth), c->move_bluetooth = nullptr;
@@ -341,7 +341,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                         }
                     }
 
-                    if (device_type == EVENT_DEVICE_TYPE_USB && c->move_usb != nullptr) {
+                    if (c->move_usb != nullptr) {
                         const char *devpath = _psmove_get_device_path(c->move_usb);
                         if (devpath != nullptr && strcmp(devpath, path) == 0) {
                             psmove_disconnect(c->move_usb), c->move_usb = nullptr;
