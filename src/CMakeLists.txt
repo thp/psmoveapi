@@ -108,7 +108,7 @@ ELSE()
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/linux/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_linux.c)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_linux.cpp)
 
     list(APPEND PSMOVEAPI_MOVED_SRC
         ${CMAKE_CURRENT_LIST_DIR}/daemon/moved_monitor_linux.c)
