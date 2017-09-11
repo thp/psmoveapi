@@ -25,10 +25,10 @@ case "$UNAME" in
             . /etc/lsb-release
             if [ "$DISTRIB_RELEASE" = "14.04" ]; then
                 echo "Detected Ubuntu 14.04 LTS, installing BlueZ 5"
-                sudo apt-get purge -q -y bluez
+                sudo apt-get purge -q -y bluez libbluetooth-dev
                 sudo add-apt-repository --yes ppa:vidplace7/bluez5
                 sudo apt-get update -qq
-                sudo apt-get install -q -y bluez
+                sudo apt-get install -q -y bluez libbluetooth-dev
             fi
         fi
         ;;
