@@ -51,8 +51,6 @@ ENDIF()
 # Linker commands to put into the .pc file (when installing)
 set(PSMOVEAPI_PKGCONFIG_LIBS "-lpsmoveapi")
 
-set(INFO_BLUEZ5_SUPPORT "No")
-
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(FOUNDATION Foundation)
     find_library(AVFOUNDATION AVFoundation)
@@ -103,14 +101,6 @@ ELSE()
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
     pkg_check_modules(BLUEZ REQUIRED bluez)
-    
-    # auto-detect BlueZ version >= 5
-    if(${BLUEZ_VERSION} VERSION_LESS "5.0")
-        set(INFO_BLUEZ5_SUPPORT "No")
-    else()
-        set(INFO_BLUEZ5_SUPPORT "Yes")
-        add_definitions(-DPSMOVE_BLUEZ5_SUPPORT)
-    endif()
 
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
@@ -239,5 +229,4 @@ message("")
 message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
 message("    Library license:  " ${INFO_LICENSE} " (see README.md for details)")
-message("    BlueZ 5 support:  " ${INFO_BLUEZ5_SUPPORT} " (for pairing on Linux only)")
 message("    Pocket C.H.I.P:   " ${INFO_POCKET_CHIP})
