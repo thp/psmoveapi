@@ -18,6 +18,19 @@ case "$UNAME" in
                                    python-dev mono-mcs               \
                                    swig3.0 freeglut3-dev             \
                                    python-sphinx python-pip
+
+        # Workaround to get BlueZ 5 on Travis CI (it doesn't yet have Ubuntu 16.04)
+        # Based on: https://askubuntu.com/a/662349
+        if [ -f /etc/lsb-release ] && [ ! -z "$TRAVIS_BUILD_ID" ]; then
+            . /etc/lsb-release
+            if [ "$DISTRIB_RELEASE" = "14.04" ]; then
+                echo "Detected Ubuntu 14.04 LTS, installing BlueZ 5"
+                sudo apt-get purge bluez
+                sudo add-apt-repository ppa:vidplace7/bluez5
+                sudo apt-get update
+                sudo apt-get install bluez
+            fi
+        fi
         ;;
     Darwin)
         brew update
