@@ -381,7 +381,7 @@ linux_bluez_register_psmove(const char *addr, const char *host)
         goto cleanup;
     }
 
-    base = malloc(strlen(BLUEZ_CONFIG_DIR) + strlen(host_addr) + 1);
+    base = (char *)malloc(strlen(BLUEZ_CONFIG_DIR) + strlen(host_addr) + 1);
     strcpy(base, BLUEZ_CONFIG_DIR);
     strcat(base, host_addr);
 
@@ -394,6 +394,7 @@ linux_bluez_register_psmove(const char *addr, const char *host)
 
     errors = linux_bluez5_register_psmove(&linux_info, controller_addr, base);
 
+cleanup:
     free(base);
     free(host_addr);
     free(controller_addr);
@@ -470,7 +471,7 @@ static int
 _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 {
     struct hci_dev_info di = { .dev_id = dev_id };
-    unsigned char *btaddr = (void*)arg;
+    unsigned char *btaddr = (unsigned char *)arg;
     int i;
 
     if (ioctl(s, HCIGETDEVINFO, (void *) &di) == 0) {
