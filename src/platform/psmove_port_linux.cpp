@@ -106,6 +106,13 @@ cstring_to_stdstring_free(char *cstring)
     return result;
 }
 
+bool
+file_exists(const std::string &filename)
+{
+    struct stat st;
+    return (stat(filename.c_str(), &st) == 0 && !S_ISDIR(st.st_mode));
+}
+
 struct bluetoothd {
     static void start() { control(true); }
     static void stop() { control(false); }
@@ -115,15 +122,17 @@ private:
         std::list<std::string> services = { "bluetooth.service" };
         std::string verb { start ? "start" : "stop" };
 
-#if defined(PSMOVE_USE_POCKET_CHIP)
-        if (start) {
-            // Need to start this before bluetoothd
-            services.push_front("bt_rtk_hciattach@ttyS1.service");
-        } else {
-            // Need to stop this after bluetoothd
-            services.push_back("bt_rtk_hciattach@ttyS1.service");
+        if (file_exists("/lib/systemd/system/bt_rtk_hciattach@.service")) {
+            LINUXPAIR_DEBUG("Detected: Pocket C.H.I.P\n");
+
+            if (start) {
+                // Need to start this before bluetoothd
+                services.push_front("bt_rtk_hciattach@ttyS1.service");
+            } else {
+                // Need to stop this after bluetoothd
+                services.push_back("bt_rtk_hciattach@ttyS1.service");
+            }
         }
-#endif
 
         for (auto &service: services) {
             std::string cmd { "systemctl " + verb + " " + service };
@@ -135,13 +144,6 @@ private:
         }
     }
 };
-
-bool
-file_exists(const std::string &filename)
-{
-    struct stat st;
-    return (stat(filename.c_str(), &st) == 0 && !S_ISDIR(st.st_mode));
-}
 
 bool
 directory_exists(const std::string &filename)

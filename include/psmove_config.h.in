@@ -33,4 +33,3 @@
 
 #cmakedefine PSMOVE_BUILD_TRACKER
 #cmakedefine PSMOVE_USE_PSEYE
-#cmakedefine PSMOVE_USE_POCKET_CHIP
