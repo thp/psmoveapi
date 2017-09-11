@@ -100,7 +100,7 @@ ELSE()
     include_directories(${UDEV_INCLUDE_DIRS})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
-    pkg_check_modules(BLUEZ REQUIRED bluez)
+    pkg_check_modules(BLUEZ REQUIRED bluez>=5)
 
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
