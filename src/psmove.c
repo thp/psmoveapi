@@ -45,10 +45,6 @@
 #include <math.h>
 #include <limits.h>
 
-#ifdef __linux
-#define PSMOVE_USE_PTHREADS
-#endif
-
 #include "daemon/moved_client.h"
 #include "hidapi.h"
 
@@ -240,15 +236,6 @@ struct _PSMove {
     PSMove_3AxisVector magnetometer_min;
     PSMove_3AxisVector magnetometer_max;
 
-#ifdef PSMOVE_USE_PTHREADS
-    /* Write thread for updating LEDs in the background */
-    pthread_t led_write_thread;
-    pthread_mutex_t led_write_mutex;
-    pthread_cond_t led_write_new_data;
-    unsigned char led_write_thread_write_queued;
-    int led_write_failures_since_last_success;
-#endif
-
     enum PSMove_Connection_Type connection_type;
 };
 
@@ -263,45 +250,6 @@ static int psmove_remote_disabled = 0;
 
 /* Number of valid, open PSMove* handles "in the wild" */
 static int psmove_num_open_handles = 0;
-
-
-#if defined(PSMOVE_USE_PTHREADS)
-
-void *
-_psmove_led_write_thread_proc(void *data)
-{
-    PSMove *move = (PSMove*)data;
-    PSMove_Data_LEDs leds;
-
-    while (1) {
-        pthread_mutex_lock(&(move->led_write_mutex));
-        pthread_cond_wait(&(move->led_write_new_data),
-                &(move->led_write_mutex));
-        pthread_mutex_unlock(&(move->led_write_mutex));
-
-        if (!move->led_write_thread_write_queued) {
-            break;
-        }
-
-        psmove_util_sleep_ms(16);
-
-        /* Create a local copy of the LED state */
-        memcpy(&leds, &(move->leds), sizeof(leds));
-        move->led_write_thread_write_queued = 0;
-
-        int res = hid_write(move->handle, (unsigned char*)(&leds), sizeof(leds));
-        // FIXME: On Linux-on-ARM at least, res is always zero!?
-        if (res != sizeof(leds) && res != 0) {
-            move->led_write_failures_since_last_success++;
-        } else {
-            move->led_write_failures_since_last_success = 0;
-        }
-    }
-
-    return NULL;
-}
-
-#endif /* defined(PSMOVE_USE_PTHREADS) */
 
 
 
@@ -568,18 +516,6 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id)
         *tmp = (char)tolower(*tmp);
         tmp++;
     }
-
-#if defined(PSMOVE_USE_PTHREADS)
-    psmove_return_val_if_fail(pthread_mutex_init(&move->led_write_mutex,
-                NULL) == 0, NULL);
-    psmove_return_val_if_fail(pthread_cond_init(&move->led_write_new_data,
-                NULL) == 0, NULL);
-    psmove_return_val_if_fail(pthread_create(&move->led_write_thread,
-            NULL,
-            _psmove_led_write_thread_proc,
-            (void*)move) == 0, NULL);
-    move->led_write_failures_since_last_success = 0;
-#endif
 
     /* Bookkeeping of open handles (for psmove_reinit) */
     psmove_num_open_handles++;
@@ -1230,24 +1166,12 @@ psmove_update_leds(PSMove *move)
 
     switch (move->type) {
         case PSMove_HIDAPI:
-#if defined(PSMOVE_USE_PTHREADS)
-            pthread_mutex_lock(&(move->led_write_mutex));
-            move->led_write_thread_write_queued = 1;
-            pthread_cond_signal(&(move->led_write_new_data));
-            pthread_mutex_unlock(&(move->led_write_mutex));
-            /**
-             * Can only return the last result, but assume that we can either
-             * write successfully or not at all, this should be good enough.
-             **/
-            return (move->led_write_failures_since_last_success < 100) ? Update_Success : Update_Failed;
-#else
             if (hid_write(move->handle, (unsigned char*)(&(move->leds)),
                     sizeof(move->leds)) == sizeof(move->leds)) {
                 return Update_Success;
             } else {
                 return Update_Failed;
             }
-#endif
             break;
         case PSMove_MOVED:
             if (moved_client_send(move->client, MOVED_REQ_SET_LEDS, move->remote_id, (uint8_t *)&move->leds, sizeof(move->leds))) {
@@ -2107,19 +2031,6 @@ void
 psmove_disconnect(PSMove *move)
 {
     psmove_return_if_fail(move != NULL);
-
-#if defined(PSMOVE_USE_PTHREADS)
-    if (move->type != PSMove_MOVED) {
-        while (pthread_tryjoin_np(move->led_write_thread, NULL) != 0) {
-            pthread_mutex_lock(&(move->led_write_mutex));
-            pthread_cond_signal(&(move->led_write_new_data));
-            pthread_mutex_unlock(&(move->led_write_mutex));
-        }
-
-        pthread_mutex_destroy(&(move->led_write_mutex));
-        pthread_cond_destroy(&(move->led_write_new_data));
-    }
-#endif
 
     switch (move->type) {
         case PSMove_HIDAPI:

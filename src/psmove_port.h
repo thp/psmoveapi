@@ -41,7 +41,6 @@
 #ifdef __linux
 #  include <unistd.h>
 #  include <linux/limits.h>
-#  include <pthread.h>
 #  include <sys/poll.h>
 #endif
 
