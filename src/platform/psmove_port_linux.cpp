@@ -40,6 +40,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <string>
+#include <list>
+
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
@@ -50,357 +53,174 @@
 #define LINUXPAIR_DEBUG(msg, ...) \
         psmove_PRINTF("PAIRING LINUX", msg, ## __VA_ARGS__)
 
-#define BLUEZ_CONFIG_DIR "/var/lib/bluetooth/"
+namespace {
 
+const std::string
+BLUEZ5_INFO_ENTRY {
+"[General]\n"
+"Name=Motion Controller\n"
+"Class=0x002508\n"
+"SupportedTechnologies=BR/EDR\n"
+"Trusted=true\n"
+"Blocked=false\n"
+"Services=00001124-0000-1000-8000-00805f9b34fb;\n"
+"\n"
+"[DeviceID]\n"
+"Source=1\n"
+"Vendor=1356\n"
+"Product=981\n"
+"Version=1\n" };
 
-#define BLUEZ5_INFO_ENTRY "[General]\n" \
-    "Name=Motion Controller\n" \
-    "Class=0x002508\n" \
-    "SupportedTechnologies=BR/EDR\n" \
-    "Trusted=true\n" \
-    "Blocked=false\n" \
-    "Services=00001124-0000-1000-8000-00805f9b34fb;\n" \
-    "\n" \
-    "[DeviceID]\n" \
-    "Source=1\n" \
-    "Vendor=1356\n" \
-    "Product=981\n" \
-    "Version=1\n" \
+const std::string
+BLUEZ5_CACHE_ENTRY {
+"[General]\n"
+"Name=Motion Controller\n"
+"\n"
+"[ServiceRecords]\n"
+"0x00010000=3601920900000A000100000900013503191124090004350D"
+"35061901000900113503190011090006350909656E09006A09010009000"
+"93508350619112409010009000D350F350D350619010009001335031900"
+"110901002513576972656C65737320436F6E74726F6C6C6572090101251"
+"3576972656C65737320436F6E74726F6C6C6572090102251B536F6E7920"
+"436F6D707574657220456E7465727461696E6D656E74090200090100090"
+"2010901000902020800090203082109020428010902052801090206359A"
+"35980822259405010904A101A102850175089501150026FF00810375019"
+"513150025013500450105091901291381027501950D0600FF8103150026"
+"FF0005010901A10075089504350046FF0009300931093209358102C0050"
+"175089527090181027508953009019102750895300901B102C0A1028502"
+"750895300901B102C0A10285EE750895300901B102C0A10285EF7508953"
+"00901B102C0C00902073508350609040909010009020828000902092801"
+"09020A280109020B09010009020C093E8009020D280009020E2800\n" };
 
-#define BLUEZ5_INFO_FILE "info"
-
-#define BLUEZ5_CACHE_ENTRY "[General]\n" \
-    "Name=Motion Controller\n" \
-    "\n" \
-    "[ServiceRecords]\n" \
-    "0x00010000=3601920900000A000100000900013503191124090004350D" \
-    "35061901000900113503190011090006350909656E09006A09010009000" \
-    "93508350619112409010009000D350F350D350619010009001335031900" \
-    "110901002513576972656C65737320436F6E74726F6C6C6572090101251" \
-    "3576972656C65737320436F6E74726F6C6C6572090102251B536F6E7920" \
-    "436F6D707574657220456E7465727461696E6D656E74090200090100090" \
-    "2010901000902020800090203082109020428010902052801090206359A" \
-    "35980822259405010904A101A102850175089501150026FF00810375019" \
-    "513150025013500450105091901291381027501950D0600FF8103150026" \
-    "FF0005010901A10075089504350046FF0009300931093209358102C0050" \
-    "175089527090181027508953009019102750895300901B102C0A1028502" \
-    "750895300901B102C0A10285EE750895300901B102C0A10285EF7508953" \
-    "00901B102C0C00902073508350609040909010009020828000902092801" \
-    "09020A280109020B09010009020C093E8009020D280009020E2800\n"
-
-#define BLUEZ5_CACHE_DIR "cache"
-
-enum linux_init_type {
-    LINUX_SYSTEMD = 0,
-    LINUX_UPSTART,
-    LINUX_SYSVINIT
-};
-
-struct linux_info_t {
-    enum linux_init_type init_type;
-    int bluetoothd_stopped;
-};
-
-static char *
-bt_path_join(const char *directory, const char *filename)
+std::string
+bt_path_join(const std::string &directory, const std::string &filename)
 {
-    char *result = (char *)malloc(strlen(directory) + 1 + strlen(filename) + 1);
-    sprintf(result, "%s/%s", directory, filename);
+    return directory + "/" + filename;
+}
+
+std::string
+cstring_to_stdstring_free(char *cstring)
+{
+    std::string result { cstring ?: "" };
+    free(cstring);
     return result;
 }
 
-static void
-linux_info_init(struct linux_info_t *info)
-{
-    FILE *fp = NULL;
-    char str[512];
+struct bluetoothd {
+    static void start() { control(true); }
+    static void stop() { control(false); }
 
-    info->bluetoothd_stopped = 0;
-    info->init_type = LINUX_SYSVINIT;   // sysvinit by default
-
-    // determine distro and thus init system type by reading /etc/os-release
-    fp = fopen("/etc/os-release", "r");
-    if (fp != NULL) {
-        while (fgets(str, 512, fp) != NULL) {
-            char *p, *q, *value;
-
-            // ignore comments
-            if (str[0] == '#') {
-                continue;
-            }
-
-            // split into name=value
-            p = strchr(str, '=');
-            if (!p) {
-                continue;
-            }
-            *p++ = 0;
-
-            if (strcmp(str, "NAME")) {
-                // we're interested only in NAME, so we don't handle other values
-                continue;
-            }
-
-            // remove quotes and newline; un-escape
-            value = p;
-            q = value;
-            while (*p) {
-                if (*p == '\\') {
-                    ++p;
-                    if (!*p)
-                        break;
-                    *q++ = *p++;
-                } else if ((*p == '\'') || (*p == '"') || (*p == '\n')) {
-                    ++p;
-                } else {
-                    *q++ = *p++;
-                }
-            }
-            *q = 0;
-
-            if ((!strcmp(value, "openSUSE")) ||
-                (!strcmp(value, "Fedora")) ||
-                (!strcmp(value, "Arch Linux"))) {
-                    // all recent versions of openSUSE and Fedora use
-                    // systemd
-                    info->init_type = LINUX_SYSTEMD;
-            }
-            else if (!strcmp(value, "Ubuntu")) {
-                    // Ubuntu uses upstart now, but in the future it is
-                    // going to switch to systemd
-                    info->init_type = LINUX_UPSTART;
-            }
-            break;
-        }
-
-        fclose(fp);
-    }
-}
-
-static void
-linux_bluetoothd_control(struct linux_info_t *info, int start)
-{
-    char *cmd = NULL;
-
-    if (start) {
-        // start request
-        if (!(info->bluetoothd_stopped)) {
-            // already running
-            return;
-        }
-        info->bluetoothd_stopped = 0;
-        LINUXPAIR_DEBUG("Trying to start bluetoothd...\n");
-    }
-    else {
-        // stop request
-        if (info->bluetoothd_stopped) {
-            // already stopped
-            return;
-        }
-        info->bluetoothd_stopped = 1;
-        LINUXPAIR_DEBUG("Trying to stop bluetoothd...\n");
-    }
+private:
+    static void control(bool start) {
+        std::list<std::string> services = { "bluetooth.service" };
+        std::string verb { start ? "start" : "stop" };
 
 #if defined(PSMOVE_USE_POCKET_CHIP)
-    const char *start_services[] = {
-        "bt_rtk_hciattach@ttyS1.service",
-        "bluetooth.service",
-        NULL,
-    };
-    const char *stop_services[] = {
-        "bluetooth.service",
-        "bt_rtk_hciattach@ttyS1.service",
-        NULL,
-    };
-
-    const char **services = start ? start_services : stop_services;
-    const char *verb = start ? "start" : "stop";
-
-    LINUXPAIR_DEBUG("Using systemd with Pocket C.H.I.P quirk...\n");
-    for (int i=0; services[i] != NULL; i++) {
-        asprintf(&cmd, "systemctl %s %s", verb, services[i]);
-        LINUXPAIR_DEBUG("Running: '%s'\n", cmd);
-        if (system(cmd) != 0) {
-            LINUXPAIR_DEBUG("Automatic %s of %s failed.\n", verb, services[i]);
+        if (start) {
+            // Need to start this before bluetoothd
+            services.push_front("bt_rtk_hciattach@ttyS1.service");
+        } else {
+            // Need to stop this after bluetoothd
+            services.push_back("bt_rtk_hciattach@ttyS1.service");
         }
-        free(cmd), cmd = NULL;
-        usleep(500000);
-    }
-#else
-    switch (info->init_type) {
-    case LINUX_SYSTEMD:
-        cmd = start ? "systemctl start bluetooth.service" :
-                      "systemctl stop bluetooth.service";
-        LINUXPAIR_DEBUG("Using systemd...\n");
-        break;
-    case LINUX_UPSTART:
-        cmd = start ? "service bluetooth start" :
-                      "service bluetooth stop";
-        LINUXPAIR_DEBUG("Using upstart...\n");
-        break;
-    case LINUX_SYSVINIT:
-        cmd = start ? "/etc/init.d/bluetooth start" :
-                      "/etc/init.d/bluetooth stop";
-        LINUXPAIR_DEBUG("Using sysvinit...\n");
-    default:
-        break;
-    }
-
-    if (system(cmd) != 0) {
-        LINUXPAIR_DEBUG("Automatic starting/stopping of bluetoothd failed.\n"
-               "You might have to start/stop it manually.\n");
-    }
-    else {
-        LINUXPAIR_DEBUG("Succeeded\n");
-    }
 #endif
-}
 
-static int
-linux_bluez5_write_entry(char *path, char *contents)
-{
-    FILE *fp = NULL;
-    int errors = 0;
-
-    fp = fopen(path, "w");
-    if (fp == NULL) {
-        LINUXPAIR_DEBUG("Cannot open file for writing: %s\n", path);
-        errors++;
-    }
-    else {
-        fwrite((const void *)contents, 1, strlen(contents), fp);
-        fclose(fp);
-    }
-
-    return errors;
-}
-
-static int
-linux_bluez5_write_info(char *info_dir)
-{
-    int errors = 0;
-    char *info_file = bt_path_join(info_dir, BLUEZ5_INFO_FILE);
-
-    errors = linux_bluez5_write_entry(info_file, BLUEZ5_INFO_ENTRY);
-
-    free(info_file);
-    return errors;
-}
-
-static int
-linux_bluez5_write_cache(struct linux_info_t *linux_info, char *cache_dir, char *addr)
-{
-    int errors = 0;
-    char *cache_file = bt_path_join(cache_dir, addr);
-    struct stat st;
-
-    // if cache file already exists, do nothing
-    if (stat(cache_file, &st) != 0) {
-        linux_bluetoothd_control(linux_info, 0);
-
-        // no cache file, create it
-        errors = linux_bluez5_write_entry(cache_file, BLUEZ5_CACHE_ENTRY);
-    }
-
-    free(cache_file);
-    return errors;
-}
-
-static int
-linux_bluez5_register_psmove(struct linux_info_t *linux_info, char *addr, char *bluetooth_dir)
-{
-    char *info_dir = NULL;
-    char *cache_dir = NULL;
-    int errors = 0;
-    struct stat st;
-
-    info_dir = bt_path_join(bluetooth_dir, addr);
-
-    if (stat(info_dir, &st) != 0) {
-        linux_bluetoothd_control(linux_info, 0);
-
-        // create info directory
-        if (mkdir(info_dir, 0700) != 0) {
-            LINUXPAIR_DEBUG("Cannot create directory: %s\n", info_dir);
-            errors++;
-            goto cleanup;
+        for (auto &service: services) {
+            std::string cmd { "systemctl " + verb + " " + service };
+            LINUXPAIR_DEBUG("Running: '%s'\n", cmd.c_str());
+            if (system(cmd.c_str()) != 0) {
+                LINUXPAIR_DEBUG("Automatic %s of %s failed.\n", verb.c_str(), service.c_str());
+            }
+            psmove_port_sleep_ms(500);
         }
+    }
+};
 
-        errors += linux_bluez5_write_info(info_dir);
+bool
+file_exists(const std::string &filename)
+{
+    struct stat st;
+    return (stat(filename.c_str(), &st) == 0 && !S_ISDIR(st.st_mode));
+}
+
+bool
+directory_exists(const std::string &filename)
+{
+    struct stat st;
+    return (stat(filename.c_str(), &st) == 0 && S_ISDIR(st.st_mode));
+}
+
+bool
+make_directory(const std::string &filename)
+{
+    return (mkdir(filename.c_str(), 0700) == 0);
+}
+
+bool
+linux_bluez5_write_entry(const std::string &path, const std::string &contents)
+{
+    FILE *fp = fopen(path.c_str(), "w");
+
+    if (fp == nullptr) {
+        LINUXPAIR_DEBUG("Cannot open file for writing: %s\n", path.c_str());
+        return false;
     }
 
-    cache_dir = bt_path_join(bluetooth_dir, BLUEZ5_CACHE_DIR);
+    LINUXPAIR_DEBUG("Writing file: %s\n", path.c_str());
+    fwrite(contents.c_str(), 1, contents.length(), fp);
+    fclose(fp);
 
-    if (stat(cache_dir, &st) != 0) {
-        linux_bluetoothd_control(linux_info, 0);
+    return true;
+}
 
-        // create cache directory
-        if (mkdir(cache_dir, 0700) != 0) {
-            LINUXPAIR_DEBUG("Cannot create directory: %s\n", info_dir);
-            errors++;
-            goto cleanup;
+bool
+linux_bluez5_register_psmove(const std::string &addr, const std::string &bluetooth_dir)
+{
+    auto info_dir = bt_path_join(bluetooth_dir, addr);
+
+    if (!directory_exists(info_dir)) {
+        bluetoothd::stop();
+
+        if (!make_directory(info_dir)) {
+            LINUXPAIR_DEBUG("Cannot create directory: %s\n", info_dir.c_str());
+            return false;
         }
     }
 
-    errors += linux_bluez5_write_cache(linux_info, cache_dir, addr);
+    auto info_file = bt_path_join(info_dir, "info");
 
-    linux_bluetoothd_control(linux_info, 1);
+    bluetoothd::stop();
 
-cleanup:
-    if (info_dir != NULL) {
-        free(info_dir);
-    }
-    if (cache_dir != NULL) {
-        free(cache_dir);
+    // Always write the info file, even if it exists already
+    if (!linux_bluez5_write_entry(info_file, BLUEZ5_INFO_ENTRY)) {
+        return false;
     }
 
-    return (errors == 0);
+    auto cache_dir = bt_path_join(bluetooth_dir, "cache");
+    if (!directory_exists(cache_dir)) {
+        bluetoothd::stop();
+
+        if (!make_directory(cache_dir)) {
+            LINUXPAIR_DEBUG("Cannot create directory: %s\n", cache_dir.c_str());
+            return false;
+        }
+    }
+
+    auto cache_file = bt_path_join(cache_dir, addr);
+    if (!file_exists(cache_file)) {
+        bluetoothd::stop();
+
+        if (!linux_bluez5_write_entry(cache_file, BLUEZ5_CACHE_ENTRY)) {
+            return false;
+        }
+    }
+
+    bluetoothd::start();
+
+    return true;
 }
 
-static int
-linux_bluez_register_psmove(const char *addr, const char *host)
-{
-    int errors = 0;
-    char *base = NULL;
-    struct linux_info_t linux_info;
-
-    linux_info_init(&linux_info);
-
-    char *controller_addr = _psmove_normalize_btaddr(addr, 0, ':');
-    char *host_addr = _psmove_normalize_btaddr(host, 0, ':');
-
-    if (controller_addr == NULL) {
-        LINUXPAIR_DEBUG("Cannot parse controller address: '%s'\n", addr);
-        errors++;
-        goto cleanup;
-    }
-
-    if (host_addr == NULL) {
-        LINUXPAIR_DEBUG("Cannot parse host address: '%s'\n", host);
-        errors++;
-        goto cleanup;
-    }
-
-    base = (char *)malloc(strlen(BLUEZ_CONFIG_DIR) + strlen(host_addr) + 1);
-    strcpy(base, BLUEZ_CONFIG_DIR);
-    strcat(base, host_addr);
-
-    struct stat st;
-    if (stat(base, &st) != 0 || !S_ISDIR(st.st_mode)) {
-        LINUXPAIR_DEBUG("Not a directory: %s\n", base);
-        errors++;
-        goto cleanup;
-    }
-
-    errors = linux_bluez5_register_psmove(&linux_info, controller_addr, base);
-
-cleanup:
-    free(base);
-    free(host_addr);
-    free(controller_addr);
-
-    return (errors == 0);
-}
+} // end anonymous namespace
 
 void
 psmove_port_initialize_sockets()
@@ -448,10 +268,9 @@ psmove_port_get_time_ms()
 void
 psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
 {
-    struct timeval receive_timeout = {
-        .tv_sec = timeout_ms / 1000,
-        .tv_usec = (timeout_ms % 1000) * 1000,
-    };
+    struct timeval receive_timeout;
+    receive_timeout.tv_sec = timeout_ms / 1000u;
+    receive_timeout.tv_usec = (timeout_ms % 1000u) * 1000u;
     setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (char*)&receive_timeout, sizeof(receive_timeout));
 }
 
@@ -470,21 +289,24 @@ psmove_port_close_socket(int socket)
 static int
 _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 {
-    struct hci_dev_info di = { .dev_id = dev_id };
-    unsigned char *btaddr = (unsigned char *)arg;
-    int i;
+    struct hci_dev_info di;
+    di.dev_id = dev_id;
 
-    if (ioctl(s, HCIGETDEVINFO, (void *) &di) == 0) {
-        for (i=0; i<6; i++) {
+    unsigned char *btaddr = (unsigned char *)arg;
+
+    if (ioctl(s, HCIGETDEVINFO, (void *)&di) == 0) {
+        for (int i=0; i<6; i++) {
             btaddr[i] = di.bdaddr.b[i];
         }
+    } else {
+        LINUXPAIR_DEBUG("ioctl(HCIGETDEVINFO): %s", strerror(errno));
     }
 
     return 0;
 }
 
 static char *
-_psmove_linux_get_bluetooth_address(int try_restart)
+_psmove_linux_get_bluetooth_address(bool try_restart)
 {
     PSMove_Data_BTAddr btaddr;
     PSMove_Data_BTAddr blank;
@@ -492,16 +314,15 @@ _psmove_linux_get_bluetooth_address(int try_restart)
     memset(blank, 0, sizeof(PSMove_Data_BTAddr));
     memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
 
-    hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (long)btaddr);
+    hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (intptr_t)btaddr);
+
     if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
         if (try_restart) {
-            struct linux_info_t linux_info;
-            linux_info_init(&linux_info);
-
             // Force bluetooth restart
-            linux_bluetoothd_control(&linux_info, 0);
-            linux_bluetoothd_control(&linux_info, 1);
-            return _psmove_linux_get_bluetooth_address(0);
+            bluetoothd::stop();
+            bluetoothd::start();
+
+            return _psmove_linux_get_bluetooth_address(false);
         }
 
         fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
@@ -515,12 +336,30 @@ _psmove_linux_get_bluetooth_address(int try_restart)
 char *
 psmove_port_get_host_bluetooth_address()
 {
-    return _psmove_linux_get_bluetooth_address(1);
+    return _psmove_linux_get_bluetooth_address(true);
 }
 
 void
 psmove_port_register_psmove(const char *addr, const char *host)
 {
-    /* Add entry to Bluez' bluetoothd state file */
-    linux_bluez_register_psmove(addr, host);
+    auto controller_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 0, ':'));
+    auto host_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(host, 0, ':'));
+
+    if (controller_addr.empty()) {
+        LINUXPAIR_DEBUG("Cannot parse controller address: '%s'\n", addr);
+        return;
+    }
+
+    if (host_addr.empty()) {
+        LINUXPAIR_DEBUG("Cannot parse host address: '%s'\n", host);
+        return;
+    }
+
+    std::string base { "/var/lib/bluetooth/" + host_addr };
+    if (!directory_exists(base)) {
+        LINUXPAIR_DEBUG("Not a directory: %s\n", base.c_str());
+        return;
+    }
+
+    linux_bluez5_register_psmove(controller_addr, base);
 }
