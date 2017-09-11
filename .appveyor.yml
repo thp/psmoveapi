@@ -16,5 +16,16 @@ build_script:
 artifacts:
 - path: 'upload\psmoveapi-*.zip'
 
+deploy:
+  description: ''
+  provider: GitHub
+  auth_token:
+    secure: 9SyLIO+eSN8LQs4UysKzgQsQMkU+Dlfsm/Js4vCstON627Ebqd6FW6jox1c4chbv
+  artifact: /.*\.zip/
+  draft: false
+  prerelease: false
+  on:
+    appveyor_repo_tag: true
+
 test: off
 image: Visual Studio 2017
