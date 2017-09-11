@@ -42,6 +42,7 @@
 
 #include <string>
 #include <list>
+#include <vector>
 
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
@@ -93,12 +94,6 @@ BLUEZ5_CACHE_ENTRY {
 "09020A280109020B09010009020C093E8009020D280009020E2800\n" };
 
 std::string
-bt_path_join(const std::string &directory, const std::string &filename)
-{
-    return directory + "/" + filename;
-}
-
-std::string
 cstring_to_stdstring_free(char *cstring)
 {
     std::string result { cstring ?: "" };
@@ -113,12 +108,18 @@ file_exists(const std::string &filename)
     return (stat(filename.c_str(), &st) == 0 && !S_ISDIR(st.st_mode));
 }
 
-struct bluetoothd {
-    static void start() { control(true); }
-    static void stop() { control(false); }
+struct BluetoothDaemon {
+    ~BluetoothDaemon() { restart_if_needed(); }
+    void restart_if_needed() { if (stopped) { control(true); } }
+    void start() { control(true); }
+    void stop() { if (!stopped) { control(false); } }
+    void force_restart() { stop(); start(); }
 
 private:
-    static void control(bool start) {
+    bool started { false };
+    bool stopped { false };
+
+    void control(bool start) {
         std::list<std::string> services = { "bluetooth.service" };
         std::string verb { start ? "start" : "stop" };
 
@@ -142,6 +143,9 @@ private:
             }
             psmove_port_sleep_ms(500);
         }
+
+        stopped = !start;
+        started = start;
     }
 };
 
@@ -159,8 +163,40 @@ make_directory(const std::string &filename)
 }
 
 bool
-linux_bluez5_write_entry(const std::string &path, const std::string &contents)
+linux_bluez5_update_file_content(BluetoothDaemon &bluetoothd, const std::string &path, const std::string &contents)
 {
+    bool must_update = false;
+
+    if (file_exists(path)) {
+        FILE *fp = fopen(path.c_str(), "r");
+
+        if (fp == nullptr) {
+            LINUXPAIR_DEBUG("Cannot open file for reading: %s\n", path.c_str());
+            return false;
+        }
+        fseek(fp, 0, SEEK_END);
+        size_t len = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        std::vector<char> buf(len);
+        if (fread(buf.data(), buf.size(), 1, fp) != 1) {
+            LINUXPAIR_DEBUG("Cannot read file: %s\n", path.c_str());
+            fclose(fp);
+            return false;
+        }
+
+        fclose(fp);
+
+        if (std::string(buf.data(), buf.size()) == contents) {
+            LINUXPAIR_DEBUG("File %s is already up to date.\n", path.c_str());
+            return true;
+        } else {
+            LINUXPAIR_DEBUG("File %s needs updating.\n", path.c_str());
+        }
+    }
+
+    // Stop daemon to update files
+    bluetoothd.stop();
+
     FILE *fp = fopen(path.c_str(), "w");
 
     if (fp == nullptr) {
@@ -171,53 +207,6 @@ linux_bluez5_write_entry(const std::string &path, const std::string &contents)
     LINUXPAIR_DEBUG("Writing file: %s\n", path.c_str());
     fwrite(contents.c_str(), 1, contents.length(), fp);
     fclose(fp);
-
-    return true;
-}
-
-bool
-linux_bluez5_register_psmove(const std::string &addr, const std::string &bluetooth_dir)
-{
-    auto info_dir = bt_path_join(bluetooth_dir, addr);
-
-    if (!directory_exists(info_dir)) {
-        bluetoothd::stop();
-
-        if (!make_directory(info_dir)) {
-            LINUXPAIR_DEBUG("Cannot create directory: %s\n", info_dir.c_str());
-            return false;
-        }
-    }
-
-    auto info_file = bt_path_join(info_dir, "info");
-
-    bluetoothd::stop();
-
-    // Always write the info file, even if it exists already
-    if (!linux_bluez5_write_entry(info_file, BLUEZ5_INFO_ENTRY)) {
-        return false;
-    }
-
-    auto cache_dir = bt_path_join(bluetooth_dir, "cache");
-    if (!directory_exists(cache_dir)) {
-        bluetoothd::stop();
-
-        if (!make_directory(cache_dir)) {
-            LINUXPAIR_DEBUG("Cannot create directory: %s\n", cache_dir.c_str());
-            return false;
-        }
-    }
-
-    auto cache_file = bt_path_join(cache_dir, addr);
-    if (!file_exists(cache_file)) {
-        bluetoothd::stop();
-
-        if (!linux_bluez5_write_entry(cache_file, BLUEZ5_CACHE_ENTRY)) {
-            return false;
-        }
-    }
-
-    bluetoothd::start();
 
     return true;
 }
@@ -308,7 +297,7 @@ _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
 }
 
 static char *
-_psmove_linux_get_bluetooth_address(bool try_restart)
+_psmove_linux_get_bluetooth_address(int retries)
 {
     PSMove_Data_BTAddr btaddr;
     PSMove_Data_BTAddr blank;
@@ -316,15 +305,21 @@ _psmove_linux_get_bluetooth_address(bool try_restart)
     memset(blank, 0, sizeof(PSMove_Data_BTAddr));
     memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
 
-    hci_for_each_dev(HCI_UP, _psmove_linux_bt_dev_info, (intptr_t)btaddr);
+    hci_for_each_dev(0, _psmove_linux_bt_dev_info, (intptr_t)btaddr);
 
     if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
-        if (try_restart) {
-            // Force bluetooth restart
-            bluetoothd::stop();
-            bluetoothd::start();
-
-            return _psmove_linux_get_bluetooth_address(false);
+        if (retries == 2) {
+            fprintf(stderr, "Bluetooth address not found, trying to start the service.\n");
+            BluetoothDaemon().start();
+            // Back off timer
+            psmove_port_sleep_ms(1000);
+            return _psmove_linux_get_bluetooth_address(retries - 1);
+        } else if (retries == 1) {
+            fprintf(stderr, "Bluetooth address still not found, trying a force-restart.\n");
+            BluetoothDaemon().force_restart();
+            // Back off even more
+            psmove_port_sleep_ms(2000);
+            return _psmove_linux_get_bluetooth_address(retries - 1);
         }
 
         fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
@@ -338,7 +333,7 @@ _psmove_linux_get_bluetooth_address(bool try_restart)
 char *
 psmove_port_get_host_bluetooth_address()
 {
-    return _psmove_linux_get_bluetooth_address(true);
+    return _psmove_linux_get_bluetooth_address(2);
 }
 
 void
@@ -357,11 +352,39 @@ psmove_port_register_psmove(const char *addr, const char *host)
         return;
     }
 
-    std::string base { "/var/lib/bluetooth/" + host_addr };
-    if (!directory_exists(base)) {
-        LINUXPAIR_DEBUG("Not a directory: %s\n", base.c_str());
+    std::string bluetooth_dir { "/var/lib/bluetooth/" + host_addr };
+    if (!directory_exists(bluetooth_dir)) {
+        LINUXPAIR_DEBUG("Not a directory: %s\n", bluetooth_dir.c_str());
         return;
     }
 
-    linux_bluez5_register_psmove(controller_addr, base);
+    BluetoothDaemon bluetoothd;
+
+    std::string info_dir { bluetooth_dir + "/" + controller_addr };
+    if (!directory_exists(info_dir)) {
+        bluetoothd.stop();
+
+        if (!make_directory(info_dir)) {
+            LINUXPAIR_DEBUG("Cannot create directory: %s\n", info_dir.c_str());
+            return;
+        }
+    }
+
+    std::string cache_dir { bluetooth_dir + "/cache" };
+    if (!directory_exists(cache_dir)) {
+        bluetoothd.stop();
+
+        if (!make_directory(cache_dir)) {
+            LINUXPAIR_DEBUG("Cannot create directory: %s\n", cache_dir.c_str());
+            return;
+        }
+    }
+
+    if (!linux_bluez5_update_file_content(bluetoothd, info_dir + "/info", BLUEZ5_INFO_ENTRY)) {
+        return;
+    }
+
+    if (!linux_bluez5_update_file_content(bluetoothd, cache_dir + "/" + controller_addr, BLUEZ5_CACHE_ENTRY)) {
+        return;
+    }
 }
