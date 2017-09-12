@@ -25,15 +25,6 @@ set(INFO_LICENSE "BSD")
 # Make a debug build with helpful output for debugging / maintenance
 option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
 
-# This restarts "bt_rtk_hciattach@ttyS1.service" before "bluetooth.service" on Pocket C.H.I.P
-option(PSMOVE_USE_POCKET_CHIP "Enable workarounds for Pocket C.H.I.P" OFF)
-
-if (PSMOVE_USE_POCKET_CHIP)
-    set(INFO_POCKET_CHIP "Yes")
-else()
-    set(INFO_POCKET_CHIP "No")
-endif()
-
 # Debugging output
 IF(PSMOVE_USE_DEBUG)
     add_definitions(-DPSMOVE_DEBUG)
@@ -50,8 +41,6 @@ ENDIF()
 
 # Linker commands to put into the .pc file (when installing)
 set(PSMOVEAPI_PKGCONFIG_LIBS "-lpsmoveapi")
-
-set(INFO_BLUEZ5_SUPPORT "No")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(FOUNDATION Foundation)
@@ -102,15 +91,7 @@ ELSE()
     include_directories(${UDEV_INCLUDE_DIRS})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${UDEV_LIBRARIES})
 
-    pkg_check_modules(BLUEZ REQUIRED bluez)
-    
-    # auto-detect BlueZ version >= 5
-    if(${BLUEZ_VERSION} VERSION_LESS "5.0")
-        set(INFO_BLUEZ5_SUPPORT "No")
-    else()
-        set(INFO_BLUEZ5_SUPPORT "Yes")
-        add_definitions(-DPSMOVE_BLUEZ5_SUPPORT)
-    endif()
+    pkg_check_modules(BLUEZ REQUIRED bluez>=5)
 
     include_directories(${BLUEZ_INCLUDE_DIRS})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${BLUEZ_LIBRARIES})
@@ -118,7 +99,7 @@ ELSE()
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/linux/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_linux.c)
+        ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_linux.cpp)
 
     list(APPEND PSMOVEAPI_MOVED_SRC
         ${CMAKE_CURRENT_LIST_DIR}/daemon/moved_monitor_linux.c)
@@ -239,5 +220,3 @@ message("")
 message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
 message("    Library license:  " ${INFO_LICENSE} " (see README.md for details)")
-message("    BlueZ 5 support:  " ${INFO_BLUEZ5_SUPPORT} " (for pairing on Linux only)")
-message("    Pocket C.H.I.P:   " ${INFO_POCKET_CHIP})
