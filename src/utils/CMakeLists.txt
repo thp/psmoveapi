@@ -6,7 +6,6 @@ include_directories(${ROOT_DIR}/src)
 
 # New command line interface
 add_executable(psmove ${CMAKE_CURRENT_LIST_DIR}/psmovecli.cpp)
-target_link_libraries(psmove psmoveapi_static)
-set_target_properties(psmove PROPERTIES COMPILE_FLAGS -DUSING_STATIC_LIBRARY)
+target_link_libraries(psmove psmoveapi)
 set_property(TARGET psmove PROPERTY FOLDER "Utilities")
 list(APPEND PSMOVEAPI_INSTALL_TARGETS psmove)

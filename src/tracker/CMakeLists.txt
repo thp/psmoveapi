@@ -153,16 +153,6 @@ if(PSMOVE_BUILD_TRACKER)
     set_target_properties(psmoveapi_tracker PROPERTIES
         COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
     list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi_tracker)
-
-    add_library(psmoveapi_tracker_static STATIC
-        ${PSMOVEAPI_TRACKER_SRC}
-        ${PSMOVEAPI_TRACKER_PLATFORM_SRC})
-    target_link_libraries(psmoveapi_tracker_static
-        psmoveapi_static
-        ${PSMOVEAPI_REQUIRED_LIBS}
-        ${PSMOVEAPI_TRACKER_REQUIRED_LIBS})
-    set_target_properties(psmoveapi_tracker_static PROPERTIES
-        COMPILE_FLAGS -DBUILDING_STATIC_LIBRARY)
 endif()
 
 message("")
