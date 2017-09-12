@@ -277,18 +277,25 @@ psmove_port_close_socket(int socket)
     close(socket);
 }
 
+struct BTAddr {
+    BTAddr(bdaddr_t &addr) { memcpy(&d, &addr, sizeof(d)); }
+
+    std::string to_string() { return cstring_to_stdstring_free(_psmove_btaddr_to_string(d)); }
+
+    PSMove_Data_BTAddr d;
+};
+
 static int
-_psmove_linux_bt_dev_info(int s, int dev_id, long arg)
+_psmove_linux_bt_dev_info(int socket, int dev_id, long arg)
 {
     struct hci_dev_info di;
     di.dev_id = dev_id;
 
-    unsigned char *btaddr = (unsigned char *)arg;
+    auto btaddrs = static_cast<std::vector<BTAddr> *>((void *)(intptr_t)arg);
 
-    if (ioctl(s, HCIGETDEVINFO, (void *)&di) == 0) {
-        for (int i=0; i<6; i++) {
-            btaddr[i] = di.bdaddr.b[i];
-        }
+    if (ioctl(socket, HCIGETDEVINFO, (void *)&di) == 0) {
+        btaddrs->emplace_back(di.bdaddr);
+        LINUXPAIR_DEBUG("Found host adapter: %s (name=%s)\n", btaddrs->back().to_string().c_str(), di.name);
     } else {
         LINUXPAIR_DEBUG("ioctl(HCIGETDEVINFO): %s", strerror(errno));
     }
@@ -296,44 +303,60 @@ _psmove_linux_bt_dev_info(int s, int dev_id, long arg)
     return 0;
 }
 
-static char *
+
+static std::string
 _psmove_linux_get_bluetooth_address(int retries)
 {
-    PSMove_Data_BTAddr btaddr;
-    PSMove_Data_BTAddr blank;
+    std::vector<BTAddr> btaddrs;
 
-    memset(blank, 0, sizeof(PSMove_Data_BTAddr));
-    memset(btaddr, 0, sizeof(PSMove_Data_BTAddr));
+    hci_for_each_dev(0, _psmove_linux_bt_dev_info, (intptr_t)&btaddrs);
 
-    hci_for_each_dev(0, _psmove_linux_bt_dev_info, (intptr_t)btaddr);
-
-    if(memcmp(btaddr, blank, sizeof(PSMove_Data_BTAddr))==0) {
-        if (retries == 2) {
-            fprintf(stderr, "Bluetooth address not found, trying to start the service.\n");
-            BluetoothDaemon().start();
-            // Back off timer
-            psmove_port_sleep_ms(1000);
-            return _psmove_linux_get_bluetooth_address(retries - 1);
-        } else if (retries == 1) {
-            fprintf(stderr, "Bluetooth address still not found, trying a force-restart.\n");
-            BluetoothDaemon().force_restart();
-            // Back off even more
-            psmove_port_sleep_ms(2000);
-            return _psmove_linux_get_bluetooth_address(retries - 1);
+    if (btaddrs.size() == 0) {
+        // Only try to (re-)start the Bluetooth service if we have correct permissions
+        if (psmove_port_check_pairing_permissions()) {
+            if (retries == 2) {
+                fprintf(stderr, "Bluetooth address not found, trying to start the service.\n");
+                BluetoothDaemon().start();
+                // Back off timer
+                psmove_port_sleep_ms(1000);
+                return _psmove_linux_get_bluetooth_address(retries - 1);
+            } else if (retries == 1) {
+                fprintf(stderr, "Bluetooth address still not found, trying a force-restart.\n");
+                BluetoothDaemon().force_restart();
+                // Back off even more
+                psmove_port_sleep_ms(2000);
+                return _psmove_linux_get_bluetooth_address(retries - 1);
+            }
         }
 
-        fprintf(stderr, "WARNING: Can't determine Bluetooth address.\n"
-                "Make sure Bluetooth is turned on.\n");
-        return NULL;
+        psmove_WARNING("Can't determine Bluetooth address. Make sure Bluetooth is turned on.\n");
+        return "";
+    } else if (btaddrs.size() > 1) {
+        // TODO: Normalize prefer_addr using _psmove_normalize_btaddr()?
+        std::string prefer_addr { getenv("PSMOVE_PREFER_BLUETOOTH_HOST_ADDRESS") ?: "" };
+        if (!prefer_addr.empty()) {
+            for (auto &btaddr: btaddrs) {
+                if (btaddr.to_string() == prefer_addr) {
+                    printf("Using preferred address %s from environment.\n", btaddr.to_string().c_str());
+                    return btaddr.to_string();
+                }
+            }
+        }
+
+        printf("Multiple Bluetooth adapters found, you can choose one via:\n");
+        for (auto &btaddr: btaddrs) {
+            printf("    export PSMOVE_PREFER_BLUETOOTH_HOST_ADDRESS=%s\n", btaddr.to_string().c_str());
+        }
     }
 
-    return _psmove_btaddr_to_string(btaddr);
+    return btaddrs[0].to_string();
 }
 
 char *
 psmove_port_get_host_bluetooth_address()
 {
-    return _psmove_linux_get_bluetooth_address(2);
+    auto result = _psmove_linux_get_bluetooth_address(2);
+    return result.empty() ? nullptr : strdup(result.c_str());
 }
 
 void
