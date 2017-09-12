@@ -122,6 +122,10 @@ on_monitor_update_moved(enum MonitorEvent event,
 int
 main(int argc, char *argv[])
 {
+    if (!psmove_port_check_pairing_permissions()) {
+        printf("Warning: Connected devices won't be paired.\n");
+    }
+
     move_daemon moved;
 
     /* Never act as a client in "moved" mode */
