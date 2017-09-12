@@ -28,7 +28,7 @@ case "$UNAME" in
                 sudo apt-get purge -q -y bluez libbluetooth-dev
                 sudo add-apt-repository --yes ppa:vidplace7/bluez5
                 sudo apt-get update -qq
-                sudo apt-get install -q -y bluez libbluetooth-dev
+                sudo apt-get install -y bluez libbluetooth-dev
             fi
         fi
         ;;
