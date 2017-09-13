@@ -31,6 +31,8 @@
 
 
 
+#include "psmove.h"
+
 #include "../psmove_sockets.h"
 
 #include <stdio.h>
@@ -61,21 +63,21 @@ typedef struct _moved_client_list {
     struct _moved_client_list *next;
 } moved_client_list;
 
-moved_client_list *
-moved_client_list_open();
+ADDAPI moved_client_list *
+ADDCALL moved_client_list_open();
 
-void
-moved_client_list_destroy(moved_client_list *client_list);
+ADDAPI void
+ADDCALL moved_client_list_destroy(moved_client_list *client_list);
 
-moved_client *
-moved_client_create(const char *hostname);
+ADDAPI moved_client *
+ADDCALL moved_client_create(const char *hostname);
 
-int
-moved_client_send(moved_client *client, enum PSMoveMovedCmd cmd, int controller_id,
+ADDAPI int
+ADDCALL moved_client_send(moved_client *client, enum PSMoveMovedCmd cmd, int controller_id,
         const uint8_t *data, size_t len);
 
-void
-moved_client_destroy(moved_client *client);
+ADDAPI void
+ADDCALL moved_client_destroy(moved_client *client);
 
 #ifdef __cplusplus
 }

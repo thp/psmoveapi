@@ -68,15 +68,15 @@ extern "C" {
 #endif
 
 /* Initialize sockets API (if required) -- call before using sockets */
-void
-psmove_port_initialize_sockets();
+ADDAPI void
+ADDCALL psmove_port_initialize_sockets();
 
 /**
  * Check if necessary permissions are available for pairing controllers
  * Returns non-zero if permissions are available, zero if not
  **/
-int
-psmove_port_check_pairing_permissions();
+ADDAPI int
+ADDCALL psmove_port_check_pairing_permissions();
 
 /**
  * Get the current time in milliseconds since the first call
@@ -93,26 +93,26 @@ ADDCALL psmove_port_sleep_ms(uint32_t duration_ms);
 /**
  * Set the timeout to the specified time in milliseconds for a given socket
  **/
-void
-psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms);
+ADDAPI void
+ADDCALL psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms);
 
 /**
  * Close a socket
  **/
-void
-psmove_port_close_socket(int socket);
+ADDAPI void
+ADDCALL psmove_port_close_socket(int socket);
 
 /**
  * Get the default Bluetooth host controller address (result must be freed)
  **/
-char *
-psmove_port_get_host_bluetooth_address();
+ADDAPI char *
+ADDCALL psmove_port_get_host_bluetooth_address();
 
 /**
  * Add the PS Move Bluetooth controller address to the system database
  **/
-void
-psmove_port_register_psmove(const char *addr, const char *host);
+ADDAPI void
+ADDCALL psmove_port_register_psmove(const char *addr, const char *host);
 
 #ifdef __cplusplus
 }

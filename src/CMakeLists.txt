@@ -166,13 +166,6 @@ set_target_properties(psmoveapi PROPERTIES
     COMPILE_FLAGS -DBUILDING_SHARED_LIBRARY)
 list(APPEND PSMOVEAPI_INSTALL_TARGETS psmoveapi)
 
-# Static library
-
-add_library(psmoveapi_static STATIC ${PSMOVEAPI_LIBRARY_SRC})
-target_link_libraries(psmoveapi_static ${PSMOVEAPI_REQUIRED_LIBS})
-set_target_properties(psmoveapi_static PROPERTIES
-    COMPILE_FLAGS -DBUILDING_STATIC_LIBRARY)
-
 # For system-wide installation
 
 if(NOT PSMOVEAPI_LIB_DEST)
