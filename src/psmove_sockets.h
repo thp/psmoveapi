@@ -29,6 +29,7 @@
  **/
 
 
+#include "psmove.h"
 
 #ifdef _WIN32
 #  include <winsock2.h>
@@ -41,7 +42,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-const char *inet_ntop(int af, const void *src, char *dst, int cnt);
+ADDAPI const char *
+ADDCALL inet_ntop(int af, const void *src, char *dst, int cnt);
 #ifdef __cplusplus
 }
 #endif
