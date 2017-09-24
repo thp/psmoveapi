@@ -28,7 +28,7 @@ Supported Languages
 Need Help?
 ----------
 
- * Free community-based support via the PS Move Mailing List[5]
+ * Free community-based support via the [PS Move Mailing List](https://groups.google.com/forum/#!aboutgroup/psmove)
  * Professional support and custom development [upon request](http://thp.io/about)
 
 Hacking the Source
