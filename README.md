@@ -5,7 +5,7 @@
 
 The PS Move API is an [open source](https://github.com/thp/psmoveapi/blob/master/COPYING) library for Linux, macOS and Windows to access the Sony Move Motion Controller via Bluetooth and USB directly from your PC without the need for a PS3. Tracking in 3D space is possible using a PS Eye (on Linux, Windows and macOS), an iSight camera (on macOS) or any other suitable camera source.
 
-PS Move API has successfully participated in [Google Summer of Code 2012]([3] http://www.google-melange.com/gsoc/homepage/google/gsoc2012). Detailed documentation can be found in [my master's thesis](http://thp.io/2012/thesis/) about sensor fusion.
+PS Move API has successfully participated in [Google Summer of Code 2012](http://www.google-melange.com/gsoc/homepage/google/gsoc2012). Detailed documentation can be found in [my master's thesis](http://thp.io/2012/thesis/) about sensor fusion.
 
 
 Core Features
@@ -28,7 +28,7 @@ Supported Languages
 Need Help?
 ----------
 
- * Free community-based support via the PS Move Mailing List[5]
+ * Free community-based support via the [PS Move Mailing List](https://groups.google.com/forum/#!aboutgroup/psmove)
  * Professional support and custom development [upon request](http://thp.io/about)
 
 Hacking the Source
