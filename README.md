@@ -14,6 +14,7 @@ Core Features
  * Pairing of Bluetooth controllers via USB
  * Setting LEDs and rumble via USB and Bluetooth
  * Reading inertial sensors and buttons via Bluetooth
+ * Supporting extension devices (such as the Sharp Shooter and the Racing Wheel)
  * Tracking up to 5 controllers in 3D space via OpenCV
  * 3D orientation tracking via an open source AHRS algorithm
  * Sensor fusion for augmented and virtual reality applications
