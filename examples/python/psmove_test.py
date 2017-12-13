@@ -35,6 +35,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'build'))
 import psmove
 import time
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 move = psmove.PSMove()
 
 if move.connection_type == psmove.Conn_Bluetooth:
@@ -43,6 +47,10 @@ elif move.connection_type == psmove.Conn_USB:
     print('usb')
 else:
     print('unknown')
+
+if move.connection_type != psmove.Conn_Bluetooth:
+    print('Please connect controller via Bluetooth')
+    sys.exit(1)
 
 while True:
     if move.poll():

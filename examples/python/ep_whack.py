@@ -334,6 +334,10 @@ class Cube:
         self.program.unbind()
 
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 tracker = psmove.PSMoveTracker()
 tracker.set_mirror(True)
 
@@ -345,6 +349,10 @@ projection_matrix = read_matrix(fusion.get_projection_matrix())
 move = psmove.PSMove()
 move.enable_orientation(True)
 move.reset_orientation()
+
+if move.connection_type != psmove.Conn_Bluetooth:
+    print('Please connect controller via Bluetooth')
+    sys.exit(1)
 
 pygame.init()
 if '-f' not in sys.argv:

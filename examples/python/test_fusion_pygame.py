@@ -39,6 +39,10 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 import psmove
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 glutInit(sys.argv)
 
 tracker = psmove.PSMoveTracker()
@@ -54,6 +58,10 @@ projection_matrix = fusion.get_projection_matrix()
 move = psmove.PSMove()
 move.enable_orientation(True)
 move.reset_orientation()
+
+if move.connection_type != psmove.Conn_Bluetooth:
+    print('Please connect controller via Bluetooth')
+    sys.exit(1)
 
 while tracker.enable(move) != psmove.Tracker_CALIBRATED:
     pass

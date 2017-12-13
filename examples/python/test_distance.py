@@ -34,6 +34,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'build'))
 
 import psmove
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 move = psmove.PSMove()
 tracker = psmove.PSMoveTracker()
 

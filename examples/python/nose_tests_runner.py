@@ -139,6 +139,10 @@ class Glue:
             time.sleep(2)
 
 if __name__ == '__main__':
+    if psmove.count_connected() < 1:
+        print('No controller connected')
+        sys.exit(1)
+
     visualizer = Visualizer()
     test_runner = TestRunner()
     glue = Glue(visualizer, test_runner)

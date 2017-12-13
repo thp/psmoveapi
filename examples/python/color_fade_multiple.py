@@ -38,6 +38,10 @@ import psmove
 
 moves = [psmove.PSMove(x) for x in range(psmove.count_connected())]
 
+if not moves:
+    print('No controller connected');
+    sys.exit(1)
+
 colors = [
    (255, 0, 0),
    (0, 255, 0),
