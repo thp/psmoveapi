@@ -52,7 +52,7 @@ NUM_MEANS = 10
 
 def mean(readings):
     sums = list(map(sum, list(zip(*readings))))
-    return [sum/len(readings) for sum in sums]
+    return [s/len(readings) for s in sums]
 
 def calc_diffsums(lastmeans, currentmeans):
     cx, cy, cz = currentmeans
