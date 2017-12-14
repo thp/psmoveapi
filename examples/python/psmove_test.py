@@ -53,29 +53,31 @@ if move.connection_type != psmove.Conn_Bluetooth:
     sys.exit(1)
 
 while True:
-    if move.poll():
-        trigger_value = move.get_trigger()
-        move.set_leds(trigger_value, 0, 0)
-        move.update_leds()
+    # Get the latest input report from the controller
+    while move.poll(): pass
 
-        buttons = move.get_buttons()
-        if buttons & psmove.Btn_TRIANGLE:
-            print('triangle pressed')
-            move.set_rumble(trigger_value)
-        else:
-            move.set_rumble(0)
+    trigger_value = move.get_trigger()
+    move.set_leds(trigger_value, 0, 0)
+    move.update_leds()
 
-        battery = move.get_battery()
-        if battery == psmove.Batt_CHARGING:
-            print('battery charging via USB')
-        elif battery >= psmove.Batt_MIN and battery <= psmove.Batt_MAX:
-            print('battery: %d / %d' % (battery, psmove.Batt_MAX))
-        else:
-            print('unknown battery value:', battery)
+    buttons = move.get_buttons()
+    if buttons & psmove.Btn_TRIANGLE:
+        print('triangle pressed')
+        move.set_rumble(trigger_value)
+    else:
+        move.set_rumble(0)
 
-        print('accel:', (move.ax, move.ay, move.az))
-        print('gyro:', (move.gx, move.gy, move.gz))
-        print('magnetometer:', (move.mx, move.my, move.mz))
+    battery = move.get_battery()
+    if battery == psmove.Batt_CHARGING:
+        print('battery charging via USB')
+    elif battery >= psmove.Batt_MIN and battery <= psmove.Batt_MAX:
+        print('battery: %d / %d' % (battery, psmove.Batt_MAX))
+    else:
+        print('unknown battery value:', battery)
+
+    print('accel:', (move.ax, move.ay, move.az))
+    print('gyro:', (move.gx, move.gy, move.gz))
+    print('magnetometer:', (move.mx, move.my, move.mz))
 
     time.sleep(.1)
 
