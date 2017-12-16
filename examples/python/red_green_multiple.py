@@ -38,6 +38,10 @@ import psmove
 
 moves = [psmove.PSMove(x) for x in range(psmove.count_connected())]
 
+if not moves:
+    print('No controller connected');
+    sys.exit(1)
+
 i = 0
 while True:
     r = int(128+128*math.sin(i))

@@ -37,6 +37,10 @@ import psmove
 
 move = psmove.PSMove()
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 i = 0
 while True:
     if i % 12 in (1, 3, 5):

@@ -37,6 +37,11 @@ import psmove
 
 
 moves = [psmove.PSMove(x) for x in range(psmove.count_connected())]
+
+if not moves:
+    print('No controller connected');
+    sys.exit(1)
+
 for move in moves:
     move.set_leds(0, 150, 0)
 

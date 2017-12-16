@@ -36,6 +36,10 @@ import time
 import math
 import psmove
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 move = psmove.PSMove()
 
 i = 0

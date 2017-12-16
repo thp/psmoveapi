@@ -11,13 +11,16 @@ option(PSMOVE_BUILD_CSHARP_BINDINGS "Build the C# bindings" ON)
 option(PSMOVE_BUILD_PROCESSING_BINDINGS "Build the Processing bindings" ON)
 option(PSMOVE_BUILD_PYTHON_BINDINGS "Build the Python bindings" ON)
 
+# useful if multiple versions of the Python lib are installed
+set(PSMOVE_PYTHON_VERSION "" CACHE STRING "Use this version of the Python lib for building Python bindings")
+
 # Language bindings (Python, Java and Processing)
 find_package(SWIG QUIET)
 if(SWIG_FOUND)
     include(${SWIG_USE_FILE})
 
     if(PSMOVE_BUILD_PYTHON_BINDINGS)
-        find_package(PythonLibs QUIET)
+        find_package(PythonLibs ${PSMOVE_PYTHON_VERSION} QUIET)
         if(PYTHONLIBS_FOUND)
             unset(CMAKE_SWIG_FLAGS)
             include_directories(${PYTHON_INCLUDE_PATH})

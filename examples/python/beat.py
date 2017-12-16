@@ -44,8 +44,16 @@ import time
 import math
 import psmove
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 move = psmove.PSMove()
 move.set_rate_limiting(1)
+
+if move.connection_type != psmove.Conn_Bluetooth:
+    print('Please connect controller via Bluetooth')
+    sys.exit(1)
 
 current_beat = 0
 old_buttons = 0

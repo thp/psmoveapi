@@ -35,7 +35,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'build'))
 import psmove
 import math
 
+if psmove.count_connected() < 1:
+    print('No controller connected')
+    sys.exit(1)
+
 move = psmove.PSMove()
+
+if move.connection_type != psmove.Conn_Bluetooth:
+    print('Please connect controller via Bluetooth')
+    sys.exit(1)
 
 readings = []
 lastmeans = []
@@ -44,7 +52,7 @@ NUM_MEANS = 10
 
 def mean(readings):
     sums = list(map(sum, list(zip(*readings))))
-    return [sum/len(readings) for sum in sums]
+    return [s/len(readings) for s in sums]
 
 def calc_diffsums(lastmeans, currentmeans):
     cx, cy, cz = currentmeans
