@@ -18,7 +18,7 @@ fi
 PSMOVEAPI_PLATFORM="$1"
 shift
 
-OPENCV_VERSION=3.1.0
+OPENCV_VERSION=2.4
 PSMOVEAPI_VERSION=$(git describe --tags)
 
 MAKE_ARGS="$@"
@@ -35,7 +35,7 @@ fi
 # Build OpenCV
 if [ ! -d external/opencv ]; then
     if [ ! -f ${OPENCV_VERSION}.zip ]; then
-        curl -O -L https://github.com/Itseez/opencv/archive/${OPENCV_VERSION}.zip
+        curl -O -L https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip
     fi
     unzip ${OPENCV_VERSION}.zip
     mv opencv-${OPENCV_VERSION} external/opencv
