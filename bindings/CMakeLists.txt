@@ -52,14 +52,30 @@ if(SWIG_FOUND)
             endif()
             set(INFO_BUILD_JAVA_BINDINGS "Yes")
 
-            add_custom_target(psmoveapi.jar ALL
-                COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
-                COMMAND cp *.java ${PSMOVEAPI_JAVA_PKG_DIR}/
-                COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
-                COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                COMMENT "Java bindings JAR archive"
-            )
+            # NOTE: We need a platform-independent copy command for the .java files, but neither the COMMAND
+            #       nor CMake's "-E copy" support wildcards on Windows. We could probably whip up something
+            #       more elegant which only makes the relevant line platform-dependent without copying all
+            #       the other lines. But this simple branching is pretty robust and also works with older
+            #       versions of CMake.
+            if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+                add_custom_target(psmoveapi.jar ALL
+                    COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
+                    COMMAND ${CMAKE_CURRENT_LIST_DIR}/copy_java.bat ${PSMOVEAPI_JAVA_PKG_DIR}/
+                    COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
+                    COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "Java bindings JAR archive"
+                )
+            else()
+                add_custom_target(psmoveapi.jar ALL
+                    COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
+                    COMMAND cp *.java ${PSMOVEAPI_JAVA_PKG_DIR}/
+                    COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
+                    COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                    COMMENT "Java bindings JAR archive"
+                )
+            endif()
 
             set(PSMOVEAPI_PROCESSING_DIR "${CMAKE_CURRENT_LIST_DIR}/processing/libraries/psmove")
 
