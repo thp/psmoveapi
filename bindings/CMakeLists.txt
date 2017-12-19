@@ -58,7 +58,7 @@ if(SWIG_FOUND)
             #       the other lines. But this simple branching is pretty robust and also works with older
             #       versions of CMake.
             if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-                add_custom_target(psmoveapi.jar ALL
+                add_custom_target(psmoveapi.jar
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
                     COMMAND ${CMAKE_CURRENT_LIST_DIR}/copy_java.bat ${PSMOVEAPI_JAVA_PKG_DIR}/
                     COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
@@ -67,7 +67,7 @@ if(SWIG_FOUND)
                     COMMENT "Java bindings JAR archive"
                 )
             else()
-                add_custom_target(psmoveapi.jar ALL
+                add_custom_target(psmoveapi.jar
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
                     COMMAND cp *.java ${PSMOVEAPI_JAVA_PKG_DIR}/
                     COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
