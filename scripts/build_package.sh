@@ -103,14 +103,14 @@ case "$BUILD_TYPE" in
         WIN_ARCH=${BUILD_TYPE#windows-native-msvc-}
         BUILDDIR="build-${WIN_ARCH}"
         PLATFORM_BIN="
-        $BUILDDIR/Release/psmove.exe
-        $BUILDDIR/Release/test_tracker.exe
+        $BUILDDIR/psmove.exe
+        $BUILDDIR/test_tracker.exe
         "
         PLATFORM_LIB="
-        $BUILDDIR/Release/psmoveapi.dll
-        $BUILDDIR/Release/psmoveapi.lib
-        $BUILDDIR/Release/psmoveapi_tracker.dll
-        $BUILDDIR/Release/psmoveapi_tracker.lib
+        $BUILDDIR/psmoveapi.dll
+        $BUILDDIR/psmoveapi.lib
+        $BUILDDIR/psmoveapi_tracker.dll
+        $BUILDDIR/psmoveapi_tracker.lib
         "
         pkg_zipfile_7z
 
