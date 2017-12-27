@@ -85,8 +85,12 @@ if(SWIG_FOUND)
                 set(PSMOVEAPI_PAIRING_TOOL_NAME "psmove")
             ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
                 set(PSMOVEAPI_LIB_PLATFORM "windows")
-                set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.dll")
+                set(PSMOVEAPI_NATIVE_LIB "psmove_java.dll")
                 set(PSMOVEAPI_PAIRING_TOOL_NAME "psmove.exe")
+
+                if(MINGW)
+                    set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.dll")
+                endif()
             ELSE() # Linux
                 set(PSMOVEAPI_LIB_PLATFORM "linux")
                 set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.so")
