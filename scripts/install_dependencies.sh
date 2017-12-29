@@ -33,9 +33,9 @@ case "$UNAME" in
         ;;
     Darwin)
         brew update
-        brew install --force cmake git libtool automake autoconf swig || true
+        brew install --force cmake git libtool automake autoconf swig python || true
         brew unlink libtool ; brew link --overwrite libtool
-        pip install --user sphinx
+        pip2 install --user sphinx
         ;;
     *)
         echo "Unknown OS: $UNAME"
