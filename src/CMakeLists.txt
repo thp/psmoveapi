@@ -5,10 +5,9 @@ include(${ROOT_DIR}/cmake/common.cmake)
 # Do all the PSMOVEAPI-only work
 # At the end we will call separate files for tracker and utils
 
-#project(PSMOVEAPI VERSION 3.1.0)  # Requires cmake >= 3.0
-set(PSMOVEAPI_VERSION_MAJOR "3")
-set(PSMOVEAPI_VERSION_MINOR "1")
-set(PSMOVEAPI_VERSION_PATCH "0")
+set(PSMOVEAPI_VERSION_MAJOR "4")
+set(PSMOVEAPI_VERSION_MINOR "0")
+set(PSMOVEAPI_VERSION_PATCH "5")
 set(PSMOVEAPI_VERSION "${PSMOVEAPI_VERSION_MAJOR}.${PSMOVEAPI_VERSION_MINOR}.${PSMOVEAPI_VERSION_PATCH}")
 
 set(PSMOVEAPI_REQUIRED_LIBS)   # Container for library dependencies
