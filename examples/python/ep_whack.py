@@ -115,11 +115,11 @@ class Shader:
 
         error_message = glGetShaderInfoLog(self.id)
         if error_message:
-            print '== Shader Compile Error =='
-            print error_message
-            print '='*30
-            print '\n'.join('%3d %s' % a for a in enumerate(shader_source.splitlines()))
-            print '='*30
+            print ('== Shader Compile Error ==')
+            print (error_message)
+            print ('='*30)
+            print ('\n'.join('%3d %s' % a for a in enumerate(shader_source.splitlines())))
+            print ('='*30)
 
     def __del__(self):
         glDeleteShader(self.id)
@@ -138,9 +138,9 @@ class ShaderProgram:
         glLinkProgram(self.id)
         error_message = glGetProgramInfoLog(self.id)
         if error_message:
-            print '== Program Link Error =='
-            print error_message
-            print '='*30
+            print ('== Program Link Error ==')
+            print (error_message)
+            print ('='*30)
 
     def bind(self):
         glUseProgram(self.id)
@@ -459,7 +459,7 @@ class Button:
         if self.hits < self.required_hits:
             self.hits += 1
             if self.hits == self.required_hits:
-                print '+1 SCORE'
+                print ('+1 SCORE')
                 self.highlight_value = Constants.AFTERGLOW_TICKS
 
     def highlight_now(self):
