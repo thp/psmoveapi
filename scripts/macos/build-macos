@@ -5,19 +5,26 @@
 #
 
 # Determine PSMoveAPI root dir
-export PSMOVEAPI_CHECKOUT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../"
+export PSMOVEAPI_CHECKOUT=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../../ && pwd ) # Expands the relative path of ../../ so the following 3 exports are rendered correctly
 
-export OPENCV_CHECKOUT_DIR=$PSMOVEAPI_CHECKOUT/external/opencv
-export OPENCV_BUILD_DIR=$PSMOVEAPI_CHECKOUT/external/opencv/build
-export OPENCV_INSTALL_DIR=$OPENCV_CHECKOUT_DIR/build/install
+export OPENCV_CHECKOUT_DIR="$PSMOVEAPI_CHECKOUT/external/opencv" # Uses quotation marks to support spaces in the path
+export OPENCV_BUILD_DIR="$PSMOVEAPI_CHECKOUT/external/opencv/build" # Uses quotation marks to support spaces in the path
+export OPENCV_INSTALL_DIR="$OPENCV_CHECKOUT_DIR/build/install" # Uses quotation marks to support spaces in the path
 
 # For parallel builds
 MAKE_ARGS=-j4
 
+# Enter PS Move API directory to call the following git command in psmoveapi repository
+cd "$PSMOVEAPI_CHECKOUT" # Uses quotation marks to support spaces in the PSMOVEAPI_CHECKOUT path
+
 # Git revision identifier
 PSMOVEAPI_REVISION=$(git describe --tags)
 
-if [ ! -f $PSMOVEAPI_CHECKOUT/CMakeLists.txt ]; then
+# Initialize Submodules (if they were not initialized already)
+git submodule init
+git submodule update
+
+if [ ! -f "$PSMOVEAPI_CHECKOUT/CMakeLists.txt" ]; then # Adds quotation marks to support spaces in path
     echo "ERROR: You have to run this script in the PS Move API source root."
     exit 1
 fi
@@ -26,7 +33,7 @@ fi
 # needed for the PS3EYEDriver to access the PSEye
 # otherwise we'd dynamically link against some the Homebrew libusb
 (
-    cd $PSMOVEAPI_CHECKOUT/external/libusb-1.0
+    cd "$PSMOVEAPI_CHECKOUT/external/libusb-1.0" # Adds quotation marks to support spaces in path
     export ARCHFLAGS='-arch x86_64'
     export CFLAGS="$CFLAGS $ARCHFLAGS"
     export CXXFLAGS="$CXXFLAGS $ARCHFLAGS"
@@ -35,10 +42,10 @@ fi
     make ${MAKE_ARGS}
 )
 
-cd $PSMOVEAPI_CHECKOUT
+cd "$PSMOVEAPI_CHECKOUT" # Adds quotation marks to support spaces in path
 
 # Build OpenCV
-if [ ! -d $OPENCV_INSTALL_DIR ]; then
+if [ ! -d "$OPENCV_INSTALL_DIR" ]; then # Adds quotation marks to support spaces in path
     cd external
     if [ ! -d opencv ]; then
 		git clone --depth 1 --branch 2.4 git://github.com/opencv/opencv.git
@@ -85,7 +92,7 @@ if [ ! -d $OPENCV_INSTALL_DIR ]; then
     make install
 fi
 
-cd $PSMOVEAPI_CHECKOUT
+cd "$PSMOVEAPI_CHECKOUT" # Adds quotation marks to support spaces in path
 
 # Build PS Move API
 rm -rf build
@@ -95,5 +102,5 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_TRACKER=ON \
       -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
-      -DOpenCV_DIR=${OPENCV_BUILD_DIR} ..
+      -DOpenCV_DIR="${OPENCV_BUILD_DIR}" .. # Uses quotation marks to support spaces in the path
 make ${MAKE_ARGS}
