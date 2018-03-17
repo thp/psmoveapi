@@ -90,8 +90,8 @@ For Visual Studio 2017 and 32-bit use::
 
 For Visual Studio 2015 and 2013, replace 2017 accordingly.
 
-The resulting binaries will be placed in ``build-x86/[Debug/Release]`` (for
-the 32-bit build) and ``build-x64/[Debug/Release]`` (for the 64-bit build).
+The resulting binaries will be placed in ``build-x86/`` (for the 32-bit build)
+and ``build-x64/`` (for the 64-bit build).
 
 
 Cross-Compiling for Windows (MinGW)
