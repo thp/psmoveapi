@@ -60,12 +60,14 @@ You need to install the following requirements:
 
 - `Visual Studio Community 2013`_, `Visual Studio Community 2015`_ or `Visual Studio Community 2017` (recommended)
 - `CMake`_ 3.9.1 or newer
+- `Git`_
 
 
 .. _`Visual Studio Community 2013`: http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
 .. _`Visual Studio Community 2015`: https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx
 .. _`Visual Studio Community 2017`: https://www.visualstudio.com/en-us/downloads/
 .. _`CMake`: http://www.cmake.org/cmake/resources/software.html
+.. _`Git`: https://gitforwindows.org/
 
 Automatic build
 ~~~~~~~~~~~~~~~
@@ -88,8 +90,8 @@ For Visual Studio 2017 and 32-bit use::
 
 For Visual Studio 2015 and 2013, replace 2017 accordingly.
 
-The resulting binaries will be placed in ``build-x86/[Debug/Release]`` (for
-the 32-bit build) and ``build-x64/[Debug/Release]`` (for the 64-bit build).
+The resulting binaries will be placed in ``build-x86/`` (for the 32-bit build)
+and ``build-x64/`` (for the 64-bit build).
 
 
 Cross-Compiling for Windows (MinGW)
