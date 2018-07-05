@@ -151,7 +151,7 @@ _moved_monitor_handle_device(moved_monitor *monitor, struct udev_device *dev)
                     &serial_number_utf8, &product_name_utf8)) {
             wchar_t *serial_number = utf8_to_wchar_t(serial_number_utf8);
 
-            if (vendor_id == PSMOVE_VID && product_id == PSMOVE_PID) {
+            if (vendor_id == PSMOVE_VID && (product_id == PSMOVE_PID || product_id == PSMOVE_PS4_PID)) {
                 if (bus_type == BUS_BLUETOOTH) {
                     device_type = EVENT_DEVICE_TYPE_BLUETOOTH;
                 } else if (bus_type == BUS_USB) {

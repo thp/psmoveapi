@@ -134,6 +134,12 @@ psmove_decode_16bit(char *data, int offset)
     return (low | (high << 8)) - 0x8000;
 }
 
+static int
+PSMOVE_PIDS[] = {
+    PSMOVE_PID,
+    PSMOVE_PS4_PID,
+    0,
+};
 
 typedef struct {
     unsigned char type; /* message type, must be PSMove_Req_GetInput */
@@ -345,17 +351,13 @@ psmove_reinit()
         hid_exit();
 }
 
-int
-psmove_count_connected_hidapi()
+static int
+_psmove_count_connected_by_pid(int pid)
 {
     struct hid_device_info *devs, *cur_dev;
     int count = 0;
 
-    if (psmove_local_disabled) {
-        return 0;
-    }
-
-    devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+    devs = hid_enumerate(PSMOVE_VID, pid);
     cur_dev = devs;
     while (cur_dev) {
 #ifdef _WIN32
@@ -372,6 +374,23 @@ psmove_count_connected_hidapi()
         cur_dev = cur_dev->next;
     }
     hid_free_enumeration(devs);
+
+    return count;
+}
+
+int
+psmove_count_connected_hidapi()
+{
+    int count = 0;
+
+    if (psmove_local_disabled) {
+        return 0;
+    }
+
+    int *pid = PSMOVE_PIDS;
+    while (*pid) {
+        count += _psmove_count_connected_by_pid(*pid++);
+    }
 
     return count;
 }
@@ -459,6 +478,9 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id)
         move->handle = hid_open_path(path);
     } else {
         move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
+        if (!move->handle) {
+            move->handle = hid_open(PSMOVE_VID, PSMOVE_PS4_PID, serial);
+        }
     }
 
 #endif
@@ -596,14 +618,18 @@ _psmove_get_firmware_info(PSMove *move)
      * while the USB report does not. So we need to check the current connection
      * type in order to determine the correct offset for reading from the report
      * buffer.
+     *
+     * XXX: This also happens for me on macOS with USB, so check the first
+     * byte, and if it's the Report ID as first byte, assume we need to remove
+     * it from the response.
      **/
 
-    if (psmove_connection_type(move) == Conn_Bluetooth) {
-        expected_res += 1;
-        p = buf + 1;
+    if (psmove_connection_type(move) == Conn_Bluetooth || (res > 0 && buf[0] == PSMove_Req_GetFirmwareInfo)) {
+        --res;
+        ++p;
     }
 
-    psmove_return_val_if_fail(res == expected_res, NULL);
+    psmove_return_val_if_fail(res >= expected_res, NULL);
 
     PSMove_Firmware_Info *info = malloc(sizeof(PSMove_Firmware_Info));
 
@@ -741,6 +767,7 @@ psmove_connect_by_id(int id)
     struct hid_device_info *devs, *cur_dev;
     PSMove *move = NULL;
 
+    // TODO: FIXME: This needs to add support for PS4 Move still
     devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
 
     // Count available devices

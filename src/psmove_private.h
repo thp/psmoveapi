@@ -50,8 +50,11 @@ extern "C" {
      **/
 
 /* Vendor ID and Product ID of PS Move Controller */
+/* PS3/PS4 PS Move Controller (MiniUSB), a.k.a. CECH-ZCM1E */
 #define PSMOVE_VID 0x054c
 #define PSMOVE_PID 0x03d5
+/* PS4 PS Move Controller (MicroUSB), a.k.a. CECH-ZCM2J */
+#define PSMOVE_PS4_PID 0x0c5e
 
 #define psmove_PRINTF(section, msg, ...) \
         fprintf(stderr, "[" section "] " msg, ## __VA_ARGS__)
