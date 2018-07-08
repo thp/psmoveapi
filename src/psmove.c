@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
@@ -1603,19 +1604,33 @@ psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (ax != NULL) {
-        *ax = ((move->input.aXlow + move->input.aXlow2) +
-               ((move->input.aXhigh + move->input.aXhigh2) << 8)) / 2 - 0x8000;
-    }
+    if (move->model == Model_ZCM2) {
+        if (ax != NULL) {
+            *ax = (int16_t) (move->input.aXlow + (move->input.aXhigh << 8));
+        }
 
-    if (ay != NULL) {
-        *ay = ((move->input.aYlow + move->input.aYlow2) +
-               ((move->input.aYhigh + move->input.aYhigh2) << 8)) / 2 - 0x8000;
-    }
+        if (ay != NULL) {
+            *ay = (int16_t) (move->input.aYlow + (move->input.aYhigh << 8));
+        }
 
-    if (az != NULL) {
-        *az = ((move->input.aZlow + move->input.aZlow2) +
-               ((move->input.aZhigh + move->input.aZhigh2) << 8)) / 2 - 0x8000;
+        if (az != NULL) {
+            *az = (int16_t) (move->input.aZlow + (move->input.aZhigh << 8));
+        }
+    } else {
+        if (ax != NULL) {
+            *ax = ((move->input.aXlow + move->input.aXlow2) +
+                   ((move->input.aXhigh + move->input.aXhigh2) << 8)) / 2 - 0x8000;
+        }
+
+        if (ay != NULL) {
+            *ay = ((move->input.aYlow + move->input.aYlow2) +
+                   ((move->input.aYhigh + move->input.aYhigh2) << 8)) / 2 - 0x8000;
+        }
+
+        if (az != NULL) {
+            *az = ((move->input.aZlow + move->input.aZlow2) +
+                   ((move->input.aZhigh + move->input.aZhigh2) << 8)) / 2 - 0x8000;
+        }
     }
 }
 
@@ -1624,20 +1639,34 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (gx != NULL) {
-        *gx = ((move->input.gXlow + move->input.gXlow2) +
-               ((move->input.gXhigh + move->input.gXhigh2) << 8)) / 2 - 0x8000;
-    }
+    if (move->model == Model_ZCM2) {
+		if (gx != NULL) {
+		    *gx = (int16_t) (move->input.gXlow + (move->input.gXhigh << 8));
+		}
 
-    if (gy != NULL) {
-        *gy = ((move->input.gYlow + move->input.gYlow2) +
-               ((move->input.gYhigh + move->input.gYhigh2) << 8)) / 2 - 0x8000;
-    }
+		if (gy != NULL) {
+		    *gy = (int16_t) (move->input.gYlow + (move->input.gYhigh << 8));
+		}
 
-    if (gz != NULL) {
-        *gz = ((move->input.gZlow + move->input.gZlow2) +
-               ((move->input.gZhigh + move->input.gZhigh2) << 8)) / 2 - 0x8000;
-    }
+		if (gz != NULL) {
+		    *gz = (int16_t) (move->input.gZlow + (move->input.gZhigh << 8));
+		}
+	} else {
+		if (gx != NULL) {
+		    *gx = ((move->input.gXlow + move->input.gXlow2) +
+		           ((move->input.gXhigh + move->input.gXhigh2) << 8)) / 2 - 0x8000;
+		}
+
+		if (gy != NULL) {
+		    *gy = ((move->input.gYlow + move->input.gYlow2) +
+		           ((move->input.gYhigh + move->input.gYhigh2) << 8)) / 2 - 0x8000;
+		}
+
+		if (gz != NULL) {
+		    *gz = ((move->input.gZlow + move->input.gZlow2) +
+		           ((move->input.gZhigh + move->input.gZhigh2) << 8)) / 2 - 0x8000;
+		}
+	}
 }
 
 void
