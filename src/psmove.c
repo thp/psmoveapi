@@ -1780,19 +1780,35 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (mx != NULL) {
-        *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
-                move->input.mXlow);
-    }
+    if (move->model == Model_ZCM2) {
+        // NOTE: This model does not have magnetometers
 
-    if (my != NULL) {
-        *my = TWELVE_BIT_SIGNED((move->input.mYhigh << 4) |
-               (move->input.mYlow_mZhigh & 0xF0) >> 4);
-    }
+        if (mx != NULL) {
+            *mx = 0;
+        }
 
-    if (mz != NULL) {
-        *mz = TWELVE_BIT_SIGNED(((move->input.mYlow_mZhigh & 0x0F) << 8) |
-                move->input.mZlow);
+        if (my != NULL) {
+            *my = 0;
+        }
+
+        if (mz != NULL) {
+            *mz = 0;
+        }
+    } else {
+        if (mx != NULL) {
+            *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
+                    move->input.mXlow);
+        }
+
+        if (my != NULL) {
+            *my = TWELVE_BIT_SIGNED((move->input.mYhigh << 4) |
+                   (move->input.mYlow_mZhigh & 0xF0) >> 4);
+        }
+
+        if (mz != NULL) {
+            *mz = TWELVE_BIT_SIGNED(((move->input.mYlow_mZhigh & 0x0F) << 8) |
+                    move->input.mZlow);
+        }
     }
 }
 
