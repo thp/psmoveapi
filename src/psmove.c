@@ -1558,7 +1558,11 @@ psmove_get_trigger(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return (move->input.trigger + move->input.trigger2) / 2;
+    if (move->model == Model_ZCM2) {
+        return move->input.trigger;
+    } else {
+        return (move->input.trigger + move->input.trigger2) / 2;
+    }
 }
 
 void
