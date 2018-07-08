@@ -134,6 +134,9 @@ psmove_decode_16bit(char *data, int offset)
     return (low | (high << 8)) - 0x8000;
 }
 
+#define NUM_PSMOVE_PIDS \
+    ((sizeof(PSMOVE_PIDS) / sizeof(PSMOVE_PIDS[0])) - 1)
+
 static int
 PSMOVE_PIDS[] = {
     PSMOVE_PID,
@@ -738,6 +741,8 @@ compare_hid_device_info_ptr(const void *a, const void *b)
     return 0;
 }
 
+static struct hid_device_info *move_hid_devices[NUM_PSMOVE_PIDS];
+
 PSMove *
 psmove_connect_by_id(int id)
 {
@@ -767,22 +772,38 @@ psmove_connect_by_id(int id)
     struct hid_device_info *devs, *cur_dev;
     PSMove *move = NULL;
 
-    // TODO: FIXME: This needs to add support for PS4 Move still
-    devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+    // TODO: Implement handling of multiple PIDs in a cleaner way. Ideally, we
+    //       would just build a *single* list of hid_device_info structs.
+
+    // enumerate matching HID devices
+    for (unsigned int i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        psmove_DEBUG("Enumerating HID devices with PID 0x%04X\n", PSMOVE_PIDS[i]);
+
+        // NOTE: hidapi returns NULL for PIDs that were not found
+        move_hid_devices[i] = hid_enumerate(PSMOVE_VID, PSMOVE_PIDS[i]);
+    }
 
     // Count available devices
     int available = 0;
-    for (cur_dev=devs, available=0; cur_dev != NULL; cur_dev = cur_dev->next, available++);
+    int i;
+    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        for (cur_dev = move_hid_devices[i]; cur_dev != NULL; cur_dev = cur_dev->next, available++);
+    }
+    psmove_DEBUG("Matching HID devices: %d\n", available);
 
     // Sort list of devices to have stable ordering of devices
+    int n = 0;
     struct hid_device_info **devs_sorted = calloc(available, sizeof(struct hid_device_info *));
-    cur_dev = devs;
-    int i;
-    for (i=0; i<available; i++) {
-        devs_sorted[i] = cur_dev;
-        cur_dev = cur_dev->next;
+    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        cur_dev = move_hid_devices[i];
+        while (cur_dev && (n < available)) {
+            devs_sorted[n] = cur_dev;
+            cur_dev = cur_dev->next;
+            n++;
+        }
     }
     qsort((void *)devs_sorted, available, sizeof(struct hid_device_info *), compare_hid_device_info_ptr);
+
 #if defined(PSMOVE_DEBUG)
     for (i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
@@ -816,7 +837,14 @@ psmove_connect_by_id(int id)
 #endif
 
     free(devs_sorted);
-    hid_free_enumeration(devs);
+
+    // free HID device enumerations
+    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        devs = hid_enumerate(PSMOVE_VID, PSMOVE_PIDS[i]);
+        if (devs) {
+            hid_free_enumeration(devs);
+        }
+    }
 
     return move;
 }
