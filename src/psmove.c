@@ -51,7 +51,7 @@
 /* Begin private definitions */
 
 /* Buffer size for writing LEDs and reading sensor data */
-#define PSMOVE_BUFFER_SIZE 49
+#define PSMOVE_BUFFER_SIZE 9
 
 /* Buffer size for the Bluetooth address get request */
 #define PSMOVE_BTADDR_GET_SIZE 16
@@ -71,7 +71,7 @@
 
 enum PSMove_Request_Type {
     PSMove_Req_GetInput = 0x01,
-    PSMove_Req_SetLEDs = 0x02,
+    PSMove_Req_SetLEDs = 0x06,
     PSMove_Req_SetLEDPWMFrequency = 0x03,
     PSMove_Req_GetBTAddr = 0x04,
     PSMove_Req_SetBTAddr = 0x05,
