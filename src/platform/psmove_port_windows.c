@@ -669,6 +669,8 @@ psmove_port_get_host_bluetooth_address()
 void
 psmove_port_register_psmove(const char *addr, const char *host)
 {
+    // TODO: FIXME: If necessary, handle different controller models differently.
+
     // FIXME: Host is ignored for now
 
     HANDLE hRadio;

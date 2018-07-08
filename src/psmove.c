@@ -212,6 +212,9 @@ struct _PSMove {
     PSMove_Data_LEDs leds;
     PSMove_Data_Input input;
 
+    /* Controller hardware model */
+    enum PSMove_Model_Type model;
+
     /* Save location for the serial number */
     char *serial_number;
 
@@ -427,7 +430,7 @@ psmove_count_connected()
 }
 
 PSMove *
-psmove_connect_internal(const wchar_t *serial, const char *path, int id)
+psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigned short pid)
 {
     char *tmp;
 
@@ -498,6 +501,8 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id)
 
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
+
+    move->model = (pid == PSMOVE_PS4_PID) ? Model_ZCM2 : Model_ZCM1;
 
     /* Remember the ID/index */
     move->id = id;
@@ -694,6 +699,9 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
 
+    // TODO: Add support for other models
+    move->model = Model_ZCM1;
+
     /* Remember the ID/index */
     move->id = id;
 
@@ -820,7 +828,7 @@ psmove_connect_by_id(int id)
 
         if (strstr(cur_dev->path, "&col01#") != NULL) {
             if (count == id) {
-                move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id);
+                move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id, cur_dev->product_id);
                 break;
             }
         } else {
@@ -832,7 +840,7 @@ psmove_connect_by_id(int id)
 #else
     if (id < available) {
         cur_dev = devs_sorted[id];
-        move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id);
+        move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id, cur_dev->product_id);
     }
 #endif
 
@@ -1034,7 +1042,7 @@ psmove_pair(PSMove *move)
 
     char *addr = psmove_get_serial(move);
 
-    psmove_port_register_psmove(addr, host);
+    psmove_port_register_psmove(addr, host, move->model);
 
     free(addr);
     free(host);
@@ -1043,13 +1051,13 @@ psmove_pair(PSMove *move)
 }
 
 enum PSMove_Bool
-psmove_host_pair_custom(const char *addr)
+psmove_host_pair_custom(const char *addr, enum PSMove_Model_Type model)
 {
     char *host = psmove_port_get_host_bluetooth_address();
 
     psmove_return_val_if_fail(host != NULL, PSMove_False);
 
-    psmove_port_register_psmove(addr, host);
+    psmove_port_register_psmove(addr, host, model);
 
     free(host);
 
@@ -1083,7 +1091,7 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
     char *addr = psmove_get_serial(move);
     char *host = _psmove_btaddr_to_string(new_host);
 
-    psmove_port_register_psmove(addr, host);
+    psmove_port_register_psmove(addr, host, move->model);
 
     free(addr);
     free(host);

@@ -57,20 +57,22 @@
 namespace {
 
 const std::string
-BLUEZ5_INFO_ENTRY {
-"[General]\n"
-"Name=Motion Controller\n"
-"Class=0x002508\n"
-"SupportedTechnologies=BR/EDR\n"
-"Trusted=true\n"
-"Blocked=false\n"
-"Services=00001124-0000-1000-8000-00805f9b34fb;\n"
-"\n"
-"[DeviceID]\n"
-"Source=1\n"
-"Vendor=1356\n"
-"Product=981\n"
-"Version=1\n" };
+BLUEZ5_INFO_ENTRY(unsigned short pid) {
+    return
+        "[General]\n"
+        "Name=Motion Controller\n"
+        "Class=0x002508\n"
+        "SupportedTechnologies=BR/EDR\n"
+        "Trusted=true\n"
+        "Blocked=false\n"
+        "Services=00001124-0000-1000-8000-00805f9b34fb;\n"
+        "\n"
+        "[DeviceID]\n"
+        "Source=1\n"
+        "Vendor=1356\n"
+        "Product=" + std::to_string(pid) + "\n"
+        "Version=1\n";
+};
 
 const std::string
 BLUEZ5_CACHE_ENTRY {
@@ -360,10 +362,12 @@ psmove_port_get_host_bluetooth_address()
 }
 
 void
-psmove_port_register_psmove(const char *addr, const char *host)
+psmove_port_register_psmove(const char *addr, const char *host, PSMove_Model_Type model)
 {
     auto controller_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 0, ':'));
     auto host_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(host, 0, ':'));
+
+    unsigned short pid = (model == Model_ZCM2) ? PSMOVE_PS4_PID : PSMOVE_PID;
 
     if (controller_addr.empty()) {
         LINUXPAIR_DEBUG("Cannot parse controller address: '%s'\n", addr);
@@ -403,7 +407,7 @@ psmove_port_register_psmove(const char *addr, const char *host)
         }
     }
 
-    if (!linux_bluez5_update_file_content(bluetoothd, info_dir + "/info", BLUEZ5_INFO_ENTRY)) {
+    if (!linux_bluez5_update_file_content(bluetoothd, info_dir + "/info", BLUEZ5_INFO_ENTRY(pid))) {
         return;
     }
 

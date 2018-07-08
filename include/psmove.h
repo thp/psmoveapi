@@ -49,6 +49,13 @@ extern "C" {
 #  define ADDCALL
 #endif
 
+/*! Hardware model type for controller.
+ **/
+enum PSMove_Model_Type {
+    Model_ZCM1,
+    Model_ZCM2,
+};
+
 /*! Connection type for controllers.
  * Controllers can be connected via USB or via Bluetooth. The USB connection is
  * required when you want to pair the controller and for saving the calibration
@@ -416,9 +423,10 @@ ADDCALL psmove_pair(PSMove *move);
  * \brief Add an entry for a controller paired on another host.
  *
  * \param addr The Bluetooth address of the PS move to add
+ * \param model The hardware model type of the controller
  **/
 ADDAPI enum PSMove_Bool
-ADDCALL psmove_host_pair_custom(const char *addr);
+ADDCALL psmove_host_pair_custom(const char *addr, enum PSMove_Model_Type model);
 
 /**
  * \brief Pair a controller connected via USB to a specific address.

@@ -38,12 +38,14 @@
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
+#define OPT_PS4 "--ps4"
+
 
 int
 main(int argc, char *argv[])
 {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s [bluetooth-address]\n", argv[0]);
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s [%s] bluetooth-address\n", argv[0], OPT_PS4);
         return 1;
     }
 
@@ -51,7 +53,15 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    if (psmove_host_pair_custom(argv[1])) {
+    char *bdaddr = argv[1];
+    PSMove_Model_Type model = Model_ZCM1;
+
+    if ((argc > 2) && (strcmp(argv[1], OPT_PS4) == 0)) {
+        bdaddr = argv[2];
+        model = Model_ZCM2;
+    }
+
+    if (psmove_host_pair_custom(bdaddr, model)) {
         printf("Paired\n");
     } else {
         printf("Pairing failed\n");

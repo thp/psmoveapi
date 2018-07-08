@@ -130,7 +130,7 @@ ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
  * [PRIVATE API] Internal device open function (hidraw, Linux / for moved)
  **/
 ADDAPI PSMove *
-ADDCALL psmove_connect_internal(const wchar_t *serial, const char *path, int id);
+ADDCALL psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigned short pid);
 
 /**
  * [PRIVATE API] Get device path of a controller (hidraw, Linux / for moved)
