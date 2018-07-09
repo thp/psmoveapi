@@ -241,7 +241,7 @@ cstring_to_stdstring_free(char *cstring)
 };
 
 void
-psmove_port_register_psmove(const char *addr, const char *host, PSMove_Model_Type model)
+psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
 {
     // TODO: FIXME: If necessary, handle different controller models differently.
 

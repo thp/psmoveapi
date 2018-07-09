@@ -362,7 +362,7 @@ psmove_port_get_host_bluetooth_address()
 }
 
 void
-psmove_port_register_psmove(const char *addr, const char *host, PSMove_Model_Type model)
+psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
 {
     auto controller_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 0, ':'));
     auto host_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(host, 0, ':'));
