@@ -423,10 +423,22 @@ ADDCALL psmove_pair(PSMove *move);
  * \brief Add an entry for a controller paired on another host.
  *
  * \param addr The Bluetooth address of the PS move to add
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_host_pair_custom(const char *addr);
+
+/**
+ * \brief Add an entry for a controller paired on another host.
+ *
+ * This function behaves the same as psmove_host_pair_custom() but allows you
+ * to specify a controller hardware model. Use this to pair a PS4 Move Motion
+ * controller (model ZCM2).
+ *
+ * \param addr The Bluetooth address of the PS move to add
  * \param model The hardware model type of the controller
  **/
 ADDAPI enum PSMove_Bool
-ADDCALL psmove_host_pair_custom(const char *addr, enum PSMove_Model_Type model);
+ADDCALL psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model);
 
 /**
  * \brief Pair a controller connected via USB to a specific address.

@@ -1052,7 +1052,15 @@ psmove_pair(PSMove *move)
 }
 
 enum PSMove_Bool
-psmove_host_pair_custom(const char *addr, enum PSMove_Model_Type model)
+psmove_host_pair_custom(const char *addr)
+{
+    // NOTE: We assume Move Motion controller model ZCM1 to be compatible with
+    //       earlier version of the library that only supported that model.
+    return psmove_host_pair_custom_model(addr, Model_ZCM1);
+}
+
+enum PSMove_Bool
+psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model)
 {
     char *host = psmove_port_get_host_bluetooth_address();
 

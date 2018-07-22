@@ -61,7 +61,7 @@ main(int argc, char *argv[])
         model = Model_ZCM2;
     }
 
-    if (psmove_host_pair_custom(bdaddr, model)) {
+    if (psmove_host_pair_custom_model(bdaddr, model)) {
         printf("Paired\n");
     } else {
         printf("Pairing failed\n");
