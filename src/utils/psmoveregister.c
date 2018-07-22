@@ -38,7 +38,7 @@
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
-#define OPT_PS4 "--ps4"
+static const char *OPT_PS4 = "--ps4";
 
 
 int
