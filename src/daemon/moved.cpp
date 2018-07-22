@@ -102,7 +102,7 @@ on_monitor_update_moved(enum MonitorEvent event,
         if (device_type == EVENT_DEVICE_TYPE_USB) {
             // TODO: FIXME: This should use the device's actual USB product ID.
             // HACK: We rely on this invalid PID being translated to a
-            //       valid controller model (the old ZCM1, be default).
+            //       valid controller model (the old ZCM1, by default).
             unsigned short pid = 0;
             PSMove *move = psmove_connect_internal(serial, path, -1, pid);
             if (psmove_pair(move)) {
@@ -311,7 +311,7 @@ psmove_dev::psmove_dev(move_daemon *moved, const char *path, const wchar_t *seri
     if (path != NULL) {
         // TODO: FIXME: This should use the device's actual USB product ID.
         // HACK: We rely on this invalid PID being translated to a
-        //       valid controller model (the old ZCM1, be default).
+        //       valid controller model (the old ZCM1, by default).
         unsigned short pid = 0;
         move = psmove_connect_internal((wchar_t *)serial, (char *)path, moved->count(), pid);
     } else {
