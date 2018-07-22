@@ -849,7 +849,7 @@ psmove_connect_by_id(int id)
 
     // free HID device enumerations
     for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
-        devs = hid_enumerate(PSMOVE_VID, PSMOVE_PIDS[i]);
+        devs = move_hid_devices[i];
         if (devs) {
             hid_free_enumeration(devs);
         }
