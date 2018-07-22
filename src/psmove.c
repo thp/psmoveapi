@@ -1644,33 +1644,33 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
     psmove_return_if_fail(move != NULL);
 
     if (move->model == Model_ZCM2) {
-		if (gx != NULL) {
-		    *gx = (int16_t) (move->input.gXlow + (move->input.gXhigh << 8));
-		}
+        if (gx != NULL) {
+            *gx = (int16_t) (move->input.gXlow + (move->input.gXhigh << 8));
+        }
 
-		if (gy != NULL) {
-		    *gy = (int16_t) (move->input.gYlow + (move->input.gYhigh << 8));
-		}
+        if (gy != NULL) {
+            *gy = (int16_t) (move->input.gYlow + (move->input.gYhigh << 8));
+        }
 
-		if (gz != NULL) {
-		    *gz = (int16_t) (move->input.gZlow + (move->input.gZhigh << 8));
-		}
-	} else {
-		if (gx != NULL) {
-		    *gx = ((move->input.gXlow + move->input.gXlow2) +
-		           ((move->input.gXhigh + move->input.gXhigh2) << 8)) / 2 - 0x8000;
-		}
+        if (gz != NULL) {
+            *gz = (int16_t) (move->input.gZlow + (move->input.gZhigh << 8));
+        }
+    } else {
+        if (gx != NULL) {
+            *gx = ((move->input.gXlow + move->input.gXlow2) +
+                   ((move->input.gXhigh + move->input.gXhigh2) << 8)) / 2 - 0x8000;
+        }
 
-		if (gy != NULL) {
-		    *gy = ((move->input.gYlow + move->input.gYlow2) +
-		           ((move->input.gYhigh + move->input.gYhigh2) << 8)) / 2 - 0x8000;
-		}
+        if (gy != NULL) {
+            *gy = ((move->input.gYlow + move->input.gYlow2) +
+                   ((move->input.gYhigh + move->input.gYhigh2) << 8)) / 2 - 0x8000;
+        }
 
-		if (gz != NULL) {
-		    *gz = ((move->input.gZlow + move->input.gZlow2) +
-		           ((move->input.gZhigh + move->input.gZhigh2) << 8)) / 2 - 0x8000;
-		}
-	}
+        if (gz != NULL) {
+            *gz = ((move->input.gZlow + move->input.gZlow2) +
+                   ((move->input.gZhigh + move->input.gZhigh2) << 8)) / 2 - 0x8000;
+        }
+    }
 }
 
 void
