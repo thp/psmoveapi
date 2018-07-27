@@ -241,8 +241,10 @@ cstring_to_stdstring_free(char *cstring)
 };
 
 void
-psmove_port_register_psmove(const char *addr, const char *host)
+psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
 {
+    // TODO: FIXME: If necessary, handle different controller models differently.
+
     ScopedNSAutoreleasePool pool;
     std::string btaddr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 1, '-'));
 

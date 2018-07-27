@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
@@ -51,7 +52,7 @@
 /* Begin private definitions */
 
 /* Buffer size for writing LEDs and reading sensor data */
-#define PSMOVE_BUFFER_SIZE 49
+#define PSMOVE_BUFFER_SIZE 9
 
 /* Buffer size for the Bluetooth address get request */
 #define PSMOVE_BTADDR_GET_SIZE 16
@@ -71,7 +72,7 @@
 
 enum PSMove_Request_Type {
     PSMove_Req_GetInput = 0x01,
-    PSMove_Req_SetLEDs = 0x02,
+    PSMove_Req_SetLEDs = 0x06,
     PSMove_Req_SetLEDPWMFrequency = 0x03,
     PSMove_Req_GetBTAddr = 0x04,
     PSMove_Req_SetBTAddr = 0x05,
@@ -133,6 +134,9 @@ psmove_decode_16bit(char *data, int offset)
     unsigned char high = (data[offset+1]) & 0xFF;
     return (low | (high << 8)) - 0x8000;
 }
+
+#define NUM_PSMOVE_PIDS \
+    ((sizeof(PSMOVE_PIDS) / sizeof(PSMOVE_PIDS[0])) - 1)
 
 static int
 PSMOVE_PIDS[] = {
@@ -208,6 +212,9 @@ struct _PSMove {
     /* Various buffers for PS Move-related data */
     PSMove_Data_LEDs leds;
     PSMove_Data_Input input;
+
+    /* Controller hardware model */
+    enum PSMove_Model_Type model;
 
     /* Save location for the serial number */
     char *serial_number;
@@ -424,7 +431,7 @@ psmove_count_connected()
 }
 
 PSMove *
-psmove_connect_internal(const wchar_t *serial, const char *path, int id)
+psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigned short pid)
 {
     char *tmp;
 
@@ -495,6 +502,8 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id)
 
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
+
+    move->model = (pid == PSMOVE_PS4_PID) ? Model_ZCM2 : Model_ZCM1;
 
     /* Remember the ID/index */
     move->id = id;
@@ -691,6 +700,9 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
     /* Message type for LED set requests */
     move->leds.type = PSMove_Req_SetLEDs;
 
+    // TODO: Add support for other models
+    move->model = Model_ZCM1;
+
     /* Remember the ID/index */
     move->id = id;
 
@@ -738,6 +750,8 @@ compare_hid_device_info_ptr(const void *a, const void *b)
     return 0;
 }
 
+static struct hid_device_info *move_hid_devices[NUM_PSMOVE_PIDS];
+
 PSMove *
 psmove_connect_by_id(int id)
 {
@@ -767,22 +781,38 @@ psmove_connect_by_id(int id)
     struct hid_device_info *devs, *cur_dev;
     PSMove *move = NULL;
 
-    // TODO: FIXME: This needs to add support for PS4 Move still
-    devs = hid_enumerate(PSMOVE_VID, PSMOVE_PID);
+    // TODO: Implement handling of multiple PIDs in a cleaner way. Ideally, we
+    //       would just build a *single* list of hid_device_info structs.
+
+    // enumerate matching HID devices
+    for (unsigned int i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        psmove_DEBUG("Enumerating HID devices with PID 0x%04X\n", PSMOVE_PIDS[i]);
+
+        // NOTE: hidapi returns NULL for PIDs that were not found
+        move_hid_devices[i] = hid_enumerate(PSMOVE_VID, PSMOVE_PIDS[i]);
+    }
 
     // Count available devices
     int available = 0;
-    for (cur_dev=devs, available=0; cur_dev != NULL; cur_dev = cur_dev->next, available++);
+    int i;
+    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        for (cur_dev = move_hid_devices[i]; cur_dev != NULL; cur_dev = cur_dev->next, available++);
+    }
+    psmove_DEBUG("Matching HID devices: %d\n", available);
 
     // Sort list of devices to have stable ordering of devices
+    int n = 0;
     struct hid_device_info **devs_sorted = calloc(available, sizeof(struct hid_device_info *));
-    cur_dev = devs;
-    int i;
-    for (i=0; i<available; i++) {
-        devs_sorted[i] = cur_dev;
-        cur_dev = cur_dev->next;
+    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        cur_dev = move_hid_devices[i];
+        while (cur_dev && (n < available)) {
+            devs_sorted[n] = cur_dev;
+            cur_dev = cur_dev->next;
+            n++;
+        }
     }
     qsort((void *)devs_sorted, available, sizeof(struct hid_device_info *), compare_hid_device_info_ptr);
+
 #if defined(PSMOVE_DEBUG)
     for (i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
@@ -799,7 +829,7 @@ psmove_connect_by_id(int id)
 
         if (strstr(cur_dev->path, "&col01#") != NULL) {
             if (count == id) {
-                move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id);
+                move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id, cur_dev->product_id);
                 break;
             }
         } else {
@@ -811,12 +841,19 @@ psmove_connect_by_id(int id)
 #else
     if (id < available) {
         cur_dev = devs_sorted[id];
-        move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id);
+        move = psmove_connect_internal(cur_dev->serial_number, cur_dev->path, id, cur_dev->product_id);
     }
 #endif
 
     free(devs_sorted);
-    hid_free_enumeration(devs);
+
+    // free HID device enumerations
+    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+        devs = move_hid_devices[i];
+        if (devs) {
+            hid_free_enumeration(devs);
+        }
+    }
 
     return move;
 }
@@ -1006,7 +1043,7 @@ psmove_pair(PSMove *move)
 
     char *addr = psmove_get_serial(move);
 
-    psmove_port_register_psmove(addr, host);
+    psmove_port_register_psmove(addr, host, move->model);
 
     free(addr);
     free(host);
@@ -1017,11 +1054,19 @@ psmove_pair(PSMove *move)
 enum PSMove_Bool
 psmove_host_pair_custom(const char *addr)
 {
+    // NOTE: We assume Move Motion controller model ZCM1 to be compatible with
+    //       earlier version of the library that only supported that model.
+    return psmove_host_pair_custom_model(addr, Model_ZCM1);
+}
+
+enum PSMove_Bool
+psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model)
+{
     char *host = psmove_port_get_host_bluetooth_address();
 
     psmove_return_val_if_fail(host != NULL, PSMove_False);
 
-    psmove_port_register_psmove(addr, host);
+    psmove_port_register_psmove(addr, host, model);
 
     free(host);
 
@@ -1055,7 +1100,7 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
     char *addr = psmove_get_serial(move);
     char *host = _psmove_btaddr_to_string(new_host);
 
-    psmove_port_register_psmove(addr, host);
+    psmove_port_register_psmove(addr, host, move->model);
 
     free(addr);
     free(host);
@@ -1521,7 +1566,11 @@ psmove_get_trigger(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return (move->input.trigger + move->input.trigger2) / 2;
+    if (move->model == Model_ZCM2) {
+        return move->input.trigger;
+    } else {
+        return (move->input.trigger + move->input.trigger2) / 2;
+    }
 }
 
 void
@@ -1567,19 +1616,33 @@ psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (ax != NULL) {
-        *ax = ((move->input.aXlow + move->input.aXlow2) +
-               ((move->input.aXhigh + move->input.aXhigh2) << 8)) / 2 - 0x8000;
-    }
+    if (move->model == Model_ZCM2) {
+        if (ax != NULL) {
+            *ax = (int16_t) (move->input.aXlow + (move->input.aXhigh << 8));
+        }
 
-    if (ay != NULL) {
-        *ay = ((move->input.aYlow + move->input.aYlow2) +
-               ((move->input.aYhigh + move->input.aYhigh2) << 8)) / 2 - 0x8000;
-    }
+        if (ay != NULL) {
+            *ay = (int16_t) (move->input.aYlow + (move->input.aYhigh << 8));
+        }
 
-    if (az != NULL) {
-        *az = ((move->input.aZlow + move->input.aZlow2) +
-               ((move->input.aZhigh + move->input.aZhigh2) << 8)) / 2 - 0x8000;
+        if (az != NULL) {
+            *az = (int16_t) (move->input.aZlow + (move->input.aZhigh << 8));
+        }
+    } else {
+        if (ax != NULL) {
+            *ax = ((move->input.aXlow + move->input.aXlow2) +
+                   ((move->input.aXhigh + move->input.aXhigh2) << 8)) / 2 - 0x8000;
+        }
+
+        if (ay != NULL) {
+            *ay = ((move->input.aYlow + move->input.aYlow2) +
+                   ((move->input.aYhigh + move->input.aYhigh2) << 8)) / 2 - 0x8000;
+        }
+
+        if (az != NULL) {
+            *az = ((move->input.aZlow + move->input.aZlow2) +
+                   ((move->input.aZhigh + move->input.aZhigh2) << 8)) / 2 - 0x8000;
+        }
     }
 }
 
@@ -1588,19 +1651,33 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (gx != NULL) {
-        *gx = ((move->input.gXlow + move->input.gXlow2) +
-               ((move->input.gXhigh + move->input.gXhigh2) << 8)) / 2 - 0x8000;
-    }
+    if (move->model == Model_ZCM2) {
+        if (gx != NULL) {
+            *gx = (int16_t) (move->input.gXlow + (move->input.gXhigh << 8));
+        }
 
-    if (gy != NULL) {
-        *gy = ((move->input.gYlow + move->input.gYlow2) +
-               ((move->input.gYhigh + move->input.gYhigh2) << 8)) / 2 - 0x8000;
-    }
+        if (gy != NULL) {
+            *gy = (int16_t) (move->input.gYlow + (move->input.gYhigh << 8));
+        }
 
-    if (gz != NULL) {
-        *gz = ((move->input.gZlow + move->input.gZlow2) +
-               ((move->input.gZhigh + move->input.gZhigh2) << 8)) / 2 - 0x8000;
+        if (gz != NULL) {
+            *gz = (int16_t) (move->input.gZlow + (move->input.gZhigh << 8));
+        }
+    } else {
+        if (gx != NULL) {
+            *gx = ((move->input.gXlow + move->input.gXlow2) +
+                   ((move->input.gXhigh + move->input.gXhigh2) << 8)) / 2 - 0x8000;
+        }
+
+        if (gy != NULL) {
+            *gy = ((move->input.gYlow + move->input.gYlow2) +
+                   ((move->input.gYhigh + move->input.gYhigh2) << 8)) / 2 - 0x8000;
+        }
+
+        if (gz != NULL) {
+            *gz = ((move->input.gZlow + move->input.gZlow2) +
+                   ((move->input.gZhigh + move->input.gZhigh2) << 8)) / 2 - 0x8000;
+        }
     }
 }
 
@@ -1715,19 +1792,35 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (mx != NULL) {
-        *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
-                move->input.mXlow);
-    }
+    if (move->model == Model_ZCM2) {
+        // NOTE: This model does not have magnetometers
 
-    if (my != NULL) {
-        *my = TWELVE_BIT_SIGNED((move->input.mYhigh << 4) |
-               (move->input.mYlow_mZhigh & 0xF0) >> 4);
-    }
+        if (mx != NULL) {
+            *mx = 0;
+        }
 
-    if (mz != NULL) {
-        *mz = TWELVE_BIT_SIGNED(((move->input.mYlow_mZhigh & 0x0F) << 8) |
-                move->input.mZlow);
+        if (my != NULL) {
+            *my = 0;
+        }
+
+        if (mz != NULL) {
+            *mz = 0;
+        }
+    } else {
+        if (mx != NULL) {
+            *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
+                    move->input.mXlow);
+        }
+
+        if (my != NULL) {
+            *my = TWELVE_BIT_SIGNED((move->input.mYhigh << 4) |
+                   (move->input.mYlow_mZhigh & 0xF0) >> 4);
+        }
+
+        if (mz != NULL) {
+            *mz = TWELVE_BIT_SIGNED(((move->input.mYlow_mZhigh & 0x0F) << 8) |
+                    move->input.mZlow);
+        }
     }
 }
 
