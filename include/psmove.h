@@ -231,14 +231,9 @@ typedef struct _PSMove_3AxisTransform PSMove_3AxisTransform;
 
 /*! Library version number */
 enum PSMove_Version {
-    /**
-     * Version format: AA.BB.CC = 0xAABBCC
-     *
-     * Examples:
-     *  3.0.1 = 0x030001
-     *  4.2.11 = 0x04020B
-     **/
-    PSMOVE_CURRENT_VERSION = 0x030001, /*!< Current version, see psmove_init() */
+    PSMOVE_CURRENT_VERSION = (PSMOVEAPI_VERSION_MAJOR << 16) |
+                             (PSMOVEAPI_VERSION_MINOR << 8) |
+                             (PSMOVEAPI_VERSION_PATCH << 0)
 };
     
 /**
