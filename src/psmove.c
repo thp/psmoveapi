@@ -1043,12 +1043,12 @@ psmove_pair(PSMove *move)
 
     char *addr = psmove_get_serial(move);
 
-    psmove_port_register_psmove(addr, host, move->model);
+    enum PSMove_Bool result = psmove_port_register_psmove(addr, host, move->model);
 
     free(addr);
     free(host);
 
-    return PSMove_True;
+    return result;
 }
 
 enum PSMove_Bool
@@ -1066,11 +1066,11 @@ psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model)
 
     psmove_return_val_if_fail(host != NULL, PSMove_False);
 
-    psmove_port_register_psmove(addr, host, model);
+    enum PSMove_Bool result = psmove_port_register_psmove(addr, host, model);
 
     free(host);
 
-    return PSMove_True;
+    return result;
 }
 
 enum PSMove_Bool
@@ -1100,12 +1100,12 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
     char *addr = psmove_get_serial(move);
     char *host = _psmove_btaddr_to_string(new_host);
 
-    psmove_port_register_psmove(addr, host, move->model);
+    enum PSMove_Bool result = psmove_port_register_psmove(addr, host, move->model);
 
     free(addr);
     free(host);
 
-    return PSMove_True;
+    return result;
 }
 
 enum PSMove_Connection_Type

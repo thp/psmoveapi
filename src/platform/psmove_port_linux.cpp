@@ -361,7 +361,7 @@ psmove_port_get_host_bluetooth_address()
     return result.empty() ? nullptr : strdup(result.c_str());
 }
 
-void
+enum PSMove_Bool
 psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
 {
     auto controller_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 0, ':'));
@@ -371,18 +371,18 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
 
     if (controller_addr.empty()) {
         LINUXPAIR_DEBUG("Cannot parse controller address: '%s'\n", addr);
-        return;
+        return PSMove_False;
     }
 
     if (host_addr.empty()) {
         LINUXPAIR_DEBUG("Cannot parse host address: '%s'\n", host);
-        return;
+        return PSMove_False;
     }
 
     std::string bluetooth_dir { "/var/lib/bluetooth/" + host_addr };
     if (!directory_exists(bluetooth_dir)) {
         LINUXPAIR_DEBUG("Not a directory: %s\n", bluetooth_dir.c_str());
-        return;
+        return PSMove_False;
     }
 
     BluetoothDaemon bluetoothd;
@@ -393,7 +393,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
 
         if (!make_directory(info_dir)) {
             LINUXPAIR_DEBUG("Cannot create directory: %s\n", info_dir.c_str());
-            return;
+            return PSMove_False;
         }
     }
 
@@ -403,15 +403,17 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
 
         if (!make_directory(cache_dir)) {
             LINUXPAIR_DEBUG("Cannot create directory: %s\n", cache_dir.c_str());
-            return;
+            return PSMove_False;
         }
     }
 
     if (!linux_bluez5_update_file_content(bluetoothd, info_dir + "/info", BLUEZ5_INFO_ENTRY(pid))) {
-        return;
+        return PSMove_False;
     }
 
     if (!linux_bluez5_update_file_content(bluetoothd, cache_dir + "/" + controller_addr, BLUEZ5_CACHE_ENTRY)) {
-        return;
+        return PSMove_False;
     }
+
+    return PSMove_True;
 }

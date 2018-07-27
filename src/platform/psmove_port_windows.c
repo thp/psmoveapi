@@ -666,7 +666,7 @@ psmove_port_get_host_bluetooth_address()
     return _psmove_btaddr_to_string(btaddr);
 }
 
-void
+enum PSMove_Bool
 psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
 {
     // TODO: FIXME: If necessary, handle different controller models differently.
@@ -676,7 +676,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     HANDLE hRadio;
     if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
         psmove_WARNING("Failed to find a Bluetooth radio");
-        return;
+        return PSMove_False;
     }
 
     BLUETOOTH_RADIO_INFO radioInfo;
@@ -685,11 +685,13 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
         psmove_CRITICAL("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
-        return;
+        return PSMove_False;
     }
 
-    windows_register_psmove(addr, &radioInfo.address, hRadio);
+    int res = windows_register_psmove(addr, &radioInfo.address, hRadio);
     CloseHandle(hRadio);
+
+    return (res == 0) ? PSMove_True : PSMove_False;
 }
 
 #if !defined(_MSC_VER)

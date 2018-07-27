@@ -275,7 +275,9 @@ moved_server::handle_request()
                 char *host = psmove_port_get_host_bluetooth_address();
 
                 // TODO: Add support for other models
-                psmove_port_register_psmove(addr, host, Model_ZCM1);
+                if (!psmove_port_register_psmove(addr, host, Model_ZCM1)) {
+                    printf("Could not register PS Move Controller in the system.\n");
+                }
 
                 free(addr);
                 free(host);

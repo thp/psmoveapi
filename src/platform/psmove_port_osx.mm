@@ -233,28 +233,35 @@ format(const char *fmt, ...)
 std::string
 cstring_to_stdstring_free(char *cstring)
 {
-    std::string result = cstring;
+    std::string result = cstring ?: "";
     free(cstring);
     return result;
 }
 
 };
 
-void
+enum PSMove_Bool
 psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
 {
+    enum PSMove_Bool result = PSMove_True;
+
     // TODO: FIXME: If necessary, handle different controller models differently.
 
     ScopedNSAutoreleasePool pool;
     std::string btaddr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 1, '-'));
 
+    if (btaddr.length() == 0) {
+        OSXPAIR_DEBUG("Not a valid Bluetooth address: %s\n", addr);
+        return PSMove_False;
+    }
+
     int minor_version = macosx_get_minor_version();
     if (minor_version == -1) {
         OSXPAIR_DEBUG("Cannot detect Mac OS X version.\n");
-        return;
+        return PSMove_False;
     } else if (minor_version < 7) {
         OSXPAIR_DEBUG("No need to add entry for OS X before 10.7.\n");
-        return;
+        return PSMove_False;
     } else {
         OSXPAIR_DEBUG("Detected: Mac OS X 10.%d\n", minor_version);
     }
@@ -264,7 +271,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
 
     if (macosx_blued_is_paired(btaddr)) {
         OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr.c_str());
-        return;
+        return PSMove_True;
     }
 
     if (minor_version < 10)
@@ -291,6 +298,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     OSXPAIR_DEBUG("Running: '%s'\n", command.c_str());
     if (system(command.c_str()) != 0) {
         OSXPAIR_DEBUG("Could not run the command.");
+        result = PSMove_False;
     }
 
     if (minor_version < 10)
@@ -299,6 +307,8 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         // from a fresh process (e.g. like "blueutil 1") to switch Bluetooth on
         macosx_bluetooth_set_powered(1);
     }
+
+    return result;
 }
 
 void

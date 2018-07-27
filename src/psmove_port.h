@@ -111,7 +111,7 @@ ADDCALL psmove_port_get_host_bluetooth_address();
 /**
  * Add the PS Move Bluetooth controller address to the system database
  **/
-ADDAPI void
+ADDAPI enum PSMove_Bool
 ADDCALL psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model);
 
 #ifdef __cplusplus
