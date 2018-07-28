@@ -1455,7 +1455,7 @@ psmove_get_temperature(PSMove *move)
 }
 
 float
-psmove_get_temperature_in_celsius(PSMove *move)
+_psmove_temperature_to_celsius(int raw_value)
 {
     /**
      * The Move uses this table in Debug mode. Even though the resulting values
@@ -1475,9 +1475,6 @@ psmove_get_temperature_in_celsius(PSMove *move)
         0xCC1, 0xCD8, 0xCF0, 0xD06, 0xD1C, 0xD31, 0xD46, 0xD5A,
     };
 
-    psmove_return_val_if_fail(move != NULL, 0.0);
-
-    int raw_value = psmove_get_temperature(move);
     int i;
 
     for (i = 0; i < 80; i++) {
@@ -1487,6 +1484,16 @@ psmove_get_temperature_in_celsius(PSMove *move)
     }
 
     return 70.0f;
+}
+
+float
+psmove_get_temperature_in_celsius(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, 0.0);
+
+    int raw_value = psmove_get_temperature(move);
+
+    return _psmove_temperature_to_celsius(raw_value);
 }
 
 unsigned char
