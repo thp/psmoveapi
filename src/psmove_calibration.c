@@ -115,6 +115,14 @@ psmove_calibration_decode(char *data, int offset)
     return (low | (high << 8)) - 0x8000;
 }
 
+unsigned int
+psmove_calibration_decode_12bits(char *data, int offset)
+{
+    unsigned char low = data[offset] & 0xFF;
+    unsigned char high = (data[offset+1]) & 0xFF;
+    return low | (high << 8);
+}
+
 void
 psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 {
@@ -127,6 +135,8 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 
     /* https://github.com/nitsch/moveonpc/wiki/Calibration-data */
 
+    t = psmove_calibration_decode_12bits(data, 0x02);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
     for (orientation=0; orientation<6; orientation++) {
         x = psmove_calibration_decode(data, 0x04 + 6*orientation);
         y = psmove_calibration_decode(data, 0x04 + 6*orientation + 2);
@@ -136,6 +146,8 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 
     printf("\n");
 
+    t = psmove_calibration_decode_12bits(data, 0x42);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
     for (orientation=0; orientation<3; orientation++) {
         x = psmove_calibration_decode(data, 0x46 + 8*orientation);
         y = psmove_calibration_decode(data, 0x46 + 8*orientation + 2);
@@ -145,20 +157,20 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 
     printf("\n");
 
-    t = psmove_calibration_decode(data, 0x28);
+    t = psmove_calibration_decode_12bits(data, 0x28);
     x = psmove_calibration_decode(data, 0x2a);
     y = psmove_calibration_decode(data, 0x2a + 2);
     z = psmove_calibration_decode(data, 0x2a + 4);
-    printf("# Temperature at 0x28: (%5d)\n", t);
+    printf("# Temperature at 0x28: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
     printf("# Vector at 0x2a: (%5d | %5d | %5d)\n", x, y, z);
 
     printf("\n");
 
-    t = psmove_calibration_decode(data, 0x30);
+    t = psmove_calibration_decode_12bits(data, 0x30);
     x = psmove_calibration_decode(data, 0x32);
     y = psmove_calibration_decode(data, 0x32 + 2);
     z = psmove_calibration_decode(data, 0x32 + 4);
-    printf("# Temperature at 0x30: (%5d)\n", t);
+    printf("# Temperature at 0x30: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
     printf("# Vector at 0x32: (%5d | %5d | %5d)\n", x, y, z);
 
     printf("\n");
