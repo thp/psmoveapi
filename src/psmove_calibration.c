@@ -161,8 +161,8 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
     x = psmove_calibration_decode(data, 0x2a);
     y = psmove_calibration_decode(data, 0x2a + 2);
     z = psmove_calibration_decode(data, 0x2a + 4);
-    printf("# Temperature at 0x28: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
-    printf("# Vector at 0x2a: (%5d | %5d | %5d)\n", x, y, z);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
+    printf("# Gyro, 0 rpm (at 0x2a): (%5d | %5d | %5d)\n", x, y, z);
 
     printf("\n");
 
@@ -170,8 +170,8 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
     x = psmove_calibration_decode(data, 0x32);
     y = psmove_calibration_decode(data, 0x32 + 2);
     z = psmove_calibration_decode(data, 0x32 + 4);
-    printf("# Temperature at 0x30: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
-    printf("# Vector at 0x32: (%5d | %5d | %5d)\n", x, y, z);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
+    printf("# Gyro, 0 rpm (at 0x32): (%5d | %5d | %5d)\n", x, y, z);
 
     printf("\n");
 
