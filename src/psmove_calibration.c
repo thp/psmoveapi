@@ -123,6 +123,17 @@ psmove_calibration_decode_12bits(char *data, int offset)
     return low | (high << 8);
 }
 
+float
+psmove_calibration_decode_float(char *data, int offset)
+{
+    uint32_t v = (data[offset] & 0xFF)
+        | ((data[offset+1] & 0xFF) <<  8)
+        | ((data[offset+2] & 0xFF) << 16)
+        | ((data[offset+3] & 0xFF) << 24);
+    return *((float *) &v);
+}
+
+
 void
 psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 {
@@ -130,6 +141,7 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
     char *data = calibration->usb_calibration;
     int orientation;
     int x, y, z, t;
+    float fx, fy, fz;
 
     printf("\n");
 
@@ -175,7 +187,23 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 
     printf("\n");
 
+    t = psmove_calibration_decode_12bits(data, 0x5c);
+    fx = psmove_calibration_decode_float(data, 0x5e);
+    fy = psmove_calibration_decode_float(data, 0x5e + 4);
+    fz = psmove_calibration_decode_float(data, 0x5e + 8);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
+    printf("# Vector at 0x5e: (%f | %f | %f)\n", fx, fy, fz);
+
+    fx = psmove_calibration_decode_float(data, 0x6a);
+    fy = psmove_calibration_decode_float(data, 0x6a + 4);
+    fz = psmove_calibration_decode_float(data, 0x6a + 8);
+    printf("# Vector at 0x6a: (%f | %f | %f)\n", fx, fy, fz);
+
+    printf("\n");
+
     printf("# byte at 0x3F: %02x\n", (unsigned char) data[0x3F]);
+    printf("# float at 0x76: %f\n", psmove_calibration_decode_float(data, 0x76));
+    printf("# float at 0x7a: %f\n", psmove_calibration_decode_float(data, 0x7a));
 }
 
 void
