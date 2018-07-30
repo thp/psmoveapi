@@ -289,14 +289,13 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
 enum PSMove_Bool
 psmove_init(enum PSMove_Version version)
 {
-    /**
-     * You could do initialization here. Be sure to always check
-     * if initialization has already been carried out, as this
-     * might be called multiple times, even after succeeding once.
-     **/
+    // Compile-time version of the library is PSMOVE_CURRENT_VERSION
+    // Compile-time version of the user code is the value of "version"
 
-    /* For now, assume future versions will be backwards-compatible */
-    if (version >= PSMOVE_CURRENT_VERSION) {
+    // The requested version must be equal or less than the version implemented,
+    // but it's okay if the requested version is less than the implemented version,
+    // as we (try to) be backwards compatible with older API users
+    if (version <= PSMOVE_CURRENT_VERSION) {
         return PSMove_True;
     } else {
         return PSMove_False;
