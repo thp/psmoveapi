@@ -100,7 +100,11 @@ on_monitor_update_moved(enum MonitorEvent event,
 
     if (event == EVENT_DEVICE_ADDED) {
         if (device_type == EVENT_DEVICE_TYPE_USB) {
-            PSMove *move = psmove_connect_internal(serial, path, -1);
+            // TODO: FIXME: This should use the device's actual USB product ID.
+            // HACK: We rely on this invalid PID being translated to a
+            //       valid controller model (the old ZCM1, by default).
+            unsigned short pid = 0;
+            PSMove *move = psmove_connect_internal(serial, path, -1, pid);
             if (psmove_pair(move)) {
                 // Indicate to the user that pairing was successful
                 psmove_set_leds(move, 0, 255, 0);
@@ -270,7 +274,10 @@ moved_server::handle_request()
                 char *addr = _psmove_btaddr_to_string(*((PSMove_Data_BTAddr *)&request.register_controller.btaddr));
                 char *host = psmove_port_get_host_bluetooth_address();
 
-                psmove_port_register_psmove(addr, host);
+                // TODO: Add support for other models
+                if (!psmove_port_register_psmove(addr, host, Model_ZCM1)) {
+                    printf("Could not register PS Move Controller in the system.\n");
+                }
 
                 free(addr);
                 free(host);
@@ -304,7 +311,11 @@ psmove_dev::psmove_dev(move_daemon *moved, const char *path, const wchar_t *seri
     : dirty_output(0)
 {
     if (path != NULL) {
-        move = psmove_connect_internal((wchar_t *)serial, (char *)path, moved->count());
+        // TODO: FIXME: This should use the device's actual USB product ID.
+        // HACK: We rely on this invalid PID being translated to a
+        //       valid controller model (the old ZCM1, by default).
+        unsigned short pid = 0;
+        move = psmove_connect_internal((wchar_t *)serial, (char *)path, moved->count(), pid);
     } else {
         move = psmove_connect_by_id(moved->count());
     }

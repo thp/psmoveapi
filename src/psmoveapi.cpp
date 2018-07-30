@@ -299,7 +299,11 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                     }
                 }
 
-                PSMove *move = psmove_connect_internal(serial, path, -1);
+                // TODO: FIXME: This should use the device's actual USB product ID.
+                // HACK: We rely on this invalid PID being translated to a
+                //       valid controller model (the old ZCM1, by default).
+                unsigned short pid = 0;
+                PSMove *move = psmove_connect_internal(serial, path, -1, pid);
                 if (move == nullptr) {
                     psmove_CRITICAL("Cannot open move for retrieving serial!");
                     return;

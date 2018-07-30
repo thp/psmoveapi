@@ -94,7 +94,7 @@ private:
     void
     make_event(enum MonitorEvent event, IOHIDDeviceRef device)
     {
-        if (get_vendor_id(device) == PSMOVE_VID && get_product_id(device) == PSMOVE_PID) {
+        if (get_vendor_id(device) == PSMOVE_VID && (get_product_id(device) == PSMOVE_PID || get_product_id(device) == PSMOVE_PS4_PID)) {
             ASyncDeviceEvent ade;
             ade.event = event;
             ade.device_type = EVENT_DEVICE_TYPE_UNKNOWN;

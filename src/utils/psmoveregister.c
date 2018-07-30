@@ -38,20 +38,43 @@
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
+static const char *OPT_PS4 = "--ps4";
+
+static void
+psmoveregister_usage(const char *progname)
+{
+    fprintf(stderr, "Usage: %s [%s] bluetooth-address\n", progname, OPT_PS4);
+}
 
 int
 main(int argc, char *argv[])
 {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s [bluetooth-address]\n", argv[0]);
-        return 1;
-    }
-
     if (!psmove_port_check_pairing_permissions()) {
         return 1;
     }
 
-    if (psmove_host_pair_custom(argv[1])) {
+    char *bdaddr = NULL;
+    PSMove_Model_Type model = Model_ZCM1;
+
+    for (int i=1; i<argc; ++i) {
+        if (strcmp(argv[i], OPT_PS4) == 0) {
+            model = Model_ZCM2;
+        } else if (bdaddr == NULL) {
+            bdaddr = argv[i];
+        } else {
+            psmoveregister_usage(argv[0]);
+            fprintf(stderr, "Unrecognized command-line argument: '%s'\n", argv[i]);
+            return 1;
+        }
+    }
+
+    if (bdaddr == NULL) {
+        psmoveregister_usage(argv[0]);
+        fprintf(stderr, "No Bluetooth address supplied.\n");
+        return 1;
+    }
+
+    if (psmove_host_pair_custom_model(bdaddr, model)) {
         printf("Paired\n");
     } else {
         printf("Pairing failed\n");
