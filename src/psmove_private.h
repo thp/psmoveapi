@@ -148,6 +148,12 @@ ADDCALL _psmove_get_device_path(PSMove *move);
 ADDAPI int
 ADDCALL _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size);
 
+/**
+ * [PRIVATE API] Translate a raw temperature value to degrees Celsius
+ **/
+ADDAPI float
+ADDCALL _psmove_temperature_to_celsius(int temperature);
+
 /* A Bluetooth address. */
 typedef unsigned char PSMove_Data_BTAddr[6];
 

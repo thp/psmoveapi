@@ -115,6 +115,25 @@ psmove_calibration_decode(char *data, int offset)
     return (low | (high << 8)) - 0x8000;
 }
 
+unsigned int
+psmove_calibration_decode_12bits(char *data, int offset)
+{
+    unsigned char low = data[offset] & 0xFF;
+    unsigned char high = (data[offset+1]) & 0xFF;
+    return low | (high << 8);
+}
+
+float
+psmove_calibration_decode_float(char *data, int offset)
+{
+    uint32_t v = (data[offset] & 0xFF)
+        | ((data[offset+1] & 0xFF) <<  8)
+        | ((data[offset+2] & 0xFF) << 16)
+        | ((data[offset+3] & 0xFF) << 24);
+    return *((float *) &v);
+}
+
+
 void
 psmove_calibration_parse_usb(PSMoveCalibration *calibration)
 {
@@ -122,48 +141,69 @@ psmove_calibration_parse_usb(PSMoveCalibration *calibration)
     char *data = calibration->usb_calibration;
     int orientation;
     int x, y, z, t;
+    float fx, fy, fz;
 
     printf("\n");
 
     /* https://github.com/nitsch/moveonpc/wiki/Calibration-data */
 
+    t = psmove_calibration_decode_12bits(data, 0x02);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
     for (orientation=0; orientation<6; orientation++) {
         x = psmove_calibration_decode(data, 0x04 + 6*orientation);
         y = psmove_calibration_decode(data, 0x04 + 6*orientation + 2);
         z = psmove_calibration_decode(data, 0x04 + 6*orientation + 4);
-        printf("# Orientation #%d: (%5d | %5d | %5d)\n", orientation, x, y, z);
+        printf("# Orientation #%d:      (%5d | %5d | %5d)\n", orientation, x, y, z);
     }
 
     printf("\n");
 
+    t = psmove_calibration_decode_12bits(data, 0x42);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
     for (orientation=0; orientation<3; orientation++) {
         x = psmove_calibration_decode(data, 0x46 + 8*orientation);
         y = psmove_calibration_decode(data, 0x46 + 8*orientation + 2);
         z = psmove_calibration_decode(data, 0x46 + 8*orientation + 4);
-        printf("# Gyro %c, 80 rpm: (%5d | %5d | %5d)\n", "XYZ"[orientation], x, y, z);
+        printf("# Gyro %c, 80 rpm:      (%5d | %5d | %5d)\n", "XYZ"[orientation], x, y, z);
     }
 
     printf("\n");
 
-    t = psmove_calibration_decode(data, 0x28);
+    t = psmove_calibration_decode_12bits(data, 0x28);
     x = psmove_calibration_decode(data, 0x2a);
     y = psmove_calibration_decode(data, 0x2a + 2);
     z = psmove_calibration_decode(data, 0x2a + 4);
-    printf("# Temperature at 0x28: (%5d)\n", t);
-    printf("# Vector at 0x2a: (%5d | %5d | %5d)\n", x, y, z);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
+    printf("# Gyro, 0 rpm (@0x2a): (%5d | %5d | %5d)\n", x, y, z);
 
     printf("\n");
 
-    t = psmove_calibration_decode(data, 0x30);
+    t = psmove_calibration_decode_12bits(data, 0x30);
     x = psmove_calibration_decode(data, 0x32);
     y = psmove_calibration_decode(data, 0x32 + 2);
     z = psmove_calibration_decode(data, 0x32 + 4);
-    printf("# Temperature at 0x30: (%5d)\n", t);
-    printf("# Vector at 0x32: (%5d | %5d | %5d)\n", x, y, z);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
+    printf("# Gyro, 0 rpm (@0x32): (%5d | %5d | %5d)\n", x, y, z);
 
     printf("\n");
 
-    printf("# byte at 0x3F: %02x\n", (unsigned char) data[0x3F]);
+    t = psmove_calibration_decode_12bits(data, 0x5c);
+    fx = psmove_calibration_decode_float(data, 0x5e);
+    fy = psmove_calibration_decode_float(data, 0x5e + 4);
+    fz = psmove_calibration_decode_float(data, 0x5e + 8);
+    printf("# Temperature: 0x%04X (%.0f °C)\n", t, _psmove_temperature_to_celsius(t));
+    printf("# Vector @0x5e: (%f | %f | %f)\n", fx, fy, fz);
+
+    fx = psmove_calibration_decode_float(data, 0x6a);
+    fy = psmove_calibration_decode_float(data, 0x6a + 4);
+    fz = psmove_calibration_decode_float(data, 0x6a + 8);
+    printf("# Vector @0x6a: (%f | %f | %f)\n", fx, fy, fz);
+
+    printf("\n");
+
+    printf("# byte @0x3f:  0x%02x\n", (unsigned char) data[0x3f]);
+    printf("# float @0x76: %f\n", psmove_calibration_decode_float(data, 0x76));
+    printf("# float @0x7a: %f\n", psmove_calibration_decode_float(data, 0x7a));
 }
 
 void
