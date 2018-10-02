@@ -306,7 +306,7 @@ bluetooth_auth_callback(
     LPVOID pvParam, 
     PBLUETOOTH_AUTHENTICATION_CALLBACK_PARAMS pAuthCallbackParams)
 {
-    struct BluetoothAuthenticationCallbackState *state= (struct BluetoothAuthenticationCallbackState *)pAuthCallbackParams;
+    struct BluetoothAuthenticationCallbackState *state= (struct BluetoothAuthenticationCallbackState *)pvParam;
 
     BLUETOOTH_AUTHENTICATE_RESPONSE AuthRes;
     memset(&AuthRes, 0, sizeof(BLUETOOTH_AUTHENTICATE_RESPONSE));
@@ -407,6 +407,10 @@ authenticate_controller(
             else if (dwRet == ERROR_INVALID_PARAMETER)
             {
                 WINPAIR_DEBUG("Invalid parameter!");
+                ret= 1;
+            }
+            else if (dwRet != ERROR_SUCCESS) {
+                WINPAIR_DEBUG("BluetoothAuthenticateDeviceEx failed: %d", GetLastError());
                 ret= 1;
             }
             else
