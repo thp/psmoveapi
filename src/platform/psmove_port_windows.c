@@ -409,10 +409,6 @@ authenticate_controller(
                 WINPAIR_DEBUG("Invalid parameter!");
                 ret= 1;
             }
-            else if (dwRet != ERROR_SUCCESS) {
-                WINPAIR_DEBUG("BluetoothAuthenticateDeviceEx failed: %d", GetLastError());
-                ret= 1;
-            }
             else
             {
                 // Block on authentication completing
