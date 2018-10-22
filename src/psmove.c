@@ -242,12 +242,11 @@ typedef struct {
     unsigned char gZhigh2;
     unsigned char temphigh; /* temperature (bits 12-5) */
     unsigned char templow; /* tempature (bits 4-1); */
-	unsigned char timehigh2; /* same as timestamp at offsets 0x0B */
-	unsigned char timelow; /* same as timestamp at offsets 0x2B */
-	unsigned char _unk41;
-	unsigned char _unk42;
-	unsigned char timelow2;
-
+    unsigned char timehigh2; /* same as timestamp at offsets 0x0B */
+    unsigned char timelow; /* same as timestamp at offsets 0x2B */
+    unsigned char _unk41;
+    unsigned char _unk42;
+    unsigned char timelow2;
 } PSMove_ZCM2_Data_Input;
 
 typedef struct {
