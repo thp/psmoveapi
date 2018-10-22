@@ -316,38 +316,30 @@ bluetooth_auth_callback(
 
     // Send authentication response to authenticate device
     DWORD dwRet = BluetoothSendAuthenticationResponseEx(state->hRadio, &AuthRes);
-    if (dwRet == ERROR_SUCCESS)
-    {
-        // Flag the device as authenticated
-        WINPAIR_DEBUG("Bluetooth device authenticated!");
-        state->deviceInfo->fAuthenticated = TRUE;
-    }
-    else
-    {
-        if (dwRet == ERROR_CANCELLED)
-        {
+    switch (dwRet) {
+        case ERROR_SUCCESS:
+            // Flag the device as authenticated
+            WINPAIR_DEBUG("Bluetooth device authenticated!");
+            state->deviceInfo->fAuthenticated = TRUE;
+            break;
+        case ERROR_CANCELLED:
             WINPAIR_DEBUG("Bluetooth device denied passkey response");
-        }
-        else if (dwRet == E_FAIL)
-        {
+            break;
+        case E_FAIL:
             WINPAIR_DEBUG("Failure during authentication");
-        }
-        else if (dwRet == ERROR_NOT_READY)
-        {
+            break;
+        case ERROR_NOT_READY:
             WINPAIR_DEBUG("Device not ready");
-        }
-        else if (dwRet == ERROR_INVALID_PARAMETER)
-        {
+            break;
+        case ERROR_INVALID_PARAMETER:
             WINPAIR_DEBUG("Invalid parameter");
-        }		
-        else if (dwRet == 1244)
-        {
+            break;
+        case 1244:  // TODO: Is there a named constant for this?
             WINPAIR_DEBUG("Not authenticated");
-        }
-        else
-        {
+            break;
+        default:
             WINPAIR_DEBUG("BluetoothSendAuthenticationResponseEx failed: %d", GetLastError());
-        }
+            break;
     }
 
     // Signal the thread that the authentication callback completed
