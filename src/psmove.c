@@ -249,11 +249,9 @@ typedef struct {
     unsigned char timelow2;
 } PSMove_ZCM2_Data_Input;
 
-typedef struct {
-	union {
-		PSMove_ZCM1_Data_Input zcm1;
-		PSMove_ZCM2_Data_Input zcm2;
-	} data;
+typedef union{
+    PSMove_ZCM1_Data_Input zcm1;
+    PSMove_ZCM2_Data_Input zcm2;
 } PSMove_Data_Input;
 
 struct _PSMove {
@@ -394,12 +392,12 @@ _psmove_read_data(PSMove *move, unsigned char *data, int length)
 
 	if (move->model == Model_ZCM1)
 	{
-		assert(length >= (sizeof(move->input.data.zcm1) + 4));
-		memcpy(data + sizeof(int32_t), &(move->input.data.zcm1), sizeof(move->input.data.zcm1));
+		assert(length >= (sizeof(move->input.zcm1) + 4));
+		memcpy(data + sizeof(int32_t), &(move->input.zcm1), sizeof(move->input.zcm1));
 	}
 	else if (move->model == Model_ZCM2)
 	{
-		memcpy(data + sizeof(int32_t), &(move->input.data.zcm2), sizeof(move->input.data.zcm2));
+		memcpy(data + sizeof(int32_t), &(move->input.zcm2), sizeof(move->input.zcm2));
 	}
 }
 
@@ -1412,15 +1410,15 @@ psmove_poll(PSMove *move)
     /* store old sequence number before reading */
     int oldseq = 
 		(move->model == Model_ZCM1)
-		? (move->input.data.zcm1.buttons4 & 0x0F)
-		: (move->input.data.zcm2.buttons4 & 0x0F);
+		? (move->input.zcm1.buttons4 & 0x0F)
+		: (move->input.zcm2.buttons4 & 0x0F);
 
     switch (move->type) {
         case PSMove_HIDAPI:
 			if (move->model == Model_ZCM1)
-				res = hid_read(move->handle, (unsigned char*)(&(move->input.data.zcm1)), sizeof(move->input.data.zcm1));
+				res = hid_read(move->handle, (unsigned char*)(&(move->input.zcm1)), sizeof(move->input.zcm1));
 			else if (move->model == Model_ZCM2)
-				res = hid_read(move->handle, (unsigned char*)(&(move->input.data.zcm2)), sizeof(move->input.data.zcm2));
+				res = hid_read(move->handle, (unsigned char*)(&(move->input.zcm2)), sizeof(move->input.zcm2));
             break;
         case PSMove_MOVED:
             if (moved_client_send(move->client, MOVED_REQ_READ_INPUT, (char)move->remote_id, NULL, 0)) {
@@ -1430,12 +1428,12 @@ psmove_poll(PSMove *move)
                  **/
 				size_t input_data_size= 0;
 				if (move->model == Model_ZCM1) {
-					input_data_size= sizeof(move->input.data.zcm1);
-					memcpy(&(move->input.data.zcm1), move->client->response_buf.read_input.data, input_data_size);
+					input_data_size= sizeof(move->input.zcm1);
+					memcpy(&(move->input.zcm1), move->client->response_buf.read_input.data, input_data_size);
 				}
 				else if (move->model == Model_ZCM2) {
-					input_data_size= sizeof(move->input.data.zcm2);
-					memcpy(&(move->input.data.zcm2), move->client->response_buf.read_input.data, input_data_size);
+					input_data_size= sizeof(move->input.zcm2);
+					memcpy(&(move->input.zcm2), move->client->response_buf.read_input.data, input_data_size);
 				}
 
                 if (move->client->response_buf.read_input.poll_return_value != 0) {
@@ -1447,14 +1445,14 @@ psmove_poll(PSMove *move)
             psmove_CRITICAL("Unknown device type");
     }
 
-    if ((move->model == Model_ZCM1 && res == sizeof(move->input.data.zcm1)) ||
-		(move->model == Model_ZCM2 && res == sizeof(move->input.data.zcm2))) {
+    if ((move->model == Model_ZCM1 && res == sizeof(move->input.zcm1)) ||
+		(move->model == Model_ZCM2 && res == sizeof(move->input.zcm2))) {
         /* Sanity check: The first byte should be PSMove_Req_GetInput */
 		if (move->model == Model_ZCM1) {
-			psmove_return_val_if_fail(move->input.data.zcm1.type == PSMove_Req_GetInput, 0);
+			psmove_return_val_if_fail(move->input.zcm1.type == PSMove_Req_GetInput, 0);
 		}
 		else if (move->model == Model_ZCM2) {
-			psmove_return_val_if_fail(move->input.data.zcm2.type == PSMove_Req_GetInput, 0);
+			psmove_return_val_if_fail(move->input.zcm2.type == PSMove_Req_GetInput, 0);
 		}
 
         /**
@@ -1464,8 +1462,8 @@ psmove_poll(PSMove *move)
          **/
         int seq = 
 			(move->model == Model_ZCM1)
-			? (move->input.data.zcm1.buttons4 & 0x0F)
-			: (move->input.data.zcm2.buttons4 & 0x0F);
+			? (move->input.zcm1.buttons4 & 0x0F)
+			: (move->input.zcm2.buttons4 & 0x0F);
         if (seq != ((oldseq + 1) % 16)) {
             psmove_DEBUG("Warning: Dropped frames (seq %d -> %d)\n",
                     oldseq, seq);
@@ -1489,9 +1487,9 @@ psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data)
 
 	if (move->model == Model_ZCM1)
 	{
-		assert(sizeof(*data) >= sizeof(move->input.data.zcm1.extdata));
+		assert(sizeof(*data) >= sizeof(move->input.zcm1.extdata));
 
-		memcpy(data, move->input.data.zcm1.extdata, sizeof(move->input.data.zcm1.extdata));
+		memcpy(data, move->input.zcm1.extdata, sizeof(move->input.zcm1.extdata));
 		return PSMove_True;
 	}
 	else
@@ -1551,17 +1549,17 @@ psmove_get_buttons(PSMove *move)
 
 	if (move->model == Model_ZCM1)
 	{
-		return ((move->input.data.zcm1.buttons2) |
-				(move->input.data.zcm1.buttons1 << 8) |
-				((move->input.data.zcm1.buttons3 & 0x01) << 16) |
-				((move->input.data.zcm1.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
+		return ((move->input.zcm1.buttons2) |
+				(move->input.zcm1.buttons1 << 8) |
+				((move->input.zcm1.buttons3 & 0x01) << 16) |
+				((move->input.zcm1.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
 	}
 	else if (move->model == Model_ZCM2)
 	{
-		return ((move->input.data.zcm2.buttons2) |
-				(move->input.data.zcm2.buttons1 << 8) |
-				((move->input.data.zcm2.buttons3 & 0x01) << 16) |
-				((move->input.data.zcm2.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
+		return ((move->input.zcm2.buttons2) |
+				(move->input.zcm2.buttons1 << 8) |
+				((move->input.zcm2.buttons3 & 0x01) << 16) |
+				((move->input.zcm2.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
 	}
 	else
 	{
@@ -1593,7 +1591,7 @@ psmove_is_ext_connected(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, PSMove_False);
 
-    if(move->model == Model_ZCM1 && (move->input.data.zcm1.buttons4 & 0x10) != 0) {
+    if(move->model == Model_ZCM1 && (move->input.zcm1.buttons4 & 0x10) != 0) {
         return PSMove_True;
     }
 
@@ -1691,9 +1689,9 @@ psmove_get_battery(PSMove *move)
     psmove_return_val_if_fail(move != NULL, 0);
 
 	if (move->model == Model_ZCM1)
-		return move->input.data.zcm1.battery;
+		return move->input.zcm1.battery;
 	else if (move->model == Model_ZCM2)
-		return move->input.data.zcm2.battery;
+		return move->input.zcm2.battery;
 	else
 		return 0;
 }
@@ -1715,13 +1713,13 @@ psmove_get_temperature(PSMove *move)
 
 	if (move->model == Model_ZCM1)
 	{
-		return ((move->input.data.zcm1.temphigh << 4) |
-				((move->input.data.zcm1.templow_mXhigh & 0xF0) >> 4));
+		return ((move->input.zcm1.temphigh << 4) |
+				((move->input.zcm1.templow_mXhigh & 0xF0) >> 4));
 	}
 	else if (move->model == Model_ZCM2)
 	{
-		return ((move->input.data.zcm2.temphigh << 4) |
-				((move->input.data.zcm2.templow & 0xF0) >> 4));
+		return ((move->input.zcm2.temphigh << 4) |
+				((move->input.zcm2.templow & 0xF0) >> 4));
 	}
 	else
 	{
@@ -1777,10 +1775,10 @@ psmove_get_trigger(PSMove *move)
     psmove_return_val_if_fail(move != NULL, 0);
 
     if (move->model == Model_ZCM1) {
-        return (move->input.data.zcm1.trigger + move->input.data.zcm1.trigger2) / 2;
+        return (move->input.zcm1.trigger + move->input.zcm1.trigger2) / 2;
     }
     else if (move->model == Model_ZCM2) {
-        return move->input.data.zcm2.trigger;
+        return move->input.zcm2.trigger;
 	}
 	else {
 		return 0;
@@ -1814,15 +1812,15 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
 		}
 
 		if (x != NULL) {
-			*x = psmove_decode_16bit((void*)&move->input.data.zcm1, base + 0);
+			*x = psmove_decode_16bit((void*)&move->input.zcm1, base + 0);
 		}
 
 		if (y != NULL) {
-			*y = psmove_decode_16bit((void*)&move->input.data.zcm1, base + 2);
+			*y = psmove_decode_16bit((void*)&move->input.zcm1, base + 2);
 		}
 
 		if (z != NULL) {
-			*z = psmove_decode_16bit((void*)&move->input.data.zcm1, base + 4);
+			*z = psmove_decode_16bit((void*)&move->input.zcm1, base + 4);
 		}
 	} else {
 		int base;
@@ -1841,15 +1839,15 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
 		//NOTE: Only one frame on the ZCM2
 
 		if (x != NULL) {
-			*x = psmove_decode_16bit_twos_complement((void*)&move->input.data.zcm2, base + 0);
+			*x = psmove_decode_16bit_twos_complement((void*)&move->input.zcm2, base + 0);
 		}
 
 		if (y != NULL) {
-			*y = psmove_decode_16bit_twos_complement((void*)&move->input.data.zcm2, base + 2);
+			*y = psmove_decode_16bit_twos_complement((void*)&move->input.zcm2, base + 2);
 		}
 
 		if (z != NULL) {
-			*z = psmove_decode_16bit_twos_complement((void*)&move->input.data.zcm2, base + 4);
+			*z = psmove_decode_16bit_twos_complement((void*)&move->input.zcm2, base + 4);
 		}
 	}
 }
@@ -1861,30 +1859,30 @@ psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 
     if (move->model == Model_ZCM2) {
         if (ax != NULL) {
-            *ax = (int16_t) (move->input.data.zcm2.aXlow + (move->input.data.zcm2.aXhigh << 8));
+            *ax = (int16_t) (move->input.zcm2.aXlow + (move->input.zcm2.aXhigh << 8));
         }
 
         if (ay != NULL) {
-            *ay = (int16_t) (move->input.data.zcm2.aYlow + (move->input.data.zcm2.aYhigh << 8));
+            *ay = (int16_t) (move->input.zcm2.aYlow + (move->input.zcm2.aYhigh << 8));
         }
 
         if (az != NULL) {
-            *az = (int16_t) (move->input.data.zcm2.aZlow + (move->input.data.zcm2.aZhigh << 8));
+            *az = (int16_t) (move->input.zcm2.aZlow + (move->input.zcm2.aZhigh << 8));
         }
     } else {
         if (ax != NULL) {
-            *ax = ((move->input.data.zcm1.aXlow + move->input.data.zcm1.aXlow2) +
-                   ((move->input.data.zcm1.aXhigh + move->input.data.zcm1.aXhigh2) << 8)) / 2 - 0x8000;
+            *ax = ((move->input.zcm1.aXlow + move->input.zcm1.aXlow2) +
+                   ((move->input.zcm1.aXhigh + move->input.zcm1.aXhigh2) << 8)) / 2 - 0x8000;
         }
 
         if (ay != NULL) {
-            *ay = ((move->input.data.zcm1.aYlow + move->input.data.zcm1.aYlow2) +
-                   ((move->input.data.zcm1.aYhigh + move->input.data.zcm1.aYhigh2) << 8)) / 2 - 0x8000;
+            *ay = ((move->input.zcm1.aYlow + move->input.zcm1.aYlow2) +
+                   ((move->input.zcm1.aYhigh + move->input.zcm1.aYhigh2) << 8)) / 2 - 0x8000;
         }
 
         if (az != NULL) {
-            *az = ((move->input.data.zcm1.aZlow + move->input.data.zcm1.aZlow2) +
-                   ((move->input.data.zcm1.aZhigh + move->input.data.zcm1.aZhigh2) << 8)) / 2 - 0x8000;
+            *az = ((move->input.zcm1.aZlow + move->input.zcm1.aZlow2) +
+                   ((move->input.zcm1.aZhigh + move->input.zcm1.aZhigh2) << 8)) / 2 - 0x8000;
         }
     }
 }
@@ -1896,30 +1894,30 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 
     if (move->model == Model_ZCM2) {
         if (gx != NULL) {
-            *gx = (int16_t) (move->input.data.zcm2.gXlow + (move->input.data.zcm2.gXhigh << 8));
+            *gx = (int16_t) (move->input.zcm2.gXlow + (move->input.zcm2.gXhigh << 8));
         }
 
         if (gy != NULL) {
-            *gy = (int16_t) (move->input.data.zcm2.gYlow + (move->input.data.zcm2.gYhigh << 8));
+            *gy = (int16_t) (move->input.zcm2.gYlow + (move->input.zcm2.gYhigh << 8));
         }
 
         if (gz != NULL) {
-            *gz = (int16_t) (move->input.data.zcm2.gZlow + (move->input.data.zcm2.gZhigh << 8));
+            *gz = (int16_t) (move->input.zcm2.gZlow + (move->input.zcm2.gZhigh << 8));
         }
     } else {
         if (gx != NULL) {
-            *gx = ((move->input.data.zcm1.gXlow + move->input.data.zcm1.gXlow2) +
-                   ((move->input.data.zcm1.gXhigh + move->input.data.zcm1.gXhigh2) << 8)) / 2 - 0x8000;
+            *gx = ((move->input.zcm1.gXlow + move->input.zcm1.gXlow2) +
+                   ((move->input.zcm1.gXhigh + move->input.zcm1.gXhigh2) << 8)) / 2 - 0x8000;
         }
 
         if (gy != NULL) {
-            *gy = ((move->input.data.zcm1.gYlow + move->input.data.zcm1.gYlow2) +
-                   ((move->input.data.zcm1.gYhigh + move->input.data.zcm1.gYhigh2) << 8)) / 2 - 0x8000;
+            *gy = ((move->input.zcm1.gYlow + move->input.zcm1.gYlow2) +
+                   ((move->input.zcm1.gYhigh + move->input.zcm1.gYhigh2) << 8)) / 2 - 0x8000;
         }
 
         if (gz != NULL) {
-            *gz = ((move->input.data.zcm1.gZlow + move->input.data.zcm1.gZlow2) +
-                   ((move->input.data.zcm1.gZhigh + move->input.data.zcm1.gZhigh2) << 8)) / 2 - 0x8000;
+            *gz = ((move->input.zcm1.gZlow + move->input.zcm1.gZlow2) +
+                   ((move->input.zcm1.gZhigh + move->input.zcm1.gZhigh2) << 8)) / 2 - 0x8000;
         }
     }
 }
@@ -2051,18 +2049,18 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
         }
     } else {
         if (mx != NULL) {
-            *mx = TWELVE_BIT_SIGNED(((move->input.data.zcm1.templow_mXhigh & 0x0F) << 8) |
-                    move->input.data.zcm1.mXlow);
+            *mx = TWELVE_BIT_SIGNED(((move->input.zcm1.templow_mXhigh & 0x0F) << 8) |
+                    move->input.zcm1.mXlow);
         }
 
         if (my != NULL) {
-            *my = TWELVE_BIT_SIGNED((move->input.data.zcm1.mYhigh << 4) |
-                   (move->input.data.zcm1.mYlow_mZhigh & 0xF0) >> 4);
+            *my = TWELVE_BIT_SIGNED((move->input.zcm1.mYhigh << 4) |
+                   (move->input.zcm1.mYlow_mZhigh & 0xF0) >> 4);
         }
 
         if (mz != NULL) {
-            *mz = TWELVE_BIT_SIGNED(((move->input.data.zcm1.mYlow_mZhigh & 0x0F) << 8) |
-                    move->input.data.zcm1.mZlow);
+            *mz = TWELVE_BIT_SIGNED(((move->input.zcm1.mYlow_mZhigh & 0x0F) << 8) |
+                    move->input.zcm1.mZlow);
         }
     }
 }
