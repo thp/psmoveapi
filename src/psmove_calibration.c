@@ -146,8 +146,8 @@ psmove_calibration_decode_float(char *data, int offset)
 }
 
 
-void
-psmove_ZCM1_calibration_parse_usb(PSMoveCalibration *calibration)
+static void
+psmove_zcm1_calibration_parse_usb(PSMoveCalibration *calibration)
 {
     assert(calibration != NULL);
     char *data = calibration->usb_calibration;
@@ -218,8 +218,8 @@ psmove_ZCM1_calibration_parse_usb(PSMoveCalibration *calibration)
     printf("# float @0x7a: %f\n", psmove_calibration_decode_float(data, 0x7a));
 }
 
-void
-psmove_ZCM2_calibration_parse_usb(PSMoveCalibration *calibration)
+static void
+psmove_zcm2_calibration_parse_usb(PSMoveCalibration *calibration)
 {
     assert(calibration != NULL);
     char *data = calibration->usb_calibration;
@@ -264,44 +264,45 @@ psmove_calibration_get_usb_accel_values(PSMoveCalibration *calibration,
 
     int orientation;
 
-	enum PSMove_Model_Type model_type= psmove_get_model(calibration->move);
+    switch (psmove_get_model(calibration->move)) {
+        case Model_ZCM1:
+            /* Minimum (negative) value of each axis */
+            orientation = 1;
+            *x1 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation);
+            orientation = 5;
+            *y1 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 2);
+            orientation = 2;
+            *z1 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 4);
 
-	if (model_type == Model_ZCM1)
-	{
-		/* Minimum (negative) value of each axis */
-		orientation = 1;
-		*x1 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation);
-		orientation = 5;
-		*y1 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 2);
-		orientation = 2;
-		*z1 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 4);
+            /* Maximum (positive) values of each axis */
+            orientation = 3;
+            *x2 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation);
+            orientation = 4;
+            *y2 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 2);
+            orientation = 0;
+            *z2 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 4);
+            break;
+        case Model_ZCM2:
+            /* Minimum (negative) value of each axis */
+            orientation = 1;
+            *x1 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation);
+            orientation = 3;
+            *y1 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 2);
+            orientation = 5;
+            *z1 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 4);
 
-		/* Maximum (positive) values of each axis */
-		orientation = 3;
-		*x2 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation);
-		orientation = 4;
-		*y2 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 2);
-		orientation = 0;
-		*z2 = psmove_calibration_decode_16bit_unsigned(data, 0x04 + 6*orientation + 4);
-	}
-	else if (model_type == Model_ZCM2)
-	{
-		/* Minimum (negative) value of each axis */
-		orientation = 1;
-		*x1 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation);
-		orientation = 3;
-		*y1 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 2);
-		orientation = 5;
-		*z1 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 4);
-
-		/* Maximum (positive) values of each axis */
-		orientation = 0;
-		*x2 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation);
-		orientation = 2;
-		*y2 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 2);
-		orientation = 4;
-		*z2 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 4);
-	}
+            /* Maximum (positive) values of each axis */
+            orientation = 0;
+            *x2 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation);
+            orientation = 2;
+            *y2 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 2);
+            orientation = 4;
+            *z2 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 4);
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 }
 
 
@@ -339,21 +340,21 @@ psmove_calibration_get_zcm2_usb_gyro_values(PSMoveCalibration *calibration,
 
     int orientation;
 
-	/* Minimum (negative) value of each axis */
-	orientation = 3;
-	*x1 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation);
-	orientation = 4;
-	*y1 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 2);
-	orientation = 5;
-	*z1 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 4);
+    /* Minimum (negative) value of each axis */
+    orientation = 3;
+    *x1 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation);
+    orientation = 4;
+    *y1 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 2);
+    orientation = 5;
+    *z1 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 4);
 
-	/* Maximum (positive) values of each axis */
-	orientation = 0;
-	*x2 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation);
-	orientation = 1;
-	*y2 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 2);
-	orientation = 2;
-	*z2 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 4);
+    /* Maximum (positive) values of each axis */
+    orientation = 0;
+    *x2 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation);
+    orientation = 1;
+    *y2 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 2);
+    orientation = 2;
+    *z2 = psmove_calibration_decode_16bit_signed(data, 0x30 + 6*orientation + 4);
 
     *dx = psmove_calibration_decode_16bit_signed(data, 0x26);
     *dy = psmove_calibration_decode_16bit_signed(data, 0x26 + 2);
@@ -367,11 +368,11 @@ psmove_calibration_dump_usb(PSMoveCalibration *calibration)
 
     assert(calibration != NULL);
 
-	enum PSMove_Model_Type model= psmove_get_model(calibration->move);
-	size_t calibration_blob_size= 
-		(model == Model_ZCM1) 
-		? PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE 
-		: PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE;
+    enum PSMove_Model_Type model = psmove_get_model(calibration->move);
+
+    size_t calibration_blob_size = (model == Model_ZCM1)
+        ? PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE
+        : PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE;
 
     for (j=0; j<calibration_blob_size; j++) {
         printf("%02x", (unsigned char) calibration->usb_calibration[j]);
@@ -383,10 +384,18 @@ psmove_calibration_dump_usb(PSMoveCalibration *calibration)
     }
     printf("\n");
 
-	if (model == Model_ZCM1) 
-		psmove_ZCM1_calibration_parse_usb(calibration);
-	else if (model == Model_ZCM2)
-		psmove_ZCM2_calibration_parse_usb(calibration);
+    switch (model) {
+        case Model_ZCM1:
+            psmove_zcm1_calibration_parse_usb(calibration);
+            break;
+        case Model_ZCM2:
+            psmove_zcm2_calibration_parse_usb(calibration);
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
+
     printf("\n");
 }
 
@@ -399,7 +408,7 @@ psmove_calibration_new(PSMove *move)
     char *serial;
     int i;
 
-	enum PSMove_Model_Type model= psmove_get_model(move);
+    enum PSMove_Model_Type model = psmove_get_model(move);
 
     PSMoveCalibration *calibration =
         (PSMoveCalibration*)calloc(1, sizeof(PSMoveCalibration));
@@ -528,52 +537,60 @@ psmove_calibration_new(PSMove *move)
          *
          **/
 
-		const float k_rpm_to_rad_per_sec = (2.0f * (float)M_PI) / 60.0f;
+        const float k_rpm_to_rad_per_sec = (2.0f * (float)M_PI) / 60.0f;
 
-		if (model == Model_ZCM1)
-		{
-			/* ZCM1 gyro calibrations are at +80RPM */
-			int gx80, gy80, gz80;
-			psmove_calibration_get_zcm1_usb_gyro_values(calibration,
-					&gx80, &gy80, &gz80);
+        switch (model) {
+            case Model_ZCM1:
+                {
+                    /* ZCM1 gyro calibrations are at +80RPM */
+                    int gx80, gy80, gz80;
+                    psmove_calibration_get_zcm1_usb_gyro_values(calibration,
+                            &gx80, &gy80, &gz80);
 
-			const float k_calibration_rpm= 80.f;
-			const float factor = k_calibration_rpm * k_rpm_to_rad_per_sec;
+                    const float k_calibration_rpm= 80.f;
+                    const float factor = k_calibration_rpm * k_rpm_to_rad_per_sec;
 
-			calibration->gx = factor / (float)gx80;
-			calibration->gy = factor / (float)gy80;
-			calibration->gz = factor / (float)gz80;
+                    calibration->gx = factor / (float)gx80;
+                    calibration->gy = factor / (float)gy80;
+                    calibration->gz = factor / (float)gz80;
 
-			// Per frame drift taken into account using adjusted gain values
-			calibration->dx = 0;
-			calibration->dy = 0;
-			calibration->dz = 0;
-		} else {
-			/* ZCM1 gyro calibrations are at +90RPM and -90RPM 
+                    // Per frame drift taken into account using adjusted gain values
+                    calibration->dx = 0;
+                    calibration->dy = 0;
+                    calibration->dz = 0;
+                }
+                break;
+            case Model_ZCM2:
+                /* ZCM2 gyro calibrations are at +90RPM and -90RPM
 
-			   Note on the bias values (dx, dy, and dz).
-			   Given the slightly asymmetrical min and max 90RPM readings you might think
-			   that there is a bias in the gyros that you should compute by finding
-			   the y-intercept value (the y-intercept of the gyro reading/angular speed line) 
-			   using the formula b= y_hi - m*x_hi, but this results in pretty bad
-			   controller drift. We get much better results ignoring the y-intercept
-			   and instead use the presumed "drift" values stored at 0x26
-			*/
-			int gx90_low, gx90_high, gy90_low, gy90_high, gz90_low, gz90_high;
-			psmove_calibration_get_zcm2_usb_gyro_values(calibration,
-					&gx90_low, &gx90_high, &gy90_low, &gy90_high, &gz90_low, &gz90_high,
-					&calibration->dx, &calibration->dy, &calibration->dz);
+                   Note on the bias values (dx, dy, and dz).
+                   Given the slightly asymmetrical min and max 90RPM readings you might think
+                   that there is a bias in the gyros that you should compute by finding
+                   the y-intercept value (the y-intercept of the gyro reading/angular speed line)
+                   using the formula b= y_hi - m*x_hi, but this results in pretty bad
+                   controller drift. We get much better results ignoring the y-intercept
+                   and instead use the presumed "drift" values stored at 0x26
+                   */
+                {
+                    int gx90_low, gx90_high, gy90_low, gy90_high, gz90_low, gz90_high;
+                    psmove_calibration_get_zcm2_usb_gyro_values(calibration,
+                            &gx90_low, &gx90_high, &gy90_low, &gy90_high, &gz90_low, &gz90_high,
+                            &calibration->dx, &calibration->dy, &calibration->dz);
 
-			const float k_calibration_rpm= 90.f;
-			const float calibration_hi= k_calibration_rpm * k_rpm_to_rad_per_sec;
-			const float calibration_low= -k_calibration_rpm * k_rpm_to_rad_per_sec;
-			const float factor = calibration_hi - calibration_low;
+                    const float k_calibration_rpm= 90.f;
+                    const float calibration_hi= k_calibration_rpm * k_rpm_to_rad_per_sec;
+                    const float calibration_low= -k_calibration_rpm * k_rpm_to_rad_per_sec;
+                    const float factor = calibration_hi - calibration_low;
 
-			// Compute the gain value (the slope of the gyro reading/angular speed line)
-			calibration->gx = factor / (float)(gx90_high - gx90_low);
-			calibration->gy = factor / (float)(gy90_high - gy90_low);
-			calibration->gz = factor / (float)(gz90_high - gz90_low);
-		}
+                    // Compute the gain value (the slope of the gyro reading/angular speed line)
+                    calibration->gx = factor / (float)(gx90_high - gx90_low);
+                    calibration->gy = factor / (float)(gy90_high - gy90_low);
+                    calibration->gz = factor / (float)(gz90_high - gz90_low);
+                }
+            default:
+                psmove_CRITICAL("Unknown PS Move model");
+                break;
+        }
     } else {
         /* No calibration data - pass-through input data */
         calibration->ax = 1.f;
@@ -604,27 +621,29 @@ psmove_calibration_read_from_usb(PSMoveCalibration *calibration)
     char *data;
     size_t size;
 
-	enum PSMove_Model_Type model= psmove_get_model(calibration->move);
-	if (model == Model_ZCM1)
-	{
-		if (_psmove_get_zcm1_calibration_blob(calibration->move, &data, &size) == 1) {
-			assert(size == PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE);
-			memcpy(calibration->usb_calibration, data, size);
-			free(data);
-			calibration->flags |= CalibrationFlag_HaveUSB;
-			return 1;
-		}
-	}
-	else if (model == Model_ZCM2)
-	{
-		if (_psmove_get_zcm2_calibration_blob(calibration->move, &data, &size) == 1) {
-			assert(size == PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE);
-			memcpy(calibration->usb_calibration, data, size);
-			free(data);
-			calibration->flags |= CalibrationFlag_HaveUSB;
-			return 1;
-		}
-	}
+    switch (psmove_get_model(calibration->move)) {
+        case Model_ZCM1:
+            if (_psmove_get_zcm1_calibration_blob(calibration->move, &data, &size) == 1) {
+                assert(size == PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE);
+                memcpy(calibration->usb_calibration, data, size);
+                free(data);
+                calibration->flags |= CalibrationFlag_HaveUSB;
+                return 1;
+            }
+            break;
+        case Model_ZCM2:
+            if (_psmove_get_zcm2_calibration_blob(calibration->move, &data, &size) == 1) {
+                assert(size == PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE);
+                memcpy(calibration->usb_calibration, data, size);
+                free(data);
+                calibration->flags |= CalibrationFlag_HaveUSB;
+                return 1;
+            }
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 
     return 0;
 }
