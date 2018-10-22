@@ -294,6 +294,155 @@ is_connection_established(const HANDLE hRadio, BLUETOOTH_DEVICE_INFO *device_inf
     return 1;
 }
 
+struct BluetoothAuthenticationCallbackState
+{
+    HANDLE hRadio;
+    BLUETOOTH_DEVICE_INFO *deviceInfo;
+    HANDLE hAuthenticationCompleteEvent;
+};
+
+static BOOL CALLBACK 
+bluetooth_auth_callback(
+    LPVOID pvParam, 
+    PBLUETOOTH_AUTHENTICATION_CALLBACK_PARAMS pAuthCallbackParams)
+{
+    struct BluetoothAuthenticationCallbackState *state= (struct BluetoothAuthenticationCallbackState *)pvParam;
+
+    BLUETOOTH_AUTHENTICATE_RESPONSE AuthRes;
+    memset(&AuthRes, 0, sizeof(BLUETOOTH_AUTHENTICATE_RESPONSE));
+    AuthRes.authMethod = pAuthCallbackParams->authenticationMethod;
+    AuthRes.bthAddressRemote = pAuthCallbackParams->deviceInfo.Address;
+    AuthRes.negativeResponse = 0;
+
+    // Send authentication response to authenticate device
+    DWORD dwRet = BluetoothSendAuthenticationResponseEx(state->hRadio, &AuthRes);
+    switch (dwRet) {
+        case ERROR_SUCCESS:
+            // Flag the device as authenticated
+            WINPAIR_DEBUG("Bluetooth device authenticated!");
+            state->deviceInfo->fAuthenticated = TRUE;
+            break;
+        case ERROR_CANCELLED:
+            WINPAIR_DEBUG("Bluetooth device denied passkey response");
+            break;
+        case E_FAIL:
+            WINPAIR_DEBUG("Failure during authentication");
+            break;
+        case ERROR_NOT_READY:
+            WINPAIR_DEBUG("Device not ready");
+            break;
+        case ERROR_INVALID_PARAMETER:
+            WINPAIR_DEBUG("Invalid parameter");
+            break;
+        case 1244:  // TODO: Is there a named constant for this?
+            WINPAIR_DEBUG("Not authenticated");
+            break;
+        default:
+            WINPAIR_DEBUG("BluetoothSendAuthenticationResponseEx failed: %d", GetLastError());
+            break;
+    }
+
+    // Signal the thread that the authentication callback completed
+    if (!SetEvent(state->hAuthenticationCompleteEvent)) 
+    {
+        WINPAIR_DEBUG("Failed to set event: %d", GetLastError());
+    }
+
+    return TRUE;
+}
+
+static int
+authenticate_controller(
+    HANDLE hRadio,
+    BLUETOOTH_DEVICE_INFO *device_info)
+{
+    int ret;
+
+    if (device_info->fAuthenticated == 0)
+    {
+        struct BluetoothAuthenticationCallbackState callbackState;
+        callbackState.deviceInfo= device_info;
+        callbackState.hAuthenticationCompleteEvent= INVALID_HANDLE_VALUE;
+        callbackState.hRadio= hRadio;
+
+        // Register authentication callback before starting authentication request
+        HBLUETOOTH_AUTHENTICATION_REGISTRATION hRegHandle = 0;
+        DWORD dwRet = BluetoothRegisterForAuthenticationEx(
+            device_info, &hRegHandle, &bluetooth_auth_callback, &callbackState);
+
+        if (dwRet == ERROR_SUCCESS)
+        {
+            callbackState.hAuthenticationCompleteEvent = CreateEvent( 
+                NULL,               // default security attributes
+                TRUE,               // manual-reset event
+                FALSE,              // initial state is non-signaled
+                TEXT("AuthenticationCompleteEvent"));  // object name
+
+            // Start the authentication request
+            dwRet = BluetoothAuthenticateDeviceEx(
+                NULL, 
+                hRadio, 
+                device_info, 
+                NULL, 
+                MITMProtectionNotRequiredBonding);
+
+            if (dwRet == ERROR_NO_MORE_ITEMS)
+            {
+                WINPAIR_DEBUG("Already paired.");
+                ret= 0;
+            }
+            else if (dwRet == ERROR_CANCELLED)
+            {
+                WINPAIR_DEBUG("User canceled the authentication.");
+                ret= 1;
+            }
+            else if (dwRet == ERROR_INVALID_PARAMETER)
+            {
+                WINPAIR_DEBUG("Invalid parameter!");
+                ret= 1;
+            }
+            else
+            {
+                // Block on authentication completing
+                WaitForSingleObject(callbackState.hAuthenticationCompleteEvent, INFINITE);
+
+                if (device_info->fAuthenticated)
+                {
+                    WINPAIR_DEBUG("Successfully paired.");
+                    ret= 0;
+                }
+                else
+                {
+                    WINPAIR_DEBUG("Failed to authenticate!");
+                    ret= 1;
+                }
+            }
+
+            if (callbackState.hAuthenticationCompleteEvent != INVALID_HANDLE_VALUE)
+            {
+                CloseHandle(callbackState.hAuthenticationCompleteEvent);
+            }
+        }
+        else
+        {
+            WINPAIR_DEBUG("BluetoothRegisterForAuthenticationEx failed!");
+            ret= 1;
+        }
+
+        if (hRegHandle != 0)
+        {
+            BluetoothUnregisterAuthentication(hRegHandle);
+            hRegHandle= 0;
+        }
+    }
+    else
+    {
+        WINPAIR_DEBUG("Already authenticated.");
+        ret= 0;
+    }
+
+    return ret;
+}
 
 static int
 patch_registry(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr)
@@ -368,7 +517,7 @@ is_windows8_or_later()
 
 
 static void
-handle_windows8_and_later(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+handle_windows8_and_later(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio, enum PSMove_Model_Type model)
 {
     unsigned int scan = 0;
     int connected = 0;
@@ -379,6 +528,16 @@ handle_windows8_and_later(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_AD
         } else {
             if (is_move_motion_controller(&device_info)) {
                 WINPAIR_DEBUG("Found Move Motion Controller matching the given address");
+
+                if (model == Model_ZCM2)
+                {
+                    if (authenticate_controller(hRadio, &device_info) != 0)
+                    {
+                        WINPAIR_DEBUG("Failed to authenticate the controller");
+                        Sleep(SLEEP_BETWEEN_SCANS);
+                        continue;
+                    }
+                }
 
                 unsigned int conn_try;
                 for (conn_try = 1; conn_try <= CONN_RETRIES; conn_try++) {
@@ -441,7 +600,7 @@ handle_windows8_and_later(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_AD
 
 
 static void
-handle_windows_pre8(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+handle_windows_pre8(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio, enum PSMove_Model_Type model)
 {
     int connected = 0;
     while (!connected) {
@@ -451,6 +610,16 @@ handle_windows_pre8(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS 
         } else {
             if (is_move_motion_controller(&device_info)) {
                 WINPAIR_DEBUG("Found Move Motion Controller matching the given address");
+
+                if (model == Model_ZCM2)
+                {
+                    if (authenticate_controller(hRadio, &device_info) != 0)
+                    {
+                        WINPAIR_DEBUG("Failed to authenticate the controller");
+                        Sleep(SLEEP_BETWEEN_SCANS);
+                        continue;
+                    }
+                }
 
                 if (device_info.fConnected) {
                     /* enable HID service only if necessary */
@@ -483,7 +652,7 @@ handle_windows_pre8(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS 
 
 
 static int
-windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio)
+windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radio_addr, const HANDLE hRadio, enum PSMove_Model_Type model)
 {
     /* parse controller's Bluetooth device address string */
     BLUETOOTH_ADDRESS *move_addr = string_to_btaddr(move_addr_str);
@@ -512,10 +681,10 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
 
     if (is_windows8_or_later()) {
         WINPAIR_DEBUG("Dealing with Windows 8 or later");
-        handle_windows8_and_later(move_addr, radio_addr, hRadio);
+        handle_windows8_and_later(move_addr, radio_addr, hRadio, model);
     } else {
         WINPAIR_DEBUG("Dealing with Windows version older than 8");
-        handle_windows_pre8(move_addr, radio_addr, hRadio);
+        handle_windows_pre8(move_addr, radio_addr, hRadio, model);
     }
 
     free(move_addr);
@@ -688,7 +857,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         return PSMove_False;
     }
 
-    int res = windows_register_psmove(addr, &radioInfo.address, hRadio);
+    int res = windows_register_psmove(addr, &radioInfo.address, hRadio, model);
     CloseHandle(hRadio);
 
     return (res == 0) ? PSMove_True : PSMove_False;

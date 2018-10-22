@@ -104,8 +104,14 @@ struct PSMove_RGBValue {
 /* Buffer size for calibration data */
 #define PSMOVE_CALIBRATION_SIZE 49
 
-/* Three blocks, minus 2x the header (2 bytes) for the 2nd and 3rd block */
-#define PSMOVE_CALIBRATION_BLOB_SIZE (PSMOVE_CALIBRATION_SIZE*3 - 2*2)
+/* Three blocks, minus header (2 bytes) for blocks 2,3 */
+#define PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE	(PSMOVE_CALIBRATION_SIZE*3 - 2*2) 
+
+/* Three blocks, minus header (2 bytes) for block 2 */
+#define PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE	(PSMOVE_CALIBRATION_SIZE*2 - 2*1) 
+
+/* The maximum calibration blob size */
+#define PSMOVE_MAX_CALIBRATION_BLOB_SIZE	PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE
 
 /* System-wide data directory */
 #define PSMOVE_SYSTEM_DATA_DIR "/etc/psmoveapi"
@@ -139,14 +145,24 @@ ADDAPI const char *
 ADDCALL _psmove_get_device_path(PSMove *move);
 
 /**
- * [PRIVATE API] Get the calibration data from a connected USB controller.
+ * [PRIVATE API] Get the ZCM1 calibration data from a connected USB controller.
  *
  * The pointer *dest will be set to a newly-allocated byte array
  * of a certain size (which will be saved in *size) and the caller
  * has to free this field with free()
  **/
 ADDAPI int
-ADDCALL _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size);
+ADDCALL _psmove_get_zcm1_calibration_blob(PSMove *move, char **dest, size_t *size);
+
+/**
+ * [PRIVATE API] Get the ZCM2 calibration data from a connected USB controller.
+ *
+ * The pointer *dest will be set to a newly-allocated byte array
+ * of a certain size (which will be saved in *size) and the caller
+ * has to free this field with free()
+ **/
+ADDAPI int
+ADDCALL _psmove_get_zcm2_calibration_blob(PSMove *move, char **dest, size_t *size);
 
 /**
  * [PRIVATE API] Translate a raw temperature value to degrees Celsius

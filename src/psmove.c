@@ -135,6 +135,15 @@ psmove_decode_16bit(char *data, int offset)
     return (low | (high << 8)) - 0x8000;
 }
 
+static inline int
+psmove_decode_16bit_twos_complement(char *data, int offset)
+{
+    unsigned char low = data[offset] & 0xFF;
+    unsigned char high = (data[offset+1]) & 0xFF;
+    int value = (low | (high << 8));
+    return (value & 0x8000) ? (-(~value & 0xFFFF) + 1) : value;
+}
+
 #define NUM_PSMOVE_PIDS \
     ((sizeof(PSMOVE_PIDS) / sizeof(PSMOVE_PIDS[0])) - 1)
 
@@ -184,13 +193,34 @@ typedef struct {
     unsigned char gZlow2;
     unsigned char gZhigh2;
     unsigned char temphigh; /* temperature (bits 12-5) */
-    unsigned char templow_mXhigh; /* temp (bits 4-1); magneto X (bits 12-9) */
+    unsigned char templow_mXhigh; /* temp (bits 4-1); magneto X (bits 12-9) (magneto only in ZCM1) */
+} PSMove_Data_Input_Common;
+
+typedef struct {
+    PSMove_Data_Input_Common common;
+
     unsigned char mXlow; /* magnetometer X (bits 8-1) */
     unsigned char mYhigh; /* magnetometer Y (bits 12-5) */
     unsigned char mYlow_mZhigh; /* magnetometer: Y (bits 4-1), Z (bits 12-9) */
     unsigned char mZlow; /* magnetometer Z (bits 8-1) */
     unsigned char timelow; /* low byte of timestamp */
     unsigned char extdata[PSMOVE_EXT_DATA_BUF_SIZE]; /* external device data (EXT port) */
+} PSMove_ZCM1_Data_Input;
+
+typedef struct {
+    PSMove_Data_Input_Common common;
+
+    unsigned char timehigh2; /* same as timestamp at offsets 0x0B */
+    unsigned char timelow; /* same as timestamp at offsets 0x2B */
+    unsigned char _unk41;
+    unsigned char _unk42;
+    unsigned char timelow2;
+} PSMove_ZCM2_Data_Input;
+
+typedef union {
+    PSMove_Data_Input_Common common;
+    PSMove_ZCM1_Data_Input zcm1;
+    PSMove_ZCM2_Data_Input zcm2;
 } PSMove_Data_Input;
 
 struct _PSMove {
@@ -323,14 +353,29 @@ void
 _psmove_read_data(PSMove *move, unsigned char *data, int length)
 {
     assert(data != NULL);
-    assert(length >= (sizeof(move->input) + 4));
 
     int32_t res = psmove_poll(move);
     assert(res <= 0xFF);
 
+    // Put the read result at the beginning of the buffer
+    assert(length >= sizeof(int32_t));
     *((int32_t *)data) = res;
+    data += sizeof(int32_t);
+    length -= sizeof(int32_t);
 
-    memcpy(data + sizeof(int32_t), &(move->input), sizeof(move->input));
+    switch (move->model) {
+        case Model_ZCM1:
+            assert(length >= sizeof(move->input.zcm1));
+            memcpy(data, &(move->input.zcm1), sizeof(move->input.zcm1));
+            break;
+        case Model_ZCM2:
+            assert(length >= sizeof(move->input.zcm2));
+            memcpy(data, &(move->input.zcm2), sizeof(move->input.zcm2));
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 }
 
 enum PSMove_Bool
@@ -553,8 +598,18 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigne
     move->calibration = psmove_calibration_new(move);
     move->orientation = psmove_orientation_new(move);
 
-    /* Load magnetometer calibration data */
-    psmove_load_magnetometer_calibration(move);
+    switch (move->model) {
+        case Model_ZCM1:
+            /* Load magnetometer calibration data */
+            psmove_load_magnetometer_calibration(move);
+        case Model_ZCM2:
+            /* No magnetometer on the ZCM2 */
+            psmove_reset_magnetometer_calibration(move);
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 
     return move;
 }
@@ -909,13 +964,13 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
 }
 
 int
-_psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
+_psmove_get_zcm1_calibration_blob(PSMove *move, char **dest, size_t *size)
 {
     psmove_return_val_if_fail(move != NULL, 0);
     psmove_return_val_if_fail(dest != NULL, 0);
     psmove_return_val_if_fail(size != NULL, 0);
 
-    unsigned char calibration[PSMOVE_CALIBRATION_BLOB_SIZE];
+    unsigned char calibration[PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE];
 
     unsigned char cal[PSMOVE_CALIBRATION_SIZE];
     int res;
@@ -963,6 +1018,57 @@ _psmove_get_calibration_blob(PSMove *move, char **dest, size_t *size)
     return 1;
 }
 
+int
+_psmove_get_zcm2_calibration_blob(PSMove *move, char **dest, size_t *size)
+{
+    psmove_return_val_if_fail(move != NULL, 0);
+    psmove_return_val_if_fail(dest != NULL, 0);
+    psmove_return_val_if_fail(size != NULL, 0);
+
+    unsigned char calibration[PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE];
+
+    unsigned char cal[PSMOVE_CALIBRATION_SIZE];
+    int res;
+    int x;
+
+    int dest_offset;
+    int src_offset;
+
+    for (x=0; x<2; x++) {
+        memset(cal, 0, sizeof(cal));
+        cal[0] = PSMove_Req_GetCalibration;
+        res = hid_get_feature_report(move->handle, cal, sizeof(cal));
+#if defined(__linux)
+        if(res == -1) {
+            psmove_WARNING("hid_get_feature_report failed, kernel issue? see %s\n",
+                "https://github.com/thp/psmoveapi/issues/108");
+        }
+#endif
+        psmove_return_val_if_fail(res == PSMOVE_CALIBRATION_SIZE, 0);
+
+        if (cal[1] == 0x00) {
+            /* First block */
+            dest_offset = 0;
+            src_offset = 0;
+        } else if (cal[1] == 0x81) {
+            /* Second block */
+            dest_offset = PSMOVE_CALIBRATION_SIZE;
+            src_offset = 2;
+        } else {
+            return 0;
+        }
+
+        memcpy(calibration+dest_offset, cal+src_offset,
+                sizeof(cal)-src_offset);
+    }
+
+    *dest = (char*)malloc(sizeof(calibration));
+    memcpy(*dest, calibration, sizeof(calibration));
+    *size = sizeof(calibration);
+
+    return 1;
+}
+
 char *
 psmove_get_serial(PSMove *move)
 {
@@ -979,6 +1085,13 @@ psmove_get_serial(PSMove *move)
     }
 
     return strdup(move->serial_number);
+}
+
+enum PSMove_Model_Type
+psmove_get_model(PSMove *move)
+{
+    psmove_return_val_if_fail(move != NULL, Model_ZCM1);
+    return move->model;
 }
 
 int
@@ -1273,12 +1386,21 @@ psmove_poll(PSMove *move)
     psmove_return_val_if_fail(move != NULL, 0);
 
     /* store old sequence number before reading */
-    int oldseq = (move->input.buttons4 & 0x0F);
+    int oldseq = (move->input.common.buttons4 & 0x0F);
 
     switch (move->type) {
         case PSMove_HIDAPI:
-            res = hid_read(move->handle, (unsigned char*)(&(move->input)),
-                sizeof(move->input));
+            switch (move->model) {
+                case Model_ZCM1:
+                    res = hid_read(move->handle, (unsigned char*)(&(move->input.zcm1)), sizeof(move->input.zcm1));
+                    break;
+                case Model_ZCM2:
+                    res = hid_read(move->handle, (unsigned char*)(&(move->input.zcm2)), sizeof(move->input.zcm2));
+                    break;
+                default:
+                    psmove_CRITICAL("Unknown PS Move model");
+                    break;
+            }
             break;
         case PSMove_MOVED:
             if (moved_client_send(move->client, MOVED_REQ_READ_INPUT, (char)move->remote_id, NULL, 0)) {
@@ -1286,10 +1408,24 @@ psmove_poll(PSMove *move)
                  * The input buffer is stored at offset 1 (the first byte
                  * contains the return value of the remote psmove_poll())
                  **/
-                memcpy(&(move->input), move->client->response_buf.read_input.data, sizeof(move->input));
+
+                size_t input_data_size = 0;
+                switch (move->model) {
+                    case Model_ZCM1:
+                        input_data_size = sizeof(move->input.zcm1);
+                        memcpy(&(move->input.zcm1), move->client->response_buf.read_input.data, input_data_size);
+                        break;
+                    case Model_ZCM2:
+                        input_data_size = sizeof(move->input.zcm2);
+                        memcpy(&(move->input.zcm2), move->client->response_buf.read_input.data, input_data_size);
+                        break;
+                    default:
+                        psmove_CRITICAL("Unknown PS Move model");
+                        break;
+                }
 
                 if (move->client->response_buf.read_input.poll_return_value != 0) {
-                    res = sizeof(move->input);
+                    res = input_data_size;
                 }
             }
             break;
@@ -1297,16 +1433,17 @@ psmove_poll(PSMove *move)
             psmove_CRITICAL("Unknown device type");
     }
 
-    if (res == sizeof(move->input)) {
+    if ((move->model == Model_ZCM1 && res == sizeof(move->input.zcm1)) ||
+        (move->model == Model_ZCM2 && res == sizeof(move->input.zcm2))) {
         /* Sanity check: The first byte should be PSMove_Req_GetInput */
-        psmove_return_val_if_fail(move->input.type == PSMove_Req_GetInput, 0);
+        psmove_return_val_if_fail(move->input.common.type == PSMove_Req_GetInput, 0);
 
         /**
          * buttons4's 4 least significant bits contain the sequence number,
          * so we add 1 to signal "success" and add the sequence number for
          * consumers to utilize the data
          **/
-        int seq = (move->input.buttons4 & 0x0F);
+        int seq = (move->input.common.buttons4 & 0x0F);
         if (seq != ((oldseq + 1) % 16)) {
             psmove_DEBUG("Warning: Dropped frames (seq %d -> %d)\n",
                     oldseq, seq);
@@ -1328,10 +1465,18 @@ psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data)
     psmove_return_val_if_fail(move != NULL, PSMove_False);
     psmove_return_val_if_fail(data != NULL, PSMove_False);
 
-    assert(sizeof(*data) >= sizeof(move->input.extdata));
-
-    memcpy(data, move->input.extdata, sizeof(move->input.extdata));
-    return PSMove_True;
+    switch (move->model) {
+        case Model_ZCM1:
+            assert(sizeof(*data) >= sizeof(move->input.zcm1.extdata));
+            memcpy(data, move->input.zcm1.extdata, sizeof(move->input.zcm1.extdata));
+            return PSMove_True;
+        case Model_ZCM2:
+            // EXT data not supported on ZCM2
+            return PSMove_False;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            return PSMove_False;
+    }
 }
 
 unsigned int
@@ -1382,10 +1527,10 @@ psmove_get_buttons(PSMove *move)
      *
      **/
 
-    return ((move->input.buttons2) |
-            (move->input.buttons1 << 8) |
-            ((move->input.buttons3 & 0x01) << 16) |
-            ((move->input.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
+    return ((move->input.common.buttons2) |
+            (move->input.common.buttons1 << 8) |
+            ((move->input.common.buttons3 & 0x01) << 16) |
+            ((move->input.common.buttons4 & 0xF0) << 13 /* 13 = 17 - 4 */));
 }
 
 void
@@ -1412,7 +1557,11 @@ psmove_is_ext_connected(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, PSMove_False);
 
-    if((move->input.buttons4 & 0x10) != 0) {
+    if (move->model != Model_ZCM1) {
+        return PSMove_False;
+    }
+
+    if ((move->input.common.buttons4 & 0x10) != 0) {
         return PSMove_True;
     }
 
@@ -1428,6 +1577,10 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
 
     psmove_return_val_if_fail(move != NULL, PSMove_False);
     psmove_return_val_if_fail(ext != NULL, PSMove_False);
+
+    if (move->model != Model_ZCM1) {
+        return PSMove_False;
+    }
 
     /* Send setup Report for the following read operation */
     memset(send_buf, 0, sizeof(send_buf));
@@ -1475,6 +1628,10 @@ psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char leng
     psmove_return_val_if_fail(data != NULL, PSMove_False);
     psmove_return_val_if_fail(length > 0,   PSMove_False);
 
+    if (move->model != Model_ZCM1) {
+        return PSMove_False;
+    }
+
     if (length > sizeof(send_buf) - 9) {
         psmove_DEBUG("Data too large for send buffer\n");
         return PSMove_False;
@@ -1503,7 +1660,7 @@ psmove_get_battery(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    return move->input.battery;
+    return move->input.common.battery;
 }
 
 int
@@ -1521,8 +1678,8 @@ psmove_get_temperature(PSMove *move)
      * but it seems to default to 0.
      **/
 
-    return ((move->input.temphigh << 4) |
-            ((move->input.templow_mXhigh & 0xF0) >> 4));
+    return ((move->input.common.temphigh << 4) |
+            ((move->input.common.templow_mXhigh & 0xF0) >> 4));
 }
 
 float
@@ -1572,12 +1729,20 @@ psmove_get_trigger(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
 
-    if (move->model == Model_ZCM2) {
-        return move->input.trigger;
-    } else {
-        return (move->input.trigger + move->input.trigger2) / 2;
+    switch (move->model) {
+        case Model_ZCM1:
+            return (move->input.common.trigger + move->input.common.trigger2) / 2;
+        case Model_ZCM2:
+            return move->input.common.trigger;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            return 0;
     }
 }
+
+struct Vector3Int {
+    int x, y, z;
+};
 
 void
 psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
@@ -1587,33 +1752,66 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
     psmove_return_if_fail(sensor == Sensor_Accelerometer || sensor == Sensor_Gyroscope);
     psmove_return_if_fail(frame == Frame_FirstHalf || frame == Frame_SecondHalf);
 
-    int base;
+    struct Vector3Int result = {0, 0, 0};
 
-    switch (sensor) {
-        case Sensor_Accelerometer:
-            base = offsetof(PSMove_Data_Input, aXlow);
+    int base = 0;
+
+    switch (move->model) {
+        case Model_ZCM1:
+            switch (sensor) {
+                case Sensor_Accelerometer:
+                    base = offsetof(PSMove_Data_Input_Common, aXlow);
+                    break;
+                case Sensor_Gyroscope:
+                    base = offsetof(PSMove_Data_Input_Common, gXlow);
+                    break;
+                default:
+                    psmove_WARNING("Unknown sensor type");
+                    return;
+            }
+
+            if (frame == Frame_SecondHalf) {
+                base += 6;
+            }
+
+            result.x = psmove_decode_16bit((void*)&move->input.common, base + 0);
+            result.y = psmove_decode_16bit((void*)&move->input.common, base + 2);
+            result.z = psmove_decode_16bit((void*)&move->input.common, base + 4);
             break;
-        case Sensor_Gyroscope:
-            base = offsetof(PSMove_Data_Input, gXlow);
+        case Model_ZCM2:
+            switch (sensor) {
+                case Sensor_Accelerometer:
+                    base = offsetof(PSMove_Data_Input_Common, aXlow);
+                    break;
+                case Sensor_Gyroscope:
+                    base = offsetof(PSMove_Data_Input_Common, gXlow);
+                    break;
+                default:
+                    psmove_WARNING("Unknown sensor type");
+                    return;
+            }
+
+            // NOTE: Only one frame on the ZCM2
+
+            result.x = psmove_decode_16bit_twos_complement((void*)&move->input.common, base + 0);
+            result.y = psmove_decode_16bit_twos_complement((void*)&move->input.common, base + 2);
+            result.z = psmove_decode_16bit_twos_complement((void*)&move->input.common, base + 4);
             break;
         default:
-            return;
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
     }
 
-    if (frame == Frame_SecondHalf) {
-        base += 6;
+    if (x) {
+        *x = result.x;
     }
 
-    if (x != NULL) {
-        *x = psmove_decode_16bit((void*)&move->input, base + 0);
+    if (y) {
+        *y = result.y;
     }
 
-    if (y != NULL) {
-        *y = psmove_decode_16bit((void*)&move->input, base + 2);
-    }
-
-    if (z != NULL) {
-        *z = psmove_decode_16bit((void*)&move->input, base + 4);
+    if (z) {
+        *z = result.z;
     }
 }
 
@@ -1622,33 +1820,39 @@ psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (move->model == Model_ZCM2) {
-        if (ax != NULL) {
-            *ax = (int16_t) (move->input.aXlow + (move->input.aXhigh << 8));
-        }
+    struct Vector3Int result = {0, 0, 0};
 
-        if (ay != NULL) {
-            *ay = (int16_t) (move->input.aYlow + (move->input.aYhigh << 8));
-        }
+    switch (move->model) {
+        case Model_ZCM1:
+            result.x = ((move->input.common.aXlow + move->input.common.aXlow2) +
+                   ((move->input.common.aXhigh + move->input.common.aXhigh2) << 8)) / 2 - 0x8000;
 
-        if (az != NULL) {
-            *az = (int16_t) (move->input.aZlow + (move->input.aZhigh << 8));
-        }
-    } else {
-        if (ax != NULL) {
-            *ax = ((move->input.aXlow + move->input.aXlow2) +
-                   ((move->input.aXhigh + move->input.aXhigh2) << 8)) / 2 - 0x8000;
-        }
+            result.y = ((move->input.common.aYlow + move->input.common.aYlow2) +
+                   ((move->input.common.aYhigh + move->input.common.aYhigh2) << 8)) / 2 - 0x8000;
 
-        if (ay != NULL) {
-            *ay = ((move->input.aYlow + move->input.aYlow2) +
-                   ((move->input.aYhigh + move->input.aYhigh2) << 8)) / 2 - 0x8000;
-        }
+            result.z = ((move->input.common.aZlow + move->input.common.aZlow2) +
+                   ((move->input.common.aZhigh + move->input.common.aZhigh2) << 8)) / 2 - 0x8000;
+            break;
+        case Model_ZCM2:
+            result.x = (int16_t) (move->input.common.aXlow + (move->input.common.aXhigh << 8));
+            result.y = (int16_t) (move->input.common.aYlow + (move->input.common.aYhigh << 8));
+            result.z = (int16_t) (move->input.common.aZlow + (move->input.common.aZhigh << 8));
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 
-        if (az != NULL) {
-            *az = ((move->input.aZlow + move->input.aZlow2) +
-                   ((move->input.aZhigh + move->input.aZhigh2) << 8)) / 2 - 0x8000;
-        }
+    if (ax) {
+        *ax = result.x;
+    }
+
+    if (ay) {
+        *ay = result.y;
+    }
+
+    if (az) {
+        *az = result.z;
     }
 }
 
@@ -1657,33 +1861,39 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (move->model == Model_ZCM2) {
-        if (gx != NULL) {
-            *gx = (int16_t) (move->input.gXlow + (move->input.gXhigh << 8));
-        }
+    struct Vector3Int result = {0, 0, 0};
 
-        if (gy != NULL) {
-            *gy = (int16_t) (move->input.gYlow + (move->input.gYhigh << 8));
-        }
+    switch (move->model) {
+        case Model_ZCM1:
+            result.x = ((move->input.common.gXlow + move->input.common.gXlow2) +
+                   ((move->input.common.gXhigh + move->input.common.gXhigh2) << 8)) / 2 - 0x8000;
 
-        if (gz != NULL) {
-            *gz = (int16_t) (move->input.gZlow + (move->input.gZhigh << 8));
-        }
-    } else {
-        if (gx != NULL) {
-            *gx = ((move->input.gXlow + move->input.gXlow2) +
-                   ((move->input.gXhigh + move->input.gXhigh2) << 8)) / 2 - 0x8000;
-        }
+            result.y = ((move->input.common.gYlow + move->input.common.gYlow2) +
+                   ((move->input.common.gYhigh + move->input.common.gYhigh2) << 8)) / 2 - 0x8000;
 
-        if (gy != NULL) {
-            *gy = ((move->input.gYlow + move->input.gYlow2) +
-                   ((move->input.gYhigh + move->input.gYhigh2) << 8)) / 2 - 0x8000;
-        }
+            result.z = ((move->input.common.gZlow + move->input.common.gZlow2) +
+                   ((move->input.common.gZhigh + move->input.common.gZhigh2) << 8)) / 2 - 0x8000;
+            break;
+        case Model_ZCM2:
+            result.x = (int16_t) (move->input.common.gXlow + (move->input.common.gXhigh << 8));
+            result.y = (int16_t) (move->input.common.gYlow + (move->input.common.gYhigh << 8));
+            result.z = (int16_t) (move->input.common.gZlow + (move->input.common.gZhigh << 8));
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 
-        if (gz != NULL) {
-            *gz = ((move->input.gZlow + move->input.gZlow2) +
-                   ((move->input.gZhigh + move->input.gZhigh2) << 8)) / 2 - 0x8000;
-        }
+    if (gx) {
+        *gx = result.x;
+    }
+
+    if (gy) {
+        *gy = result.y;
+    }
+
+    if (gz) {
+        *gz = result.z;
     }
 }
 
@@ -1798,35 +2008,37 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 {
     psmove_return_if_fail(move != NULL);
 
-    if (move->model == Model_ZCM2) {
-        // NOTE: This model does not have magnetometers
+    struct Vector3Int result = {0, 0, 0};
 
-        if (mx != NULL) {
-            *mx = 0;
-        }
+    switch (move->model) {
+        case Model_ZCM1:
+            result.x = TWELVE_BIT_SIGNED(((move->input.common.templow_mXhigh & 0x0F) << 8) |
+                    move->input.zcm1.mXlow);
 
-        if (my != NULL) {
-            *my = 0;
-        }
+            result.y = TWELVE_BIT_SIGNED((move->input.zcm1.mYhigh << 4) |
+                   (move->input.zcm1.mYlow_mZhigh & 0xF0) >> 4);
 
-        if (mz != NULL) {
-            *mz = 0;
-        }
-    } else {
-        if (mx != NULL) {
-            *mx = TWELVE_BIT_SIGNED(((move->input.templow_mXhigh & 0x0F) << 8) |
-                    move->input.mXlow);
-        }
+            result.z = TWELVE_BIT_SIGNED(((move->input.zcm1.mYlow_mZhigh & 0x0F) << 8) |
+                    move->input.zcm1.mZlow);
+            break;
+        case Model_ZCM2:
+            // NOTE: This model does not have magnetometers
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 
-        if (my != NULL) {
-            *my = TWELVE_BIT_SIGNED((move->input.mYhigh << 4) |
-                   (move->input.mYlow_mZhigh & 0xF0) >> 4);
-        }
+    if (mx) {
+        *mx = result.x;
+    }
 
-        if (mz != NULL) {
-            *mz = TWELVE_BIT_SIGNED(((move->input.mYlow_mZhigh & 0x0F) << 8) |
-                    move->input.mZlow);
-        }
+    if (my) {
+        *my = result.y;
+    }
+
+    if (mz) {
+        *mz = result.z;
     }
 }
 

@@ -381,6 +381,21 @@ ADDAPI char *
 ADDCALL psmove_get_serial(PSMove *move);
 
 /**
+ * \brief Get the model type (ZCM1 or ZCM2) of a controller.
+ *
+ * There are two primary version of the PSMove controller.
+ * The ZCM1 is the original PSMove controller that shipped with the PS3.
+ * The ZCM2 is the newer PSMove controller that shipped with the PS4.
+ * The most important difference is that ZCM2 does not have a magnetometer.
+ *
+ * \param move A valid \ref PSMove handle
+ *
+ * \return The \ref PSMove_Model_Type type of the controller
+ **/
+ADDAPI enum PSMove_Model_Type
+ADDCALL psmove_get_model(PSMove *move);
+
+/**
  * \brief Pair a controller connected via USB with the computer.
  *
  * This function assumes that psmove_connection_type() returns

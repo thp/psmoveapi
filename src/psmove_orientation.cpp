@@ -163,7 +163,18 @@ psmove_orientation_new(PSMove *move)
     orientation_state->reset_quaternion = *k_psmove_quaternion_identity;
 
     /* Initialize data specific to the selected filter */
-    psmove_orientation_set_fusion_type(orientation_state, OrientationFusion_ComplementaryMARG);
+    switch (psmove_get_model(move)) {
+        case Model_ZCM1:
+            psmove_orientation_set_fusion_type(orientation_state, OrientationFusion_ComplementaryMARG);
+            break;
+        case Model_ZCM2:
+            // No magnetometer on the ZCM2
+            psmove_orientation_set_fusion_type(orientation_state, OrientationFusion_MadgwickIMU);
+            break;
+        default:
+            psmove_CRITICAL("Unknown PS Move model");
+            break;
+    }
 
     /* Set the transform used re-orient the calibration data used by the orientation fusion algorithm */
     psmove_orientation_set_calibration_transform(orientation_state, k_psmove_identity_pose_laying_flat);
