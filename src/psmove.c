@@ -1774,9 +1774,9 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
                 base += 6;
             }
 
-            result.x = psmove_decode_16bit((void*)&move->input.zcm1, base + 0);
-            result.y = psmove_decode_16bit((void*)&move->input.zcm1, base + 2);
-            result.z = psmove_decode_16bit((void*)&move->input.zcm1, base + 4);
+            result.x = psmove_decode_16bit((void*)&move->input.common, base + 0);
+            result.y = psmove_decode_16bit((void*)&move->input.common, base + 2);
+            result.z = psmove_decode_16bit((void*)&move->input.common, base + 4);
             break;
         case Model_ZCM2:
             switch (sensor) {
@@ -1793,9 +1793,9 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
 
             // NOTE: Only one frame on the ZCM2
 
-            result.x = psmove_decode_16bit_twos_complement((void*)&move->input.zcm2, base + 0);
-            result.y = psmove_decode_16bit_twos_complement((void*)&move->input.zcm2, base + 2);
-            result.z = psmove_decode_16bit_twos_complement((void*)&move->input.zcm2, base + 4);
+            result.x = psmove_decode_16bit_twos_complement((void*)&move->input.common, base + 0);
+            result.y = psmove_decode_16bit_twos_complement((void*)&move->input.common, base + 2);
+            result.z = psmove_decode_16bit_twos_complement((void*)&move->input.common, base + 4);
             break;
         default:
             psmove_CRITICAL("Unknown PS Move model");
