@@ -140,9 +140,8 @@ psmove_decode_16bit_twos_complement(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
     unsigned char high = (data[offset+1]) & 0xFF;
-    int value= (low | (high << 8));
-
-	return (value & 0x8000) ? (-(~value & 0xFFFF) + 1) : value;
+    int value = (low | (high << 8));
+    return (value & 0x8000) ? (-(~value & 0xFFFF) + 1) : value;
 }
 
 #define NUM_PSMOVE_PIDS \
