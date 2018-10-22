@@ -357,16 +357,20 @@ _psmove_read_data(PSMove *move, unsigned char *data, int length)
     int32_t res = psmove_poll(move);
     assert(res <= 0xFF);
 
+    // Put the read result at the beginning of the buffer
+    assert(length >= sizeof(int32_t));
     *((int32_t *)data) = res;
+    data += sizeof(int32_t);
+    length -= sizeof(int32_t);
 
     switch (move->model) {
         case Model_ZCM1:
-            assert(length >= (sizeof(move->input.zcm1) + sizeof(int32_t)));
-            memcpy(data + sizeof(int32_t), &(move->input.zcm1), sizeof(move->input.zcm1));
+            assert(length >= sizeof(move->input.zcm1));
+            memcpy(data, &(move->input.zcm1), sizeof(move->input.zcm1));
             break;
         case Model_ZCM2:
-            assert(length >= (sizeof(move->input.zcm2) + sizeof(int32_t)));
-            memcpy(data + sizeof(int32_t), &(move->input.zcm2), sizeof(move->input.zcm2));
+            assert(length >= sizeof(move->input.zcm2));
+            memcpy(data, &(move->input.zcm2), sizeof(move->input.zcm2));
             break;
         default:
             psmove_CRITICAL("Unknown PS Move model");
