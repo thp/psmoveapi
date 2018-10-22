@@ -109,8 +109,9 @@ psmove_calibration_save(PSMoveCalibration *calibration);
 
 
 
+// TODO: Combine these decoding functions with the ones in psmove.c
 
-int
+static inline int
 psmove_calibration_decode_16bit_unsigned(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
@@ -118,7 +119,7 @@ psmove_calibration_decode_16bit_unsigned(char *data, int offset)
     return (low | (high << 8)) - 0x8000;
 }
 
-short
+static inline short
 psmove_calibration_decode_16bit_signed(char *data, int offset)
 {
     unsigned short low = data[offset] & 0xFF;
@@ -126,7 +127,7 @@ psmove_calibration_decode_16bit_signed(char *data, int offset)
     return (short)(low | (high << 8));
 }
 
-unsigned int
+static inline unsigned int
 psmove_calibration_decode_12bits(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
@@ -134,7 +135,7 @@ psmove_calibration_decode_12bits(char *data, int offset)
     return low | (high << 8);
 }
 
-float
+static inline float
 psmove_calibration_decode_float(char *data, int offset)
 {
     uint32_t v = (data[offset] & 0xFF)
