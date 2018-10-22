@@ -136,7 +136,7 @@ psmove_decode_16bit(char *data, int offset)
 }
 
 static inline int
-psmove_decode_16bit_twos_compliment(char *data, int offset)
+psmove_decode_16bit_twos_complement(char *data, int offset)
 {
     unsigned char low = data[offset] & 0xFF;
     unsigned char high = (data[offset+1]) & 0xFF;
@@ -1843,15 +1843,15 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
 		//NOTE: Only one frame on the ZCM2
 
 		if (x != NULL) {
-			*x = psmove_decode_16bit_twos_compliment((void*)&move->input.data.zcm2, base + 0);
+			*x = psmove_decode_16bit_twos_complement((void*)&move->input.data.zcm2, base + 0);
 		}
 
 		if (y != NULL) {
-			*y = psmove_decode_16bit_twos_compliment((void*)&move->input.data.zcm2, base + 2);
+			*y = psmove_decode_16bit_twos_complement((void*)&move->input.data.zcm2, base + 2);
 		}
 
 		if (z != NULL) {
-			*z = psmove_decode_16bit_twos_compliment((void*)&move->input.data.zcm2, base + 4);
+			*z = psmove_decode_16bit_twos_complement((void*)&move->input.data.zcm2, base + 4);
 		}
 	}
 }
