@@ -599,6 +599,7 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigne
         case Model_ZCM1:
             /* Load magnetometer calibration data */
             psmove_load_magnetometer_calibration(move);
+            break;
         case Model_ZCM2:
             /* No magnetometer on the ZCM2 */
             psmove_reset_magnetometer_calibration(move);
