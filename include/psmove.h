@@ -52,8 +52,10 @@ extern "C" {
 /*! Hardware model type for controller.
  **/
 enum PSMove_Model_Type {
+    Model_Unknown = 0,
     Model_ZCM1,
     Model_ZCM2,
+    Model_Count
 };
 
 /*! Connection type for controllers.
