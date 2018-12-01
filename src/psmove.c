@@ -528,10 +528,7 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigne
     if ((serial == NULL || wcslen(serial) == 0) && path != NULL) {
         move->handle = hid_open_path(path);
     } else {
-        move->handle = hid_open(PSMOVE_VID, PSMOVE_PID, serial);
-        if (!move->handle) {
-            move->handle = hid_open(PSMOVE_VID, PSMOVE_PS4_PID, serial);
-        }
+        move->handle = hid_open(PSMOVE_VID, pid, serial);
     }
 
 #endif
