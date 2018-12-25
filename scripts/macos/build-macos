@@ -52,15 +52,6 @@ if [ ! -d "$OPENCV_INSTALL_DIR" ]; then
     fi
     cd opencv
 
-    # Patch for Mac OS X deprecation of QTKit & adoption of AVFoundation
-    while ! git fetch https://github.com/opencv/opencv.git +pull/7266/head:pr7266; do
-        # This workaround is in place since Travis CI often has failed due to network errors
-        echo "Git fetch failed, retrying..."
-        sleep 2
-    done
-
-    git checkout pr7266
-
     rm -rf build
     mkdir -p build
     cd build
