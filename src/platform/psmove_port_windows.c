@@ -792,7 +792,7 @@ psmove_port_sleep_ms(uint32_t duration_ms)
     LARGE_INTEGER ft;
 
     // Convert to 100 nanosecond interval, negative value indicates relative time
-    ft.QuadPart = -(10 * 1000 * duration_ms);
+    ft.QuadPart = -(10ll * 1000ll * (LONGLONG)duration_ms);
 
     timer = CreateWaitableTimer(NULL, TRUE, NULL);
     SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
