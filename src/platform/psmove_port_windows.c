@@ -788,15 +788,25 @@ psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
 void
 psmove_port_sleep_ms(uint32_t duration_ms)
 {
-    HANDLE timer;
+    HANDLE timer = NULL;
     LARGE_INTEGER ft;
 
     // Convert to 100 nanosecond interval, negative value indicates relative time
-    ft.QuadPart = -(10 * 1000 * duration_ms);
+    ft.QuadPart = -(10ll * 1000ll * (LONGLONG)duration_ms);
 
     timer = CreateWaitableTimer(NULL, TRUE, NULL);
-    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
-    WaitForSingleObject(timer, INFINITE);
+    if (timer == NULL) {
+        psmove_WARNING("In psmove_port_sleep_ms, CreateWaitableTimer failed (%d)\n", GetLastError());
+        return;
+    }
+    if (!SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0)) {
+        psmove_WARNING("In psmove_port_sleep_ms, SetWaitableTimer failed (%d)\n", GetLastError());
+        CloseHandle(timer);
+        return;
+    }
+    if (WaitForSingleObject(timer, INFINITE) != WAIT_OBJECT_0) {
+        psmove_WARNING("In psmove_port_sleep_ms, WaitForSingleObject failed (%d)\n", GetLastError());
+    }
     CloseHandle(timer);
 }
 
