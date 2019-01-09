@@ -587,6 +587,7 @@ psmove_calibration_new(PSMove *move)
                     calibration->gy = factor / (float)(gy90_high - gy90_low);
                     calibration->gz = factor / (float)(gz90_high - gz90_low);
                 }
+                break;
             default:
                 psmove_CRITICAL("Unknown PS Move model");
                 break;
