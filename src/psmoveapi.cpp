@@ -151,11 +151,15 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
     for (int i=0; i<n; i++) {
         PSMove *move = psmove_connect_by_id(i);
 
-        char *tmp = psmove_get_serial(move);
-        std::string serial(tmp);
-        free(tmp);
+        if (move) {
+            char *tmp = psmove_get_serial(move);
+            if (tmp) {
+                std::string serial(tmp);
+                free(tmp);
 
-        moves[serial].emplace_back(move);
+                moves[serial].emplace_back(move);
+            }
+        }
     }
 
     int i = 0;
