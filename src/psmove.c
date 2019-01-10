@@ -55,7 +55,9 @@
 #define PSMOVE_BUFFER_SIZE 9
 
 /* Buffer size for the Bluetooth address get request */
-#define PSMOVE_BTADDR_GET_SIZE 16
+#define PSMOVE_ZCM1_BTADDR_GET_SIZE 16
+#define PSMOVE_ZCM2_BTADDR_GET_SIZE 20
+#define PSMOVE_MAX_BTADDR_GET_SIZE PSMOVE_ZCM2_BTADDR_GET_SIZE
 
 /* Buffer size for the Bluetooth address set request */
 #define PSMOVE_BTADDR_SET_SIZE 23
@@ -920,7 +922,7 @@ psmove_connect()
 int
 _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller)
 {
-    unsigned char btg[PSMOVE_BTADDR_GET_SIZE];
+    unsigned char btg[PSMOVE_MAX_BTADDR_GET_SIZE];
     int res;
 
     psmove_return_val_if_fail(move != NULL, 0);

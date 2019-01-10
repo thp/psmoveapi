@@ -793,7 +793,7 @@ psmove_port_sleep_ms(uint32_t duration_ms)
     // Convert to 100 nanosecond interval, negative value indicates relative time
     ft.QuadPart = -(10ll * 1000ll * (LONGLONG)duration_ms);
 
-	HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if (timer == NULL) {
         psmove_WARNING("In psmove_port_sleep_ms, CreateWaitableTimer failed (%d)\n", GetLastError());
         return;
