@@ -788,13 +788,12 @@ psmove_port_set_socket_timeout_ms(int socket, uint32_t timeout_ms)
 void
 psmove_port_sleep_ms(uint32_t duration_ms)
 {
-    HANDLE timer = NULL;
     LARGE_INTEGER ft;
 
     // Convert to 100 nanosecond interval, negative value indicates relative time
     ft.QuadPart = -(10ll * 1000ll * (LONGLONG)duration_ms);
 
-    timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if (timer == NULL) {
         psmove_WARNING("In psmove_port_sleep_ms, CreateWaitableTimer failed (%d)\n", GetLastError());
         return;
