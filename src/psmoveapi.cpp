@@ -150,8 +150,17 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
     int n = psmove_count_connected();
     for (int i=0; i<n; i++) {
         PSMove *move = psmove_connect_by_id(i);
+        if (!move) {
+            psmove_WARNING("Failed to connect to controller #%d", i);
+            continue;
+        }
 
         char *tmp = psmove_get_serial(move);
+        if (!tmp) {
+            psmove_WARNING("Failed to get serial for controller #%d", i);
+            continue;
+        }
+
         std::string serial(tmp);
         free(tmp);
 
