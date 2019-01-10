@@ -1348,8 +1348,18 @@ psmove_update_leds(PSMove *move)
 
     switch (move->type) {
         case PSMove_HIDAPI:
+        	// NOTE: On Linux, hid_write returns 0 for a Bluetooth-connected
+        	//       controller, but not for USB. On Windows, hid_write always
+        	//       returns the size of the longest HID report which, in this
+        	//       case, does not match the output report size. And Mac
+        	//       probably adds another behaviour altogether.
+        	//
+        	//       So instead of handling every different case here, we just
+        	//       settle for the lowest common denominator and flag write
+        	//       errors.
+
             if (hid_write(move->handle, (unsigned char*)(&(move->leds)),
-                    sizeof(move->leds)) == sizeof(move->leds)) {
+                    sizeof(move->leds)) >= 0) {
                 return Update_Success;
             } else {
                 return Update_Failed;
