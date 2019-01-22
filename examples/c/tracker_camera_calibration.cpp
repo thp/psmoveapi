@@ -245,6 +245,8 @@ int main(int arg, char** args) {
     free(distortion_xml);
 	free(corners);
 
+    psmove_tracker_free(tracker);
+
 	return 0;
 }
 
