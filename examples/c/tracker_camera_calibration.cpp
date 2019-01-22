@@ -107,7 +107,10 @@ int main(int arg, char** args) {
 		int key = cvWaitKey(1);
 		user_canceled = key == ESC_KEY;
 		if (user_canceled)
+		{
+			psmove_tracker_free(tracker);
 			break;
+		}
 
 		image = capture_frame(tracker); // Get next image
 		cvCvtColor(image, gray_image1, CV_BGR2GRAY);
@@ -224,7 +227,10 @@ int main(int arg, char** args) {
 				}
 			}
 			if (c == ESC_KEY)
+			{
+				psmove_tracker_free(tracker);
 				break;
+			}
 			image = capture_frame(tracker);
 		}
 
