@@ -58,7 +58,8 @@
 /* NOTE: On Windows, reading Feature Request 0x04 sometimes fails for ZCM2
  *       controllers because hidapi occasionally returns a garbage buffer of
  *       much larger size. Increasing the buffer size in the request seems to
- *       reliably fix this.
+ *       reliably fix this. Note that this only happens for Bluetooth
+ *       connections, not USB.
  */
 #define PSMOVE_BTADDR_GET_SIZE            16
 #define PSMOVE_WIN32_ZCM2_BTADDR_GET_SIZE 20
@@ -938,7 +939,7 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
 #ifdef _WIN32
     // fix Windows quirk for ZCM2
     // (see definition of PSMOVE_WIN32_ZCM2_BTADDR_GET_SIZE)
-    if (move->model == Model_ZCM2) {
+    if ((move->model == Model_ZCM2) && (move->connection_type == Conn_Bluetooth)) {
         report_size = PSMOVE_WIN32_ZCM2_BTADDR_GET_SIZE;
     }
 #endif
