@@ -28,7 +28,7 @@ ENDIF()
 
 # 1 - OpenCV
 IF(PSMOVE_BUILD_TRACKER)
-    FIND_PACKAGE(OpenCV 2 QUIET)
+    FIND_PACKAGE(OpenCV 3 QUIET)
     IF(OpenCV_FOUND)
         IF ("${OpenCV_LIBS}" STREQUAL "")
             message("OpenCV Libs was empty! Manually setting.")
