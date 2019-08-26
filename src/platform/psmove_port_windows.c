@@ -468,14 +468,10 @@ patch_registry(const BLUETOOTH_ADDRESS *move_addr, const BLUETOOTH_ADDRESS *radi
     /* open registry key for modifying a value */
     HKEY hKey;
     LONG result;
-    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, sub_key, 0, KEY_SET_VALUE | KEY_WOW64_64KEY, &hKey);
+	DWORD lpdwDisposition;
+	result = RegCreateKeyEx(HKEY_LOCAL_MACHINE, sub_key, 0, 0, 0, KEY_READ | KEY_QUERY_VALUE | KEY_WOW64_64KEY | KEY_ALL_ACCESS, NULL, &hKey, &lpdwDisposition);
     if (result != ERROR_SUCCESS) {
-        if (result == ERROR_FILE_NOT_FOUND) {
-            WINPAIR_DEBUG("Failed to open registry key, it does not yet exist");
-        } else {
-            WINPAIR_DEBUG("Failed to open registry key");
-        }
-
+		    printf("could not write to registry, try running program as administrator\n");
         return 1;
     }
 
