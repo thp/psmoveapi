@@ -48,7 +48,7 @@ fi
 if [ ! -d "$OPENCV_INSTALL_DIR" ]; then
     cd external
     if [ ! -d opencv ]; then
-		git clone --depth 1 --branch 2.4 git://github.com/opencv/opencv.git
+		git clone --depth 1 --branch 3.4 git://github.com/opencv/opencv.git
     fi
     cd opencv
 
