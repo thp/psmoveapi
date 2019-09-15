@@ -12,7 +12,7 @@ case "$UNAME" in
         sudo apt-get install -q -y build-essential cmake             \
                                    libudev-dev libbluetooth-dev      \
                                    libv4l-dev libopencv-dev          \
-                                   openjdk-7-jdk ant liblwjgl-java   \
+                                   openjdk-8-jdk ant liblwjgl-java   \
                                    python-dev mono-mcs               \
                                    swig3.0 freeglut3-dev             \
                                    python-sphinx python-pip
