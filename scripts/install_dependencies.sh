@@ -15,6 +15,7 @@ case "$UNAME" in
                                    openjdk-8-jdk ant liblwjgl-java   \
                                    python-dev mono-mcs               \
                                    swig3.0 freeglut3-dev             \
+                                   libxrandr-dev libxinerama-dev libxcursor-dev \
                                    python-sphinx python-pip
 
         # Workaround to get BlueZ 5 on Travis CI (it doesn't yet have Ubuntu 16.04)
