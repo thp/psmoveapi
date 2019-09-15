@@ -1,8 +1,13 @@
 Building PS Move API from source
 ================================
 
+Note that the `PS Move API Github Releases`_ page contains
+prebuilt library downloads, you might prefer to use those.
 
-Building on macOS 10.12
+.. _`PS Move API GitHub Releases`: https://github.com/thp/psmoveapi/releases
+
+
+Building on macOS 10.14
 -----------------------
 
 You need to install the following requirements:
@@ -13,44 +18,23 @@ You need to install the following requirements:
 
 Install the dependencies::
 
-    brew install cmake libtool automake
+    bash -e -x scripts/install_dependencies.sh
 
 To build from source, you can use the build script::
 
     bash -e -x scripts/macos/build-macos
 
 
-Building on Ubuntu 14.04
+Building on Ubuntu 18.04
 ------------------------
 
-Automatic build
-~~~~~~~~~~~~~~~
+Install the dependencies::
 
-A build script is provided which will take care of the build for you::
+    bash -e -x scripts/install_dependencies.sh
+
+To build from source, you can use the build script::
 
     bash -e -x scripts/linux/build-debian
-
-Manual build
-~~~~~~~~~~~~
-
-1. Install the build-dependencies::
-
-    sudo apt-get install \
-        build-essential cmake \
-        libudev-dev libbluetooth-dev libv4l-dev libopencv-dev \
-        openjdk-7-jdk ant liblwjgl-java \
-        python-dev \
-        mono-mcs \
-        swig3.0 \
-        freeglut3-dev
-
-2. Build the API (standalone - if you want to make changes)::
-
-    cd ~/src/psmoveapi/
-    mkdir build
-    cd build
-    JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64/ cmake ..
-    make -j4
 
 
 Building on Windows (Visual Studio)
@@ -58,13 +42,11 @@ Building on Windows (Visual Studio)
 
 You need to install the following requirements:
 
-- `Visual Studio Community 2013`_, `Visual Studio Community 2015`_ or `Visual Studio Community 2017` (recommended)
+- `Visual Studio Community 2017`_ or newer
 - `CMake`_ 3.9.1 or newer
 - `Git`_
 
 
-.. _`Visual Studio Community 2013`: http://www.visualstudio.com/en-us/news/vs2013-community-vs.aspx
-.. _`Visual Studio Community 2015`: https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx
 .. _`Visual Studio Community 2017`: https://www.visualstudio.com/en-us/downloads/
 .. _`CMake`: http://www.cmake.org/cmake/resources/software.html
 .. _`Git`: https://gitforwindows.org/
@@ -87,8 +69,6 @@ For Visual Studio 2017 and 64-bit use::
 For Visual Studio 2017 and 32-bit use::
 
     call scripts/visualc/build_msvc.bat 2017 x86
-
-For Visual Studio 2015 and 2013, replace 2017 accordingly.
 
 The resulting binaries will be placed in ``build-x86/`` (for the 32-bit build)
 and ``build-x64/`` (for the 64-bit build).
