@@ -27,6 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
+#include "opencv2/core/core_c.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +35,6 @@ extern "C" {
 
 #include "psmove.h"
 #include "../psmove_private.h"
-#include "opencv2/core/core_c.h"
 
 struct _CameraControl;
 typedef struct _CameraControl CameraControl;

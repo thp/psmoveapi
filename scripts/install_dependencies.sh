@@ -7,16 +7,15 @@ UNAME=$(uname)
 
 case "$UNAME" in
     Linux)
-        sudo add-apt-repository --yes ppa:kubuntu-ppa/backports
-        sudo add-apt-repository --yes ppa:hlprasu/swig-trusty-backports
         sudo apt-get update -qq
         sudo apt-get install -q -y mingw-w64 g++-mingw-w64
         sudo apt-get install -q -y build-essential cmake             \
                                    libudev-dev libbluetooth-dev      \
                                    libv4l-dev libopencv-dev          \
-                                   openjdk-7-jdk ant liblwjgl-java   \
+                                   openjdk-8-jdk ant liblwjgl-java   \
                                    python-dev mono-mcs               \
                                    swig3.0 freeglut3-dev             \
+                                   libxrandr-dev libxinerama-dev libxcursor-dev \
                                    python-sphinx python-pip
 
         # Workaround to get BlueZ 5 on Travis CI (it doesn't yet have Ubuntu 16.04)
