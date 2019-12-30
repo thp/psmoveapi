@@ -103,6 +103,14 @@ camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoW
 {
     int fd = open_v4l2_device(cc->cameraID);
 
+#if defined(PSMOVE_USE_PSEYE)
+    /**
+     * Force auto exposure off, workaround by peoro
+     * https://github.com/thp/psmoveapi/issues/150
+     **/
+    autoE = 0xFFFF;
+#endif
+
     if (fd != -1) {
         v4l2_set_control(fd, V4L2_CID_EXPOSURE, exposure);
         v4l2_set_control(fd, V4L2_CID_GAIN, gain);
