@@ -387,6 +387,7 @@ psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings) {
     camera = linux_find_pseye();
     if (camera == -1) {
         /* Could not find the PSEye - fallback to first camera */
+        psmove_DEBUG("No PSEye found, using first camera instead\n");
         camera = 0;
     }
 #endif
