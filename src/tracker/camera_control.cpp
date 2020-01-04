@@ -101,6 +101,11 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
     } else {
         cc->capture = cvCaptureFromCAM(cc->cameraID);
 
+        if (cc->capture == NULL) {
+            free(cc);
+            return NULL;
+        }
+
         if (width <= 0 || height <= 0) {
             get_metrics(&width, &height);
         }
