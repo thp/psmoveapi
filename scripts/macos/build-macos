@@ -72,6 +72,7 @@ if [ ! -d "$OPENCV_INSTALL_DIR" ]; then
           -DBUILD_opencv_videostab=OFF \
           -DBUILD_opencv_world=OFF \
           -DBUILD_opencv_java=OFF \
+          -DWITH_EIGEN=OFF \
           -DWITH_OPENEXR=OFF \
           -DWITH_FFMPEG=OFF \
           -DWITH_JASPER=OFF \
