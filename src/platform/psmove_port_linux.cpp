@@ -167,8 +167,6 @@ make_directory(const std::string &filename)
 bool
 linux_bluez5_update_file_content(BluetoothDaemon &bluetoothd, const std::string &path, const std::string &contents)
 {
-    bool must_update = false;
-
     if (file_exists(path)) {
         FILE *fp = fopen(path.c_str(), "r");
 
