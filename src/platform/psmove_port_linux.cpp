@@ -1,6 +1,7 @@
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2016, 2017 Thomas Perl <m@thp.io>
+ * Copyright (c) 2019, 2020 Alexander Nitsch <nitsch@ht.tu-berlin.de>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +34,7 @@
 #include "psmove_private.h"
 
 #include <ctype.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,12 +51,19 @@
 #include <bluetooth/hci_lib.h>
 #include <sys/ioctl.h>
 
+#include <dbus/dbus.h>
+
 
 
 #define LINUXPAIR_DEBUG(msg, ...) \
         psmove_PRINTF("PAIRING LINUX", msg, ## __VA_ARGS__)
 
 namespace {
+
+volatile int pinagent_cancelled = 0;
+volatile int disconnected = 0;
+
+char *dbus_device_id = NULL;
 
 const std::string
 BLUEZ5_INFO_ENTRY(unsigned short pid) {
@@ -209,6 +218,356 @@ linux_bluez5_update_file_content(BluetoothDaemon &bluetoothd, const std::string 
     fclose(fp);
 
     return true;
+}
+
+
+void
+print_and_free_dbus_error(DBusError *err)
+{
+    if (dbus_error_is_set(err)) {
+        LINUXPAIR_DEBUG("%s\n", err->message);
+        dbus_error_free(err);
+    }
+}
+
+DBusHandlerResult
+pinagent_request_pincode_message(DBusConnection *conn, DBusMessage *msg, void *data)
+{
+    DBusMessage *reply;
+    const char *path;
+    char const *pincode = "0000";
+
+    if (!dbus_message_get_args(msg, NULL,
+            DBUS_TYPE_OBJECT_PATH, &path,
+            DBUS_TYPE_INVALID)) {
+        LINUXPAIR_DEBUG("Failed to get DBus method arguments for RequestPinCode");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    reply = dbus_message_new_method_return(msg);
+    if (!reply) {
+        LINUXPAIR_DEBUG("Failed to create reply message for RequestPinCode\n");
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    LINUXPAIR_DEBUG("Pincode request for device %s\n", path);
+    LINUXPAIR_DEBUG("Sending PIN code '%s'\n", pincode);
+    dbus_message_append_args(reply,
+        DBUS_TYPE_STRING, &pincode,
+        DBUS_TYPE_INVALID);
+
+    dbus_connection_send(conn, reply, NULL);
+    dbus_connection_flush(conn);
+    dbus_message_unref(reply);
+
+    // save device identifier for accessing the device later
+    if (dbus_device_id) {
+        free(dbus_device_id);
+    }
+    dbus_device_id = strdup(path);
+
+    return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+DBusHandlerResult
+pinagent_release_message(DBusConnection *conn, DBusMessage *msg, void *data)
+{
+    DBusMessage *reply;
+
+    disconnected = 1;
+
+    reply = dbus_message_new_method_return(msg);
+    if (!reply) {
+        LINUXPAIR_DEBUG("Failed to create reply message for Release\n");
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+
+    dbus_connection_send(conn, reply, NULL);
+    dbus_connection_flush(conn);
+    dbus_message_unref(reply);
+
+    return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+DBusHandlerResult
+pinagent_message_handler(DBusConnection *conn, DBusMessage *msg, void *data)
+{
+    if (dbus_message_is_method_call(msg, "org.bluez.Agent1", "RequestPinCode")) {
+        return pinagent_request_pincode_message(conn, msg, data);
+    }
+
+    if (dbus_message_is_method_call(msg, "org.bluez.Agent1", "Release")) {
+        return pinagent_release_message(conn, msg, data);
+    }
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+const DBusObjectPathVTable pinagent_vtable = {
+    .message_function = pinagent_message_handler,
+};
+
+int
+register_agent(DBusConnection *conn, char const *agent_path, char const *capabilities)
+{
+    DBusMessage *msg;
+    DBusMessage *reply;
+    DBusError err;
+
+    if (!dbus_connection_register_object_path(conn, agent_path, &pinagent_vtable, NULL)) {
+        LINUXPAIR_DEBUG("Failed to register DBus object path for agent\n");
+        return -1;
+    }
+
+    msg = dbus_message_new_method_call("org.bluez",
+        "/org/bluez",
+        "org.bluez.AgentManager1",
+        "RegisterAgent");
+
+    if (!msg) {
+        LINUXPAIR_DEBUG("Failed to create DBus method call: RegisterAgent\n");
+        return -1;
+    }
+
+    dbus_message_append_args(msg,
+        DBUS_TYPE_OBJECT_PATH, &agent_path,
+        DBUS_TYPE_STRING, &capabilities,
+        DBUS_TYPE_INVALID);
+
+    dbus_error_init(&err);
+    reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, &err);
+    dbus_message_unref(msg);
+
+    if (!reply) {
+        LINUXPAIR_DEBUG("Failed to register agent\n");
+        print_and_free_dbus_error(&err);
+        return -1;
+    }
+
+    dbus_message_unref(reply);
+    dbus_connection_flush(conn);
+
+
+    // make our agent the default agent
+
+    msg = dbus_message_new_method_call("org.bluez",
+        "/org/bluez",
+        "org.bluez.AgentManager1",
+        "RequestDefaultAgent");
+
+    if (!msg) {
+        LINUXPAIR_DEBUG("Failed to create DBus method call: RequestDefaultAgent\n");
+        return -1;
+    }
+
+    dbus_message_append_args(msg,
+        DBUS_TYPE_OBJECT_PATH, &agent_path,
+        DBUS_TYPE_INVALID);
+
+    dbus_error_init(&err);
+    reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, &err);
+    dbus_message_unref(msg);
+
+    if (!reply) {
+        LINUXPAIR_DEBUG("Failed to request default agent\n");
+        print_and_free_dbus_error(&err);
+        return -1;
+    }
+
+    dbus_message_unref(reply);
+    dbus_connection_flush(conn);
+
+    return 0;
+}
+
+int
+unregister_agent(DBusConnection *conn, char const *agent_path)
+{
+    DBusMessage *msg;
+    DBusMessage *reply;
+    DBusError err;
+
+    msg = dbus_message_new_method_call("org.bluez",
+        "/org/bluez",
+        "org.bluez.AgentManager1",
+        "UnregisterAgent");
+
+    if (!msg) {
+        LINUXPAIR_DEBUG("Failed to create DBus method call: UnregisterAgent\n");
+        return -1;
+    }
+
+    dbus_message_append_args(msg,
+        DBUS_TYPE_OBJECT_PATH, &agent_path,
+        DBUS_TYPE_INVALID);
+
+    dbus_error_init(&err);
+    reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, &err);
+    dbus_message_unref(msg);
+
+    if (!reply) {
+        LINUXPAIR_DEBUG("Failed to unregister agent\n");
+        print_and_free_dbus_error(&err);
+        return -1;
+    }
+
+    dbus_message_unref(reply);
+    dbus_connection_flush(conn);
+    dbus_connection_unregister_object_path(conn, agent_path);
+
+    return 0;
+}
+
+int
+get_device_property(DBusConnection *conn, char const *dev, char const *interface, char const* property)
+{
+    DBusMessage *msg;
+    DBusMessage *reply;
+    DBusMessageIter msg_iter;
+    DBusMessageIter prop_iter;
+    DBusError err;
+
+    int value;
+
+    msg = dbus_message_new_method_call("org.bluez",
+        dev,
+        "org.freedesktop.DBus.Properties",
+        "Get");
+
+    if (!msg) {
+        LINUXPAIR_DEBUG("Failed to create DBus method call: Get\n");
+        return 0;
+    }
+
+    dbus_message_append_args(msg,
+        DBUS_TYPE_STRING, &interface,
+        DBUS_TYPE_STRING, &property,
+        DBUS_TYPE_INVALID);
+
+    dbus_error_init(&err);
+    reply = dbus_connection_send_with_reply_and_block(conn, msg, -1, &err);
+    dbus_message_unref(msg);
+
+    if (!reply) {
+        LINUXPAIR_DEBUG("Failed to read DBus device property\n");
+        print_and_free_dbus_error(&err);
+        return 0;
+    }
+
+    // extract the property value
+
+    dbus_message_iter_init(reply, &msg_iter);
+    dbus_message_iter_recurse(&msg_iter, &prop_iter);
+
+    if (DBUS_TYPE_BOOLEAN == dbus_message_iter_get_arg_type(&prop_iter)) {
+        dbus_message_iter_get_basic(&prop_iter, &value);
+    } else {
+        LINUXPAIR_DEBUG("DBus property has wrong type, must be boolean\n");
+        value = 0;
+    }
+
+    dbus_message_unref(reply);
+
+    return value;
+}
+
+int
+is_device_connected(DBusConnection *conn, char const *dev)
+{
+    char const *interface = "org.bluez.Device1";
+    char const *property  = "Connected";
+    int value;
+
+    if (!dev) {
+        return 0;
+    }
+
+    // check multiple times in a row
+    for (int i = 0; i < 5; i++) {
+        value = get_device_property(conn, dev, interface, property);
+        if (!value) {
+            return 0;
+        }
+
+        usleep(300 * 1000);
+    }
+
+    return 1;
+}
+
+void
+sig_term(int sig)
+{
+    pinagent_cancelled = 1;
+}
+
+int
+run_pin_agent()
+{
+    struct sigaction sa;
+
+    DBusConnection *conn = NULL;
+    DBusError err;
+
+    char const *agent_path = "/psmoveapi/pinagent";
+    char const *capabilities = "KeyboardOnly";
+
+    dbus_error_init(&err);
+    conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+    if (!conn) {
+        LINUXPAIR_DEBUG("Failed to connect to DBus system bus\n");
+        print_and_free_dbus_error(&err);
+        return -1;
+    }
+
+    LINUXPAIR_DEBUG("Registering PIN code agent\n");
+    if (register_agent(conn, agent_path, capabilities)) {
+        dbus_connection_unref(conn);
+        return -1;
+    }
+
+    printf("\n" \
+           "    Press the controller's PS button. The red status LED\n" \
+           "    will start blinking. This might take a few seconds. If\n" \
+           "    the connection is established, the status LED will\n" \
+           "    finally remain lit. Press Ctrl+C to cancel anytime.\n");
+
+    // install signal handler for cancelling
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_flags   = SA_NOCLDSTOP;
+    sa.sa_handler = sig_term;
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT,  &sa, NULL);
+
+    while (!pinagent_cancelled && !disconnected) {
+        if (dbus_connection_read_write_dispatch(conn, 500) != TRUE) {
+            break;
+        }
+
+        if (dbus_device_id) {
+            LINUXPAIR_DEBUG("Checking device connected: %s\n", dbus_device_id);
+
+            if (is_device_connected(conn, dbus_device_id)) {
+                LINUXPAIR_DEBUG("Device connected\n");
+                break;
+            }
+        }
+    }
+
+    if (!disconnected) {
+        LINUXPAIR_DEBUG("Unregistering PIN code agent\n");
+        unregister_agent(conn, agent_path);
+    }
+
+    dbus_connection_unref(conn);
+    conn = NULL;
+
+    if (dbus_device_id) {
+        free(dbus_device_id);
+        dbus_device_id = NULL;
+    }
+
+    return 0;
 }
 
 } // end anonymous namespace
@@ -413,5 +772,13 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         return PSMove_False;
     }
 
+    // start agent for automatically entering the PIN code if the ZCM2 requests
+    // it (only required once, during initial setup)
+    if (model == Model_ZCM2) {
+        bluetoothd.force_restart();
+        run_pin_agent();
+    }
+
     return PSMove_True;
 }
+
