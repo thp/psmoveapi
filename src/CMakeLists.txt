@@ -86,9 +86,9 @@ ELSE()
     list(APPEND PSMOVEAPI_REQUIRED_LIBS ${CMAKE_THREAD_LIBS_INIT})
     list(APPEND PSMOVEAPI_REQUIRED_LIBS m)
 
-    find_package(DBus1 REQUIRED)
-    include_directories(${DBus1_INCLUDE_DIRS})
-    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${DBus1_LIBRARIES})
+    pkg_check_modules(DBus REQUIRED dbus-1)
+    include_directories(${DBus_INCLUDE_DIRS})
+    list(APPEND PSMOVEAPI_REQUIRED_LIBS ${DBus_LIBRARIES})
 
     pkg_check_modules(UDEV REQUIRED libudev)
     include_directories(${UDEV_INCLUDE_DIRS})
