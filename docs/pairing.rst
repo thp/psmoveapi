@@ -73,6 +73,8 @@ button on your controller, follow these steps:
 * Enable Bluetooth again then press the PS button on the controller. The PIN request should
   not pop up this time and the Move should now appear in the bluetooth devices as "Motion Controller".
 
+Starting with macOS Sierra, at most 2 Move controllers can be connected via Bluetooth at the same time when using the built-in Bluetooth adapter. This is due to some internal changes Apple made and did work on the same hardware prior to updating to Sierra. If you need more controllers at the same time, you can use an external Bluetooth adapter.
+
 
 Ubuntu Linux
 ~~~~~~~~~~~~
