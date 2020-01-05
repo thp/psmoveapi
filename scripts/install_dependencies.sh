@@ -11,6 +11,7 @@ case "$UNAME" in
         sudo apt-get install -q -y mingw-w64 g++-mingw-w64
         sudo apt-get install -q -y build-essential cmake             \
                                    libudev-dev libbluetooth-dev      \
+                                   libdbus-1-dev                     \
                                    libv4l-dev libopencv-dev          \
                                    openjdk-8-jdk ant liblwjgl-java   \
                                    python-dev mono-mcs               \
