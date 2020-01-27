@@ -50,6 +50,7 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 #include <sys/ioctl.h>
+#include <sys/utsname.h>
 
 #include <dbus/dbus.h>
 
@@ -772,9 +773,13 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         return PSMove_False;
     }
 
+    struct utsname uts;
+    uname(&uts);
+
     // start agent for automatically entering the PIN code if the ZCM2 requests
     // it (only required once, during initial setup)
-    if (model == Model_ZCM2) {
+    // note the ZCM2 controller does not request for a pin on the pi
+    if (model == Model_ZCM2 && strcmp(uts.nodename , "raspberrypi") != 0) {
         bluetoothd.force_restart();
         run_pin_agent();
     }
