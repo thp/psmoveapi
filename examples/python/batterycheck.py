@@ -60,6 +60,8 @@ while True:
                 move.set_leds(128, 200, 0)
             elif battery == 3: # 60% - yellow
                 move.set_leds(255, 255, 0)
+            elif battery > 5: # charging
+                move.set_leds(0, 0, 255)
             else: # <= 40% - red
                 move.set_leds(255, 0, 0)
             move.update_leds()
