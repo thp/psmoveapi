@@ -89,6 +89,12 @@ extern "C" {
 }
 #undef main
 
+#define main sixpair_main
+extern "C" {
+#include "sixpair.c"
+}
+#undef main
+
 static int
 usage(const char *progname, std::vector<SubCommand> &subcommands)
 {
@@ -219,6 +225,7 @@ main(int argc, char *argv[])
     subcommands.emplace_back("battery", "Visualize the battery charge on connected controllers", battery_check_main);
     subcommands.emplace_back("extensions", "Show sharp shooter and racing wheel extension data", test_extension_main);
     subcommands.emplace_back("list", "List connected controllers", list_main);
+    subcommands.emplace_back("pair-nav", "Pair navigation controller via USB (using sixpair)", sixpair_main);
 
     subcommands.emplace_back(nullptr, "Debugging Tools (for developers)", nullptr);
 

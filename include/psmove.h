@@ -117,6 +117,36 @@ enum PSMove_Button {
 #endif
 };
 
+/*! Navigation Controller buttons.
+ *
+ * Use these values to index into e.g. SDL Joystick Buttons.
+ **/
+enum PSNav_Button {
+    NavBtn_CROSS = 0, /*!< Cross button */
+    NavBtn_CIRCLE = 1, /*!< Circle button */
+
+    NavBtn_L1 = 4, /*!< Shoulder button */
+    NavBtn_L2 = 5, /*!< Trigger */
+    NavBtn_L3 = 7, /*!< Analog stick */
+
+    NavBtn_PS = 6, /*!< PS button */
+
+    NavBtn_UP = 8, /*!< D-Pad UP */
+    NavBtn_DOWN = 9, /*!< D-Pad DOWN */
+    NavBtn_LEFT = 10, /*!< D-Pad LEFT */
+    NavBtn_RIGHT = 11, /*!< D-Pad RIGHT */
+};
+
+/*! Navigation Controller axes.
+ *
+ * Use these values to index into e.g. SDL Joystick Axes.
+ **/
+enum PSNav_Axis {
+    NavAxis_X = 0,
+    NavAxis_Y = 1,
+    NavAxis_Trigger = 2,
+};
+
 
 /*! Frame of an input report.
  * Each input report sent by the PS Move Controller contains two readings for
