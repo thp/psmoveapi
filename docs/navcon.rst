@@ -81,3 +81,18 @@ expected to bring your own Joystick-reading library (e.g. SDL2).
  * D-Pad Right: Button 11
  * PS button: Button 6
 
+
+Caveats
+-------
+
+On Linux, all inputs work via both USB and Bluetooth. When connecting
+via USB, you might need to press the PS button for the controller to
+start reporting.
+
+On macOS, inputs only work over Bluetooth, not via USB. Also, the
+button assignment is different on macOS (but ``psmove.h`` contains
+definitions for both platforms and will pick the right ones). As a
+special case, the analog value of the trigger isn't available on
+macOS at the moment.
+
+This is not tested at all on Windows, contributions welcome.
