@@ -18,7 +18,7 @@ case "$UNAME" in
                                    swig3.0 freeglut3-dev             \
                                    libxrandr-dev libxinerama-dev libxcursor-dev \
                                    python-sphinx python-pip \
-                                   libusb-dev
+                                   libusb-dev libsdl2-dev
 
         # Workaround to get BlueZ 5 on Travis CI (it doesn't yet have Ubuntu 16.04)
         # Based on: https://askubuntu.com/a/662349
@@ -34,7 +34,7 @@ case "$UNAME" in
         ;;
     Darwin)
         brew update
-        brew install --force cmake git libtool automake autoconf swig python libusb-compat || true
+        brew install --force cmake git libtool automake autoconf swig python libusb-compat sdl2 || true
         brew unlink libtool ; brew link --overwrite libtool
         pip2 install --user sphinx
         ;;
