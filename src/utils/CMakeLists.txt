@@ -12,6 +12,6 @@ include_directories(${LIBUSB_INCLUDE_DIRS})
 # New command line interface
 add_executable(psmove ${CMAKE_CURRENT_LIST_DIR}/psmovecli.cpp)
 target_link_libraries(psmove psmoveapi ${LIBUSB_LIBRARIES})
-target_link_directories(psmove PRIVATE ${LIBUSB_LIBRARY_DIRS})
+target_link_options(psmove PRIVATE "-L${LIBUSB_LIBRARY_DIRS}")
 set_property(TARGET psmove PROPERTY FOLDER "Utilities")
 list(APPEND PSMOVEAPI_INSTALL_TARGETS psmove)
