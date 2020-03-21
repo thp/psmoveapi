@@ -117,6 +117,55 @@ enum PSMove_Button {
 #endif
 };
 
+/*! Navigation Controller buttons.
+ *
+ * Note that the button assignment seems to be different on macOS
+ * compared to Linux. Untested on Windows, contributions welcome.
+ *
+ * Use these values to index into e.g. SDL Joystick Buttons.
+ **/
+enum PSNav_Button {
+#if defined(__APPLE__)
+    NavBtn_CROSS = 14, /*!< Cross button */
+    NavBtn_CIRCLE = 13, /*!< Circle button */
+
+    NavBtn_L1 = 10, /*!< Shoulder button */
+    NavBtn_L2 = 8, /*!< Trigger */
+    NavBtn_L3 = 1, /*!< Analog stick */
+
+    NavBtn_PS = 16, /*!< PS button */
+
+    NavBtn_UP = 4, /*!< D-Pad UP */
+    NavBtn_DOWN = 6, /*!< D-Pad DOWN */
+    NavBtn_LEFT = 7, /*!< D-Pad LEFT */
+    NavBtn_RIGHT = 5, /*!< D-Pad RIGHT */
+#else
+    NavBtn_CROSS = 0, /*!< Cross button */
+    NavBtn_CIRCLE = 1, /*!< Circle button */
+
+    NavBtn_L1 = 4, /*!< Shoulder button */
+    NavBtn_L2 = 5, /*!< Trigger */
+    NavBtn_L3 = 7, /*!< Analog stick */
+
+    NavBtn_PS = 6, /*!< PS button */
+
+    NavBtn_UP = 8, /*!< D-Pad UP */
+    NavBtn_DOWN = 9, /*!< D-Pad DOWN */
+    NavBtn_LEFT = 10, /*!< D-Pad LEFT */
+    NavBtn_RIGHT = 11, /*!< D-Pad RIGHT */
+#endif
+};
+
+/*! Navigation Controller axes.
+ *
+ * Use these values to index into e.g. SDL Joystick Axes.
+ **/
+enum PSNav_Axis {
+    NavAxis_X = 0,
+    NavAxis_Y = 1,
+    NavAxis_Trigger = 2, /*!< might not work on macOS */
+};
+
 
 /*! Frame of an input report.
  * Each input report sent by the PS Move Controller contains two readings for

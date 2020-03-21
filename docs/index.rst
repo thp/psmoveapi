@@ -9,6 +9,7 @@ PS Move API Documentation
    Camera <camera.rst>
    Network (Move Daemon) <moved.rst>
    Configuration <config.rst>
+   Navigation Controller <navcon.rst>
 
 
 Mailing List
