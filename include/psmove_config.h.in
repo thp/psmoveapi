@@ -33,6 +33,7 @@
 
 #cmakedefine PSMOVE_BUILD_TRACKER
 #cmakedefine PSMOVE_USE_PSEYE
+#cmakedefine PSMOVE_USE_SIXPAIR
 
 /* Version information */
 #define PSMOVEAPI_VERSION_MAJOR @PSMOVEAPI_VERSION_MAJOR@
