@@ -50,7 +50,7 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 #include <sys/ioctl.h>
-#include <sys/utsname.h>
+#include <array>
 
 #include <dbus/dbus.h>
 
@@ -772,16 +772,32 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     if (!linux_bluez5_update_file_content(bluetoothd, cache_dir + "/" + controller_addr, BLUEZ5_CACHE_ENTRY)) {
         return PSMove_False;
     }
-
-    struct utsname uts;
-    uname(&uts);
+    
 
     // start agent for automatically entering the PIN code if the ZCM2 requests
     // it (only required once, during initial setup)
-    // note the ZCM2 controller does not request for a pin on the pi
-    if (model == Model_ZCM2 && strcmp(uts.nodename , "raspberrypi") != 0) {
+    if (model == Model_ZCM2){
         bluetoothd.force_restart();
-        run_pin_agent();
+        
+        //Run hciconfig to see if secure simple pairing is enabled
+        std::string command("hciconfig hci0 sspmode 2>&1");
+        std::array<char, 128> buffer;
+        std::string result;
+
+        FILE* pipe = popen(command.c_str(), "r");
+        if (!pipe)
+        {
+            printf("Couldn't start command.");
+        }
+        while (fgets(buffer.data(), 128, pipe) != NULL) {
+            result += buffer.data();
+        }
+        auto returnCode = pclose(pipe);
+        
+        //If it is not enabled, then run the pin agent to send 0000
+        if(result.find("Enabled") == std::string::npos){
+            run_pin_agent();
+        }
     }
 
     return PSMove_True;
