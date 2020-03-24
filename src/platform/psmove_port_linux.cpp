@@ -779,23 +779,13 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     if (model == Model_ZCM2){
         bluetoothd.force_restart();
         
-        //Run hciconfig to see if secure simple pairing is enabled
-        std::string command("hciconfig hci0 sspmode 2>&1");
-        std::array<char, 128> buffer;
-        std::string result;
-
-        FILE* pipe = popen(command.c_str(), "r");
-        if (!pipe)
-        {
-            printf("Couldn't start command.");
-        }
-        while (fgets(buffer.data(), 128, pipe) != NULL) {
-            result += buffer.data();
-        }
-        auto returnCode = pclose(pipe);
+        uint8_t ssp = 0;
+        int dd = hci_open_dev(hci_devid(host));
+        hci_read_simple_pairing_mode(dd, &ssp, -1);
+        hci_close_dev(dd);
         
         //If it is not enabled, then run the pin agent to send 0000
-        if(result.find("Enabled") == std::string::npos){
+        if(ssp == 0){
             run_pin_agent();
         }
     }
