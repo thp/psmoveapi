@@ -50,7 +50,6 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 #include <sys/ioctl.h>
-#include <array>
 
 #include <dbus/dbus.h>
 
@@ -772,13 +771,13 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     if (!linux_bluez5_update_file_content(bluetoothd, cache_dir + "/" + controller_addr, BLUEZ5_CACHE_ENTRY)) {
         return PSMove_False;
     }
-    
 
     // start agent for automatically entering the PIN code if the ZCM2 requests
     // it (only required once, during initial setup)
     if (model == Model_ZCM2){
         bluetoothd.force_restart();
         
+        //check if secure simple pairing is enabled in the host adapter
         uint8_t ssp = 0;
         int dd = hci_open_dev(hci_devid(host));
         hci_read_simple_pairing_mode(dd, &ssp, -1);
