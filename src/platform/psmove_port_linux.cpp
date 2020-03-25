@@ -774,9 +774,19 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
 
     // start agent for automatically entering the PIN code if the ZCM2 requests
     // it (only required once, during initial setup)
-    if (model == Model_ZCM2) {
+    if (model == Model_ZCM2){
         bluetoothd.force_restart();
-        run_pin_agent();
+        
+        //check if secure simple pairing is enabled in the host adapter
+        uint8_t ssp = 0;
+        int dd = hci_open_dev(hci_devid(host));
+        hci_read_simple_pairing_mode(dd, &ssp, -1);
+        hci_close_dev(dd);
+        
+        //If it is not enabled, then run the pin agent to send 0000
+        if(ssp == 0){
+            run_pin_agent();
+        }
     }
 
     return PSMove_True;
