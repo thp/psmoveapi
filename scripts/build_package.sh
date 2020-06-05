@@ -49,9 +49,9 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi.so
         build/libpsmoveapi_tracker.so
         "
-	JAVA_JAR="build/psmoveapi.jar"
-	JAVA_NATIVE="build/libpsmove_java.so"
-	CSHARP_NATIVE="build/psmoveapi_chsharp.so"
+        JAVA_JAR="build/psmoveapi.jar"
+        JAVA_NATIVE="build/libpsmove_java.so"
+        CSHARP_NATIVE="build/psmoveapi_chsharp.so"
         pkg_tarball
 
         PLATFORM_NAME="linux"
@@ -67,9 +67,9 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi.dll
         build/libpsmoveapi_tracker.dll
         "
-	JAVA_JAR="build/psmoveapi.jar"
-	JAVA_NATIVE="build/psmove_java.dll"
-	CSHARP_NATIVE="build/psmoveapi_csharp.dll"
+        JAVA_JAR="build/psmoveapi.jar"
+        JAVA_NATIVE="build/psmove_java.dll"
+        CSHARP_NATIVE="build/psmoveapi_csharp.dll"
         pkg_zipfile_zip
 
         case "$BUILD_TYPE" in
@@ -118,6 +118,9 @@ case "$BUILD_TYPE" in
         $BUILDDIR/psmoveapi_tracker.dll
         $BUILDDIR/psmoveapi_tracker.lib
         "
+        JAVA_JAR="build/psmoveapi.jar"
+        JAVA_NATIVE="build/psmove_java.dll"
+        CSHARP_NATIVE="build/psmoveapi_csharp.dll"
         pkg_zipfile_7z
 
         PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
