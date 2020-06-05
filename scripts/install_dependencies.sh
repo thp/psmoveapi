@@ -13,7 +13,7 @@ case "$UNAME" in
                                    libudev-dev libbluetooth-dev      \
                                    libdbus-1-dev                     \
                                    libv4l-dev libopencv-dev          \
-                                   openjdk-8-jdk ant liblwjgl-java   \
+                                   default-jdk ant liblwjgl-java   \
                                    python-dev mono-mcs               \
                                    swig3.0 freeglut3-dev             \
                                    libxrandr-dev libxinerama-dev libxcursor-dev \

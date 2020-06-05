@@ -49,6 +49,9 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi.so
         build/libpsmoveapi_tracker.so
         "
+	JAVA_JAR="build/psmoveapi.jar"
+	JAVA_NATIVE="build/libpsmove_java.so"
+	CSHARP_NATIVE="build/psmoveapi_chsharp.so"
         pkg_tarball
 
         PLATFORM_NAME="linux"
@@ -64,6 +67,9 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi.dll
         build/libpsmoveapi_tracker.dll
         "
+	JAVA_JAR="build/psmoveapi.jar"
+	JAVA_NATIVE="build/psmove_java.dll"
+	CSHARP_NATIVE="build/psmoveapi_csharp.dll"
         pkg_zipfile_zip
 
         case "$BUILD_TYPE" in
@@ -146,6 +152,17 @@ cp -v include/*.h $BUILDDIR/psmove_config.h "$DEST/include/"
 
 mkdir -p "$DEST/bindings/python"
 cp -rv bindings/python/psmoveapi.py "$DEST/bindings/python/"
+
+if [ -f $JAVA_JAR ]; then
+    mkdir -p "$DEST/bindings/java"
+    cp -rv $JAVA_JAR "$DEST/bindings/java/"
+    cp -rv $JAVA_NATIVE "$DEST/bindings/java/"
+fi
+
+if [ -f $CSHARP_NATIVE ]; then
+    mkdir -p "$DEST/bindings/csharp"
+    cp -rv $CSHARP_NATIVE "$DEST/bindings/csharp"
+fi
 
 if [ ! -z "$PLATFORM_BIN" ]; then
     mkdir -p "$DEST/bin"
