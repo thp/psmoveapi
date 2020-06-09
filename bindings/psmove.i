@@ -42,6 +42,12 @@
 %pragma(java) jniclasscode=%{
     static {
         try {
+            String os = System.getProperty("os.name");
+            boolean isWindows = os.toUpperCase().contains("WINDOWS");
+            if (isWindows) {
+                System.loadLibrary("libpsmoveapi");
+                System.loadLibrary("libpsmoveapi_tracker");
+            }
             System.loadLibrary("psmove_java");
         } catch (UnsatisfiedLinkError e) {
             System.err.println("Failed to load native 'psmove' library: " + e);
