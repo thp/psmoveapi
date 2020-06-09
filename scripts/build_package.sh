@@ -156,13 +156,13 @@ cp -v include/*.h $BUILDDIR/psmove_config.h "$DEST/include/"
 mkdir -p "$DEST/bindings/python"
 cp -rv bindings/python/psmoveapi.py "$DEST/bindings/python/"
 
-if [ -f $JAVA_JAR ]; then
+if [ -f "$JAVA_JAR" ]; then
     mkdir -p "$DEST/bindings/java"
     cp -rv $JAVA_JAR "$DEST/bindings/java/"
     cp -rv $JAVA_NATIVE "$DEST/bindings/java/"
 fi
 
-if [ -f $CSHARP_NATIVE ]; then
+if [ -f "$CSHARP_NATIVE" ]; then
     mkdir -p "$DEST/bindings/csharp"
     cp -rv $CSHARP_NATIVE "$DEST/bindings/csharp"
 fi
