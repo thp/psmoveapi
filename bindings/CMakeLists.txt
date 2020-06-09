@@ -57,11 +57,11 @@ if(SWIG_FOUND)
             #       more elegant which only makes the relevant line platform-dependent without copying all
             #       the other lines. But this simple branching is pretty robust and also works with older
             #       versions of CMake.
-            if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT MINGW)
                 add_custom_target(psmoveapi.jar
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
                     COMMAND ${CMAKE_CURRENT_LIST_DIR}/copy_java.bat ${PSMOVEAPI_JAVA_PKG_DIR}/
-                    COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
+                    COMMAND javac --release 8 ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
                     COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                     COMMENT "Java bindings JAR archive"
@@ -70,7 +70,7 @@ if(SWIG_FOUND)
                 add_custom_target(psmoveapi.jar
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
                     COMMAND cp *.java ${PSMOVEAPI_JAVA_PKG_DIR}/
-                    COMMAND javac ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
+                    COMMAND javac --release 8 ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
                     COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                     COMMENT "Java bindings JAR archive"
@@ -89,7 +89,7 @@ if(SWIG_FOUND)
                 set(PSMOVEAPI_PAIRING_TOOL_NAME "psmove.exe")
 
                 if(MINGW)
-                    set(PSMOVEAPI_NATIVE_LIB "libpsmove_java.dll")
+                    set(PSMOVEAPI_NATIVE_LIB "psmove_java.dll")
                 endif()
             ELSE() # Linux
                 set(PSMOVEAPI_LIB_PLATFORM "linux")
