@@ -23,6 +23,7 @@ set(INFO_LICENSE "BSD")
 
 # Make a debug build with helpful output for debugging / maintenance
 option(PSMOVE_USE_DEBUG "Build for debugging" OFF)
+option(PSMOVE_USE_SIXPAIR "Enable Navigation Controller pairing" ON)
 
 # Debugging output
 IF(PSMOVE_USE_DEBUG)
@@ -138,7 +139,7 @@ file(GLOB PSMOVEAPI_HEADERS
 
 file (GLOB PSMOVEAPI_MATH_HEADERS
     "${CMAKE_CURRENT_LIST_DIR}/math/*.h"
-    "${CMAKE_CURRENT_LIST_DIR}/math/*.hpp"    
+    "${CMAKE_CURRENT_LIST_DIR}/math/*.hpp"
 )
 
 file (GLOB PSMOVEAPI_MATH_SRC
