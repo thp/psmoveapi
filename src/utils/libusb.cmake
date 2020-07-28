@@ -105,10 +105,28 @@ set(dir "${CMAKE_BINARY_DIR}/dl/usb/libusb-1.0.23")
 add_library(usb STATIC)
 file(GLOB files1 "${dir}/libusb/*.c")
 file(GLOB files2 "${dir}/libusb/os/*windows*")
-target_sources(usb PRIVATE ${files1} ${files2})
+if (MSVC)
+    file(REMOVE "${dir}/msvc/errno.h")
+    target_include_directories(usb PUBLIC "${dir}/msvc")
+elseif (MINGW)
+    target_compile_definitions(usb PRIVATE OS_WINDOWS)
+    if (NOT EXISTS "${dir}/libusb/config.h")
+        file(WRITE "${dir}/libusb/config.h" "
+            /* Define to 1 to enable message logging. */
+            #define ENABLE_LOGGING 1
+            /* Define to 1 if using the Windows poll() implementation. */
+            #define POLL_WINDOWS 1
+            /* Define to 1 if using Windows threads. */
+            #define THREADS_WINDOWS 1
+            #define DEFAULT_VISIBILITY// USB_API
+            #define POLL_NFDS_TYPE int
+        ")
+    endif()
+else()
+    message(FATAL_ERROR "Wrong platform")
+endif()
 target_include_directories(usb PUBLIC "${dir}/libusb")
-target_include_directories(usb PUBLIC "${dir}/msvc")
-file(REMOVE "${dir}/msvc/errno.h")
+target_sources(usb PRIVATE ${files1} ${files2})
 
 ################################################################################
 # usbcompat
