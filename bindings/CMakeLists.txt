@@ -52,6 +52,33 @@ if(SWIG_FOUND)
             endif()
             set(INFO_BUILD_JAVA_BINDINGS "Yes")
 
+            # explicitly instruct javac to generate .class files compatible
+            # with Java VM 8
+
+            execute_process(COMMAND javac --version
+                RESULT_VARIABLE proc_result
+                OUTPUT_VARIABLE javac_version_string
+            )
+
+            if (NOT proc_result EQUAL "0")
+                message(WARNING "javac version check failed with error code ${proc_result}")
+            else()
+                string(REGEX MATCH "^javac ([0-9]+\\.[0-9]+\\.[0-9]+)"
+                    regex_match
+                    "${javac_version_string}"
+                )
+                if (regex_match)
+                    # Since the --release flag for generating .class files that link
+                    # against the specified platform version was only introduced in
+                    # Java 9, we must not use it in older versions.
+                    if (CMAKE_MATCH_1 VERSION_GREATER_EQUAL "1.9.0")
+                        set(javac_release_opt "--release 8")
+                    endif()
+                else()
+                    message(WARNING "Failed to parse javac's version output: ${javac_version_string}")
+                endif()
+            endif()
+
             # NOTE: We need a platform-independent copy command for the .java files, but neither the COMMAND
             #       nor CMake's "-E copy" support wildcards on Windows. We could probably whip up something
             #       more elegant which only makes the relevant line platform-dependent without copying all
@@ -61,7 +88,7 @@ if(SWIG_FOUND)
                 add_custom_target(psmoveapi.jar
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
                     COMMAND ${CMAKE_CURRENT_LIST_DIR}/copy_java.bat ${PSMOVEAPI_JAVA_PKG_DIR}/
-                    COMMAND javac --release 8 ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
+                    COMMAND javac ${javac_release_opt} ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
                     COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                     COMMENT "Java bindings JAR archive"
@@ -70,7 +97,7 @@ if(SWIG_FOUND)
                 add_custom_target(psmoveapi.jar
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
                     COMMAND cp *.java ${PSMOVEAPI_JAVA_PKG_DIR}/
-                    COMMAND javac --release 8 ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
+                    COMMAND javac ${javac_release_opt} ${PSMOVEAPI_JAVA_PKG_DIR}/*.java
                     COMMAND jar cf psmoveapi.jar ${PSMOVEAPI_JAVA_PKG_DIR}/*.class
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                     COMMENT "Java bindings JAR archive"
