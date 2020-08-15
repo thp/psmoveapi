@@ -1,7 +1,9 @@
 version: 1.0.{build}
 
-# AppVeyor clone is not recursive, so we need to to init submodules manually
 install:
+  - cinst --yes --version 3.0.12 swig
+
+  # AppVeyor clone is not recursive, so we need to to init submodules manually
   - git submodule update --init --recursive
 
 environment:
