@@ -57,7 +57,7 @@ if(SWIG_FOUND)
             #       more elegant which only makes the relevant line platform-dependent without copying all
             #       the other lines. But this simple branching is pretty robust and also works with older
             #       versions of CMake.
-	    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT MINGW)
+            if(${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT MINGW)
                 add_custom_target(psmoveapi.jar
                     COMMAND ${CMAKE_COMMAND} -E make_directory ${PSMOVEAPI_JAVA_PKG_DIR}
                     COMMAND ${CMAKE_CURRENT_LIST_DIR}/copy_java.bat ${PSMOVEAPI_JAVA_PKG_DIR}/
