@@ -49,6 +49,7 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi.so
         build/libpsmoveapi_tracker.so
         "
+        PYTHON_BINDINGS="build/psmove.py"
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/libpsmove_java.so"
         CSHARP_NATIVE="build/psmoveapi_chsharp.so"
@@ -67,6 +68,7 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi.dll
         build/libpsmoveapi_tracker.dll
         "
+        PYTHON_BINDINGS="build/psmove.py"
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/psmove_java.dll"
         CSHARP_NATIVE="build/psmoveapi_csharp.dll"
@@ -121,6 +123,7 @@ case "$BUILD_TYPE" in
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/psmove_java.dll"
         CSHARP_NATIVE="build/psmoveapi_csharp.dll"
+        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
         pkg_zipfile_7z
 
         PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
@@ -155,6 +158,9 @@ cp -v include/*.h $BUILDDIR/psmove_config.h "$DEST/include/"
 
 mkdir -p "$DEST/bindings/python"
 cp -rv bindings/python/psmoveapi.py "$DEST/bindings/python/"
+if [ -f "$PYTHON_BINDINGS" ]; then
+    cp -rv "$PYTHON_BINDINGS" "$DEST/bindings/python/"
+fi
 
 if [ -f "$JAVA_JAR" ]; then
     mkdir -p "$DEST/bindings/java"
