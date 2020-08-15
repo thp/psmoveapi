@@ -120,10 +120,10 @@ case "$BUILD_TYPE" in
         $BUILDDIR/psmoveapi_tracker.dll
         $BUILDDIR/psmoveapi_tracker.lib
         "
-        JAVA_JAR="build/psmoveapi.jar"
-        JAVA_NATIVE="build/psmove_java.dll"
-        CSHARP_NATIVE="build/psmoveapi_csharp.dll"
         PYTHON_BINDINGS="$BUILDDIR/psmove.py"
+        JAVA_JAR="$BUILDDIR/psmoveapi.jar"
+        JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
+        CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
         pkg_zipfile_7z
 
         PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
