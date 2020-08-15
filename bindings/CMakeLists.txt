@@ -55,10 +55,25 @@ if(SWIG_FOUND)
             # explicitly instruct javac to generate .class files compatible
             # with Java VM 8
 
+            set(javac_use_gnu_opts TRUE)
+
             execute_process(COMMAND javac --version
                 RESULT_VARIABLE proc_result
                 OUTPUT_VARIABLE javac_version_string
             )
+
+            if (NOT proc_result EQUAL "0")
+                # javac decided, somewhere around version 1.9 I believe, to switch from
+                # -opt to GNU-style --opt for their options format. So we try once
+                # again with the old-style options, in case we are dealing with an old
+                # version of javac.
+                execute_process(COMMAND javac -version
+                    RESULT_VARIABLE proc_result
+                    OUTPUT_VARIABLE javac_version_string
+                )
+
+                set(javac_use_gnu_opts FALSE)
+            endif()
 
             if (NOT proc_result EQUAL "0")
                 message(WARNING "javac version check failed with error code ${proc_result}")
@@ -72,7 +87,10 @@ if(SWIG_FOUND)
                     # against the specified platform version was only introduced in
                     # Java 9, we must not use it in older versions.
                     if (CMAKE_MATCH_1 VERSION_GREATER_EQUAL "1.9.0")
-                        set(javac_release_opt "--release 8")
+                        set(javac_release_opt "-release 8")
+                        if (javac_use_gnu_opts)
+                            string(PREPEND javac_release_opt "-")
+                        endif()
                     endif()
                 else()
                     message(WARNING "Failed to parse javac's version output: ${javac_version_string}")
