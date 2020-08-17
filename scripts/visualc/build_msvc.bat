@@ -41,15 +41,17 @@ IF %ERRORLEVEL% NEQ 0 ( echo Failed to apply libusb patch. Perhaps it was alread
 
 REM Build libusb
 echo.
-echo Building libusb
+echo Building libusb ^(Debug^)
 msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_%MSVC_VERSION%.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF !ERRORLEVEL! NEQ 0 (
-	echo Failed to build libusb
+	echo Failed to build libusb ^(Debug^)
 	goto Error
 )
+echo.
+echo Building libusb ^(Release^)
 msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_%MSVC_VERSION%.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF !ERRORLEVEL! NEQ 0 (
-	echo Failed to build libusb
+	echo Failed to build libusb ^(Release^)
 	goto Error
 )
 
@@ -79,15 +81,17 @@ IF !ERRORLEVEL! NEQ 0 (
 
 REM Build OpenCV
 echo.
-echo Building OpenCV
+echo Building OpenCV ^(Debug^)
 msbuild.exe %OPENCV_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
-	echo Failed to build OpenCV
+	echo Failed to build OpenCV ^(Debug^)
 	goto Error
 )
+echo.
+echo Building OpenCV ^(Release^)
 msbuild.exe %OPENCV_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
-	echo Failed to build OpenCV
+	echo Failed to build OpenCV ^(Release^)
 	goto Error
 )
 
@@ -108,15 +112,17 @@ IF !ERRORLEVEL! NEQ 0 (
 
 REM Build PSMoveAPI
 echo.
-echo Building PSMoveAPI
+echo Building PSMoveAPI ^(Debug^)
 msbuild.exe %PSMOVE_API_ROOT_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
-	echo Failed to build PSMoveAPI
+	echo Failed to build PSMoveAPI ^(Debug^)
 	goto Error
 )
+echo.
+echo Building PSMoveAPI ^(Release^)
 msbuild.exe %PSMOVE_API_ROOT_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF %ERRORLEVEL% NEQ 0 (
-	echo Failed to build PSMoveAPI
+	echo Failed to build PSMoveAPI ^(Release^)
 	goto Error
 )
 
