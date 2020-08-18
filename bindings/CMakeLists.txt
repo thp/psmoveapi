@@ -57,9 +57,12 @@ if(SWIG_FOUND)
 
             set(javac_use_gnu_opts TRUE)
 
+            # NOTE: Some versions of javac seems to report their regular output
+            #       on stderr instead of stdout, so we merge both to capture it
             execute_process(COMMAND javac --version
                 RESULT_VARIABLE proc_result
                 OUTPUT_VARIABLE javac_version_string
+                ERROR_VARIABLE  javac_version_string
             )
 
             if (NOT proc_result EQUAL "0")
@@ -67,9 +70,14 @@ if(SWIG_FOUND)
                 # -opt to GNU-style --opt for their options format. So we try once
                 # again with the old-style options, in case we are dealing with an old
                 # version of javac.
+                #
+                # NOTE: Some versions of javac seems to report their regular
+                #       output on stderr instead of stdout, so we merge both to
+                #       capture it
                 execute_process(COMMAND javac -version
                     RESULT_VARIABLE proc_result
                     OUTPUT_VARIABLE javac_version_string
+                    ERROR_VARIABLE  javac_version_string
                 )
 
                 set(javac_use_gnu_opts FALSE)
