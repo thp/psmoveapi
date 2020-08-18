@@ -100,7 +100,7 @@ if(SWIG_FOUND)
 			# NOTE: We have to convert this string to a list or else the
 			#       add_custom_target call below will escape the whitespaces in
 			#       this string and thus fuck up the command.
-           	string(REPLACE " " ";" javac_release_opt ${javac_release_opt})
+           	string(REPLACE " " ";" javac_release_opt "${javac_release_opt}")
 
             # NOTE: We need a platform-independent copy command for the .java files, but neither the COMMAND
             #       nor CMake's "-E copy" support wildcards on Windows. We could probably whip up something
