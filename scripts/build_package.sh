@@ -50,6 +50,7 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi_tracker.so
         "
         PYTHON_BINDINGS="build/psmove.py"
+        PYTHON_BINDINGS_LIB="build/_psmove.so"
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/libpsmove_java.so"
         CSHARP_NATIVE="build/psmoveapi_chsharp.so"
@@ -69,6 +70,7 @@ case "$BUILD_TYPE" in
         build/libpsmoveapi_tracker.dll
         "
         PYTHON_BINDINGS="build/psmove.py"
+        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.dll"
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/psmove_java.dll"
         CSHARP_NATIVE="build/psmoveapi_csharp.dll"
@@ -121,6 +123,7 @@ case "$BUILD_TYPE" in
         $BUILDDIR/psmoveapi_tracker.lib
         "
         PYTHON_BINDINGS="$BUILDDIR/psmove.py"
+        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.pyd"
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"
         JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
@@ -160,6 +163,7 @@ mkdir -p "$DEST/bindings/python"
 cp -rv bindings/python/psmoveapi.py "$DEST/bindings/python/"
 if [ -f "$PYTHON_BINDINGS" ]; then
     cp -rv "$PYTHON_BINDINGS" "$DEST/bindings/python/"
+    cp -rv "$PYTHON_BINDINGS_LIB" "$DEST/bindings/python/"
 fi
 
 if [ -f "$JAVA_JAR" ]; then
