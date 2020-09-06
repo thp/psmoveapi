@@ -10,10 +10,9 @@ target_link_libraries(psmove psmoveapi)
 set_property(TARGET psmove PROPERTY FOLDER "Utilities")
 list(APPEND PSMOVEAPI_INSTALL_TARGETS psmove)
 
-option(PSMOVE_USE_SIXPAIR "Enable Navigation Controller pairing" ON)
-
 if (WIN32)
-  set(PSMOVE_USE_SIXPAIR OFF CACHE BOOL "Disabling Navigation Controller pairing on Windows" FORCE)
+  include(${CMAKE_CURRENT_LIST_DIR}/libusb.cmake)
+  target_link_libraries(psmove ${LIBUSB_LIBRARIES})
 else()
   # sixpair needs libusb
   find_package(PkgConfig REQUIRED)

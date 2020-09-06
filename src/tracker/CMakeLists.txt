@@ -106,7 +106,6 @@ IF (PSMOVE_USE_PS3EYE_DRIVER AND (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMA
 	source_group("Source Files\\PS3EyeDriver" FILES ${PS3_EYE_SRC})
     include_directories(${ROOT_DIR}/external/PS3EYEDriver/src)
     find_package(USB1 REQUIRED)
-    include_directories(${LIBUSB_INCLUDE_DIR})
     list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS ${LIBUSB_LIBRARIES})
     set(INFO_USE_PS3EYE_DRIVER "Yes")
 ELSE()
@@ -147,6 +146,7 @@ if(PSMOVE_BUILD_TRACKER)
     add_library(psmoveapi_tracker SHARED
         ${PSMOVEAPI_TRACKER_SRC}
         ${PSMOVEAPI_TRACKER_PLATFORM_SRC})
+    target_include_directories(psmoveapi_tracker PRIVATE ${LIBUSB_INCLUDE_DIR})
     target_link_libraries(psmoveapi_tracker
         psmoveapi
         ${PSMOVEAPI_REQUIRED_LIBS}
