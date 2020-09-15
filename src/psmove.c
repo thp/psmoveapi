@@ -2590,3 +2590,12 @@ psmove_util_sleep_ms(uint32_t ms)
 {
     psmove_port_sleep_ms(ms);
 }
+
+void
+psmove_free_mem(char *buf)
+{
+    if (buf) {
+        free(buf);
+    }
+}
+
