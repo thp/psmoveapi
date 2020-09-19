@@ -683,7 +683,7 @@ windows_register_psmove(const char *move_addr_str, const BLUETOOTH_ADDRESS *radi
         handle_windows_pre8(move_addr, radio_addr, hRadio, model);
     }
 
-    free(move_addr);
+    psmove_free_mem(move_addr);
 
     return 0;
 }

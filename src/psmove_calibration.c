@@ -443,7 +443,7 @@ psmove_calibration_new(PSMove *move)
     calibration->system_filename = psmove_util_get_system_file_path(template);
 
     free(template);
-    free(serial);
+    psmove_free_mem(serial);
 
     /* Try to load the calibration data from disk, or from USB */
     psmove_calibration_load(calibration);
@@ -627,7 +627,7 @@ psmove_calibration_read_from_usb(PSMoveCalibration *calibration)
             if (_psmove_get_zcm1_calibration_blob(calibration->move, &data, &size) == 1) {
                 assert(size == PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE);
                 memcpy(calibration->usb_calibration, data, size);
-                free(data);
+                psmove_free_mem(data);
                 calibration->flags |= CalibrationFlag_HaveUSB;
                 return 1;
             }
@@ -636,7 +636,7 @@ psmove_calibration_read_from_usb(PSMoveCalibration *calibration)
             if (_psmove_get_zcm2_calibration_blob(calibration->move, &data, &size) == 1) {
                 assert(size == PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE);
                 memcpy(calibration->usb_calibration, data, size);
-                free(data);
+                psmove_free_mem(data);
                 calibration->flags |= CalibrationFlag_HaveUSB;
                 return 1;
             }
@@ -782,8 +782,8 @@ psmove_calibration_free(PSMoveCalibration *calibration)
 {
     psmove_return_if_fail(calibration != NULL);
 
-    free(calibration->filename);
-    free(calibration->system_filename);
+    psmove_free_mem(calibration->filename);
+    psmove_free_mem(calibration->system_filename);
     free(calibration);
 }
 

@@ -555,8 +555,8 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 	char *intrinsics_xml = psmove_util_get_file_path(settings->intrinsics_xml);
 	char *distortion_xml = psmove_util_get_file_path(settings->distortion_xml);
 	camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml);
-	free(intrinsics_xml);
-	free(distortion_xml);
+	psmove_free_mem(intrinsics_xml);
+	psmove_free_mem(distortion_xml);
 
     tracker->cc_settings = camera_control_backup_system_settings(tracker->cc);
 
@@ -588,7 +588,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 
         fclose(fp);
     }
-    free(filename);
+    psmove_free_mem(filename);
 #endif
 
     // Default to the distance parameters for the PS Eye camera
@@ -818,7 +818,7 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
 
         fclose(fp);
     }
-    free(filename);
+    psmove_free_mem(filename);
 }
 
 enum PSMoveTracker_Status
@@ -843,12 +843,12 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
             printf("r: %d, g: %d, b: %d\n", r, g, b);
             *color = cvScalar(r, g, b, 0);
             *hsv_color = th_brg2hsv(*color);
-            free(color_str);
+            psmove_free_mem(color_str);
             return PSMove_True;
         } else {
             psmove_WARNING("Cannot parse color: '%s'\n", color_str);
         }
-        free(color_str);
+        psmove_free_mem(color_str);
     }
 
     psmove_tracker_update_image(tracker);

@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 
     char *serial = psmove_get_serial(move);
     printf("Serial: %s\n", serial);
-    free(serial);
+    psmove_free_mem(serial);
 
     ctype = psmove_connection_type(move);
     switch (ctype) {

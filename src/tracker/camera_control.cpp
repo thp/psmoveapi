@@ -97,7 +97,7 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
     if (video) {
         psmove_DEBUG("Using '%s' as video input.\n", video);
         cc->capture = cvCaptureFromFile(video);
-        free(video);
+        psmove_free_mem(video);
     } else {
         cc->capture = cvCaptureFromCAM(cc->cameraID);
 
