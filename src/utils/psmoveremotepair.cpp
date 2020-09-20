@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 
                 printf("Server has accepted pairing.\n");
 
-                free(serial);
+                psmove_free_mem(serial);
             } else {
                 printf("Failed to write new host address via USB.\n");
             }
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
         psmove_disconnect(move);
     }
 
-    free(new_host);
+    psmove_free_mem(new_host);
 
     moved_client_destroy(client);
 

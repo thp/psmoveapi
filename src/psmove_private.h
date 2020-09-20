@@ -149,7 +149,7 @@ ADDCALL _psmove_get_device_path(PSMove *move);
  *
  * The pointer *dest will be set to a newly-allocated byte array
  * of a certain size (which will be saved in *size) and the caller
- * has to free this field with free()
+ * has to free this field using \ref psmove_free_mem().
  **/
 ADDAPI int
 ADDCALL _psmove_get_zcm1_calibration_blob(PSMove *move, char **dest, size_t *size);
@@ -159,7 +159,7 @@ ADDCALL _psmove_get_zcm1_calibration_blob(PSMove *move, char **dest, size_t *siz
  *
  * The pointer *dest will be set to a newly-allocated byte array
  * of a certain size (which will be saved in *size) and the caller
- * has to free this field with free()
+ * has to free this field using \ref psmove_free_mem().
  **/
 ADDAPI int
 ADDCALL _psmove_get_zcm2_calibration_blob(PSMove *move, char **dest, size_t *size);
@@ -187,7 +187,8 @@ ADDCALL _psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest)
 
 /**
  * Formats the contents of addr to a newly-allocated string and
- * returns it. The caller has to free() the return value.
+ * returns it. The caller has to free the return value using
+ * \ref psmove_free_mem().
  **/
 ADDAPI char *
 ADDCALL _psmove_btaddr_to_string(const PSMove_Data_BTAddr addr);
@@ -198,7 +199,8 @@ ADDCALL _psmove_btaddr_to_string(const PSMove_Data_BTAddr addr);
  * lowercase ... Make all characters lowercase if nonzero
  * separator ... The separator character (usually ':' or '-')
  *
- * The return value must be free()d by the caller.
+ * The return value must be freed by the caller using
+ * \ref psmove_free_mem().
  **/
 ADDAPI char *
 ADDCALL _psmove_normalize_btaddr(const char *addr, int lowercase, char separator);

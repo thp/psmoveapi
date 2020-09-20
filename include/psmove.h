@@ -425,8 +425,9 @@ ADDCALL psmove_is_remote(PSMove *move);
  *
  * \param move A valid \ref PSMove handle
  *
- * \return The serial number of the controller. The caller must
- *         free() the result when it is not needed anymore.
+ * \return The serial number of the controller. The caller must free
+ *         the result using \ref psmove_free_mem() when it is not
+ *         needed anymore.
  **/
 ADDAPI char *
 ADDCALL psmove_get_serial(PSMove *move);
@@ -1529,8 +1530,9 @@ ADDCALL psmove_util_get_data_dir();
  *
  * \param filename The basename of the file (e.g. \c myfile.txt)
  *
- * \return The absolute filename to the file. The caller must
- *         free() the result when it is not needed anymore.
+ * \return The absolute filename to the file. The caller must free
+ *         the result using \ref psmove_free_mem() when it is not
+ *         needed anymore.
  * \return On error, \c NULL is returned.
  **/
 ADDAPI char *
@@ -1546,8 +1548,9 @@ ADDCALL psmove_util_get_file_path(const char *filename);
  *
  * \param filename The basename of the file (e.g. \c myfile.txt)
  *
- * \return The absolute filename to the file. The caller must
- *         free() the result when it is not needed anymore.
+ * \return The absolute filename to the file. The caller must free
+ *         the result using \ref psmove_free_mem() when it is not
+ *         needed anymore.
  * \return On error, \c NULL is returned.
  **/
 ADDAPI char *
@@ -1576,8 +1579,8 @@ ADDCALL psmove_util_get_env_int(const char *name);
  * \param name The name of the environment variable
  *
  * \return The string value of the environment variable, or NULL if the
- *         variable is not set. The caller must free() the result when
- *         it is not needed anymore.
+ *         variable is not set. The caller must free the result using
+ *         \ref psmove_free_mem() when it is not needed anymore.
  **/
 ADDAPI char *
 ADDCALL psmove_util_get_env_string(const char *name);
@@ -1589,6 +1592,15 @@ ADDCALL psmove_util_get_env_string(const char *name);
  **/
 ADDAPI void
 ADDCALL psmove_util_sleep_ms(uint32_t ms);
+
+/**
+ * \brief Free memory allocated by psmoveapi
+ *
+ * \param buf Pointer to the memory that was previously allocated and
+ *            returned by the library
+ **/
+ADDAPI void
+ADDCALL psmove_free_mem(char *buf);
 
 
 #ifdef __cplusplus

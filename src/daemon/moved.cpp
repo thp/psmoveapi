@@ -253,7 +253,7 @@ moved_server::handle_request()
                     printf("Cannot convert serial\n");
                     return;
                 }
-                free(serial);
+                psmove_free_mem(serial);
             } else {
                 printf("Cannot read from device %d.\n", request.header.controller_id);
                 return;
@@ -266,7 +266,7 @@ moved_server::handle_request()
                     printf("Cannot convert serial\n");
                     return;
                 }
-                free(serial);
+                psmove_free_mem(serial);
             }
             break;
         case MOVED_REQ_REGISTER_CONTROLLER:
@@ -279,8 +279,8 @@ moved_server::handle_request()
                     printf("Could not register PS Move Controller in the system.\n");
                 }
 
-                free(addr);
-                free(host);
+                psmove_free_mem(addr);
+                psmove_free_mem(host);
             }
             break;
         case MOVED_REQ_DISCOVER:
@@ -358,7 +358,7 @@ move_daemon::dump_devices()
     for (psmove_dev *dev: devs) {
         char *serial = psmove_get_serial(dev->move);
         printf("Device %d: %s\n", dev->assigned_id, serial);
-        free(serial);
+        psmove_free_mem(serial);
     }
 #endif
     fflush(stdout);

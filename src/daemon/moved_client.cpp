@@ -126,7 +126,7 @@ moved_client_list_discover(moved_client_list *result)
         if (moved_client_send(client, MOVED_REQ_GET_HOST_BTADDR, 0, nullptr, 0)) {
             char *serial = _psmove_btaddr_to_string(*((PSMove_Data_BTAddr *)client->response_buf.get_host_btaddr.btaddr));
             printf("Bluetooth host address of '%s' is '%s'\n", hostname, serial);
-            free(serial);
+            psmove_free_mem(serial);
         }
     }
     return result;
@@ -162,7 +162,7 @@ moved_client_list_open()
         }
         fclose(fp);
     }
-    free(filename);
+    psmove_free_mem(filename);
 
     /* XXX: Read from config file */
     //result = moved_client_list_insert(result, moved_client_create("localhost"));

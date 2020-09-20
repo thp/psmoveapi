@@ -71,7 +71,7 @@ int pair(const char *custom_addr)
                 printf("Pairing of #%d succeeded!\n", i+1);
                 char *serial = psmove_get_serial(move);
                 printf("Controller address: %s\n", serial);
-                free(serial);
+                psmove_free_mem(serial);
             } else {
                 printf("Pairing of #%d failed.\n", i+1);
             }

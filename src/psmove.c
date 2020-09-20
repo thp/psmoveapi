@@ -967,7 +967,7 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
 
         char *current_host = _psmove_btaddr_to_string(btg+10);
         psmove_DEBUG("Current host: %s\n", current_host);
-        free(current_host);
+        psmove_free_mem(current_host);
 
         if (host != NULL) {
             memcpy(*host, btg+10, 6);
@@ -1174,8 +1174,8 @@ psmove_pair(PSMove *move)
 
     enum PSMove_Bool result = psmove_port_register_psmove(addr, host, move->model);
 
-    free(addr);
-    free(host);
+    psmove_free_mem(addr);
+    psmove_free_mem(host);
 
     return result;
 }
@@ -1197,7 +1197,7 @@ psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model)
 
     enum PSMove_Bool result = psmove_port_register_psmove(addr, host, model);
 
-    free(host);
+    psmove_free_mem(host);
 
     return result;
 }
@@ -1231,8 +1231,8 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
 
     enum PSMove_Bool result = psmove_port_register_psmove(addr, host, move->model);
 
-    free(addr);
-    free(host);
+    psmove_free_mem(addr);
+    psmove_free_mem(host);
 
     return result;
 }
@@ -2140,7 +2140,7 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
         }
     }
     snprintf(filename, PATH_MAX, "%s.magnetometer.csv", serial);
-    free(serial);
+    psmove_free_mem(serial);
 
     char *filepath = psmove_util_get_file_path(filename);
     return filepath;
@@ -2152,7 +2152,7 @@ psmove_save_magnetometer_calibration(PSMove *move)
     psmove_return_if_fail(move != NULL);
     char *filename = psmove_get_magnetometer_calibration_filename(move);
     FILE *fp = fopen(filename, "w");
-    free(filename);
+    psmove_free_mem(filename);
     psmove_return_if_fail(fp != NULL);
 
 	fprintf(fp, "mx,my,mz\n");
@@ -2180,12 +2180,12 @@ psmove_load_magnetometer_calibration(PSMove *move)
     psmove_reset_magnetometer_calibration(move);
     char *filename = psmove_get_magnetometer_calibration_filename(move);
     FILE *fp = fopen(filename, "r");
-    free(filename);
+    psmove_free_mem(filename);
 
 	if (fp == NULL) {
         char *addr = psmove_get_serial(move);
         psmove_WARNING("Magnetometer in %s not yet calibrated.\n", addr);
-        free(addr);
+        psmove_free_mem(addr);
 		goto finish;
     }
 
@@ -2590,3 +2590,12 @@ psmove_util_sleep_ms(uint32_t ms)
 {
     psmove_port_sleep_ms(ms);
 }
+
+void
+psmove_free_mem(char *buf)
+{
+    if (buf) {
+        free(buf);
+    }
+}
+

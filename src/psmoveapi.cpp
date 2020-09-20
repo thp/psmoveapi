@@ -162,7 +162,7 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
         }
 
         std::string serial(tmp);
-        free(tmp);
+        psmove_free_mem(tmp);
 
         moves[serial].emplace_back(move);
     }
@@ -335,7 +335,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                     self->controllers.emplace_back(c);
                 }
 
-                free(serial_number);
+                psmove_free_mem(serial_number);
             }
             break;
         case EVENT_DEVICE_REMOVED:
