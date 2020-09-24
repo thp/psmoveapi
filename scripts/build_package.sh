@@ -105,6 +105,9 @@ case "$BUILD_TYPE" in
 
         PYTHON_BINDINGS="build/psmove.py"
         PYTHON_BINDINGS_LIB="build/_psmove.so"
+        JAVA_JAR="build/psmoveapi.jar"
+        JAVA_NATIVE="build/libpsmove_java.jnilib"
+        CSHARP_NATIVE="build/psmoveapi_csharp.so"
 
         # Workaround for macOS to find the sphinx-build binary installed via pip
         export PATH=$PATH:$HOME/Library/Python/2.7/bin
