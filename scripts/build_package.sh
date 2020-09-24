@@ -103,6 +103,9 @@ case "$BUILD_TYPE" in
         #build/libpsmoveapi_tracker.dylib
         pkg_tarball
 
+        PYTHON_BINDINGS="build/psmove.py"
+        PYTHON_BINDINGS_LIB="build/_psmove.so"
+
         # Workaround for macOS to find the sphinx-build binary installed via pip
         export PATH=$PATH:$HOME/Library/Python/2.7/bin
 
