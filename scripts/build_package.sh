@@ -53,7 +53,7 @@ case "$BUILD_TYPE" in
         PYTHON_BINDINGS_LIB="build/_psmove.so"
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/libpsmove_java.so"
-        CSHARP_NATIVE="build/psmoveapi_chsharp.so"
+        CSHARP_NATIVE="build/psmoveapi_csharp.so"
         pkg_tarball
 
         PLATFORM_NAME="linux"
