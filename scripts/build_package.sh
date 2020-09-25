@@ -54,6 +54,8 @@ case "$BUILD_TYPE" in
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/libpsmove_java.so"
         CSHARP_NATIVE="build/psmoveapi_csharp.so"
+        PROCESSING_BINDINGS="build/psmove_processing_linux.zip"
+
         pkg_tarball
 
         PLATFORM_NAME="linux"
@@ -74,6 +76,8 @@ case "$BUILD_TYPE" in
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/psmove_java.dll"
         CSHARP_NATIVE="build/psmoveapi_csharp.dll"
+        PROCESSING_BINDINGS="build/psmove_processing_windows.zip"
+
         pkg_zipfile_zip
 
         case "$BUILD_TYPE" in
@@ -108,6 +112,7 @@ case "$BUILD_TYPE" in
         JAVA_JAR="build/psmoveapi.jar"
         JAVA_NATIVE="build/libpsmove_java.jnilib"
         CSHARP_NATIVE="build/psmoveapi_csharp.so"
+        PROCESSING_BINDINGS="build/psmove_processing_macosx.zip"
 
         # Workaround for macOS to find the sphinx-build binary installed via pip
         export PATH=$PATH:$HOME/Library/Python/2.7/bin
@@ -133,6 +138,8 @@ case "$BUILD_TYPE" in
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"
         JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
+        PROCESSING_BINDINGS="build/psmove_processing_windows.zip"
+
         pkg_zipfile_7z
 
         PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
@@ -181,6 +188,11 @@ fi
 if [ -f "$CSHARP_NATIVE" ]; then
     mkdir -p "$DEST/bindings/csharp"
     cp -rv $CSHARP_NATIVE "$DEST/bindings/csharp"
+fi
+
+if [ -f "$PROCESSING_BINDINGS" ]; then
+    mkdir -p "$DEST/bindings/processing"
+    cp -rv $PROCESSING_BINDINGS "$DEST/bindings/processing"
 fi
 
 if [ ! -z "$PLATFORM_BIN" ]; then
