@@ -95,12 +95,12 @@ case "$BUILD_TYPE" in
         BUILDDIR=build
         PLATFORM_BIN="
         build/psmove
+        build/test_tracker
         "
-        #build/test_tracker
         PLATFORM_LIB="
         build/libpsmoveapi.dylib
+        build/libpsmoveapi_tracker.dylib
         "
-        #build/libpsmoveapi_tracker.dylib
         pkg_tarball
 
         PYTHON_BINDINGS="build/psmove.py"
