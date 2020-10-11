@@ -1176,14 +1176,7 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
     // using none of these ways to configure the camera and thus have no way
     // to enable flipping in hardware (or the driver).
     if (tracker->settings.camera_mirror) {
-        /**
-         * Mirror image on the X axis (works for me with the PS Eye on Linux,
-         * although the OpenCV docs say the third parameter should be 0 for X
-         * axis mirroring)
-         *
-         * See also:
-         * http://cv-kolaric.blogspot.com/2007/07/effects-of-cvflip.html
-         **/
+        // mirror image horizontally, i.e. flip left to right
         cvFlip(tracker->frame, NULL, 1);
     }
 #endif
