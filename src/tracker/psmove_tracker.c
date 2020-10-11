@@ -1170,8 +1170,11 @@ void psmove_tracker_update_image(PSMoveTracker *tracker) {
 
     tracker->frame = camera_control_query_frame(tracker->cc);
 
-#if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-	// We only need to flip here if we're using OpenCV to capture, since the PS3EyeDriver and CLEyeDriver support flipping in hardware (see camera_control_set_parameters)
+#if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && !defined(__linux)
+    // PS3EyeDriver, CLEyeDriver, and v4l support flipping the camera image in
+    // hardware (or in the driver). Manual flipping is only required if we are
+    // using none of these ways to configure the camera and thus have no way
+    // to enable flipping in hardware (or the driver).
     if (tracker->settings.camera_mirror) {
         /**
          * Mirror image on the X axis (works for me with the PS Eye on Linux,
