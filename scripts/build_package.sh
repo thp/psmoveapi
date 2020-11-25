@@ -188,6 +188,7 @@ fi
 if [ -f "$CSHARP_NATIVE" ]; then
     mkdir -p "$DEST/bindings/csharp"
     cp -rv $CSHARP_NATIVE "$DEST/bindings/csharp"
+    cp -v "$BUILDDIR"/*.cs "$DEST/bindings/csharp"
 fi
 
 if [ -f "$PROCESSING_BINDINGS" ]; then
