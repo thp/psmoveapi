@@ -138,7 +138,7 @@ case "$BUILD_TYPE" in
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"
         JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
-        PROCESSING_BINDINGS="build/psmove_processing_windows.zip"
+        PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_windows.zip"
 
         pkg_zipfile_7z
 
