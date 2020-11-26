@@ -42,19 +42,19 @@ case "$BUILD_TYPE" in
     linux-native-clang)
         BUILDDIR=build
         PLATFORM_BIN="
-        build/psmove
-        build/test_tracker
+        $BUILDDIR/psmove
+        $BUILDDIR/test_tracker
         "
         PLATFORM_LIB="
-        build/libpsmoveapi.so
-        build/libpsmoveapi_tracker.so
+        $BUILDDIR/libpsmoveapi.so
+        $BUILDDIR/libpsmoveapi_tracker.so
         "
-        PYTHON_BINDINGS="build/psmove.py"
-        PYTHON_BINDINGS_LIB="build/_psmove.so"
-        JAVA_JAR="build/psmoveapi.jar"
-        JAVA_NATIVE="build/libpsmove_java.so"
-        CSHARP_NATIVE="build/psmoveapi_csharp.so"
-        PROCESSING_BINDINGS="build/psmove_processing_linux.zip"
+        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
+        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.so"
+        JAVA_JAR="$BUILDDIR/psmoveapi.jar"
+        JAVA_NATIVE="$BUILDDIR/libpsmove_java.so"
+        CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.so"
+        PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_linux.zip"
 
         pkg_tarball
 
@@ -64,19 +64,19 @@ case "$BUILD_TYPE" in
     linux-cross-mingw*)
         BUILDDIR=build
         PLATFORM_BIN="
-        build/psmove.exe
-        build/test_tracker.exe
+        $BUILDDIR/psmove.exe
+        $BUILDDIR/test_tracker.exe
         "
         PLATFORM_LIB="
-        build/libpsmoveapi.dll
-        build/libpsmoveapi_tracker.dll
+        $BUILDDIR/libpsmoveapi.dll
+        $BUILDDIR/libpsmoveapi_tracker.dll
         "
-        PYTHON_BINDINGS="build/psmove.py"
+        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
         PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.dll"
-        JAVA_JAR="build/psmoveapi.jar"
-        JAVA_NATIVE="build/psmove_java.dll"
-        CSHARP_NATIVE="build/psmoveapi_csharp.dll"
-        PROCESSING_BINDINGS="build/psmove_processing_windows.zip"
+        JAVA_JAR="$BUILDDIR/psmoveapi.jar"
+        JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
+        CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
+        PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_windows.zip"
 
         pkg_zipfile_zip
 
@@ -98,21 +98,21 @@ case "$BUILD_TYPE" in
     macos-native-clang)
         BUILDDIR=build
         PLATFORM_BIN="
-        build/psmove
-        build/test_tracker
+        $BUILDDIR/psmove
+        $BUILDDIR/test_tracker
         "
         PLATFORM_LIB="
-        build/libpsmoveapi.dylib
-        build/libpsmoveapi_tracker.dylib
+        $BUILDDIR/libpsmoveapi.dylib
+        $BUILDDIR/libpsmoveapi_tracker.dylib
         "
         pkg_tarball
 
-        PYTHON_BINDINGS="build/psmove.py"
-        PYTHON_BINDINGS_LIB="build/_psmove.so"
-        JAVA_JAR="build/psmoveapi.jar"
-        JAVA_NATIVE="build/libpsmove_java.jnilib"
-        CSHARP_NATIVE="build/psmoveapi_csharp.so"
-        PROCESSING_BINDINGS="build/psmove_processing_macosx.zip"
+        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
+        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.so"
+        JAVA_JAR="$BUILDDIR/psmoveapi.jar"
+        JAVA_NATIVE="$BUILDDIR/libpsmove_java.jnilib"
+        CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.so"
+        PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_macosx.zip"
 
         # Workaround for macOS to find the sphinx-build binary installed via pip
         export PATH=$PATH:$HOME/Library/Python/2.7/bin
