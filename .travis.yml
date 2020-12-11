@@ -19,7 +19,7 @@ matrix:
       compiler: gcc
       env: BUILD_TYPE=linux-cross-mingw32
     - os: osx
-      osx_image: xcode8.1
+      osx_image: xcode12.2
       language: cpp
       compiler: clang
       env: BUILD_TYPE=macos-native-clang
