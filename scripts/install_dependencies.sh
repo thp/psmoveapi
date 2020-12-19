@@ -14,10 +14,10 @@ case "$UNAME" in
                                    libdbus-1-dev                     \
                                    libv4l-dev libopencv-dev          \
                                    default-jdk ant liblwjgl-java   \
-                                   python-dev mono-mcs               \
+                                   python3-dev mono-mcs               \
                                    swig3.0 freeglut3-dev             \
                                    libxrandr-dev libxinerama-dev libxcursor-dev \
-                                   python-sphinx python-pip \
+                                   python3-sphinx python3-pip \
                                    libusb-dev libsdl2-dev
 
         # Workaround to get BlueZ 5 on Travis CI (it doesn't yet have Ubuntu 16.04)
@@ -36,7 +36,7 @@ case "$UNAME" in
         brew update
         brew install --force cmake git libtool automake autoconf swig python libusb-compat sdl2 || true
         brew unlink libtool ; brew link --overwrite libtool
-        pip2 install --user sphinx
+        pip3 install --user sphinx
         ;;
     *)
         echo "Unknown OS: $UNAME"
