@@ -15,7 +15,10 @@ IF "%MSVC_PLATFORM%" == "x64" (
     GOTO InvalidArgs
 )
 
-if "%MSVC_VERSION%" == "2017" (
+if "%MSVC_VERSION%" == "2019" (
+    set "MSVC_CMAKE_GENERATOR=Visual Studio 16 2019"
+    call "%VS160COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat"
+) ELSE IF "%MSVC_VERSION%" == "2017" (
     set "MSVC_CMAKE_GENERATOR=Visual Studio 15 2017%MSVC_CMAKE_EXTRA%"
     call "%VS150COMNTOOLS%..\..\VC\vcvarsall.bat"
 ) ELSE IF "%MSVC_VERSION%" == "2015" (
