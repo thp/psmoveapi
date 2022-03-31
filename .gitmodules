@@ -1,9 +1,9 @@
 [submodule "external/hidapi"]
 	path = external/hidapi
-	url = git://github.com/thp/hidapi.git
+	url = https://github.com/thp/hidapi.git
 [submodule "external/PS3EYEDriver"]
 	path = external/PS3EYEDriver
-	url = git://github.com/inspirit/PS3EYEDriver.git
+	url = https://github.com/inspirit/PS3EYEDriver.git
 [submodule "external/libusb-1.0"]
 	path = external/libusb-1.0
 	url = https://github.com/libusb/libusb.git
