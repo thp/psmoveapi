@@ -1,0 +1,47 @@
+name: Build from source
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '**'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ${{ matrix.build_host }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build_host:
+          - ubuntu-latest
+        build_type:
+          - linux-native-clang
+          - linux-cross-mingw64
+          - linux-cross-mingw32
+        include:
+          - build_host: macos-latest
+            build_type: macos-native-clang
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: bash -e -x scripts/install_dependencies.sh
+      - name: Build package
+        run: bash -e -x scripts/build_package.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build-result
+          path: upload/*
+          if-no-files-found: ignore
+      - name: Upload release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          gh release create "${GITHUB_REF#refs/tags/}" || true
+          gh release upload "${GITHUB_REF#refs/tags/}" upload/* || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
