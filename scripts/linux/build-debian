@@ -7,6 +7,13 @@ PSMOVE_API_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../"
 
 cd $PSMOVE_API_ROOT_DIR
 
+if [ ! -d external/opencv ]; then
+    echo "Cloning OpenCV 3.4..."
+    git clone --depth 1 --branch 3.4 https://github.com/opencv/opencv.git external/opencv
+else
+    echo "Skipping OpenCV clone -- assuming it's checked out in external/opencv"
+fi
+
 # Configure
 echo "Configuring build..."
 
