@@ -61,7 +61,7 @@ IF !ERRORLEVEL! NEQ 0 (
 REM Clone OpenCV
 IF NOT EXIST %OPENCV_DIR% (
 	cd %PSMOVE_API_EXTERNAL_DIR%
-	git clone --depth 1 --branch 3.4 git://github.com/opencv/opencv.git
+	git clone --depth 1 --branch 3.4 https://github.com/opencv/opencv.git
 ) ELSE (
 	echo.
 	echo OpenCV dir already exists; assuming it has been cloned already
