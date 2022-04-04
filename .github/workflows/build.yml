@@ -28,7 +28,9 @@ jobs:
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Install dependencies
         run: bash -e -x scripts/install_dependencies.sh
       - name: Build package
