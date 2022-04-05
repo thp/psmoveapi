@@ -7,6 +7,22 @@ PSMOVE_API_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../"
 
 cd $PSMOVE_API_ROOT_DIR
 
+if [ ! -d external/opencv/build ]; then
+    echo "Cloning OpenCV 3.4..."
+    git clone --depth 1 --branch 3.4 https://github.com/opencv/opencv.git external/opencv
+
+    echo "Building OpenCV 3.4..."
+    cmake -B external/opencv/build external/opencv -G "Unix Makefiles" \
+        -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF \
+        -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON \
+        -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF \
+        -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=ON -DBUILD_opencv_video=OFF \
+        -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF
+    make -C external/opencv/build -j 24
+else
+    echo "Skipping OpenCV clone -- assuming it's checked out in external/opencv"
+fi
+
 # Configure
 echo "Configuring build..."
 
@@ -16,7 +32,7 @@ if [ -z "$JAVA_HOME" ]; then
     echo "WARNING: \$JAVA_HOME is not set; please set it manually"
 fi
 export PATH=$PATH:$JAVA_HOME/bin
-cmake ..
+cmake -DOpenCV_DIR=$PSMOVE_API_ROOT_DIR/external/opencv/build ..
 
 # Build
 echo "Building..."
