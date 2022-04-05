@@ -63,12 +63,14 @@ IF(PSMOVE_BUILD_TRACKER)
         find_library(APPKIT AppKit)
         find_library(QTKIT QTKit)
         find_library(AVFOUNDATION AVFoundation)
+        find_library(SECURITY Security)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
             stdc++
             ${QUARTZCORE}
             ${APPKIT}
             ${QTKIT}
-            ${AVFOUNDATION})
+            ${AVFOUNDATION}
+            ${SECURITY})
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
             ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_win32.cpp)
