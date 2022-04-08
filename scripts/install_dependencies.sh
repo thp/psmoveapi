@@ -19,18 +19,6 @@ case "$UNAME" in
                                    libxrandr-dev libxinerama-dev libxcursor-dev \
                                    python3-sphinx python3-pip \
                                    libusb-dev libsdl2-dev
-
-        # Workaround to get BlueZ 5 on Travis CI (it doesn't yet have Ubuntu 16.04)
-        # Based on: https://askubuntu.com/a/662349
-        if [ -f /etc/lsb-release ] && [ ! -z "$TRAVIS_BUILD_ID" ]; then
-            . /etc/lsb-release
-            if [ "$DISTRIB_RELEASE" = "14.04" ]; then
-                echo "Detected Ubuntu 14.04 LTS, installing BlueZ 5"
-                sudo add-apt-repository --yes ppa:vidplace7/bluez5
-                sudo apt-get update -qq
-                sudo apt-get install -q -y libbluetooth-dev
-            fi
-        fi
         ;;
     Darwin)
         brew update
