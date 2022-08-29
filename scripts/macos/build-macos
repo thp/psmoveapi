@@ -1,8 +1,27 @@
 #!/bin/bash -xe
 #
-# Script to build Mac OS X binary snapshots of PS Move API
+# Script to build macOS binary snapshots of PS Move API
 # Thomas Perl <m@thp.io>; 2012-09-28
 #
+# 2022-08-29: Added support for building on M1 / Apple Silicon
+#
+
+case "$(uname -m)" in
+    x86_64)
+        echo "Configuring for Intel architecture (x86_64)"
+        MACOS_CPU_ARCH="x86_64"
+        MACOS_HOMEBREW_LIB=/usr/local/lib
+        ;;
+    arm64)
+        echo "Configuring for Apple architecture (arm64)"
+        MACOS_CPU_ARCH="arm64"
+        MACOS_HOMEBREW_LIB=/opt/homebrew/lib
+        ;;
+    *)
+        echo "Unknown CPU architecture reported by 'uname -m': $(uname -m)"
+        exit 1
+        ;;
+esac
 
 # Determine PSMoveAPI root dir
 PSMOVEAPI_CHECKOUT=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../../ && pwd )
@@ -36,7 +55,7 @@ fi
 # otherwise we'd dynamically link against some the Homebrew libusb
 (
     cd "$PSMOVEAPI_CHECKOUT/external/libusb-1.0"
-    export ARCHFLAGS='-arch x86_64'
+    export ARCHFLAGS="-arch $MACOS_CPU_ARCH"
     export CFLAGS="$CFLAGS $ARCHFLAGS"
     export CXXFLAGS="$CXXFLAGS $ARCHFLAGS"
     ./autogen.sh
@@ -78,7 +97,7 @@ if [ ! -d "$OPENCV_INSTALL_DIR" ]; then
           -DWITH_JASPER=OFF \
           -DWITH_GSTREAMER=OFF \
           -DWITH_GPHOTO2=OFF \
-          -DCMAKE_OSX_ARCHITECTURES="x86_64" \
+          -DCMAKE_OSX_ARCHITECTURES="$MACOS_CPU_ARCH" \
           -DCMAKE_INSTALL_PREFIX="$(pwd)/install" ..
     make ${MAKE_ARGS}
     make install
@@ -97,7 +116,7 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
       -DPSMOVE_BUILD_PYTHON_BINDINGS=ON \
       -DPSMOVE_BUILD_CSHARP_BINDINGS=ON \
-      -DCMAKE_OSX_ARCHITECTURES="x86_64" \
-      -DCMAKE_EXE_LINKER_FLAGS=-L/usr/local/lib \
+      -DCMAKE_OSX_ARCHITECTURES="$MACOS_CPU_ARCH" \
+      -DCMAKE_EXE_LINKER_FLAGS=-L$MACOS_HOMEBREW_LIB \
       -DOpenCV_DIR="${OPENCV_BUILD_DIR}" ..
 make ${MAKE_ARGS}

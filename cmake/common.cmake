@@ -29,8 +29,12 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 ENDIF()
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    # Build Universal Binaries for OS X
-    set(CMAKE_OSX_ARCHITECTURES "x86_64")
+    # The build script sets this, so don't modify the variable if the
+    # caller knows which CPU architecture we want to build against
+    if (NOT DEFINED CMAKE_OSX_ARCHITECTURES)
+        message("Defaulting to Intel architecture (x86_64) on macOS, set CMAKE_OSX_ARCHITECTURES to override")
+        set(CMAKE_OSX_ARCHITECTURES "x86_64")
+    endif()
 ENDIF()
 
 # Windows' math include does not define constants by default.
