@@ -46,6 +46,14 @@
 #include <math.h>
 #include <limits.h>
 
+#if defined(__linux) || defined(__APPLE__)
+#include <locale.h>
+#endif
+
+#if defined(__APPLE__)
+#include <xlocale.h>
+#endif
+
 #include "daemon/moved_client.h"
 #include "hidapi.h"
 
@@ -302,6 +310,38 @@ static int psmove_remote_disabled = 0;
 /* Number of valid, open PSMove* handles "in the wild" */
 static int psmove_num_open_handles = 0;
 
+
+static int
+psmove_fscanf_c(FILE *fp, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+#if !defined(_WIN32)
+    locale_t old = uselocale(newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0));
+#endif
+    int result = vfscanf(fp, fmt, args);
+#if !defined(_WIN32)
+    freelocale(uselocale(old));
+#endif
+    va_end(args);
+    return result;
+}
+
+static int
+psmove_fprintf_c(FILE *fp, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+#if !defined(_WIN32)
+    locale_t old = uselocale(newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0));
+#endif
+    int result = vfprintf(fp, fmt, args);
+#if !defined(_WIN32)
+    freelocale(uselocale(old));
+#endif
+    va_end(args);
+    return result;
+}
 
 
 /* Previously public functions, now private: */
