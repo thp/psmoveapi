@@ -45,6 +45,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
+#include <stdarg.h>
 
 #if defined(__linux) || defined(__APPLE__)
 #include <locale.h>
@@ -2186,6 +2187,18 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
     return filepath;
 }
 
+static const char *
+PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING =
+    "mx,my,mz\n"
+    "%f,%f,%f\n"
+    "axis,min,max\n"
+    "x,%f,%f\n"
+    "y,%f,%f\n"
+    "x,%f,%f\n";
+
+static const int
+PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING_FIELDS = 9;
+
 void
 psmove_save_magnetometer_calibration(PSMove *move)
 {
@@ -2195,15 +2208,13 @@ psmove_save_magnetometer_calibration(PSMove *move)
     psmove_free_mem(filename);
     psmove_return_if_fail(fp != NULL);
 
-	fprintf(fp, "mx,my,mz\n");
-	fprintf(fp, "%f,%f,%f\n", 
-		move->magnetometer_calibration_direction.x,
-		move->magnetometer_calibration_direction.y, 
-		move->magnetometer_calibration_direction.z);
-    fprintf(fp, "axis,min,max\n");
-    fprintf(fp, "x,%f,%f\n", move->magnetometer_min.x, move->magnetometer_max.x);
-    fprintf(fp, "y,%f,%f\n", move->magnetometer_min.y, move->magnetometer_max.y);
-    fprintf(fp, "z,%f,%f\n", move->magnetometer_min.z, move->magnetometer_max.z);
+    psmove_fprintf_c(fp, PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING,
+            move->magnetometer_calibration_direction.x,
+            move->magnetometer_calibration_direction.y,
+            move->magnetometer_calibration_direction.z,
+            move->magnetometer_min.x, move->magnetometer_max.x,
+            move->magnetometer_min.y, move->magnetometer_max.y,
+            move->magnetometer_min.z, move->magnetometer_max.z);
 
     fclose(fp);
 }
@@ -2211,10 +2222,8 @@ psmove_save_magnetometer_calibration(PSMove *move)
 enum PSMove_Bool
 psmove_load_magnetometer_calibration(PSMove *move)
 {
-	enum PSMove_Bool success = PSMove_False;
-    
-	if (move == NULL) {
-        return success;
+    if (move == NULL) {
+        return PSMove_False;
     }
 
     psmove_reset_magnetometer_calibration(move);
@@ -2222,68 +2231,31 @@ psmove_load_magnetometer_calibration(PSMove *move)
     FILE *fp = fopen(filename, "r");
     psmove_free_mem(filename);
 
-	if (fp == NULL) {
+    if (fp == NULL) {
         char *addr = psmove_get_serial(move);
         psmove_WARNING("Magnetometer in %s not yet calibrated.\n", addr);
         psmove_free_mem(addr);
-		goto finish;
+        return PSMove_False;
     }
 
-	char s_mx[3], s_my[3], s_mz[3];
-	float mx, my, mz;
-	char s_axis[5], s_min[4], s_max[4];
-    char c_axis;
-    float f_min, f_max;
-    int result;
+    int res = psmove_fscanf_c(fp, PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING,
+            &move->magnetometer_calibration_direction.x,
+            &move->magnetometer_calibration_direction.y,
+            &move->magnetometer_calibration_direction.z,
+            &move->magnetometer_min.x, &move->magnetometer_max.x,
+            &move->magnetometer_min.y, &move->magnetometer_max.y,
+            &move->magnetometer_min.z, &move->magnetometer_max.z);
 
-	result = fscanf(fp, "%2s,%2s,%2s\n", s_mx, s_my, s_mz);
-	psmove_goto_if_fail(result == 3, finish);
-	psmove_goto_if_fail(strcmp(s_mx, "mx") == 0, finish);
-	psmove_goto_if_fail(strcmp(s_my, "my") == 0, finish);
-	psmove_goto_if_fail(strcmp(s_mz, "mz") == 0, finish);
+    fclose(fp);
 
-	result = fscanf(fp, "%f,%f,%f\n", &mx, &my, &mz);
-	psmove_goto_if_fail(result == 3, finish);
-	move->magnetometer_calibration_direction = psmove_3axisvector_xyz(mx, my, mz);
-
-	result = fscanf(fp, "%4s,%3s,%3s\n", s_axis, s_min, s_max);
-    psmove_goto_if_fail(result == 3, finish);
-    psmove_goto_if_fail(strcmp(s_axis, "axis") == 0, finish);
-    psmove_goto_if_fail(strcmp(s_min, "min") == 0, finish);
-    psmove_goto_if_fail(strcmp(s_max, "max") == 0, finish);
-
-    result = fscanf(fp, "%c,%f,%f\n", &c_axis, &f_min, &f_max);
-    psmove_goto_if_fail(result == 3, finish);
-    psmove_goto_if_fail(c_axis == 'x', finish);
-    move->magnetometer_min.x = f_min;
-    move->magnetometer_max.x = f_max;
-
-    result = fscanf(fp, "%c,%f,%f\n", &c_axis, &f_min, &f_max);
-    psmove_goto_if_fail(result == 3, finish);
-    psmove_goto_if_fail(c_axis == 'y', finish);
-    move->magnetometer_min.y = f_min;
-    move->magnetometer_max.y = f_max;
-
-    result = fscanf(fp, "%c,%f,%f\n", &c_axis, &f_min, &f_max);
-    psmove_goto_if_fail(result == 3, finish);
-    psmove_goto_if_fail(c_axis == 'z', finish);
-    move->magnetometer_min.z = f_min;
-    move->magnetometer_max.z = f_max;
-
-	success = PSMove_True;
-
-finish:
-	if (success == PSMove_False)
-	{
-		psmove_reset_magnetometer_calibration(move);
-	}
-    
-    if (fp != NULL)
-    {
-        fclose(fp);
+    if (res != PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING_FIELDS) {
+        psmove_WARNING("Only %d/%d fields read from magnetometer calibration, discarding values. Please recalibrate.\n",
+                res, PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING_FIELDS);
+        psmove_reset_magnetometer_calibration(move);
+        return PSMove_False;
     }
 
-	return success;
+    return PSMove_True;
 }
 
 float
