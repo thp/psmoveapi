@@ -47,9 +47,7 @@
 #include <limits.h>
 #include <stdarg.h>
 
-#if defined(__linux) || defined(__APPLE__)
 #include <locale.h>
-#endif
 
 #if defined(__APPLE__)
 #include <xlocale.h>
@@ -317,11 +315,13 @@ psmove_fscanf_c(FILE *fp, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-#if !defined(_WIN32)
+#if defined(_WIN32)
+    _locale_t loc = _create_locale(LC_NUMERIC, "C");
+    int result = _vfscanf_l(fp, fmt, loc, args);
+    _free_locale(loc);
+#else
     locale_t old = uselocale(newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0));
-#endif
     int result = vfscanf(fp, fmt, args);
-#if !defined(_WIN32)
     freelocale(uselocale(old));
 #endif
     va_end(args);
@@ -333,13 +333,17 @@ psmove_fprintf_c(FILE *fp, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-#if !defined(_WIN32)
+
+#if defined(_WIN32)
+    _locale_t loc = _create_locale(LC_NUMERIC, "C");
+    int result = _vfprintf_l(fp, fmt, loc, args);
+    _free_locale(loc);
+#else
     locale_t old = uselocale(newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0));
-#endif
     int result = vfprintf(fp, fmt, args);
-#if !defined(_WIN32)
     freelocale(uselocale(old));
 #endif
+
     va_end(args);
     return result;
 }
