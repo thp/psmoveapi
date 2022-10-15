@@ -313,16 +313,27 @@ static int psmove_num_open_handles = 0;
 static int
 psmove_fscanf_c(FILE *fp, const char *fmt, ...)
 {
+    int result = -1;
+
     va_list args;
     va_start(args, fmt);
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(_UCRT)
+    /* Locale APIs only available with the Universal CRT */
     _locale_t loc = _create_locale(LC_NUMERIC, "C");
-    int result = _vfscanf_l(fp, fmt, loc, args);
+    result = _vfscanf_l(fp, fmt, loc, args);
     _free_locale(loc);
+#elif defined(_WIN32)
+    result = vfscanf(fp, fmt, args);
 #else
-    locale_t old = uselocale(newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0));
-    int result = vfscanf(fp, fmt, args);
-    freelocale(uselocale(old));
+    locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
+    if (c_locale == NULL) {
+        psmove_WARNING("Could not create C locale.");
+        result = vfscanf(fp, fmt, args);
+    } else {
+        locale_t old = uselocale(c_locale);
+        result = vfscanf(fp, fmt, args);
+        freelocale(uselocale(old));
+    }
 #endif
     va_end(args);
     return result;
@@ -331,17 +342,28 @@ psmove_fscanf_c(FILE *fp, const char *fmt, ...)
 static int
 psmove_fprintf_c(FILE *fp, const char *fmt, ...)
 {
+    int result = -1;
+
     va_list args;
     va_start(args, fmt);
 
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(_UCRT)
+    /* Locale APIs only available with the Universal CRT */
     _locale_t loc = _create_locale(LC_NUMERIC, "C");
-    int result = _vfprintf_l(fp, fmt, loc, args);
+    result = _vfprintf_l(fp, fmt, loc, args);
     _free_locale(loc);
+#elif defined(_WIN32)
+    result = vfprintf(fp, fmt, args);
 #else
-    locale_t old = uselocale(newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0));
-    int result = vfprintf(fp, fmt, args);
-    freelocale(uselocale(old));
+    locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
+    if (c_locale == NULL) {
+        psmove_WARNING("Could not create C locale.");
+        result = vfprintf(fp, fmt, args);
+    } else {
+        locale_t old = uselocale(c_locale);
+        result = vfprintf(fp, fmt, args);
+        freelocale(uselocale(old));
+    }
 #endif
 
     va_end(args);
