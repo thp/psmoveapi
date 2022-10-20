@@ -45,13 +45,6 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <limits.h>
-#include <stdarg.h>
-
-#include <locale.h>
-
-#if defined(__APPLE__)
-#include <xlocale.h>
-#endif
 
 #include "daemon/moved_client.h"
 #include "hidapi.h"
@@ -308,6 +301,7 @@ static int psmove_remote_disabled = 0;
 
 /* Number of valid, open PSMove* handles "in the wild" */
 static int psmove_num_open_handles = 0;
+
 
 
 /* Previously public functions, now private: */
@@ -2152,58 +2146,49 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
     return filepath;
 }
 
-static const char *
-PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING =
-    "mx,my,mz\n"
-    "%f,%f,%f\n"
-    "axis,min,max\n"
-    "x,%f,%f\n"
-    "y,%f,%f\n"
-    "x,%f,%f\n";
 
-static const int
-PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING_FIELDS = 9;
+/**
+ * Magic value for basic sanity checks (and in the future
+ * endianness conversion, if needed).
+ *
+ * If written in little-endian, this will spell "MvCl" as in "Move Calibration".
+ **/
+static const uint32_t
+PSMOVE_CALIBRATION_MAGIC = 0x6c43764d;
+
+struct PSMove_CalibrationData {
+    uint32_t endian_magic; // PSMOVE_CALIBRATION_MAGIC
+    float mx, my, mz;
+    float xmin, xmax;
+    float ymin, ymax;
+    float zmin, zmax;
+};
 
 void
 psmove_save_magnetometer_calibration(PSMove *move)
 {
     psmove_return_if_fail(move != NULL);
     char *filename = psmove_get_magnetometer_calibration_filename(move);
-    FILE *fp = fopen(filename, "w");
+    FILE *fp = fopen(filename, "wb");
     psmove_free_mem(filename);
     psmove_return_if_fail(fp != NULL);
 
-#define FPRINTF_FMT PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING
-#define FPRINTF_ARGS move->magnetometer_calibration_direction.x, \
-            move->magnetometer_calibration_direction.y, \
-            move->magnetometer_calibration_direction.z, \
-            move->magnetometer_min.x, move->magnetometer_max.x, \
-            move->magnetometer_min.y, move->magnetometer_max.y, \
-            move->magnetometer_min.z, move->magnetometer_max.z
+    struct PSMove_CalibrationData data = {
+        .endian_magic = PSMOVE_CALIBRATION_MAGIC,
+        .mx = move->magnetometer_calibration_direction.x,
+        .my = move->magnetometer_calibration_direction.y,
+        .mz = move->magnetometer_calibration_direction.z,
+        .xmin = move->magnetometer_min.x,
+        .xmax = move->magnetometer_max.x,
+        .ymin = move->magnetometer_min.y,
+        .ymax = move->magnetometer_max.y,
+        .zmin = move->magnetometer_min.z,
+        .zmax = move->magnetometer_max.z,
+    };
 
-    int res = -1;
-
-#if defined(_WIN32)
-    _locale_t loc = _create_locale(LC_NUMERIC, "C");
-    res = _fprintf_l(fp, FPRINTF_FMT, loc, FPRINTF_ARGS);
-    _free_locale(loc);
-#else
-    locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
-    if (c_locale == NULL) {
-        psmove_WARNING("Could not create C locale.");
-        res = fprintf(fp, FPRINTF_FMT, FPRINTF_ARGS);
-    } else {
-        locale_t old = uselocale(c_locale);
-        res = fprintf(fp, FPRINTF_FMT, FPRINTF_ARGS);
-        freelocale(uselocale(old));
-    }
-#endif
-
-#undef FPRINTF_FMT
-#undef FPRINTF_ARGS
-
-    if (res == -1) {
-        psmove_WARNING("Error writing calibration data to file.\n");
+    int res = fwrite(&data, 1, sizeof(data), fp);
+    if (res != sizeof(data)) {
+        psmove_WARNING("Error writing calibration data to file (res=%d).\n", res);
     }
 
     fclose(fp);
@@ -2218,7 +2203,7 @@ psmove_load_magnetometer_calibration(PSMove *move)
 
     psmove_reset_magnetometer_calibration(move);
     char *filename = psmove_get_magnetometer_calibration_filename(move);
-    FILE *fp = fopen(filename, "r");
+    FILE *fp = fopen(filename, "rb");
     psmove_free_mem(filename);
 
     if (fp == NULL) {
@@ -2228,43 +2213,28 @@ psmove_load_magnetometer_calibration(PSMove *move)
         return PSMove_False;
     }
 
-#define FSCANF_FMT PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING
-#define FSCANF_ARGS &move->magnetometer_calibration_direction.x, \
-            &move->magnetometer_calibration_direction.y, \
-            &move->magnetometer_calibration_direction.z, \
-            &move->magnetometer_min.x, &move->magnetometer_max.x, \
-            &move->magnetometer_min.y, &move->magnetometer_max.y, \
-            &move->magnetometer_min.z, &move->magnetometer_max.z
+    struct PSMove_CalibrationData data;
+    memset(&data, 0, sizeof(data));
 
-    int res = -1;
-
-#if defined(_WIN32)
-    _locale_t loc = _create_locale(LC_NUMERIC, "C");
-    res = _fscanf_l(fp, FSCANF_FMT, loc, FSCANF_ARGS);
-    _free_locale(loc);
-#else
-    locale_t c_locale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
-    if (c_locale == NULL) {
-        psmove_WARNING("Could not create C locale.");
-        res = fscanf(fp, FSCANF_FMT, FSCANF_ARGS);
-    } else {
-        locale_t old = uselocale(c_locale);
-        res = fscanf(fp, FSCANF_FMT, FSCANF_ARGS);
-        freelocale(uselocale(old));
-    }
-#endif
-
-#undef FSCANF_FMT
-#undef FSCANF_ARGS
+    int res = fread(&data, 1, sizeof(data), fp);
 
     fclose(fp);
 
-    if (res != PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING_FIELDS) {
-        psmove_WARNING("Only %d/%d fields read from magnetometer calibration, discarding values. Please recalibrate.\n",
-                res, PSMOVE_MAGNETOMETER_CALIBRATION_FSTRING_FIELDS);
+    if (res != sizeof(data) || data.endian_magic != PSMOVE_CALIBRATION_MAGIC) {
+        psmove_WARNING("Error reading calibration file (res=%d, magic=0x%08x)\n", res, data.endian_magic);
         psmove_reset_magnetometer_calibration(move);
         return PSMove_False;
     }
+
+    move->magnetometer_calibration_direction.x = data.mx;
+    move->magnetometer_calibration_direction.y = data.my;
+    move->magnetometer_calibration_direction.z = data.mz;
+    move->magnetometer_min.x = data.xmin;
+    move->magnetometer_max.x = data.xmax;
+    move->magnetometer_min.y = data.ymin;
+    move->magnetometer_max.y = data.ymax;
+    move->magnetometer_min.z = data.zmin;
+    move->magnetometer_max.z = data.zmax;
 
     return PSMove_True;
 }
