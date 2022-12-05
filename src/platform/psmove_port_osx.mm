@@ -182,16 +182,31 @@ macosx_blued_is_paired(const std::string &btaddr)
     return found;
 }
 
-static int
-macosx_get_minor_version()
+struct MacOSVersionNumber {
+    MacOSVersionNumber(int major=-1, int minor=-1) : major(major), minor(minor) {}
+
+    bool valid() const { return major != -1 && minor != -1; }
+
+    int major;
+    int minor;
+};
+
+bool
+operator<(const MacOSVersionNumber &a, const MacOSVersionNumber &b)
+{
+    return (a.major <= b.major && a.minor < b.minor);
+}
+
+static MacOSVersionNumber
+macosx_get_major_minor_version()
 {
     char tmp[1024];
     int major, minor, patch = 0;
     FILE *fp;
 
     fp = popen("sw_vers -productVersion", "r");
-    psmove_return_val_if_fail(fp != NULL, -1);
-    psmove_return_val_if_fail(fgets(tmp, sizeof(tmp), fp) != NULL, -1);
+    psmove_return_val_if_fail(fp != NULL, MacOSVersionNumber());
+    psmove_return_val_if_fail(fgets(tmp, sizeof(tmp), fp) != NULL, MacOSVersionNumber());
     pclose(fp);
 
     int assigned = sscanf(tmp, "%d.%d.%d", &major, &minor, &patch);
@@ -201,11 +216,11 @@ macosx_get_minor_version()
      * only the first two numbers of the triplet, leaving the patch version
      * to the default (0) set above.
      *
-     * See: https://github.com/thp/psmoveapi/issue/32
+     * See: https://github.com/thp/psmoveapi/issues/32
      **/
-    psmove_return_val_if_fail(assigned == 2 || assigned == 3, -1);
+    psmove_return_val_if_fail(assigned == 2 || assigned == 3, MacOSVersionNumber());
 
-    return minor;
+    return MacOSVersionNumber(major, minor);
 }
 
 namespace {
@@ -255,15 +270,15 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         return PSMove_False;
     }
 
-    int minor_version = macosx_get_minor_version();
-    if (minor_version == -1) {
-        OSXPAIR_DEBUG("Cannot detect Mac OS X version.\n");
+    auto macos_version = macosx_get_major_minor_version();
+    if (!macos_version.valid()) {
+        OSXPAIR_DEBUG("Cannot detect macOS version.\n");
         return PSMove_False;
-    } else if (minor_version < 7) {
-        OSXPAIR_DEBUG("No need to add entry for OS X before 10.7.\n");
+    } else if (macos_version < MacOSVersionNumber(10, 7)) {
+        OSXPAIR_DEBUG("No need to add entry for macOS before 10.7.\n");
         return PSMove_False;
     } else {
-        OSXPAIR_DEBUG("Detected: Mac OS X 10.%d\n", minor_version);
+        OSXPAIR_DEBUG("Detected: macOS %d.%d\n", macos_version.major, macos_version.minor);
     }
 
     std::string command = format("defaults write %s HIDDevices -array-add %s",
@@ -274,7 +289,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         return PSMove_True;
     }
 
-    if (minor_version < 10)
+    if (macos_version < MacOSVersionNumber(10, 10))
     {
         if (!macosx_bluetooth_set_powered(0)) {
             OSXPAIR_DEBUG("Cannot shutdown Bluetooth (shut it down manually).\n");
@@ -301,7 +316,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         result = PSMove_False;
     }
 
-    if (minor_version < 10)
+    if (macos_version < MacOSVersionNumber(10, 10))
     {
         // FIXME: In OS X 10.7 this might not work - fork() and call set_powered(1)
         // from a fresh process (e.g. like "blueutil 1") to switch Bluetooth on
