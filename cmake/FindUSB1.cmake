@@ -57,9 +57,9 @@ ELSE (LIBUSB_INCLUDE_DIR AND LIBUSB_LIBRARIES)
         ELSE()
             IF (${CMAKE_C_SIZEOF_DATA_PTR} EQUAL 8)
                 list(APPEND LIBUSB_LIB_SEARCH_PATH
-                    ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/x64/Release/lib)
+                    ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/build/v143/x64/Release/lib)
                 list(APPEND LIBUSB_LIB_SEARCH_PATH_DEBUG
-                    ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/x64/Debug/lib)
+                    ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/build/v143/x64/Debug/lib)
 			ELSE()
                 list(APPEND LIBUSB_LIB_SEARCH_PATH
                     ${CMAKE_CURRENT_LIST_DIR}/../external/libusb-1.0/Win32/Release/lib)
