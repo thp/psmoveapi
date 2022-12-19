@@ -17,7 +17,7 @@ IF "%MSVC_PLATFORM%" == "x64" (
 
 if "%MSVC_VERSION%" == "2022" (
     set "MSVC_CMAKE_GENERATOR=Visual Studio 17 2022"
-    call "%VS170COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat"
+    call "%VS170COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" amd64
 ) ELSE (
     GOTO InvalidArgs
 )
