@@ -142,9 +142,9 @@ case "$BUILD_TYPE" in
 
         pkg_zipfile_7z
 
-        PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
+        PLATFORM_NAME="windows-msvc2022-${WIN_ARCH}"
         chmod +x ./scripts/visualc/build_msvc.bat
-        ./scripts/visualc/build_msvc.bat 2017 ${WIN_ARCH}
+        ./scripts/visualc/build_msvc.bat 2022 ${WIN_ARCH}
         ;;
     *)
         echo "Invalid/unknown \$BUILD_TYPE value: '$BUILD_TYPE'"
