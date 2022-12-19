@@ -9,15 +9,17 @@ set MSVC_PLATFORM=%2
 
 IF "%MSVC_PLATFORM%" == "x64" (
     set "MSVC_CMAKE_EXTRA= Win64"
+    set MSVC_VCVARSALL_ARGS=amd64
 ) ELSE IF "%MSVC_PLATFORM%" == "x86" (
     set MSVC_CMAKE_EXTRA=
+    set MSVC_VCVARSALL_ARGS=x86
 ) ELSE (
     GOTO InvalidArgs
 )
 
 if "%MSVC_VERSION%" == "2022" (
     set "MSVC_CMAKE_GENERATOR=Visual Studio 17 2022"
-    call "%VS170COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" amd64
+    call "%VS170COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" %MSVC_VCVARSALL_ARGS%
 ) ELSE (
     GOTO InvalidArgs
 )
