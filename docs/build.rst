@@ -7,8 +7,8 @@ prebuilt library downloads, you might prefer to use those.
 .. _`PS Move API GitHub Releases`: https://github.com/thp/psmoveapi/releases
 
 
-Building on macOS 10.14
------------------------
+Building on macOS 13
+--------------------
 
 You need to install the following requirements:
 
@@ -24,8 +24,13 @@ To build from source, you can use the build script::
 
     bash -e -x scripts/macos/build-macos
 
+The build script builds for the CPU architecture of the current
+build machine (using ``uname -m`` for detection). By default, on
+an Apple Silicon machine, this builds for ``arm64``, and for
+Intel machines, ``x86_64`` is the build target.
 
-Building on Ubuntu 18.04
+
+Building on Ubuntu 22.04
 ------------------------
 
 Install the dependencies::
@@ -42,14 +47,14 @@ Building on Windows (Visual Studio)
 
 You need to install the following requirements:
 
-- `Visual Studio Community 2017`_ or newer
-- `CMake`_ 3.9.1 or newer
+- `Visual Studio Community 2022`_
+- `CMake`_ 3.12 or newer (tested with 3.25.1)
 - `Git`_
 
 
-.. _`Visual Studio Community 2017`: https://www.visualstudio.com/en-us/downloads/
-.. _`CMake`: http://www.cmake.org/cmake/resources/software.html
-.. _`Git`: https://gitforwindows.org/
+.. _`Visual Studio Community 2022`: https://visualstudio.microsoft.com/downloads/
+.. _`CMake`: http://www.cmake.org/download/
+.. _`Git`: https://git-scm.com/
 
 Automatic build
 ~~~~~~~~~~~~~~~
@@ -58,17 +63,16 @@ A build script is provided which will take care of the build for you. The
 script will generate the Visual Studio solution and build everything in Debug
 and Release.
 
-Run the batch files in the "Developer Command Prompt for VS 2017" (you will
-find it in the start menu folder "Visual Studio 2017", for VS 2013/2015 the
-menu items should be named similarly) from the PS Move API checkout folder.
+Run the batch files in a "Developer Command Prompt for VS 2022" (you will find
+this in the start menu) from the PS Move API checkout folder.
 
-For Visual Studio 2017 and 64-bit use::
+For Visual Studio 2022 and 64-bit use::
 
-    call scripts/visualc/build_msvc.bat 2017 x64
+    call scripts/visualc/build_msvc.bat 2022 x64
 
-For Visual Studio 2017 and 32-bit use::
+For Visual Studio 2022 and 32-bit use::
 
-    call scripts/visualc/build_msvc.bat 2017 x86
+    call scripts/visualc/build_msvc.bat 2022 x86
 
 The resulting binaries will be placed in ``build-x86/`` (for the 32-bit build)
 and ``build-x64/`` (for the 64-bit build).
@@ -102,21 +106,6 @@ Or use the ready-made build script::
     bash -x scripts/mingw64/cross-compile x86_64-w64-mingw32
     bash -x scripts/mingw64/cross-compile i686-w64-mingw32
 
-
-
-Building for the Pocket C.H.I.P
--------------------------------
-
-PS Move API now supports the Pocket C.H.I.P, an embedded Linux computer
-running a Debian-based operating system. The device has built-in Bluetooth,
-WIFI, a standard-sized USB port and a 3.5mm headphone jack, making it
-suitable for portable PS Move applications.
-
-To build on a Pocket C.H.I.P, ``ssh`` into your device (or use the Terminal)
-and then build the release tarball::
-
-    bash -e -x scripts/pocketchip/install_dependencies.sh
-    bash -e -x scripts/pocketchip/build.sh
 
 
 Installation and Configuration

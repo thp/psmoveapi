@@ -3,3 +3,4 @@ build/*
 bindings/processing
 external/opencv
 __pycache__
+docs/_build

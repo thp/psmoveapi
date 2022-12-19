@@ -15,10 +15,14 @@ starting after version 4.0.12, but historic entries might not.
 ### Changed
 
 - CI: Migrate from Travis CI to Github Actions
-- Linux: Build OpenCV 3.4 from source
+- Linux: Build OpenCV from source
 - `CMakeLists.txt`: Add check for 'git submodule init' (Fixes #352)
 - New binary magnetometer calibration format (Fixes #452); this changes the
   file format and controllers might need to be re-calibrated after the update
+- `external/libusb-1.0`: Updated to revision f3619c40 for VS2022 support
+- Update build instructions for newer versions
+- Updated OpenCV to Version 4 (some feature such as camera and distance calibration
+  are currently not ported to OpenCV 4 and have been disabled for now)
 
 ### Fixed
 
@@ -29,6 +33,8 @@ starting after version 4.0.12, but historic entries might not.
 
 - Remove obsolete support for Travis CI/Ubuntu 14.04
 - `contrib/convert-include-guards.py`: Remove (+ change some remaining include guards)
+- Removed support scripts and documentation for building in Pocket C.H.I.P
+- Removed support for MSVC versions older than 2022
 
 
 ## [4.0.12] - 2020-12-19

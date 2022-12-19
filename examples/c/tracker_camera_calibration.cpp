@@ -64,6 +64,7 @@ IplImage* capture_frame(PSMoveTracker *tracker)
 }
 
 int main(int arg, char** args) {
+#if CV_VERSION_MAJOR <= 3
 	int board_w = 4; // Board width in squares
 	int board_h = 7; // Board height
 	int n_boards = 10; // Number of boards
@@ -246,6 +247,10 @@ int main(int arg, char** args) {
 	free(corners);
 
     psmove_tracker_free(tracker);
+
+#else
+    fprintf(stderr, "Camera calibration not yet ported to OpenCV 4.\n");
+#endif
 
 	return 0;
 }

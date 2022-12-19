@@ -15,18 +15,9 @@ IF "%MSVC_PLATFORM%" == "x64" (
     GOTO InvalidArgs
 )
 
-if "%MSVC_VERSION%" == "2019" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 16 2019"
-    call "%VS160COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat"
-) ELSE IF "%MSVC_VERSION%" == "2017" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 15 2017%MSVC_CMAKE_EXTRA%"
-    call "%VS150COMNTOOLS%..\..\VC\vcvarsall.bat"
-) ELSE IF "%MSVC_VERSION%" == "2015" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 14%MSVC_CMAKE_EXTRA%"
-    call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat"
-) ELSE IF "%MSVC_VERSION%" == "2013" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 12%MSVC_CMAKE_EXTRA%"
-    call "%VS120COMNTOOLS%..\..\VC\vcvarsall.bat"
+if "%MSVC_VERSION%" == "2022" (
+    set "MSVC_CMAKE_GENERATOR=Visual Studio 17 2022"
+    call "%VS170COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat"
 ) ELSE (
     GOTO InvalidArgs
 )
@@ -45,14 +36,14 @@ IF %ERRORLEVEL% NEQ 0 ( echo Failed to apply libusb patch. Perhaps it was alread
 REM Build libusb
 echo.
 echo Building libusb ^(Debug^)
-msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_%MSVC_VERSION%.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %LIBUSB_DIR%/msvc/libusb_static.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF !ERRORLEVEL! NEQ 0 (
 	echo Failed to build libusb ^(Debug^)
 	goto Error
 )
 echo.
 echo Building libusb ^(Release^)
-msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_%MSVC_VERSION%.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %LIBUSB_DIR%/msvc/libusb_static.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
 IF !ERRORLEVEL! NEQ 0 (
 	echo Failed to build libusb ^(Release^)
 	goto Error
@@ -61,7 +52,7 @@ IF !ERRORLEVEL! NEQ 0 (
 REM Clone OpenCV
 IF NOT EXIST %OPENCV_DIR% (
 	cd %PSMOVE_API_EXTERNAL_DIR%
-	git clone --depth 1 --branch 3.4 https://github.com/opencv/opencv.git
+	git clone --depth 1 --branch 4.x https://github.com/opencv/opencv.git
 ) ELSE (
 	echo.
 	echo OpenCV dir already exists; assuming it has been cloned already
@@ -141,10 +132,10 @@ exit /B 1
 cd %PSMOVE_API_ROOT_DIR%
 echo.
 echo Usage: %0 visual-studio-version build-platform
-echo        visual-studio-version .... 2013, 2015 or 2017
+echo        visual-studio-version .... 2022
 echo        build-platform ........... x86 (32-bit) or x64 (64-bit)
 echo.
-echo Example for VS2017 32-bit build: %0 2017 x86
+echo Example for VS2022 64-bit build: %0 2022 x64
 exit /B 1
 
 :Done

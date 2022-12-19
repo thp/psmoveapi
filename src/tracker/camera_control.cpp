@@ -146,6 +146,7 @@ void
 camera_control_read_calibration(CameraControl* cc,
         char* intrinsicsFile, char* distortionFile)
 {
+#if CV_VERSION_MAJOR <= 3
     CvMat *intrinsic = (CvMat*) cvLoad(intrinsicsFile, 0, 0, 0);
     CvMat *distortion = (CvMat*) cvLoad(distortionFile, 0, 0, 0);
 
@@ -171,6 +172,9 @@ camera_control_read_calibration(CameraControl* cc,
     } else {
         fprintf(stderr, "Warning: No lens calibration files found.\n");
     }
+#else
+    psmove_WARNING("Camera calibration not yet supported in OpenCV 4\n");
+#endif
 }
 
 IplImage *
