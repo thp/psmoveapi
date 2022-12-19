@@ -1,3 +1,5 @@
+#pragma once
+
 /**
 * PS Move API - An interface for the PS Move Motion Controller
 * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
@@ -27,8 +29,6 @@
 **/
 
 /* General math utility methods for aligning frames of reference */
-#ifndef __PSMOVE_ALIGNMENT_H
-#define __PSMOVE_ALIGNMENT_H
 
 //-- includes -----
 #include "psmove_glm_math.hpp"
@@ -55,5 +55,3 @@ bool
 psmove_alignment_quaternion_between_vector_frames(
     const glm::vec3* from[2], const glm::vec3* to[2], const float tolerance, const glm::quat &initial_q,
     glm::quat &out_q);
-
-#endif // __PSMOVE_ALIGNMENT_H

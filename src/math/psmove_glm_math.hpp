@@ -1,3 +1,5 @@
+#pragma once
+
 /**
 * PS Move API - An interface for the PS Move Motion Controller
 * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
@@ -27,8 +29,6 @@
 **/
 
 /* General math utility functions */
-#ifndef __PSMOVE_GLM_MATH_H
-#define __PSMOVE_GLM_MATH_H
 
 //-- includes -----
 #include <glm/glm.hpp>
@@ -40,6 +40,3 @@
 
 //-- macros -----
 #define assert_vec3f_is_normalized(v) assert(is_nearly_equal(glm::dot(v,v), 1.f, k_normal_epsilon))
-
-
-#endif // __PSMOVE_GLM_MATH_H

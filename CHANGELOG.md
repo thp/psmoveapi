@@ -28,6 +28,7 @@ starting after version 4.0.12, but historic entries might not.
 ### Removed
 
 - Remove obsolete support for Travis CI/Ubuntu 14.04
+- `contrib/convert-include-guards.py`: Remove (+ change some remaining include guards)
 
 
 ## [4.0.12] - 2020-12-19

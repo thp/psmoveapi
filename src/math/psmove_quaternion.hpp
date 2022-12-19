@@ -1,3 +1,4 @@
+#pragma once
 
 /**
 * PS Move API - An interface for the PS Move Motion Controller
@@ -28,8 +29,6 @@
 **/
 
 /* Math functions related to quaternions */
-#ifndef __PSMOVE_QUATERNION_H
-#define __PSMOVE_QUATERNION_H
 
 //-- includes -----
 #include "psmove_glm_math.hpp"
@@ -62,5 +61,3 @@ psmove_vector3f_clockwise_rotate(const glm::quat &q, const glm::vec3 &v);
 
 //-- macros -----
 #define assert_quaternion_is_normalized(q) assert(is_nearly_equal(glm::dot(q,q), 1.f, k_normal_epsilon))
-
-#endif // __PSMOVE_QUATERNION_H
