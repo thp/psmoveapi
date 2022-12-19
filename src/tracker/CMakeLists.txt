@@ -83,7 +83,7 @@ IF(PSMOVE_BUILD_TRACKER)
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
             ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c
 			${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.h
-            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_linux.c)
+            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_linux.cpp)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS v4l2)
     ENDIF()
 ENDIF(PSMOVE_BUILD_TRACKER)
