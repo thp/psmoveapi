@@ -35,6 +35,7 @@ starting after version 4.0.12, but historic entries might not.
 - `contrib/convert-include-guards.py`: Remove (+ change some remaining include guards)
 - Removed support scripts and documentation for building in Pocket C.H.I.P
 - Removed support for MSVC versions older than 2022
+- Removed `libusb_dynamic_crt.patch`
 
 
 ## [4.0.12] - 2020-12-19
