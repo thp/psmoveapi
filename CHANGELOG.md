@@ -14,7 +14,7 @@ starting after version 4.0.12, but historic entries might not.
 
 ### Changed
 
-- CI: Migrate from Travis CI to Github Actions
+- CI: Migrate from Travis CI (macOS, Linux), and AppVeyor (Windows) to Github Actions
 - Linux: Build OpenCV from source
 - `CMakeLists.txt`: Add check for 'git submodule init' (Fixes #352)
 - New binary magnetometer calibration format (Fixes #452); this changes the
