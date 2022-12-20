@@ -18,10 +18,12 @@ case "$MACOS_CPU_ARCH" in
     x86_64)
         echo "Configuring for Intel architecture (x86_64)"
         MACOS_HOMEBREW_LIB=/usr/local/lib
+        MACOS_HOMEBREW_INCLUDE=/usr/local/include
         ;;
     arm64)
         echo "Configuring for Apple architecture (arm64)"
         MACOS_HOMEBREW_LIB=/opt/homebrew/lib
+        MACOS_HOMEBREW_INCLUDE=/opt/homebrew/include
         ;;
     *)
         echo "Unknown CPU architecture: $MACOS_CPU_ARCH"
@@ -123,5 +125,7 @@ cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_CSHARP_BINDINGS=ON \
       -DCMAKE_OSX_ARCHITECTURES="$MACOS_CPU_ARCH" \
       -DCMAKE_EXE_LINKER_FLAGS=-L$MACOS_HOMEBREW_LIB \
+      -DCMAKE_CXX_FLAGS=-I$MACOS_HOMEBREW_INCLUDE \
+      -DCMAKE_C_FLAGS=-I$MACOS_HOMEBREW_INCLUDE \
       -DOpenCV_DIR="${OPENCV_BUILD_DIR}" ..
 make ${MAKE_ARGS}
