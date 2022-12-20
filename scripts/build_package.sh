@@ -12,7 +12,7 @@ pkg_tarball() {
 }
 
 pkg_zipfile_7z() {
-    PLATFORM_PKG="7z a"
+    PLATFORM_PKG="7z a -bb1"
     PLATFORM_PKG_EXT=".zip"
 }
 
