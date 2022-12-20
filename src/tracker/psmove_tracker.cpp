@@ -463,10 +463,6 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
             break;
     }
 
-    #if defined(__APPLE__) && !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-        camera_control_initialize();
-    #endif
-
     tracker->settings.camera_exposure = psmove_tracker_adapt_to_light(tracker, target_luminance);
 
     camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->settings.camera_exposure,
@@ -526,19 +522,6 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
         tracker->settings.color_saturation_filter_range,
         tracker->settings.color_value_filter_range, 0);
     tracker->storage = cvCreateMemStorage(0);
-
-#if defined(__APPLE__) && !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    PSMove *move = psmove_connect();
-    psmove_set_leds(move, 255, 255, 255);
-    psmove_update_leds(move);
-
-    printf("Cover the iSight camera with the sphere and press the Move button\n");
-    _psmove_wait_for_button(move, Btn_MOVE);
-    psmove_set_leds(move, 0, 0, 0);
-    psmove_update_leds(move);
-    psmove_set_leds(move, 255, 255, 255);
-    psmove_update_leds(move);
-#endif
 
 	// start the video capture device for tracking
 
@@ -668,14 +651,6 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 	int ks = 5; // Kernel Size
 	int kc = (ks + 1) / 2; // Kernel Center
 	tracker->kCalib = cvCreateStructuringElementEx(ks, ks, kc, kc, CV_SHAPE_RECT, NULL);
-
-#if defined(__APPLE__) && !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    printf("Move the controller away and press the Move button\n");
-    _psmove_wait_for_button(move, Btn_MOVE);
-    psmove_set_leds(move, 0, 0, 0);
-    psmove_update_leds(move);
-    psmove_disconnect(move);
-#endif
 
 	return tracker;
 }

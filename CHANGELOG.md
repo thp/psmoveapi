@@ -38,6 +38,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed support for MSVC versions older than 2022
 - Removed `libusb_dynamic_crt.patch`
 - Removed SWIG-based Python bindings (use the existing `ctypes`-based Python bindings instead) (Fixes #338)
+- Removed support for macOS iSight exposure locking / calibration; PS3EYEDriver replaces it (Fixes #53)
 
 
 ## [4.0.12] - 2020-12-19

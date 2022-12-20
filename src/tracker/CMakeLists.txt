@@ -57,7 +57,6 @@ ENDIF()
 IF(PSMOVE_BUILD_TRACKER)
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
-            ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_osxsupport.m
             ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_macosx.cpp)
         find_library(QUARTZCORE QuartzCore)
         find_library(APPKIT AppKit)

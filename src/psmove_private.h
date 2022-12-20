@@ -216,11 +216,6 @@ ADDAPI int
 ADDCALL _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr *controller);
 
 
-/* Misc utility functions */
-ADDAPI void
-ADDCALL _psmove_wait_for_button(PSMove *move, int button);
-
-
 /* Firmware-related private APIs */
 
 /*! Controller's operation mode. */

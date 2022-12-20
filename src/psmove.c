@@ -2563,22 +2563,6 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
 }
 
 void
-_psmove_wait_for_button(PSMove *move, int button)
-{
-    /* Wait for press */
-    while ((psmove_get_buttons(move) & button) == 0) {
-        psmove_poll(move);
-        psmove_update_leds(move);
-    }
-
-    /* Wait for release */
-    while ((psmove_get_buttons(move) & button) != 0) {
-        psmove_poll(move);
-        psmove_update_leds(move);
-    }
-}
-
-void
 psmove_util_sleep_ms(uint32_t ms)
 {
     psmove_port_sleep_ms(ms);

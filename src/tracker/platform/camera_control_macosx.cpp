@@ -28,13 +28,6 @@
 
 #include "../camera_control.h"
 #include "../camera_control_private.h"
-#include "psmove_osxsupport.h"
-
-void
-camera_control_initialize()
-{
-    macosx_camera_set_exposure_lock(0);
-}
 
 void
 camera_control_set_parameters(CameraControl* cc,
@@ -61,8 +54,6 @@ camera_control_set_parameters(CameraControl* cc,
      * ps3eye_set_parameter(cc->eye, PS3EYE_VFLIP, ??);
      **/
     ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, h_flip);
-#else
-    macosx_camera_set_exposure_lock(1);
 #endif
 }
 
