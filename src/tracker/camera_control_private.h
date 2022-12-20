@@ -39,8 +39,6 @@
 #    include <windows.h>
 #endif
 
-#define CL_DRIVER_REG_PATH "Software\\PS3EyeCamera\\Settings"
-
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
 #    include "ps3eye_capi.h"
 #endif
