@@ -134,18 +134,6 @@ private:
         std::list<std::string> services = { "bluetooth.service" };
         std::string verb { start ? "start" : "stop" };
 
-        if (file_exists("/lib/systemd/system/bt_rtk_hciattach@.service")) {
-            LINUXPAIR_DEBUG("Detected: Pocket C.H.I.P\n");
-
-            if (start) {
-                // Need to start this before bluetoothd
-                services.push_front("bt_rtk_hciattach@ttyS1.service");
-            } else {
-                // Need to stop this after bluetoothd
-                services.push_back("bt_rtk_hciattach@ttyS1.service");
-            }
-        }
-
         for (auto &service: services) {
             std::string cmd { "systemctl " + verb + " " + service };
             LINUXPAIR_DEBUG("Running: '%s'\n", cmd.c_str());

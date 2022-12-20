@@ -94,18 +94,3 @@ You might have to try pairing multiple times for the Bluetooth connection to
 work on Windows. Also, be sure to use the Microsoft Bluetooth Stack and do
 not install any third party drivers (e.g. MotionInJoy) that would interfere
 with proper operation of PS Move API on Windows.
-
-
-Pocket C.H.I.P
-~~~~~~~~~~~~~~
-
-During testing, we found that pairing a PS Move via USB works fine in a Pocket
-C.H.I.P with its battery. On a C.H.I.P (the board, without the battery, just
-connected via a MicroUSB charger) we noticed that sometimes the PS Move seems
-to draw too much power from USB, causing the C.H.I.P to reboot. In this case,
-you can pair your controller with the C.H.I.P in the Pocket C.H.I.P shell and
-then remove the C.H.I.P and just power it up and connect via Bluetooth only.
-
-If you do not have a Pocket C.H.I.P, and just a C.H.I.P, you can pair the
-controller on your workstation (Linux, macOS, Windows) and then register the
-controller using ``psmove register``.
