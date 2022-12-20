@@ -139,25 +139,23 @@ initial configure step. Look in CMake's output in the section "Language
 bindings".
 
 Also required is the Python library (``libpython-dev`` on Linux). If you
-have multiple versions of Python installed (most likely some 2.x and 3.x)
-chances are CMake decides to use the wrong one. Again, look in CMake's
-output in the section "Language bindings" which version of the Python
-library CMake is using for the build. Make sure it matches the version you
-want to run your Python scripts with later. They must be the same!
+have multiple versions of Python installed, chances are CMake decides to
+use the wrong one. Again, look in CMake's output in the section "Language
+bindings" which version of the Python library CMake is using for the
+build. Make sure it matches the version you want to run your Python
+scripts with later. They must be the same!
 
 If CMake does not choose the correct version right away, use the option
 ``PSMOVE_PYTHON_VERSION`` to set the desired one. Usually it is sufficient
-to set this to either 2 or 3 (for Python 2 and 3, respectively), but minor
-versions are also supported. So you could choose between building for
-Python 2.6 and 2.7. If you are running CMake from the command line set the
-version like so::
+to set this to 3, but minor versions are also supported. So you could choose
+between building for Python 3.10 and 3.11. If you are running CMake from the
+command line set the version like so::
 
-    cmake .. -DPSMOVE_PYTHON_VERSION=2
+    cmake .. -DPSMOVE_PYTHON_VERSION=3.11
 
-Check CMake's output to verify that the correct version is now found; some
-flavor of Python 2 in this example. If CMake still uses the wrong one, try
-removing all the files CMake generated in the ``build`` directory and run
-again.
+Check CMake's output to verify that the correct version is now found. If
+CMake still uses the wrong one, try removing all the files CMake generated
+in the ``build`` directory and run again.
 
 Testing the build
 ~~~~~~~~~~~~~~~~~
