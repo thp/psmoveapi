@@ -96,10 +96,10 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
 
     if (video) {
         psmove_DEBUG("Using '%s' as video input.\n", video);
-        cc->capture = cvCaptureFromFile(video);
+        cc->capture = new cv::VideoCapture(video);
         psmove_free_mem(video);
     } else {
-        cc->capture = cvCaptureFromCAM(cc->cameraID);
+        cc->capture = new cv::VideoCapture(cc->cameraID);
 
         if (cc->capture == NULL) {
             free(cc);
@@ -110,8 +110,8 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
             get_metrics(&width, &height);
         }
 
-        cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_WIDTH, width);
-        cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_HEIGHT, height);
+        cc->capture->set(cv::CAP_PROP_FRAME_WIDTH, width);
+        cc->capture->set(cv::CAP_PROP_FRAME_HEIGHT, height);
     }
 #endif
     cc->width = width;
@@ -180,7 +180,7 @@ camera_control_read_calibration(CameraControl* cc,
 IplImage *
 camera_control_query_frame( CameraControl* cc)
 {
-    IplImage* result;
+    IplImage *result = nullptr;
 
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
     // Get raw data pointer
@@ -192,8 +192,16 @@ camera_control_query_frame( CameraControl* cc)
 
     result = cc->framebgr;
 #else
-    cvGrabFrame(cc->capture);
-    result = cvRetrieveFrame(cc->capture, 0);
+    cv::Mat frame;
+    if (cc->capture->read(frame)) {
+        if (cc->frame != nullptr) {
+            cvReleaseImage(&cc->frame);
+        }
+
+        IplImage tmp = cvIplImage(frame);
+        result = cvCloneImage(&tmp);
+        cc->frame = result;
+    }
 #endif
 
     if (cc->deinterlace == PSMove_True) {
@@ -253,8 +261,13 @@ camera_control_delete(CameraControl* cc)
     ps3eye_close(cc->eye);
     ps3eye_uninit();
 #else
+    if (cc->frame != nullptr) {
+        cvReleaseImage(&cc->frame);
+    }
+
     // linux, others and windows opencv only
-    cvReleaseCapture(&cc->capture);
+    delete cc->capture;
+    cc->capture = nullptr;
 #endif
 
     if (cc->frame3chUndistort) {
