@@ -31,6 +31,9 @@ if [ -z "$BUILD_TYPE" ]; then
         Linux)
             BUILD_TYPE="linux-native-clang"
             ;;
+        MINGW64_NT-*)
+            BUILD_TYPE="windows-native-msvc-x64"
+            ;;
         *)
             echo "Could not auto-detect build type, please set \$BUILD_TYPE"
             exit 1
