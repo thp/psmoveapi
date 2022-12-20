@@ -25,6 +25,10 @@ jobs:
         include:
           - build_host: macos-latest
             build_type: macos-native-clang
+          - build_host: windows-latest
+            build_type: windows-native-msvc-x86
+          - build_host: windows-latest
+            build_type: windows-native-msvc-x64
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
     steps:
