@@ -19,10 +19,11 @@ starting after version 4.0.12, but historic entries might not.
 - `CMakeLists.txt`: Add check for 'git submodule init' (Fixes #352)
 - New binary magnetometer calibration format (Fixes #452); this changes the
   file format and controllers might need to be re-calibrated after the update
-- `external/libusb-1.0`: Updated to revision f3619c40 for VS2022 support
 - Update build instructions for newer versions
 - Updated OpenCV to Version 4 (some feature such as camera and distance calibration
   are currently not ported to OpenCV 4 and have been disabled for now)
+- `external/libusb-1.0`: Updated to revision f3619c40 for VS2022 support
+- `external/PS3EYEDriver`: Update to latest revision
 
 ### Fixed
 
