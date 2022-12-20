@@ -117,9 +117,6 @@ case "$BUILD_TYPE" in
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.so"
         PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_macosx.zip"
 
-        # Workaround for macOS to find the sphinx-build binary installed via pip
-        export PATH=$PATH:$HOME/Library/Python/2.7/bin
-
         PLATFORM_NAME="macos"
         bash -e -x scripts/macos/build-macos
         ;;
