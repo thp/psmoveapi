@@ -8,7 +8,14 @@ PSEYEDriver
 -----------
 
 This is the recommended way of interfacing with the PS Eye camera on
-Windows and OS X.
+Windows and macOS.
+
+On Windows, you need to install `Zadig`_ (WinUSB driver) for the
+"USBCamera-B4.09.24.1" (or similar) device so that the PS3EYEDriver
+can access the camera using ``libusb``. This has been tested with the
+"WinUSB (v6.1.7600.16385)" driver and Zadig 2.7.
+
+.. _Zadig: https://zadig.akeo.ie/
 
 
 CL Eye Driver
