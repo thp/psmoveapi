@@ -47,6 +47,7 @@ case "$BUILD_TYPE" in
         PLATFORM_BIN="
         $BUILDDIR/psmove
         $BUILDDIR/test_tracker
+        $BUILDDIR/test_camera
         "
         PLATFORM_LIB="
         $BUILDDIR/libpsmoveapi.so
@@ -67,6 +68,7 @@ case "$BUILD_TYPE" in
         PLATFORM_BIN="
         $BUILDDIR/psmove.exe
         $BUILDDIR/test_tracker.exe
+        $BUILDDIR/test_camera.exe
         "
         PLATFORM_LIB="
         $BUILDDIR/libpsmoveapi.dll
@@ -100,6 +102,7 @@ case "$BUILD_TYPE" in
         PLATFORM_BIN="
         $BUILDDIR/psmove
         $BUILDDIR/test_tracker
+        $BUILDDIR/test_camera
         "
         PLATFORM_LIB="
         $BUILDDIR/libpsmoveapi.dylib
@@ -121,6 +124,7 @@ case "$BUILD_TYPE" in
         PLATFORM_BIN="
         $BUILDDIR/psmove.exe
         $BUILDDIR/test_tracker.exe
+        $BUILDDIR/test_camera.exe
         "
         PLATFORM_LIB="
         $BUILDDIR/psmoveapi.dll
