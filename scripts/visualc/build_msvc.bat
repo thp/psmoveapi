@@ -13,16 +13,14 @@ IF "%MSVC_PLATFORM%" == "x64" (
 ) ELSE IF "%MSVC_PLATFORM%" == "x86" (
     set MSVC_CMAKE_ARCH=Win32
     set MSVC_VCVARSALL_ARGS=x86
-) ELSE (
-    GOTO InvalidArgs
-)
+) ELSE GOTO InvalidArgs
+
+if "%VS170COMNTOOLS%" == "" GOTO InvalidArgs
 
 if "%MSVC_VERSION%" == "2022" (
     set "MSVC_CMAKE_GENERATOR=Visual Studio 17 2022"
     call "%VS170COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" %MSVC_VCVARSALL_ARGS%
-) ELSE (
-    GOTO InvalidArgs
-)
+) ELSE  GOTO InvalidArgs
 
 set PSMOVE_API_ROOT_DIR=%~dp0..\..\
 set PSMOVE_API_EXTERNAL_DIR=%PSMOVE_API_ROOT_DIR%\external
@@ -130,6 +128,9 @@ echo.
 echo Usage: %0 visual-studio-version build-platform
 echo        visual-studio-version .... 2022
 echo        build-platform ........... x86 (32-bit) or x64 (64-bit)
+echo.
+echo Make sure VS170COMNTOOLS is set (either manually or by starting from the
+echo Developer Command Prompt for VS 2022 start menu entry).
 echo.
 echo Example for VS2022 64-bit build: %0 2022 x64
 exit /B 1
