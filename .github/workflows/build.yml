@@ -24,7 +24,9 @@ jobs:
           - linux-cross-mingw32
         include:
           - build_host: macos-latest
-            build_type: macos-native-clang
+            build_type: macos-native-clang-x86_64
+          - build_host: macos-latest
+            build_type: macos-native-clang-arm64
           - build_host: windows-latest
             build_type: windows-native-msvc-x86
           - build_host: windows-latest

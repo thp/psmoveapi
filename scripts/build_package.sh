@@ -26,7 +26,7 @@ if [ -z "$BUILD_TYPE" ]; then
     UNAME=$(uname)
     case "$UNAME" in
         Darwin)
-            BUILD_TYPE="macos-native-clang"
+            BUILD_TYPE="macos-native-clang-$(uname -m)"
             ;;
         Linux)
             BUILD_TYPE="linux-native-clang"
@@ -98,8 +98,9 @@ case "$BUILD_TYPE" in
                 ;;
         esac
         ;;
-    macos-native-clang)
-        BUILDDIR=build
+    macos-native-clang-*)
+        MAC_ARCH=${BUILD_TYPE#macos-native-clang-}
+        BUILDDIR=build-$MAC_ARCH
         PLATFORM_BIN="
         $BUILDDIR/psmove
         $BUILDDIR/test_tracker
@@ -118,7 +119,7 @@ case "$BUILD_TYPE" in
         PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_macosx.zip"
 
         PLATFORM_NAME="macos"
-        bash -e -x scripts/macos/build-macos
+        bash -e -x scripts/macos/build-macos "$MAC_ARCH"
         ;;
     windows-native-msvc-*)
         WIN_ARCH=${BUILD_TYPE#windows-native-msvc-}
