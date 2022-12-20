@@ -118,7 +118,7 @@ case "$BUILD_TYPE" in
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.so"
         PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_macosx.zip"
 
-        PLATFORM_NAME="macos"
+        PLATFORM_NAME="macos-$MAC_ARCH"
         bash -e -x scripts/macos/build-macos "$MAC_ARCH"
         ;;
     windows-native-msvc-*)
