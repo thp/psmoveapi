@@ -108,28 +108,6 @@ Or use the ready-made build script::
 
 
 
-Installation and Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In order to be able to use the PS Move Motion Controllers without ``root``
-access, you need to install an udev rules file on your C.H.I.P::
-
-    sudo cp contrib/99-psmove.rules /etc/udev/rules.d/
-
-Also, not all kernels ship with the required ``hidraw`` support, you can
-check if your kernel does by running the following command after bootup::
-
-    dmesg | grep hidraw
-
-A kernel with hidraw will print something like the following::
-
-    [    1.265000] hidraw: raw HID events driver (C) Jiri Kosina
-
-If your kernel does not have hidraw support, you should install the newest
-Firmware for your Pocket C.H.I.P, and make sure to install all updates via ``apt``.
-
-
-
 Python bindings
 ---------------
 
