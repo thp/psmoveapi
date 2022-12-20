@@ -26,6 +26,9 @@ case "$UNAME" in
         brew unlink libtool ; brew link --overwrite libtool
         pip3 install --user sphinx
         ;;
+    MINGW64_NT-*)
+        # Nothing to do, Windows OS
+        ;;
     *)
         echo "Unknown OS: $UNAME"
         exit 1
