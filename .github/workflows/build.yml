@@ -31,6 +31,7 @@ jobs:
             build_type: windows-native-msvc-x64
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
+      VS170COMNTOOLS: "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\Common7\\Tools\\"
     steps:
       - uses: actions/checkout@v3
         with:
