@@ -133,29 +133,9 @@ Firmware for your Pocket C.H.I.P, and make sure to install all updates via ``apt
 Python bindings
 ---------------
 
-Python bindings (among others) are built using SWIG. So make sure you have
-that installed. CMake will let you know if SWIG could not be found in the
-initial configure step. Look in CMake's output in the section "Language
-bindings".
+For Python 3, use the ``ctypes``-based ``psmoveapi.py`` bindings. The old
+SWIG-based bindings are not supported anymore.
 
-Also required is the Python library (``libpython-dev`` on Linux). If you
-have multiple versions of Python installed, chances are CMake decides to
-use the wrong one. Again, look in CMake's output in the section "Language
-bindings" which version of the Python library CMake is using for the
-build. Make sure it matches the version you want to run your Python
-scripts with later. They must be the same!
-
-If CMake does not choose the correct version right away, use the option
-``PSMOVE_PYTHON_VERSION`` to set the desired one. Usually it is sufficient
-to set this to 3, but minor versions are also supported. So you could choose
-between building for Python 3.10 and 3.11. If you are running CMake from the
-command line set the version like so::
-
-    cmake .. -DPSMOVE_PYTHON_VERSION=3.11
-
-Check CMake's output to verify that the correct version is now found. If
-CMake still uses the wrong one, try removing all the files CMake generated
-in the ``build`` directory and run again.
 
 Testing the build
 ~~~~~~~~~~~~~~~~~

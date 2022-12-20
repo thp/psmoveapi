@@ -36,6 +36,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed support scripts and documentation for building in Pocket C.H.I.P
 - Removed support for MSVC versions older than 2022
 - Removed `libusb_dynamic_crt.patch`
+- Removed SWIG-based Python bindings (use the existing `ctypes`-based Python bindings instead) (Fixes #338)
 
 
 ## [4.0.12] - 2020-12-19
