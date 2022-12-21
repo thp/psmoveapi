@@ -50,9 +50,7 @@ extern "C" {
 #undef main
 
 #define main get_firmware_info_main
-extern "C" {
-#include "psmove_get_firmware_info.c"
-}
+#include "psmove_get_firmware_info.cpp"
 #undef main
 
 #define main auth_response_main

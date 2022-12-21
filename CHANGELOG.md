@@ -25,6 +25,8 @@ starting after version 4.0.12, but historic entries might not.
   are currently not ported to OpenCV 4 and have been disabled for now)
 - `external/libusb-1.0`: Updated to revision f3619c40 for VS2022 support
 - `external/PS3EYEDriver`: Update to latest revision
+- `psmove firmware-info`: List firmware info for all connected controllers (not just the first one),
+  print device model number
 
 ### Fixed
 
