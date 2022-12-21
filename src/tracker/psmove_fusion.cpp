@@ -40,7 +40,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define PSMOVE_FUSION_STEP_EPSILON (.0001)
 
 struct _PSMoveFusion {
     PSMoveTracker *tracker;
@@ -49,6 +48,7 @@ struct _PSMoveFusion {
     float height;
 
     glm::mat4 projection;
+    glm::mat4 inverse_projection;
     glm::mat4 modelview;
     glm::vec4 viewport;
 };
@@ -69,6 +69,7 @@ psmove_fusion_new(PSMoveTracker *tracker, float z_near, float z_far)
 
     fusion->projection = glm::perspectiveFov<float>(PSEYE_FOV_BLUE_DOT,
             fusion->width, fusion->height, z_near, z_far);
+    fusion->inverse_projection = glm::inverse(fusion->projection);
     fusion->viewport = glm::vec4(0., 0., fusion->width, fusion->height);
 
     return fusion;
@@ -110,53 +111,34 @@ psmove_fusion_get_position(PSMoveFusion *fusion, PSMove *move,
     float camX, camY, camR;
     psmove_tracker_get_position(fusion->tracker, move, &camX, &camY, &camR);
 
-    float winX = (float)camX;
-    float winY = fusion->height - (float)camY;
-    float winZ = .5; /* start value for binary search */
+    float wx = 2.f * (camX - fusion->viewport[0]) / fusion->viewport[2] - 1.f;
+    float wy = 2.f * (1.f - (camY - fusion->viewport[1]) / fusion->viewport[3]) - 1.f;
 
-    float targetWidth = 2.0f*camR;
+    float xx = (fusion->projection[0][0] * fusion->viewport[2]) / (4.f * camR);
 
-    glm::vec3 obj;
+    float zc = wx * fusion->inverse_projection[0][2] +
+               wy * fusion->inverse_projection[1][2] +
+                    fusion->inverse_projection[3][2];
+    float zf = fusion->inverse_projection[2][2];
+    float wc = wx * fusion->inverse_projection[0][3] +
+               wy * fusion->inverse_projection[1][3] +
+                    fusion->inverse_projection[3][3];
+    float wf = fusion->inverse_projection[2][3];
 
-    /* Binary search for the best distance based on the current projection */
-    float step = .25;
-    while (step > PSMOVE_FUSION_STEP_EPSILON) {
-        /* Calculate center position of sphere */
-        obj = glm::unProject(glm::vec3(winX, winY, winZ),
-                glm::mat4(), fusion->projection, fusion->viewport);
+    float wz = (xx * wc - zc) / (zf - xx * wf);
 
-        /* Project left edge center of sphere */
-        glm::vec3 left = glm::project(glm::vec3(obj.x - .5, obj.y, obj.z),
-                glm::mat4(), fusion->projection, fusion->viewport);
-
-        /* Project right edge center of sphere */
-        glm::vec3 right = glm::project(glm::vec3(obj.x + .5, obj.y, obj.z),
-                glm::mat4(), fusion->projection, fusion->viewport);
-
-        float width = std::abs(right.x - left.x);
-        if (width > targetWidth) {
-            /* Too near */
-            winZ += step;
-        } else if (width < targetWidth) {
-            /* Too far away */
-            winZ -= step;
-        } else {
-            /* Perfect fit */
-            break;
-        }
-        step *= .5;
-    }
+    glm::vec4 obj = fusion->inverse_projection * glm::vec4(wx, wy, wz, 1.f);
 
     if (x != NULL) {
-        *x = obj.x;
+        *x = obj.x / obj.w;
     }
 
     if (y != NULL) {
-        *y = obj.y;
+        *y = obj.y / obj.w;
     }
 
     if (z != NULL) {
-        *z = obj.z;
+        *z = obj.z / obj.w;
     }
 }
 

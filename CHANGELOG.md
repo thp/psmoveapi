@@ -29,6 +29,8 @@ starting after version 4.0.12, but historic entries might not.
 - `external/PS3EYEDriver`: Update to latest revision
 - `psmove firmware-info`: List firmware info for all connected controllers (not just the first one),
   print device model number
+- `psmove_fusion_get_position()` now determines the Z coordinate of the controller
+  analytically based on the current projection and projected size on the X axis
 
 ### Fixed
 
