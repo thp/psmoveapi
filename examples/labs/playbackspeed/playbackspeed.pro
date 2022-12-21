@@ -1,14 +1,13 @@
 
 TEMPLATE = app
 
+QT += widgets multimedia
+
 DEPENDPATH += .
 INCLUDEPATH += .
 
 DEPENDPATH += ../../../include
-INCLUDEPATH += ../../../include
-
-CONFIG += mobility
-MOBILITY += multimedia
+INCLUDEPATH += ../../../include ../../../build
 
 SOURCES += playbackspeed.cpp
 

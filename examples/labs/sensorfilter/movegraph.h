@@ -30,7 +30,7 @@
 #ifndef MOVEGRAPH_H
 #define MOVEGRAPH_H
 
-#include <QtGui>
+#include <QtWidgets>
 
 #include "psmove.h"
 

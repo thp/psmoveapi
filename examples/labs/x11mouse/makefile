@@ -14,7 +14,7 @@ else
     LDFLAGS += -lxdo
 endif
 
-CFLAGS += -I../../../include/
+CFLAGS += -I../../../include/ -I../../../build
 LDFLAGS += -lpsmoveapi -L../../../build/
 
 all: $(TARGET)
