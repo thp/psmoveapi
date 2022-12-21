@@ -48,8 +48,8 @@ extern "C" {
  *         the caller MUST NOT modify or free the returned object
  **/
 
-IplImage *
-psmove_tracker_opencv_get_frame(PSMoveTracker *tracker);
+ADDAPI IplImage *
+ADDCALL psmove_tracker_opencv_get_frame(PSMoveTracker *tracker);
 
 #ifdef __cplusplus
 }
