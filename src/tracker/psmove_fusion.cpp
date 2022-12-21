@@ -95,7 +95,7 @@ psmove_fusion_get_modelview_matrix(PSMoveFusion *fusion, PSMove *move)
 
     psmove_fusion_get_position(fusion, move, &x, &y, &z);
 
-    fusion->modelview = glm::translate(glm::mat4(),
+    fusion->modelview = glm::translate(glm::mat4(1.f),
             glm::vec3(x, y, z)) * glm::mat4_cast(quaternion);
 
     return glm::value_ptr(fusion->modelview);
