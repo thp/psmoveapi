@@ -38,6 +38,7 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_tracker_opencv.h"
 
 
 int main(int arg, char** args) {
@@ -51,7 +52,7 @@ int main(int arg, char** args) {
 
     PSMove **controllers = (PSMove **)calloc(count, sizeof(PSMove *));
 
-    void *frame;
+    IplImage *frame;
     int result;
 
     fprintf(stderr, "Trying to init PSMoveTracker...");
@@ -96,7 +97,7 @@ int main(int arg, char** args) {
         psmove_tracker_update(tracker, NULL);
         psmove_tracker_annotate(tracker);
 
-        frame = psmove_tracker_get_frame(tracker);
+        frame = psmove_tracker_opencv_get_frame(tracker);
         if (frame) {
             cvShowImage("live camera feed", frame);
         }

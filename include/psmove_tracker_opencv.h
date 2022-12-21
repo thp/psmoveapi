@@ -1,7 +1,8 @@
+#pragma once
 
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2022 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,37 +28,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#ifndef ORIENTATIONVIEW_H
-#define ORIENTATIONVIEW_H
 
-#include <QWidget>
-#include <QImage>
+#include "psmove_tracker.h"
 
 #include "opencv2/core/core_c.h"
 
-class PaintView : public QWidget
-{
-    Q_OBJECT
-public:
-    PaintView(QWidget *parent, int width, int height);
-    ~PaintView();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-protected:
-    void paintEvent(QPaintEvent *event);
+/**
+ * \brief Get the current camera image as OpenCV IplImage *
+ *
+ * This function returns a pointer to an IplImage usable by OpenCV.
+ *
+ * \param tracker A valid \ref PSMoveTracker handle
+ *
+ * \return A (borrowed) pointer to the camera image
+ *         the caller MUST NOT modify or free the returned object
+ **/
 
-private:
-    QPixmap m_painting;
-    QPixmap m_painting_backup;
-    QPoint m_cursor[2];
-    QColor m_color[2];
-    QImage *m_image;
+IplImage *
+psmove_tracker_opencv_get_frame(PSMoveTracker *tracker);
 
-public slots:
-    void newposition(int id, qreal scale, qreal x, qreal y, qreal trigger);
-    void backup_frame();
-    void restore_frame();
-    void newcolor(int id, int r, int g, int b);
-    void newimage(IplImage *image);
-};
-
+#ifdef __cplusplus
+}
 #endif

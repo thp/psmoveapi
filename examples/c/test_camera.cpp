@@ -35,6 +35,7 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_tracker_opencv.h"
 
 
 void
@@ -95,7 +96,7 @@ main(int argc, char *argv[])
         psmove_tracker_update_image(tracker);
         psmove_tracker_update(tracker, NULL);
 
-        void *frame = psmove_tracker_get_frame(tracker);
+        IplImage *frame = psmove_tracker_opencv_get_frame(tracker);
         if (frame) {
             cvShowImage("live camera feed", frame);
         }

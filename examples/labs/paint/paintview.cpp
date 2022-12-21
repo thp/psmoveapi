@@ -128,21 +128,20 @@ PaintView::newcolor(int id, int r, int g, int b)
 }
 
 void
-PaintView::newimage(void *image)
+PaintView::newimage(IplImage *image)
 {
     static void *oldptr = NULL;
 
     if (image != oldptr) {
         oldptr = image;
 
-        IplImage *img = (IplImage*)image;
-        assert(img->nChannels == 3);
-        assert(img->depth == 8);
+        assert(image->nChannels == 3);
+        assert(image->depth == 8);
 
-        m_image = new QImage((uchar*)img->imageData,
-                img->width,
-                img->height,
-                img->widthStep,
+        m_image = new QImage((uchar*)image->imageData,
+                image->width,
+                image->height,
+                image->widthStep,
                 QImage::Format_RGB888);
     }
 }

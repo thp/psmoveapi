@@ -38,6 +38,8 @@
 #include "opencv2/highgui/highgui_c.h"
 
 #include "psmove_tracker.h"
+#include "psmove_tracker_opencv.h"
+
 #include "../psmove_private.h"
 #include "../psmove_port.h"
 
@@ -1114,9 +1116,10 @@ psmove_tracker_get_status(PSMoveTracker *tracker, PSMove *move)
     return Tracker_NOT_CALIBRATED;
 }
 
-void*
-psmove_tracker_get_frame(PSMoveTracker *tracker) {
-	return tracker->frame;
+IplImage *
+psmove_tracker_opencv_get_frame(PSMoveTracker *tracker)
+{
+    return tracker->frame;
 }
 
 PSMoveTrackerRGBImage

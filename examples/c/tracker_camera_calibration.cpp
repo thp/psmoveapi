@@ -33,6 +33,7 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_tracker_opencv.h"
 
 #ifdef WIN32
 #    include <windows.h>
@@ -57,10 +58,11 @@ void put_text(IplImage* img, const char* text) {
 	cvPutText(img, text, TEXT_POS, &font, TEXT_COLOR);
 }
 
-IplImage* capture_frame(PSMoveTracker *tracker)
+IplImage *
+capture_frame(PSMoveTracker *tracker)
 {
-	psmove_tracker_update_image(tracker);
-	return (IplImage *)psmove_tracker_get_frame(tracker);
+    psmove_tracker_update_image(tracker);
+    return psmove_tracker_opencv_get_frame(tracker);
 }
 
 int main(int arg, char** args) {

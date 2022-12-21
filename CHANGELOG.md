@@ -11,6 +11,7 @@ starting after version 4.0.12, but historic entries might not.
 
 - macOS: Add build support for M1/Apple Silicon (Fixes #440)
 - Linux/Debian: Force building tracker and test programs (Fixes #437)
+- Added `psmove_tracker_opencv.h` for OpenCV-specific functions
 
 ### Changed
 
@@ -40,6 +41,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed SWIG-based Python bindings (use the existing `ctypes`-based Python bindings instead) (Fixes #338)
 - Removed support for macOS iSight exposure locking / calibration; PS3EYEDriver replaces it (Fixes #53)
 - Removed support for the proprietary CL Eye Driver + Registry settings on Windows
+- Removed `psmove_tracker_get_frame()` (replaced with `psmove_tracker_opencv_get_frame()`)
 
 
 ## [4.0.12] - 2020-12-19

@@ -540,21 +540,6 @@ ADDAPI void
 ADDCALL psmove_tracker_annotate(PSMoveTracker* tracker);
 
 /**
- * \brief Get the current camera image as backend-specific pointer
- *
- * This function returns a pointer to the backend-specific camera
- * image. Right now, the only backend supported is OpenCV, so the
- * return value will always be a pointer to an IplImage structure.
- *
- * \param tracker A valid \ref PSMoveTracker handle
- *
- * \return A pointer to the camera image (currently always an IplImage)
- *         - the caller MUST NOT modify or free the returned object.
- **/
-ADDAPI void*
-ADDCALL psmove_tracker_get_frame(PSMoveTracker *tracker);
-
-/**
  * \brief Get the current camera image as 24-bit RGB data blob
  *
  * This function converts the internal camera image to a tightly-packed
