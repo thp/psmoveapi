@@ -50,6 +50,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed support for macOS iSight exposure locking / calibration; PS3EYEDriver replaces it (Fixes #53)
 - Removed support for the proprietary CL Eye Driver + Registry settings on Windows
 - Removed `psmove_tracker_get_frame()` (replaced with `psmove_tracker_opencv_get_frame()`)
+- Removed legacy OpenGL examples and glfw3 (only used for the OpenGL examples)
 
 
 ## [4.0.12] - 2020-12-19
