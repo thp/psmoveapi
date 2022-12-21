@@ -12,6 +12,8 @@ starting after version 4.0.12, but historic entries might not.
 - macOS: Add build support for M1/Apple Silicon (Fixes #440)
 - Linux/Debian: Force building tracker and test programs (Fixes #437)
 - Added `psmove_tracker_opencv.h` for OpenCV-specific functions
+- `psmove_fusion_glm.h`: Convenience wrapper functions returning `glm` types
+- `psmove_tracker_glm.h`: Convenience wrapper functions returning `glm` types
 
 ### Changed
 
