@@ -21,7 +21,8 @@ starting after version 4.0.12, but historic entries might not.
 - Linux: Build OpenCV from source
 - `CMakeLists.txt`: Add check for 'git submodule init' (Fixes #352)
 - New binary magnetometer calibration format (Fixes #452); this changes the
-  file format and controllers might need to be re-calibrated after the update
+  file format and controllers might need to be re-calibrated after the update;
+  the filename also changed from "BTADDR.magnetometer.csv" to "BTADDR.magnetometer.dat"
 - Update build instructions for newer versions
 - Updated OpenCV to Version 4 (some feature such as camera and distance calibration
   are currently not ported to OpenCV 4 and have been disabled for now)

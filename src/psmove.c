@@ -2137,7 +2137,7 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
             serial[i] = '_';
         }
     }
-    snprintf(filename, PATH_MAX, "%s.magnetometer.csv", serial);
+    snprintf(filename, PATH_MAX, "%s.magnetometer.dat", serial);
     psmove_free_mem(serial);
 
     char *filepath = psmove_util_get_file_path(filename);
