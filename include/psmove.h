@@ -1632,7 +1632,7 @@ ADDCALL psmove_vlog(const char *filename, int lineno, enum PSMove_LogLevel level
  **/
 ADDAPI void
 ADDCALL psmove_log(const char *filename, int lineno, enum PSMove_LogLevel level, const char *fmt, ...)
-#ifndef SWIG
+#if !defined(SWIG) && !defined(_MSC_VER)
     __attribute__ ((format (printf, 4, 5)))
 #endif
 ;
