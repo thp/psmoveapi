@@ -84,7 +84,7 @@ moved_client_list_discover(moved_client_list *result)
                 /*flags=*/0, (struct sockaddr *)&addr, sizeof(addr));
 
         if (res == -1) {
-            psmove_WARNING("Could not send discovery request");
+            PSMOVE_WARNING("Could not send discovery request");
         }
 
         psmove_port_sleep_ms(20);
@@ -109,7 +109,7 @@ moved_client_list_discover(moved_client_list *result)
             inet_ntop(addr.sin_family, &addr_server.sin_addr, temp, sizeof(temp));
             std::string hostname(temp);
             discovered[hostname] = true;
-            psmove_DEBUG("Discovered daemon: '%s' (seq=0x%08x)\n", temp, response.header.request_sequence);
+            PSMOVE_INFO("Discovered daemon: '%s' (seq=0x%08x)", temp, response.header.request_sequence);
             failures = 0;
         } else {
             failures++;
@@ -267,7 +267,7 @@ moved_client_send(moved_client *client, enum PSMoveMovedCmd cmd, int controller_
         }
     }
 
-    psmove_WARNING("Command %d to %s, controller %d failed (errno=%d)\n",
+    PSMOVE_WARNING("Command %d to %s, controller %d failed (errno=%d)",
             (int)cmd, client->hostname, controller_id, errno);
 
     return 0;

@@ -54,8 +54,7 @@ void IOBluetoothPreferenceSetControllerPowerState(int);
 int IOBluetoothPreferenceGetControllerPowerState();
 };
 
-#define OSXPAIR_DEBUG(msg, ...) \
-        psmove_PRINTF("PAIRING OSX", msg, ## __VA_ARGS__)
+#define OSXPAIR_DEBUG(...) PSMOVE_INFO(__VA_ARGS__)
 
 struct ScopedNSAutoreleasePool {
     ScopedNSAutoreleasePool()

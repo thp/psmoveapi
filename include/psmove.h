@@ -2,7 +2,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2011, 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2011, 2012, 2022 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ extern "C" {
 #include "psmove_config.h"
 
 #include <stdint.h>
+#include <stdarg.h>
 
 #ifdef _WIN32
 #  define ADDCALL __cdecl
@@ -1602,6 +1603,46 @@ ADDCALL psmove_util_sleep_ms(uint32_t ms);
 ADDAPI void
 ADDCALL psmove_free_mem(char *buf);
 
+/*! Logging levels
+ **/
+enum PSMove_LogLevel {
+    PSMove_Log_DEBUG = 0,
+    PSMove_Log_INFO = 1,
+    PSMove_Log_WARN = 2,
+    PSMove_Log_ERROR = 3,
+    PSMove_Log_FATAL = 4,
+};
+
+#ifndef SWIG
+/**
+ * \brief Log a message (varargs version)
+ **/
+ADDAPI void
+ADDCALL psmove_vlog(const char *filename, int lineno, enum PSMove_LogLevel level, const char *fmt, va_list args);
+#endif
+
+/**
+ * \brief Log a message
+ *
+ * \param filename Source filename where the message is logged
+ * \param lineno Source line number where the message is logged
+ * \param level Log level
+ * \param fmt Format string
+ * \param ... Format string arguments
+ **/
+ADDAPI void
+ADDCALL psmove_log(const char *filename, int lineno, enum PSMove_LogLevel level, const char *fmt, ...)
+#ifndef SWIG
+    __attribute__ ((format (printf, 4, 5)))
+#endif
+;
+
+/** Logging macros */
+#define PSMOVE_DEBUG(...) psmove_log(__FILE__, __LINE__, PSMove_Log_DEBUG, ##__VA_ARGS__)
+#define PSMOVE_INFO(...) psmove_log(__FILE__, __LINE__, PSMove_Log_INFO, ##__VA_ARGS__)
+#define PSMOVE_WARNING(...) psmove_log(__FILE__, __LINE__, PSMove_Log_WARN, ##__VA_ARGS__)
+#define PSMOVE_ERROR(...) psmove_log(__FILE__, __LINE__, PSMove_Log_WARN, ##__VA_ARGS__)
+#define PSMOVE_FATAL(...) do { psmove_log(__FILE__, __LINE__, PSMove_Log_WARN, ##__VA_ARGS__); exit(1); } while (1)
 
 #ifdef __cplusplus
 }

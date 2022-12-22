@@ -32,6 +32,7 @@ starting after version 4.0.12, but historic entries might not.
 - `psmove_fusion_get_position()` now determines the Z coordinate of the controller
   analytically based on the current projection and projected size on the X axis
 - `external/glm`: Update to version 0.9.9.8
+- New logging system and macros, includes source file names and line numbers
 
 ### Fixed
 

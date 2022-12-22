@@ -27,7 +27,7 @@ option(PSMOVE_USE_SIXPAIR "Enable Navigation Controller pairing" ON)
 
 # Debugging output
 IF(PSMOVE_USE_DEBUG)
-    add_definitions(-DPSMOVE_DEBUG)
+    add_definitions(-DPSMOVE_DEBUG_PRINTS)
     set(INFO_USE_DEBUG "Yes")
     IF(NOT MSVC)
         add_definitions(-g -O0 -Wall)

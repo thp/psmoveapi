@@ -101,14 +101,14 @@ ControllerGlue::add_handle(PSMove *handle)
 {
     if (psmove_connection_type(handle) == Conn_USB) {
         if (move_usb != nullptr) {
-            psmove_WARNING("USB handle already exists for this controller");
+            PSMOVE_WARNING("USB handle already exists for this controller");
             psmove_disconnect(move_usb);
         }
 
         move_usb = handle;
     } else {
         if (move_bluetooth != nullptr) {
-            psmove_WARNING("Bluetooth handle already exists for this controller -- leaking");
+            PSMOVE_WARNING("Bluetooth handle already exists for this controller -- leaking");
             psmove_disconnect(move_bluetooth);
         }
 
@@ -151,13 +151,13 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
     for (int i=0; i<n; i++) {
         PSMove *move = psmove_connect_by_id(i);
         if (!move) {
-            psmove_WARNING("Failed to connect to controller #%d", i);
+            PSMOVE_WARNING("Failed to connect to controller #%d", i);
             continue;
         }
 
         char *tmp = psmove_get_serial(move);
         if (!tmp) {
-            psmove_WARNING("Failed to get serial for controller #%d", i);
+            PSMOVE_WARNING("Failed to get serial for controller #%d", i);
             continue;
         }
 
@@ -297,13 +297,13 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
     switch (event) {
         case EVENT_DEVICE_ADDED:
             {
-                psmove_DEBUG("on_monitor_event(event=EVENT_DEVICE_ADDED, device_type=0x%08x, path=\"%s\", serial=%p)",
+                PSMOVE_DEBUG("on_monitor_event(event=EVENT_DEVICE_ADDED, device_type=0x%08x, path=\"%s\", serial=%p)",
                        device_type, path, serial);
 
                 for (auto &c: self->controllers) {
                     if ((c->move_bluetooth != nullptr && strcmp(_psmove_get_device_path(c->move_bluetooth), path) == 0) ||
                             (c->move_usb != nullptr && strcmp(_psmove_get_device_path(c->move_usb), path) == 0)) {
-                        psmove_WARNING("This controller is already active!");
+                        PSMOVE_WARNING("This controller is already active!");
                         return;
                     }
                 }
@@ -314,7 +314,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                 unsigned short pid = 0;
                 PSMove *move = psmove_connect_internal(serial, path, -1, pid);
                 if (move == nullptr) {
-                    psmove_CRITICAL("Cannot open move for retrieving serial!");
+                    PSMOVE_ERROR("Cannot open move for retrieving serial!");
                     return;
                 }
 
@@ -340,7 +340,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
             break;
         case EVENT_DEVICE_REMOVED:
             {
-                psmove_DEBUG("on_monitor_event(event=EVENT_DEVICE_REMOVED, device_type=0x%08x, path=\"%s\", serial=%p)",
+                PSMOVE_DEBUG("on_monitor_event(event=EVENT_DEVICE_REMOVED, device_type=0x%08x, path=\"%s\", serial=%p)",
                        device_type, path, serial);
 
                 bool found = false;
@@ -365,12 +365,12 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                 }
 
                 if (!found) {
-                    psmove_CRITICAL("Did not find device for removal\n");
+                    PSMOVE_ERROR("Did not find device for removal");
                 }
             }
             break;
         default:
-            psmove_CRITICAL("Invalid event");
+            PSMOVE_ERROR("Invalid event");
             break;
     }
 

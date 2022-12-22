@@ -389,7 +389,7 @@ psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings) {
     camera = linux_find_pseye();
     if (camera == -1) {
         /* Could not find the PSEye - fallback to first camera */
-        psmove_DEBUG("No PSEye found, using first camera instead\n");
+        PSMOVE_INFO("No PSEye found, using first camera instead");
         camera = 0;
     }
 #endif
@@ -397,8 +397,7 @@ psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings) {
     int camera_env = psmove_util_get_env_int(PSMOVE_TRACKER_CAMERA_ENV);
     if (camera_env != -1) {
         camera = camera_env;
-        psmove_DEBUG("Using camera %d (%s is set)\n", camera,
-                PSMOVE_TRACKER_CAMERA_ENV);
+        PSMOVE_DEBUG("Using camera %d (%s is set)", camera, PSMOVE_TRACKER_CAMERA_ENV);
     }
 
     return psmove_tracker_new_with_camera_and_settings(camera, settings);
@@ -461,7 +460,7 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
             target_luminance = 50;
             break;
         default:
-            psmove_DEBUG("Invalid exposure mode: %d\n", exposure);
+            PSMOVE_WARNING("Invalid exposure mode: %d", exposure);
             break;
     }
 
@@ -566,7 +565,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
         if (!fread(&(tracker->color_mapping),
                     sizeof(struct ColorMappingRingBuffer),
                     1, fp)) {
-            psmove_WARNING("Cannot read data from: %s\n", filename);
+            PSMOVE_WARNING("Cannot read data from: %s", filename);
         } else {
             printf("color mappings restored.\n");
         }
@@ -599,7 +598,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
     if (size == -1) {
         size = MIN(frame->width, frame->height) / 2;
     } else {
-        psmove_DEBUG("Using ROI size: %d\n", size);
+        PSMOVE_DEBUG("Using ROI size: %d", size);
     }
 
     int w = size, h = size;
@@ -788,7 +787,7 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
         if (!fwrite(&(tracker->color_mapping),
                     sizeof(struct ColorMappingRingBuffer),
                     1, fp)) {
-            psmove_WARNING("Cannot write data to: %s\n", filename);
+            PSMOVE_WARNING("Cannot write data to: %s", filename);
         } else {
             printf("color mappings saved.\n");
         }
@@ -823,7 +822,7 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
             psmove_free_mem(color_str);
             return PSMove_True;
         } else {
-            psmove_WARNING("Cannot parse color: '%s'\n", color_str);
+            PSMOVE_WARNING("Cannot parse color: '%s'", color_str);
         }
         psmove_free_mem(color_str);
     }
@@ -887,9 +886,9 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
         // calculate the average color from the first image
         *color = cvAvg(images[0], mask);
         *hsv_color = th_brg2hsv(*color);
-        psmove_DEBUG("Dimming: %.2f, H: %.2f, S: %.2f, V: %.2f\n", dimming,
+        PSMOVE_DEBUG("Dimming: %.2f, H: %.2f, S: %.2f, V: %.2f", dimming,
                 hsv_color->val[0], hsv_color->val[1], hsv_color->val[2]);
-        
+
         if (tracker->settings.dimming_factor == 0.) {
             if (hsv_color->val[1] > 128) {
                 tracker->settings.dimming_factor = dimming;
@@ -1496,7 +1495,7 @@ psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
         // calculate the average color and luminance (energy)
         float luminance = (float)th_color_avg(cvAvg(frame, NULL));
 
-        psmove_DEBUG("Exposure: %.2f, Luminance: %.2f\n", current_exposure, luminance);
+        PSMOVE_DEBUG("Exposure: %.2f, Luminance: %.2f", current_exposure, luminance);
         if (fabsf(luminance - target_luminance) < 1) {
             break;
         }

@@ -58,7 +58,7 @@ struct _moved_monitor {
     {
         mgr = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
         if (!mgr) {
-            psmove_CRITICAL("Could not create HID manager");
+            PSMOVE_ERROR("Could not create HID manager");
         }
 
         IOHIDManagerSetDeviceMatching(mgr, NULL);

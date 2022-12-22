@@ -56,38 +56,21 @@ extern "C" {
 /* PS4 PS Move Controller (MicroUSB), a.k.a. CECH-ZCM2J */
 #define PSMOVE_PS4_PID 0x0c5e
 
-#define psmove_PRINTF(section, msg, ...) \
-        fprintf(stderr, "[" section "] " msg, ## __VA_ARGS__)
-
-/* Macro: Debugging output */
-#ifdef PSMOVE_DEBUG
-#    define psmove_DEBUG(msg, ...) \
-            psmove_PRINTF("PSMOVE DEBUG", msg, ## __VA_ARGS__)
-#else
-#    define psmove_DEBUG(msg, ...)
-#endif
-
-/* Macro: Warning message */
-#define psmove_WARNING(msg, ...) \
-        psmove_PRINTF("PSMOVE WARNING", msg, ## __VA_ARGS__)
-
-/* Macro: Print a critical message if an assertion fails */
-#define psmove_CRITICAL(x) \
-        psmove_PRINTF("PSMOVE CRITICAL", \
-                "Assertion fail in %s: %s\n", \
-                __FUNCTION__, x)
-
-/* Macro: Deprecated functions */
-#define psmove_DEPRECATED(x) \
-        psmove_PRINTF("PSMOVE DEPRECATED", \
-                "%s is deprecated: %s\n", \
-                __FUNCTION__, x)
-
 /* Macros: Return immediately if an assertion fails + log */
 #define psmove_return_if_fail(expr) \
-        {if(!(expr)){psmove_CRITICAL(#expr);return;}}
+        { \
+            if (!(expr)) { \
+                PSMOVE_ERROR("Assertion failed: %s", (#expr)); \
+                return; \
+            } \
+        }
 #define psmove_return_val_if_fail(expr, val) \
-        {if(!(expr)){psmove_CRITICAL(#expr);return(val);}}
+        { \
+            if (!(expr)) { \
+                PSMOVE_ERROR("Assertion failed: %s", (#expr)); \
+                return (val); \
+            } \
+        }
 
 /* Macro: Length of fixed-size array */
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof((x)[0]))

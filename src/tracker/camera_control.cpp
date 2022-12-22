@@ -95,7 +95,7 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
     char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
 
     if (video) {
-        psmove_DEBUG("Using '%s' as video input.\n", video);
+        PSMOVE_INFO("Using '%s' as video input.", video);
         cc->capture = new cv::VideoCapture(video);
         psmove_free_mem(video);
     } else {
@@ -170,10 +170,10 @@ camera_control_read_calibration(CameraControl* cc,
 
         // TODO: Shouldn't we free intrinsic and distortion here?
     } else {
-        fprintf(stderr, "Warning: No lens calibration files found.\n");
+        PSMOVE_WARNING("No lens calibration files found.");
     }
 #else
-    psmove_WARNING("Camera calibration not yet supported in OpenCV 4\n");
+    PSMOVE_WARNING("Camera calibration not yet supported in OpenCV 4");
 #endif
 }
 

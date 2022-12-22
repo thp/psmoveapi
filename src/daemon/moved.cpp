@@ -297,7 +297,7 @@ moved_server::handle_request()
 
     if (sendto(socket, (const char *)&response, sizeof(response),
             /*flags=*/0, (struct sockaddr *)&si_other, si_len) == -1) {
-        psmove_WARNING("Cannot send response");
+        PSMOVE_WARNING("Cannot send response");
     }
 }
 
@@ -354,7 +354,7 @@ void
 move_daemon::dump_devices()
 {
     printf("%d connected\n", count());
-#ifdef PSMOVE_DEBUG
+#if defined(PSMOVE_DEBUG_PRINTS)
     for (psmove_dev *dev: devs) {
         char *serial = psmove_get_serial(dev->move);
         printf("Device %d: %s\n", dev->assigned_id, serial);

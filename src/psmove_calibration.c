@@ -300,7 +300,7 @@ psmove_calibration_get_usb_accel_values(PSMoveCalibration *calibration,
             *z2 = psmove_calibration_decode_16bit_signed(data, 0x02 + 6*orientation + 4);
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 }
@@ -392,7 +392,7 @@ psmove_calibration_dump_usb(PSMoveCalibration *calibration)
             psmove_zcm2_calibration_parse_usb(calibration);
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -423,7 +423,7 @@ psmove_calibration_new(PSMove *move)
     }
 
     if (!serial) {
-        psmove_CRITICAL("Could not determine serial from controller");
+        PSMOVE_ERROR("Could not determine serial from controller");
         free(calibration);
         return NULL;
     }
@@ -449,7 +449,7 @@ psmove_calibration_new(PSMove *move)
     psmove_calibration_load(calibration);
     if (!psmove_calibration_supported(calibration)) {
         if (psmove_connection_type(move) == Conn_USB) {
-            psmove_DEBUG("Storing calibration from USB\n");
+            PSMOVE_DEBUG("Storing calibration from USB");
             psmove_calibration_read_from_usb(calibration);
             psmove_calibration_save(calibration);
         }
@@ -589,7 +589,7 @@ psmove_calibration_new(PSMove *move)
                 }
                 break;
             default:
-                psmove_CRITICAL("Unknown PS Move model");
+                PSMOVE_ERROR("Unknown PS Move model");
                 break;
         }
     } else {
@@ -642,7 +642,7 @@ psmove_calibration_read_from_usb(PSMoveCalibration *calibration)
             }
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -721,7 +721,7 @@ psmove_calibration_load(PSMoveCalibration *calibration)
         // use system file in case local is not available
         fp = fopen(calibration->system_filename, "rb");
         if (fp == NULL) {
-            psmove_WARNING("No calibration file found (%s or %s)\n",
+            PSMOVE_WARNING("No calibration file found (%s or %s)",
                     calibration->filename, calibration->system_filename);
             return 0;
         }
@@ -729,13 +729,13 @@ psmove_calibration_load(PSMoveCalibration *calibration)
 
     if (fread(calibration->usb_calibration,
               sizeof(calibration->usb_calibration), 1, fp) != 1) {
-        psmove_CRITICAL("Unable to read USB calibration");
+        PSMOVE_ERROR("Unable to read USB calibration");
         fclose(fp);
         return 0;
     }
     if (fread(&(calibration->flags),
               sizeof(calibration->flags), 1, fp) != 1) {
-        psmove_CRITICAL("Unable to read USB calibration");
+        PSMOVE_ERROR("Unable to read USB calibration");
         fclose(fp);
         return 0;
     }
@@ -753,14 +753,14 @@ psmove_calibration_save(PSMoveCalibration *calibration)
 
     fp = fopen(calibration->filename, "wb");
     if (fp == NULL) {
-        psmove_CRITICAL("Unable to write USB calibration");
+        PSMOVE_ERROR("Unable to write USB calibration");
         return 0;
     }
 
     if (fwrite(calibration->usb_calibration,
                sizeof(calibration->usb_calibration),
                1, fp) != 1) {
-        psmove_CRITICAL("Unable to write USB calibration");
+        PSMOVE_ERROR("Unable to write USB calibration");
         fclose(fp);
         return 0;
     }
@@ -768,7 +768,7 @@ psmove_calibration_save(PSMoveCalibration *calibration)
     if (fwrite(&(calibration->flags),
                sizeof(calibration->flags),
                1, fp) != 1) {
-        psmove_CRITICAL("Unable to write USB calibration");
+        PSMOVE_ERROR("Unable to write USB calibration");
         fclose(fp);
         return 0;
     }

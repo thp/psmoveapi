@@ -50,8 +50,7 @@
 #endif
 
 
-#define WINPAIR_DEBUG(msg, ...) \
-        psmove_DEBUG(msg "\n", ## __VA_ARGS__)
+#define WINPAIR_DEBUG(...) PSMOVE_DEBUG(__VA_ARGS__)
 
 
 /* the number of successive checks that we require to be sure the Bluetooth
@@ -826,7 +825,7 @@ psmove_port_get_host_bluetooth_address()
     radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
 
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
-        psmove_CRITICAL("BluetoothGetRadioInfo");
+        PSMOVE_ERROR("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
         return NULL;
     }
@@ -857,7 +856,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
 
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
-        psmove_CRITICAL("BluetoothGetRadioInfo");
+        PSMOVE_ERROR("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
         return PSMove_False;
     }
