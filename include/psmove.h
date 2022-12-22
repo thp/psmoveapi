@@ -240,11 +240,9 @@ enum PSMove_SensorDataBasis_Type {
     SensorDataBasis_OpenGL,
 };
 
-#ifndef SWIG
 struct _PSMove;
 typedef struct _PSMove PSMove; /*!< Handle to a PS Move Controller.
                                     Obtained via psmove_connect_by_id() */
-#endif
 
 /*! Size of buffer for holding the extension device's data as reported by the Move */
 #define PSMOVE_EXT_DATA_BUF_SIZE 5
@@ -1613,13 +1611,11 @@ enum PSMove_LogLevel {
     PSMove_Log_FATAL = 4,
 };
 
-#ifndef SWIG
 /**
  * \brief Log a message (varargs version)
  **/
 ADDAPI void
 ADDCALL psmove_vlog(const char *filename, int lineno, enum PSMove_LogLevel level, const char *fmt, va_list args);
-#endif
 
 /**
  * \brief Log a message
@@ -1632,7 +1628,7 @@ ADDCALL psmove_vlog(const char *filename, int lineno, enum PSMove_LogLevel level
  **/
 ADDAPI void
 ADDCALL psmove_log(const char *filename, int lineno, enum PSMove_LogLevel level, const char *fmt, ...)
-#if !defined(SWIG) && !defined(_MSC_VER)
+#if !defined(_MSC_VER)
     __attribute__ ((format (printf, 4, 5)))
 #endif
 ;

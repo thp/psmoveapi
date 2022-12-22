@@ -28,4 +28,3 @@ endif()
 # Step into the subdirectories
 include("src/CMakeLists.txt")
 include("examples/CMakeLists.txt")
-include("bindings/CMakeLists.txt")

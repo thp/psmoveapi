@@ -67,11 +67,9 @@ typedef struct {
 } PSMoveTrackerRGBImage; /*!< Structure for storing RGB image data */
 
 /* Opaque data structure, defined only in psmove_tracker.c */
-#ifndef SWIG
 struct _PSMoveTracker;
 typedef struct _PSMoveTracker PSMoveTracker; /*!< Handle to a Tracker object.
                                                   Obtained via psmove_tracker_new() */
-#endif
 
 /*! Status of the tracker */
 enum PSMoveTracker_Status {

@@ -48,7 +48,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed support scripts and documentation for building in Pocket C.H.I.P
 - Removed support for MSVC versions older than 2022
 - Removed `libusb_dynamic_crt.patch`
-- Removed SWIG-based Python bindings (use the existing `ctypes`-based Python bindings instead) (Fixes #338)
+- Removed SWIG-based language bindings (use the existing `ctypes`-based Python bindings instead) (Fixes #338)
 - Removed support for macOS iSight exposure locking / calibration; PS3EYEDriver replaces it (Fixes #53)
 - Removed support for the proprietary CL Eye Driver + Registry settings on Windows
 - Removed `psmove_tracker_get_frame()` (replaced with `psmove_tracker_opencv_get_frame()`)

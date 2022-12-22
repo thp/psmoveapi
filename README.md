@@ -25,8 +25,8 @@ Supported Languages
 -------------------
 
  * Core library written in C for portability and performance
- * SWIG-based bindings for Java, Processing and C#
- * ctypes-based bindings for Python
+ * Additional C++ headers for easier interoperability
+ * ctypes-based bindings for Python 3
 
 Need Help?
 ----------
