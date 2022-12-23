@@ -14,6 +14,7 @@ starting after version 4.0.12, but historic entries might not.
 - Added `psmove_tracker_opencv.h` for OpenCV-specific functions
 - `psmove_fusion_glm.h`: Convenience wrapper functions returning `glm` types
 - `psmove_tracker_glm.h`: Convenience wrapper functions returning `glm` types
+- `psmove_tracker_count_connected()` now returns the number of connected V4L2 video devices on Linux
 
 ### Changed
 
