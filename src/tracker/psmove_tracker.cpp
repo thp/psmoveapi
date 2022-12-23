@@ -1637,25 +1637,38 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
             roi_h = tracker->roiI[tc->roi_level]->height;
             c = tc->eColor;
 
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 3, 8, 0);
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_RED, 1, 8, 0);
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y - 45), cvPoint(tc->roi_x + roi_w, tc->roi_y - 5), TH_COLOR_BLACK, CV_FILLED, 8, 0);
-
-            int vOff = 0;
-			if (roi_h == frame->height)
-                vOff = roi_h;
-            sprintf(text, "RGB:%x,%x,%x", (int)c.val[2], (int)c.val[1], (int)c.val[0]);
-            cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 5), &fontSmall, c);
-
-            sprintf(text, "ROI:%dx%d", roi_w, roi_h);
-            cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 15), &fontSmall, c);
+            // Always use full brightness for the overlay color, independent of dimming
+            double w = 255.0 / std::max(1.0, std::max(c.val[0], std::max(c.val[1], std::max(c.val[2], c.val[3]))));
+            for (auto &v: c.val) {
+                v = v * w;
+            }
 
             double distance = psmove_tracker_distance_from_radius(tracker, tc->r);
 
-            sprintf(text, "radius: %.2f", tc->r);
-            cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 35), &fontSmall, c);
+            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 3, 8, 0);
+            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_RED, 1, 8, 0);
+
+            int x = tc->x;
+            int y = tc->y + tc->r + 5;
+
+            int textbox_h = 50;
+            int textbox_w = 120;
+
+            x -= textbox_w / 2;
+
+            cvRectangle(frame, cvPoint(x, y), cvPoint(x + textbox_w, y + textbox_h), TH_COLOR_BLACK, CV_FILLED, 8, 0);
+
+            sprintf(text, "RGB:%x,%x,%x", (int)c.val[2], (int)c.val[1], (int)c.val[0]);
+            cvPutText(frame, text, cvPoint(x, y + 10), &fontSmall, c);
+
+            sprintf(text, "ROI:%dx%d", roi_w, roi_h);
+            cvPutText(frame, text, cvPoint(x, y + 20), &fontSmall, c);
+
             sprintf(text, "dist: %.2f cm", distance);
-            cvPutText(frame, text, cvPoint(tc->roi_x, tc->roi_y + vOff - 25), &fontSmall, c);
+            cvPutText(frame, text, cvPoint(x, y + 30), &fontSmall, c);
+
+            sprintf(text, "radius: %.2f", tc->r);
+            cvPutText(frame, text, cvPoint(x, y + 40), &fontSmall, c);
 
             cvCircle(frame, p, (int)tc->r, TH_COLOR_WHITE, 1, 8, 0);
         } else {

@@ -37,6 +37,7 @@ starting after version 4.0.12, but historic entries might not.
 - New logging system and macros, includes source file names and line numbers
 - CMake minimum requirement version bumped to version 3.16 (the version in Ubuntu 20.04 LTS)
 - Require C++14 support (previously was C++11)
+- Slightly improved annotation overlay for `psmove_tracker_annotate()`
 
 ### Fixed
 
