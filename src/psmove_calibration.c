@@ -431,13 +431,7 @@ psmove_calibration_new(PSMove *move)
         return NULL;
     }
 
-    char *cur = serial;
-    while (*cur) {
-        if (*cur == ':') {
-            *cur = '_';
-        }
-        ++cur;
-    }
+    serial = _psmove_normalize_btaddr_inplace(serial, true, '_');
 
     char *template = malloc(strlen(serial) +
             strlen(PSMOVE_CALIBRATION_EXTENSION) + 1);

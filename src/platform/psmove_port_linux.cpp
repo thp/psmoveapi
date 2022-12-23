@@ -684,7 +684,7 @@ _psmove_linux_get_bluetooth_address(int retries)
         PSMOVE_WARNING("Can't determine Bluetooth address. Make sure Bluetooth is turned on.");
         return "";
     } else if (btaddrs.size() > 1) {
-        // TODO: Normalize prefer_addr using _psmove_normalize_btaddr()?
+        // TODO: Normalize prefer_addr using _psmove_normalize_btaddr_inplace()?
         std::string prefer_addr { getenv("PSMOVE_PREFER_BLUETOOTH_HOST_ADDRESS") ?: "" };
         if (!prefer_addr.empty()) {
             for (auto &btaddr: btaddrs) {
@@ -712,10 +712,10 @@ psmove_port_get_host_bluetooth_address()
 }
 
 enum PSMove_Bool
-psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
+psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model)
 {
-    auto controller_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 0, ':'));
-    auto host_addr = cstring_to_stdstring_free(_psmove_normalize_btaddr(host, 0, ':'));
+    std::string controller_addr = _psmove_normalize_btaddr_inplace(addr, false, ':');
+    std::string host_addr = _psmove_normalize_btaddr_inplace(host, false, ':');
 
     unsigned short pid = (model == Model_ZCM2) ? PSMOVE_PS4_PID : PSMOVE_PID;
 

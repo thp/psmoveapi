@@ -484,8 +484,6 @@ psmove_count_connected()
 PSMove *
 psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigned short pid)
 {
-    char *tmp;
-
     PSMove *move = (PSMove*)calloc(1, sizeof(PSMove));
     move->type = PSMove_HIDAPI;
     move->connection_type = Conn_Unknown;
@@ -586,15 +584,7 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigne
      * Normalize "aa-bb-cc-dd-ee-ff" (OS X format) into "aa:bb:cc:dd:ee:ff"
      * Also normalize "AA:BB:CC:DD:EE:FF" into "aa:bb:cc:dd:ee:ff" (lowercase)
      **/
-    tmp = move->serial_number;
-    while (*tmp != '\0') {
-        if (*tmp == '-') {
-            *tmp = ':';
-        }
-
-        *tmp = (char)tolower(*tmp);
-        tmp++;
-    }
+    move->serial_number = _psmove_normalize_btaddr_inplace(move->serial_number, true, ':');
 
     /* Bookkeeping of open handles (for psmove_reinit) */
     psmove_num_open_handles++;
@@ -1187,8 +1177,9 @@ psmove_host_pair_custom(const char *addr)
 }
 
 enum PSMove_Bool
-psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model)
+psmove_host_pair_custom_model(const char *caddr, enum PSMove_Model_Type model)
 {
+    char *addr = strdup(caddr);
     char *host = psmove_port_get_host_bluetooth_address();
 
     psmove_return_val_if_fail(host != NULL, PSMove_False);
@@ -1196,6 +1187,8 @@ psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model)
     enum PSMove_Bool result = psmove_port_register_psmove(addr, host, model);
 
     psmove_free_mem(host);
+    psmove_free_mem(addr);
+
 
     return result;
 }
@@ -2130,13 +2123,7 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
     char *serial = psmove_get_serial(move);
     psmove_return_val_if_fail(serial != NULL, NULL);
 
-    char *cur = serial;
-    while (*cur) {
-        if (*cur == ':') {
-            *cur = '_';
-        }
-        ++cur;
-    }
+    serial = _psmove_normalize_btaddr_inplace(serial, true, '_');
 
     snprintf(filename, PATH_MAX, "%s.magnetometer.dat", serial);
     psmove_free_mem(serial);
@@ -2521,7 +2508,7 @@ psmove_util_get_env_string(const char *name)
 }
 
 char *
-_psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
+_psmove_normalize_btaddr_inplace(char *addr, bool lowercase, char separator)
 {
     size_t count = strlen(addr);
 
@@ -2530,34 +2517,30 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
         return NULL;
     }
 
-    char *result = malloc(count + 1);
-
     for (size_t i=0; i<count; i++) {
         if (addr[i] >= 'A' && addr[i] <= 'F' && i % 3 != 2) {
             if (lowercase) {
-                result[i] = (char)tolower(addr[i]);
+                addr[i] = (char)tolower(addr[i]);
             } else {
-                result[i] = addr[i];
+                addr[i] = addr[i];
             }
         } else if (addr[i] >= '0' && addr[i] <= '9' && i % 3 != 2) {
-            result[i] = addr[i];
+            addr[i] = addr[i];
         } else if (addr[i] >= 'a' && addr[i] <= 'f' && i % 3 != 2) {
             if (lowercase) {
-                result[i] = addr[i];
+                addr[i] = addr[i];
             } else {
-                result[i] = (char)toupper(addr[i]);
+                addr[i] = (char)toupper(addr[i]);
             }
         } else if ((addr[i] == ':' || addr[i] == '-') && i % 3 == 2) {
-            result[i] = separator;
+            addr[i] = separator;
         } else {
             PSMOVE_WARNING("Invalid character at pos %u: '%c'", (unsigned int)i, addr[i]);
-            free(result);
             return NULL;
         }
     }
 
-    result[count] = '\0';
-    return result;
+    return addr;
 }
 
 void
