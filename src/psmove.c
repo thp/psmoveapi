@@ -856,7 +856,7 @@ psmove_connect_by_id(int id)
     for (size_t i = 0; i < NUM_PSMOVE_PIDS; i++) {
         for (cur_dev = move_hid_devices[i]; cur_dev != NULL; cur_dev = cur_dev->next, available++);
     }
-    PSMOVE_DEBUG("Matching HID devices: %d", available);
+    PSMOVE_DEBUG("Matching HID devices: %u", (unsigned int)available);
 
     // Sort list of devices to have stable ordering of devices
     int n = 0;
@@ -872,7 +872,7 @@ psmove_connect_by_id(int id)
     qsort((void *)devs_sorted, available, sizeof(struct hid_device_info *), compare_hid_device_info_ptr);
 
 #if defined(PSMOVE_DEBUG_PRINTS)
-    for (size_t i=0; i<available; i++) {
+    for (size_t i=0; i<(size_t)available; i++) {
         cur_dev = devs_sorted[i];
         char tmp[64];
         wcstombs(tmp, cur_dev->serial_number, sizeof(tmp));
@@ -882,7 +882,7 @@ psmove_connect_by_id(int id)
 
 #ifdef _WIN32
     int count = 0;
-    for (size_t i=0; i<available; i++) {
+    for (size_t i=0; i<(size_t)available; i++) {
         cur_dev = devs_sorted[i];
 
         if (strstr(cur_dev->path, "&col01#") != NULL) {
@@ -2550,7 +2550,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
         } else if ((addr[i] == ':' || addr[i] == '-') && i % 3 == 2) {
             result[i] = separator;
         } else {
-            PSMOVE_WARNING("Invalid character at pos %zu: '%c'", i, addr[i]);
+            PSMOVE_WARNING("Invalid character at pos %u: '%c'", (unsigned int)i, addr[i]);
             free(result);
             return NULL;
         }
