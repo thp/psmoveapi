@@ -1625,9 +1625,21 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
 	sprintf(text, "avg(lum):%.0f", avgLum);
 	cvPutText(frame, text, cvPoint(255, 20), &fontNormal, TH_COLOR_WHITE);
 
-
-    // draw all/one controller information to camera image
+    // Draw ROI rectangles first (below overlay text)
     TrackedController *tc;
+    for_each_controller(tracker, tc) {
+        roi_w = tracker->roiI[tc->roi_level]->width;
+        roi_h = tracker->roiI[tc->roi_level]->height;
+
+        if (tc->is_tracked) {
+            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
+            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 1, 8, 0);
+        } else {
+            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
+        }
+    }
+
+    // draw overlay text
     for_each_controller(tracker, tc) {
         if (tc->is_tracked) {
             // controller specific statistics
@@ -1644,9 +1656,6 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
             }
 
             double distance = psmove_tracker_distance_from_radius(tracker, tc->r);
-
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 3, 8, 0);
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_RED, 1, 8, 0);
 
             int x = tc->x;
             int y = tc->y + tc->r + 5;
@@ -1671,10 +1680,6 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
             cvPutText(frame, text, cvPoint(x, y + 40), &fontSmall, c);
 
             cvCircle(frame, p, (int)tc->r, TH_COLOR_WHITE, 1, 8, 0);
-        } else {
-            roi_w = tracker->roiI[tc->roi_level]->width;
-            roi_h = tracker->roiI[tc->roi_level]->height;
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
         }
     }
 }
