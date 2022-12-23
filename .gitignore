@@ -1,5 +1,7 @@
 include/psmove_config.h
 build/*
+build-arm64/*
+build-x86_64/*
 bindings/processing
 external/opencv
 __pycache__
