@@ -38,6 +38,7 @@ starting after version 4.0.12, but historic entries might not.
 - CMake minimum requirement version bumped to version 3.16 (the version in Ubuntu 20.04 LTS)
 - Require C++14 support (previously was C++11)
 - Slightly improved annotation overlay for `psmove_tracker_annotate()`
+- Camera tracking-related tools are now merged into the `psmove` CLI utility
 
 ### Fixed
 
