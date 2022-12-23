@@ -2567,11 +2567,9 @@ psmove_util_sleep_ms(uint32_t ms)
 }
 
 void
-psmove_free_mem(char *buf)
+psmove_free_mem(void *buf)
 {
-    if (buf) {
-        free(buf);
-    }
+    free(buf);
 }
 
 static const char *

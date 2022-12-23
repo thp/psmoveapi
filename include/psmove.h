@@ -1599,7 +1599,7 @@ ADDCALL psmove_util_sleep_ms(uint32_t ms);
  *            returned by the library
  **/
 ADDAPI void
-ADDCALL psmove_free_mem(char *buf);
+ADDCALL psmove_free_mem(void *buf);
 
 /*! Logging levels
  **/
