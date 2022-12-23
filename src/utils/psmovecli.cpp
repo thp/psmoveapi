@@ -95,6 +95,15 @@ extern "C" {
 #undef main
 #endif /* PSMOVE_USE_SIXPAIR */
 
+#if defined(PSMOVE_BUILD_TRACKER)
+#define main test_tracker_main
+#include "test_tracker.cpp"
+#undef main
+#define main test_camera_main
+#include "test_camera.cpp"
+#undef main
+#endif /* PSMOVE_BUILD_TRACKER */
+
 static int
 usage(const char *progname, std::vector<SubCommand> &subcommands)
 {
@@ -241,6 +250,10 @@ main(int argc, char *argv[])
 
     subcommands.emplace_back("responsiveness", "Test how quickly the controllers react", test_responsiveness_main);
     subcommands.emplace_back("led-pwm-frequency", "Test LED PWM frequency modulation", test_led_pwm_frequency_main);
+#if defined(PSMOVE_BUILD_TRACKER)
+    subcommands.emplace_back("test-camera", "Test camera capture (without tracking)", test_camera_main);
+    subcommands.emplace_back("test-tracker", "Test tracking of controllers in the camera", test_tracker_main);
+#endif /* PSMOVE_BUILD_TRACKER */
 
     if (argc == 1 || strcmp(argv[1], "help") == 0) {
         return usage(argv[0], subcommands);

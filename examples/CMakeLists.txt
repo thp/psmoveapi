@@ -5,7 +5,6 @@ include(${ROOT_DIR}/cmake/common.cmake)
 # Additional applications that can be used to test the library
 
 option(PSMOVE_BUILD_EXAMPLES "Build the C examples" ON)
-option(PSMOVE_BUILD_TESTS "Build the C tests" ON)
 option(PSMOVE_BUILD_NAVCON_TEST "Build the navcon C test" ON)
 
 # C examples
@@ -48,19 +47,7 @@ else()
     set(INFO_BUILD_NAVCON_TEST "No (disabled)")
 endif()
 
-# C test programs
-if(PSMOVE_BUILD_TESTS)
-    if(PSMOVE_BUILD_TRACKER)
-        foreach(TESTNAME tracker camera)
-            add_executable(test_${TESTNAME} ${CMAKE_CURRENT_LIST_DIR}/c/test_${TESTNAME}.cpp)
-            target_link_libraries(test_${TESTNAME} psmoveapi psmoveapi_tracker)
-			set_property(TARGET test_${TESTNAME} PROPERTY FOLDER "Utilities") 
-        endforeach(TESTNAME)
-    endif()
-endif()
-
 message("")
 message("  Additional targets")
 feature_use_info("C example apps:   " PSMOVE_BUILD_EXAMPLES)
-feature_use_info("C test programs:  " PSMOVE_BUILD_TESTS)
 message("    NavCon test:      " ${INFO_BUILD_NAVCON_TEST})
