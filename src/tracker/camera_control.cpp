@@ -36,6 +36,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#if defined(__linux)
+#include <sys/stat.h>
+#endif
+
 #include "camera_control_private.h"
 
 void
@@ -125,11 +129,18 @@ int
 camera_control_count_connected()
 {
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-	ps3eye_init();
-	return ps3eye_count_connected();
+    ps3eye_init();
+    return ps3eye_count_connected();
+#elif defined(__linux)
+    int i = 0;
+    struct stat st;
+    while (::stat(("/dev/video" + std::to_string(i)).c_str(), &st) == 0 && S_ISCHR(st.st_mode)) {
+        ++i;
+    }
+    return i;
 #else
-	// Don't know how to get number of connected cameras through opencv...
-	return -1;
+    PSMOVE_WARNING("Getting number of connected cameras not implemented");
+    return -1;
 #endif
 }
 
