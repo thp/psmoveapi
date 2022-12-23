@@ -1638,7 +1638,9 @@ ADDCALL psmove_log(const char *filename, int lineno, enum PSMove_LogLevel level,
 #define PSMOVE_INFO(...) psmove_log(__FILE__, __LINE__, PSMove_Log_INFO, ##__VA_ARGS__)
 #define PSMOVE_WARNING(...) psmove_log(__FILE__, __LINE__, PSMove_Log_WARN, ##__VA_ARGS__)
 #define PSMOVE_ERROR(...) psmove_log(__FILE__, __LINE__, PSMove_Log_WARN, ##__VA_ARGS__)
-#define PSMOVE_FATAL(...) do { psmove_log(__FILE__, __LINE__, PSMove_Log_WARN, ##__VA_ARGS__); exit(1); } while (1)
+#define PSMOVE_FATAL(...) do { psmove_log(__FILE__, __LINE__, PSMove_Log_FATAL, ##__VA_ARGS__); exit(1); } while (1)
+
+#define PSMOVE_VERIFY(expr, fmt, ...) do { if (!(expr)) { PSMOVE_FATAL("Verify " #expr " failed: " fmt, ##__VA_ARGS__); } } while (0)
 
 #ifdef __cplusplus
 }

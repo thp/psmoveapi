@@ -15,6 +15,7 @@ starting after version 4.0.12, but historic entries might not.
 - `psmove_fusion_glm.h`: Convenience wrapper functions returning `glm` types
 - `psmove_tracker_glm.h`: Convenience wrapper functions returning `glm` types
 - `psmove_tracker_count_connected()` now returns the number of connected V4L2 video devices on Linux
+- `psmove_tracker_get_next_unused_color()` for previewing the next tracked color
 
 ### Changed
 
@@ -39,6 +40,8 @@ starting after version 4.0.12, but historic entries might not.
 - Require C++14 support (previously was C++11)
 - Slightly improved annotation overlay for `psmove_tracker_annotate()`
 - Camera tracking-related tools are now merged into the `psmove` CLI utility
+- `psmove_tracker_annotate()` got additional parameters for showing/hiding the status bar and ROIs
+- Tracker dimming factor is now limited to between 0.01 (1% intensity) and 1.0 (100% intensity)
 
 ### Fixed
 

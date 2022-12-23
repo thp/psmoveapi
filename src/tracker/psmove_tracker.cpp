@@ -170,6 +170,8 @@ struct _PSMoveTracker {
 
     // internal variables (debug)
     float debug_fps; // the current FPS achieved by "psmove_tracker_update"
+
+    bool fast_exposure; // whether to skip the dynamic exposure setting
 };
 
 // -------- START: internal functions only
@@ -431,7 +433,7 @@ void
 psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming)
 {
     psmove_return_if_fail(tracker != NULL);
-    tracker->settings.dimming_factor = dimming;
+    tracker->settings.dimming_factor = std::min(1.f, std::max(0.01f, dimming));
 }
 
 float
@@ -517,6 +519,7 @@ PSMoveTracker *
 psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *settings) {
 
     PSMoveTracker* tracker = (PSMoveTracker*) calloc(1, sizeof(PSMoveTracker));
+    tracker->fast_exposure = true;
     tracker->settings = *settings;
     tracker->rHSV = cvScalar(
         tracker->settings.color_hue_filter_range,
@@ -557,7 +560,8 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
         if (st.st_mtime >= (now - settings->color_mapping_max_age)) {
             fp = fopen(filename, "rb");
         } else {
-            printf("%s is too old - not restoring colors.\n", filename);
+            PSMOVE_INFO("%s is too old (%ld seconds, color_mapping_max_age=%d) - not restoring colors",
+                    filename, (long)(now - st.st_mtime), settings->color_mapping_max_age);
         }
     }
 
@@ -567,7 +571,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
                     1, fp)) {
             PSMOVE_WARNING("Cannot read data from: %s", filename);
         } else {
-            printf("color mappings restored.\n");
+            PSMOVE_INFO("Color mappings restored");
         }
 
         fclose(fp);
@@ -662,6 +666,32 @@ psmove_tracker_count_connected()
 	return camera_control_count_connected();
 }
 
+enum PSMove_Bool
+psmove_tracker_get_next_unused_color(PSMoveTracker *tracker,
+         unsigned char *r, unsigned char *g, unsigned char *b)
+{
+    /* Preset colors - use them in ascending order if not used yet */
+    static constexpr const PSMove_RGBValue PRESET_COLORS[] = {
+        {0xFF, 0x00, 0xFF}, /* magenta */
+        {0x00, 0xFF, 0xFF}, /* cyan */
+        {0xFF, 0xFF, 0x00}, /* yellow */
+        {0xFF, 0x00, 0x00}, /* red */
+        {0x00, 0x00, 0xFF}, /* blue */
+    };
+
+    for (auto &color: PRESET_COLORS) {
+        if (!psmove_tracker_color_is_used(tracker, color)) {
+            if (r) *r = color.r;
+            if (g) *g = color.g;
+            if (b) *b = color.b;
+
+            return PSMove_True;
+        }
+    }
+
+    return PSMove_False;
+}
+
 enum PSMoveTracker_Status
 psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
 {
@@ -677,20 +707,9 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
     psmove_set_leds(move, 0, 0, 0);
     psmove_update_leds(move);
 
-    /* Preset colors - use them in ascending order if not used yet */
-    struct PSMove_RGBValue preset_colors[] = {
-        {0xFF, 0x00, 0xFF}, /* magenta */
-        {0x00, 0xFF, 0xFF}, /* cyan */
-        {0xFF, 0xFF, 0x00}, /* yellow */
-        {0xFF, 0x00, 0x00}, /* red */
-        {0x00, 0x00, 0xFF}, /* blue */
-    };
-
-    for (size_t i=0; i<ARRAY_LENGTH(preset_colors); i++) {
-        if (!psmove_tracker_color_is_used(tracker, preset_colors[i])) {
-            return psmove_tracker_enable_with_color_internal(tracker,
-                    move, preset_colors[i]);
-        }
+    struct PSMove_RGBValue color;
+    if (psmove_tracker_get_next_unused_color(tracker, &color.r, &color.g, &color.b)) {
+        return psmove_tracker_enable_with_color_internal(tracker, move, color);
     }
 
     /* No colors are available anymore */
@@ -787,7 +806,7 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
                     1, fp)) {
             PSMOVE_WARNING("Cannot write data to: %s", filename);
         } else {
-            printf("color mappings saved.\n");
+            PSMOVE_INFO("Color mappings saved");
         }
 
         fclose(fp);
@@ -1468,6 +1487,10 @@ psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
     float maximum_exposure = 65535;
     float current_exposure = (maximum_exposure + minimum_exposure) / 2.0f;
 
+    if (tracker->fast_exposure) {
+        return minimum_exposure + (maximum_exposure - minimum_exposure) * target_luminance / 50;
+    }
+
     if (target_luminance == 0) {
         return (int)minimum_exposure;
     }
@@ -1598,7 +1621,9 @@ void psmove_tracker_set_roi(PSMoveTracker* tracker, TrackedController* tc, int r
 		tc->roi_y = tracker->frame->height - roi_height;
 }
 
-void psmove_tracker_annotate(PSMoveTracker* tracker) {
+void
+psmove_tracker_annotate(PSMoveTracker *tracker, bool statusbar, bool rois)
+{
 	CvPoint p;
 	IplImage* frame = tracker->frame;
 
@@ -1615,27 +1640,33 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
 	// general statistics
 	avgC = cvAvg(frame, 0x0);
     avgLum = (float)th_color_avg(avgC);
-	cvRectangle(frame, cvPoint(0, 0), cvPoint(frame->width, 25), TH_COLOR_BLACK, CV_FILLED, 8, 0);
-	sprintf(text, "fps:%.0f", tracker->debug_fps);
-	cvPutText(frame, text, cvPoint(10, 20), &fontNormal, TH_COLOR_WHITE);
+
     if (tracker->duration) {
         tracker->debug_fps = (0.85f * tracker->debug_fps + 0.15f *
                 (1000.0f / (float)tracker->duration));
     }
-	sprintf(text, "avg(lum):%.0f", avgLum);
-	cvPutText(frame, text, cvPoint(255, 20), &fontNormal, TH_COLOR_WHITE);
+
+    if (statusbar) {
+        cvRectangle(frame, cvPoint(0, 0), cvPoint(frame->width, 25), TH_COLOR_BLACK, CV_FILLED, 8, 0);
+        sprintf(text, "fps:%.0f (%ld ms)", tracker->debug_fps, tracker->duration);
+        cvPutText(frame, text, cvPoint(10, 20), &fontNormal, TH_COLOR_WHITE);
+        sprintf(text, "avg(lum):%.0f", avgLum);
+        cvPutText(frame, text, cvPoint(255, 20), &fontNormal, TH_COLOR_WHITE);
+    }
 
     // Draw ROI rectangles first (below overlay text)
     TrackedController *tc;
-    for_each_controller(tracker, tc) {
-        roi_w = tracker->roiI[tc->roi_level]->width;
-        roi_h = tracker->roiI[tc->roi_level]->height;
+    if (rois) {
+        for_each_controller(tracker, tc) {
+            roi_w = tracker->roiI[tc->roi_level]->width;
+            roi_h = tracker->roiI[tc->roi_level]->height;
 
-        if (tc->is_tracked) {
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 1, 8, 0);
-        } else {
-            cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
+            if (tc->is_tracked) {
+                cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
+                cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 1, 8, 0);
+            } else {
+                cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
+            }
         }
     }
 
@@ -1650,10 +1681,10 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
             c = tc->eColor;
 
             // Always use full brightness for the overlay color, independent of dimming
-            double w = 255.0 / std::max(1.0, std::max(c.val[0], std::max(c.val[1], std::max(c.val[2], c.val[3]))));
-            for (auto &v: c.val) {
-                v = v * w;
-            }
+            double w = 255.0 / std::max(1.0, std::max(c.val[0], std::max(c.val[1], c.val[2])));
+            c.val[0] *= w;
+            c.val[1] *= w;
+            c.val[2] *= w;
 
             double distance = psmove_tracker_distance_from_radius(tracker, tc->r);
 
@@ -1663,11 +1694,15 @@ void psmove_tracker_annotate(PSMoveTracker* tracker) {
             int textbox_h = 50;
             int textbox_w = 120;
 
+            if (y + textbox_h >= frame->height) {
+                y = tc->y - tc->r - 5 - textbox_h;
+            }
+
             x -= textbox_w / 2;
 
             cvRectangle(frame, cvPoint(x, y), cvPoint(x + textbox_w, y + textbox_h), TH_COLOR_BLACK, CV_FILLED, 8, 0);
 
-            sprintf(text, "RGB:%x,%x,%x", (int)c.val[2], (int)c.val[1], (int)c.val[0]);
+            sprintf(text, "RGB:%02x,%02x,%02x", (int)tc->eColor.val[2], (int)tc->eColor.val[1], (int)tc->eColor.val[0]);
             cvPutText(frame, text, cvPoint(x, y + 10), &fontSmall, c);
 
             sprintf(text, "ROI:%dx%d", roi_w, roi_h);
