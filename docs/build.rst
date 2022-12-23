@@ -6,6 +6,10 @@ prebuilt library downloads, you might prefer to use those.
 
 .. _`PS Move API GitHub Releases`: https://github.com/thp/psmoveapi/releases
 
+Requirements for all platforms:
+
+- `CMake`_ 3.16 or newer (tested with 3.25.1)
+
 
 Building on macOS 13
 --------------------
@@ -48,7 +52,6 @@ Building on Windows (Visual Studio)
 You need to install the following requirements:
 
 - `Visual Studio Community 2022`_
-- `CMake`_ 3.12 or newer (tested with 3.25.1)
 - `Git`_
 
 
