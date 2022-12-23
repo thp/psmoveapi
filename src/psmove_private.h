@@ -38,6 +38,7 @@ extern "C" {
 #include <stdio.h>
 #include <wchar.h>
 #include <time.h>
+#include <stdbool.h>
 
     /**
      * PRIVATE DEFINITIONS FOR USE IN psmove.c AND psmove_*.c
@@ -177,14 +178,13 @@ ADDCALL _psmove_btaddr_to_string(const PSMove_Data_BTAddr addr);
 /**
  * Normalize a Bluetooth address given a specific format
  *
- * lowercase ... Make all characters lowercase if nonzero
- * separator ... The separator character (usually ':' or '-')
+ * lowercase ... Make all characters lowercase if true
+ * separator ... The separator character (usually ':', '-' or '_')
  *
- * The return value must be freed by the caller using
- * \ref psmove_free_mem().
+ * This function returns addr.
  **/
 ADDAPI char *
-ADDCALL _psmove_normalize_btaddr(const char *addr, int lowercase, char separator);
+ADDCALL _psmove_normalize_btaddr_inplace(char *addr, bool lowercase, char separator);
 
 
 /**

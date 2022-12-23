@@ -244,25 +244,19 @@ format(const char *fmt, ...)
     return result;
 }
 
-std::string
-cstring_to_stdstring_free(char *cstring)
-{
-    std::string result = cstring ?: "";
-    free(cstring);
-    return result;
-}
-
 };
 
 enum PSMove_Bool
-psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Model_Type model)
+psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model)
 {
     enum PSMove_Bool result = PSMove_True;
+
+    // TODO: Host is ignored for now
 
     // TODO: FIXME: If necessary, handle different controller models differently.
 
     ScopedNSAutoreleasePool pool;
-    std::string btaddr = cstring_to_stdstring_free(_psmove_normalize_btaddr(addr, 1, '-'));
+    std::string btaddr = _psmove_normalize_btaddr_inplace(addr, true, '-');
 
     if (btaddr.length() == 0) {
         OSXPAIR_DEBUG("Not a valid Bluetooth address: %s\n", addr);
