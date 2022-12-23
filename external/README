@@ -28,10 +28,3 @@ PS3EYEDriver
 PSEye userspace driver based on libusb + the Linux driver
 by Eugene Zatepyakin, modified by Thomas Perl
 from https://github.com/thp/PS3EYEDriver
-
-
-glfw
-====
-
-GLFW; used for OpenGL in the examples.
-from http://www.glfw.org

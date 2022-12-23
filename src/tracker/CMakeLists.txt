@@ -28,7 +28,7 @@ ENDIF()
 
 # 1 - OpenCV
 IF(PSMOVE_BUILD_TRACKER)
-    FIND_PACKAGE(OpenCV 3 QUIET)
+    FIND_PACKAGE(OpenCV 4 QUIET)
     IF(OpenCV_FOUND)
         IF ("${OpenCV_LIBS}" STREQUAL "")
             message("OpenCV Libs was empty! Manually setting.")
@@ -57,8 +57,7 @@ ENDIF()
 IF(PSMOVE_BUILD_TRACKER)
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
-            ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_osxsupport.m
-            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_macosx.c)
+            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_macosx.cpp)
         find_library(QUARTZCORE QuartzCore)
         find_library(APPKIT AppKit)
         find_library(QTKIT QTKit)
@@ -83,7 +82,7 @@ IF(PSMOVE_BUILD_TRACKER)
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
             ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c
 			${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.h
-            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_linux.c)
+            ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_linux.cpp)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS v4l2)
     ENDIF()
 ENDIF(PSMOVE_BUILD_TRACKER)
@@ -130,21 +129,14 @@ file(GLOB PSMOVEAPI_TRACKER_SRC
 	"${CMAKE_CURRENT_LIST_DIR}/*.h"
 )
 
-list(APPEND PSMOVEAPI_TRACKER_SRC 
-	"${ROOT_DIR}/include/psmove_fusion.h" 
-	"${ROOT_DIR}/include/psmove_tracker.h")
+list(APPEND PSMOVEAPI_TRACKER_SRC
+    "${ROOT_DIR}/include/psmove_fusion.h"
+    "${ROOT_DIR}/include/psmove_tracker.h"
+    "${ROOT_DIR}/include/psmove_tracker_opencv.h"
+)
 
 
 if(PSMOVE_BUILD_TRACKER)
-	IF(MSVC)
-		# Due to a bug in OpenCV 3.0+, C source files that call cvGetSize will crash when built by MSVC.
-		# psmove_tracker.c is such a file, so we need to force the C++ compiler to be used for it, even though it's a C file. 
-		# Once the OpenCV bug is fixed, this can/should be removed.
-		#
-		# See https://github.com/Itseez/opencv/issues/6221 for more info.
-		set_source_files_properties( ${CMAKE_CURRENT_LIST_DIR}/psmove_tracker.c PROPERTIES LANGUAGE CXX )
-	ENDIF(MSVC)
-	
     add_library(psmoveapi_tracker SHARED
         ${PSMOVEAPI_TRACKER_SRC}
         ${PSMOVEAPI_TRACKER_PLATFORM_SRC})

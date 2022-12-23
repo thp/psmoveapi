@@ -8,51 +8,36 @@ set MSVC_VERSION=%1
 set MSVC_PLATFORM=%2
 
 IF "%MSVC_PLATFORM%" == "x64" (
-    set "MSVC_CMAKE_EXTRA= Win64"
+    set MSVC_CMAKE_ARCH=x64
+    set MSVC_VCVARSALL_ARGS=amd64
 ) ELSE IF "%MSVC_PLATFORM%" == "x86" (
-    set MSVC_CMAKE_EXTRA=
-) ELSE (
-    GOTO InvalidArgs
-)
+    set MSVC_CMAKE_ARCH=Win32
+    set MSVC_VCVARSALL_ARGS=x86
+) ELSE GOTO InvalidArgs
 
-if "%MSVC_VERSION%" == "2019" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 16 2019"
-    call "%VS160COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat"
-) ELSE IF "%MSVC_VERSION%" == "2017" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 15 2017%MSVC_CMAKE_EXTRA%"
-    call "%VS150COMNTOOLS%..\..\VC\vcvarsall.bat"
-) ELSE IF "%MSVC_VERSION%" == "2015" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 14%MSVC_CMAKE_EXTRA%"
-    call "%VS140COMNTOOLS%..\..\VC\vcvarsall.bat"
-) ELSE IF "%MSVC_VERSION%" == "2013" (
-    set "MSVC_CMAKE_GENERATOR=Visual Studio 12%MSVC_CMAKE_EXTRA%"
-    call "%VS120COMNTOOLS%..\..\VC\vcvarsall.bat"
-) ELSE (
-    GOTO InvalidArgs
-)
+if "%VS170COMNTOOLS%" == "" GOTO InvalidArgs
+
+if "%MSVC_VERSION%" == "2022" (
+    set "MSVC_CMAKE_GENERATOR=Visual Studio 17 2022"
+    call "%VS170COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" %MSVC_VCVARSALL_ARGS%
+) ELSE  GOTO InvalidArgs
 
 set PSMOVE_API_ROOT_DIR=%~dp0..\..\
 set PSMOVE_API_EXTERNAL_DIR=%PSMOVE_API_ROOT_DIR%\external
 set LIBUSB_DIR=%PSMOVE_API_EXTERNAL_DIR%\libusb-1.0
 set OPENCV_DIR=%PSMOVE_API_EXTERNAL_DIR%\opencv
 
-REM Apply libusb patch so that it links against the dynamic (instead of static) CRT
-echo Applying libusb dynamic CRT patch...
-cd %LIBUSB_DIR%
-git apply --ignore-space-change --ignore-whitespace %PSMOVE_API_ROOT_DIR%\scripts\visualc\libusb_dynamic_crt.patch
-IF %ERRORLEVEL% NEQ 0 ( echo Failed to apply libusb patch. Perhaps it was already applied or libub was not checked out. )
-
 REM Build libusb
 echo.
 echo Building libusb ^(Debug^)
-msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_%MSVC_VERSION%.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %LIBUSB_DIR%/msvc/libusb_static.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal
 IF !ERRORLEVEL! NEQ 0 (
 	echo Failed to build libusb ^(Debug^)
 	goto Error
 )
 echo.
 echo Building libusb ^(Release^)
-msbuild.exe %LIBUSB_DIR%/msvc/libusb_static_%MSVC_VERSION%.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %LIBUSB_DIR%/msvc/libusb_static.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal
 IF !ERRORLEVEL! NEQ 0 (
 	echo Failed to build libusb ^(Release^)
 	goto Error
@@ -61,7 +46,7 @@ IF !ERRORLEVEL! NEQ 0 (
 REM Clone OpenCV
 IF NOT EXIST %OPENCV_DIR% (
 	cd %PSMOVE_API_EXTERNAL_DIR%
-	git clone --depth 1 --branch 3.4 https://github.com/opencv/opencv.git
+	git clone --depth 1 --branch 4.x https://github.com/opencv/opencv.git
 ) ELSE (
 	echo.
 	echo OpenCV dir already exists; assuming it has been cloned already
@@ -76,7 +61,7 @@ cd %OPENCV_DIR%
 IF NOT EXIST build-%MSVC_PLATFORM% mkdir build-%MSVC_PLATFORM%
 cd build-%MSVC_PLATFORM%
 
-cmake .. -G "%MSVC_CMAKE_GENERATOR%" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=ON -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF
+cmake .. -G "%MSVC_CMAKE_GENERATOR%" -A "%MSVC_CMAKE_ARCH%" -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON -DBUILD_opencv_features2d=ON -DBUILD_opencv_objdetect=OFF -DBUILD_opencv_photo=OFF -DBUILD_opencv_ts=OFF -DBUILD_opencv_ml=ON -DBUILD_opencv_video=OFF -DBUILD_opencv_java=OFF -DWITH_OPENEXR=OFF -DWITH_FFMPEG=OFF -DWITH_JASPER=OFF -DWITH_TIFF=OFF
 IF !ERRORLEVEL! NEQ 0 (
 	echo Failed to generate OpenCV solution
 	goto Error
@@ -85,14 +70,14 @@ IF !ERRORLEVEL! NEQ 0 (
 REM Build OpenCV
 echo.
 echo Building OpenCV ^(Debug^)
-msbuild.exe %OPENCV_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %OPENCV_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build OpenCV ^(Debug^)
 	goto Error
 )
 echo.
 echo Building OpenCV ^(Release^)
-msbuild.exe %OPENCV_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %OPENCV_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build OpenCV ^(Release^)
 	goto Error
@@ -107,7 +92,7 @@ cd %PSMOVE_API_ROOT_DIR%
 IF NOT EXIST build-%MSVC_PLATFORM% mkdir build-%MSVC_PLATFORM%
 cd build-%MSVC_PLATFORM%
 
-cmake .. -G "%MSVC_CMAKE_GENERATOR%" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DPSMOVE_BUILD_OPENGL_EXAMPLES=1 -DOpenCV_DIR=./external/opencv/build-%MSVC_PLATFORM%/
+cmake .. -G "%MSVC_CMAKE_GENERATOR%" -A "%MSVC_CMAKE_ARCH%" -DPSMOVE_USE_PS3EYE_DRIVER=1 -DOpenCV_DIR=./external/opencv/build-%MSVC_PLATFORM%/
 IF !ERRORLEVEL! NEQ 0 (
 	echo Failed to generate PSMoveAPI solution
 	goto Error
@@ -116,14 +101,14 @@ IF !ERRORLEVEL! NEQ 0 (
 REM Build PSMoveAPI
 echo.
 echo Building PSMoveAPI ^(Debug^)
-msbuild.exe %PSMOVE_API_ROOT_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %PSMOVE_API_ROOT_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Debug /property:Platform=%MSVC_PLATFORM% /verbosity:minimal
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build PSMoveAPI ^(Debug^)
 	goto Error
 )
 echo.
 echo Building PSMoveAPI ^(Release^)
-msbuild.exe %PSMOVE_API_ROOT_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal /maxcpucount
+msbuild.exe %PSMOVE_API_ROOT_DIR%/build-%MSVC_PLATFORM%/ALL_BUILD.vcxproj /p:Configuration=Release /property:Platform=%MSVC_PLATFORM% /verbosity:minimal
 IF %ERRORLEVEL% NEQ 0 (
 	echo Failed to build PSMoveAPI ^(Release^)
 	goto Error
@@ -141,10 +126,13 @@ exit /B 1
 cd %PSMOVE_API_ROOT_DIR%
 echo.
 echo Usage: %0 visual-studio-version build-platform
-echo        visual-studio-version .... 2013, 2015 or 2017
+echo        visual-studio-version .... 2022
 echo        build-platform ........... x86 (32-bit) or x64 (64-bit)
 echo.
-echo Example for VS2017 32-bit build: %0 2017 x86
+echo Make sure VS170COMNTOOLS is set (either manually or by starting from the
+echo Developer Command Prompt for VS 2022 start menu entry).
+echo.
+echo Example for VS2022 64-bit build: %0 2022 x64
 exit /B 1
 
 :Done

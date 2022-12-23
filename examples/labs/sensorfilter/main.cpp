@@ -30,11 +30,10 @@
 
 #include "movegraph.h"
 
-#include <QtGui>
+#include <QtWidgets>
 
 int main(int argc, char *argv[])
 {
-    QApplication::setGraphicsSystem("raster");
     QApplication app(argc, argv);
 
     QMainWindow mainWindow;

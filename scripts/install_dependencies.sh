@@ -13,18 +13,19 @@ case "$UNAME" in
                                    libudev-dev libbluetooth-dev      \
                                    libdbus-1-dev                     \
                                    libv4l-dev libopencv-dev          \
-                                   default-jdk ant liblwjgl-java   \
-                                   python3-dev mono-mcs               \
-                                   swig3.0 freeglut3-dev             \
+                                   python3-dev                       \
                                    libxrandr-dev libxinerama-dev libxcursor-dev \
                                    python3-sphinx python3-pip \
                                    libusb-dev libsdl2-dev
         ;;
     Darwin)
         brew update
-        brew install --force cmake git libtool automake autoconf swig python libusb-compat sdl2 || true
+        brew install --force cmake git libtool automake autoconf python libusb-compat sdl2 || true
         brew unlink libtool ; brew link --overwrite libtool
         pip3 install --user sphinx
+        ;;
+    MINGW64_NT-*)
+        # Nothing to do, Windows OS
         ;;
     *)
         echo "Unknown OS: $UNAME"

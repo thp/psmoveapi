@@ -30,6 +30,7 @@
 
 #include "demoview.h"
 
+#include <QtGlobal>
 #include <QGraphicsRotation>
 #include <QQuaternion>
 #include <QDebug>
@@ -239,7 +240,11 @@ DemoView::pinpoint(int x, int y)
     QGraphicsItem *result;
     hovers[0]->hide();
     hovers[1]->hide();
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     result = scene()->itemAt(x, y);
+#else
+    result = scene()->itemAt(x, y, QTransform());
+#endif
     hovers[0]->show();
     hovers[1]->show();
     return result;

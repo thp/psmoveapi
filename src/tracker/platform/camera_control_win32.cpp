@@ -49,61 +49,13 @@ struct CameraControlSystemSettings {
 struct CameraControlSystemSettings *
 camera_control_backup_system_settings(CameraControl *cc)
 {
-#if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
-    HKEY hKey;
-    DWORD l = sizeof(DWORD);
-
-    int err = RegOpenKeyEx(HKEY_CURRENT_USER, CL_DRIVER_REG_PATH, 0, KEY_ALL_ACCESS, &hKey);
-    if (err != ERROR_SUCCESS) {
-        printf("Error: %d Unable to open reg-key:  [HKCU]\\%s!", err, CL_DRIVER_REG_PATH);
-        return NULL;
-    }
-
-    struct CameraControlSystemSettings *settings = calloc(1, sizeof(struct CameraControlSystemSettings));
-    RegQueryValueEx(hKey, "AutoAEC", NULL, NULL, (LPBYTE) &settings->AutoAEC, &l);
-    RegQueryValueEx(hKey, "AutoAGC", NULL, NULL, (LPBYTE) &settings->AutoAGC, &l);
-    RegQueryValueEx(hKey, "AutoAWB", NULL, NULL, (LPBYTE) &settings->AutoAWB, &l);
-    RegQueryValueEx(hKey, "Exposure", NULL, NULL, (LPBYTE) &settings->Exposure, &l);
-    RegQueryValueEx(hKey, "Gain", NULL, NULL, (LPBYTE) &settings->Gain, &l);
-    RegQueryValueEx(hKey, "WhiteBalanceB", NULL, NULL, (LPBYTE) &settings->wbB, &l);
-    RegQueryValueEx(hKey, "WhiteBalanceG", NULL, NULL, (LPBYTE) &settings->wbG, &l);
-    RegQueryValueEx(hKey, "WhiteBalanceR", NULL, NULL, (LPBYTE) &settings->wbR, &l);
-    RegCloseKey(hKey);
-
-    return settings;
-#else
     return NULL;
-#endif
 }
+
 void
 camera_control_restore_system_settings(CameraControl *cc,
         struct CameraControlSystemSettings *settings)
 {
-#if !defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER) && defined(PSMOVE_USE_PSEYE)
-    if (settings) {
-        HKEY hKey;
-        DWORD l = sizeof(DWORD);
-
-        char* PATH = CL_DRIVER_REG_PATH;
-        int err = RegOpenKeyEx(HKEY_CURRENT_USER, PATH, 0, KEY_ALL_ACCESS, &hKey);
-        if (err != ERROR_SUCCESS) {
-            printf("Error: %d Unable to open reg-key:  [HKCU]\\%s!", err, PATH);
-            return;
-        }
-
-        RegSetValueEx(hKey, "AutoAEC", 0, REG_DWORD, (CONST BYTE *) &settings->AutoAEC, &l);
-        RegSetValueEx(hKey, "AutoAGC", 0, REG_DWORD, (CONST BYTE *) &settings->AutoAGC, &l);
-        RegSetValueEx(hKey, "AutoAWB", 0, REG_DWORD, (CONST BYTE *) &settings->AutoAWB, &l);
-        RegSetValueEx(hKey, "Exposure", 0, REG_DWORD, (CONST BYTE *) &settings->Exposure, &l);
-        RegSetValueEx(hKey, "Gain", 0, REG_DWORD, (CONST BYTE *) &settings->Gain, &l);
-        RegSetValueEx(hKey, "WhiteBalanceB", 0, REG_DWORD, (CONST BYTE *) &settings->wbB, &l);
-        RegSetValueEx(hKey, "WhiteBalanceG", 0, REG_DWORD, (CONST BYTE *) &settings->wbG, &l);
-        RegSetValueEx(hKey, "WhiteBalanceR", 0, REG_DWORD, (CONST BYTE *) &settings->wbR, &l);
-        RegCloseKey(hKey);
-
-        free(settings);
-    }
-#endif
 }
 
 void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB, int exposure, int gain, int wbRed, int wbGreen, int wbBlue, int contrast, int brightness, enum PSMove_Bool h_flip)
@@ -129,44 +81,6 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 	* ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, ??);
 	* ps3eye_set_parameter(cc->eye, PS3EYE_VFLIP, ??);
 	**/
-#else
-	int val;
-	HKEY hKey;
-	DWORD l = sizeof(DWORD);
-	char* PATH = CL_DRIVER_REG_PATH;
-	int err = RegOpenKeyEx(HKEY_CURRENT_USER, PATH, 0, KEY_ALL_ACCESS, &hKey);
-	if (err != ERROR_SUCCESS) {
-		printf("Error: %d Unable to open reg-key:  [HKCU]\%s!", err, PATH);
-		return;
-	}
-	val = autoE > 0;
-	RegSetValueExA(hKey, "AutoAEC", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = autoG > 0;
-	RegSetValueExA(hKey, "AutoAGC", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = autoWB > 0;
-	RegSetValueExA(hKey, "AutoAWB", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = (int)((511 * exposure) / 0xFFFF);
-	RegSetValueExA(hKey, "Exposure", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = (int)((79 * gain) / 0xFFFF);
-	RegSetValueExA(hKey, "Gain", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = (int)((255 * wbRed) / 0xFFFF);
-	RegSetValueExA(hKey, "WhiteBalanceR", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = (int)((255 * wbGreen) / 0xFFFF);
-	RegSetValueExA(hKey, "WhiteBalanceG", 0, REG_DWORD, (CONST BYTE*) &val, l);
-	val = (int)((255 * wbBlue) / 0xFFFF);
-	RegSetValueExA(hKey, "WhiteBalanceB", 0, REG_DWORD, (CONST BYTE*) &val, l);
-
-	// restart the camera capture with openCv
-	if (cc->capture) {
-            cvReleaseCapture(&cc->capture);
-        }
-	 
-	int width, height;
-	get_metrics(&width, &height);
-
-	cc->capture = cvCaptureFromCAM(cc->cameraID);
-	cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_WIDTH, width);
-	cvSetCaptureProperty(cc->capture, CV_CAP_PROP_FRAME_HEIGHT, height);
 #endif
 }
 

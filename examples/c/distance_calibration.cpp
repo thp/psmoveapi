@@ -38,6 +38,7 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_tracker_opencv.h"
 
 struct measurement {
     float distance_cm;
@@ -49,6 +50,7 @@ typedef struct measurement measurement;
 #define MEASUREMENTS_CM_START 20
 #define MEASUREMENTS_CM_STEP 5
 
+#if CV_VERSION_MAJOR <= 3
 void
 save(void *image, int distance)
 {
@@ -57,10 +59,12 @@ save(void *image, int distance)
     int imgParams[] = { CV_IMWRITE_JPEG_QUALITY, 90, 0 };
     cvSaveImage(path, image, imgParams);
 }
+#endif
 
 int
 main(int arg, char** args)
 {
+#if CV_VERSION_MAJOR <= 3
     measurement measurements[MEASUREMENTS];
     float distance = MEASUREMENTS_CM_START;
     int pos = 0;
@@ -87,7 +91,7 @@ main(int arg, char** args)
         psmove_tracker_update(tracker, NULL);
         printf("Distance: %.2f cm\n", distance);
 
-        void *frame = psmove_tracker_get_frame(tracker);
+        IplImage *frame = psmove_tracker_opencv_get_frame(tracker);
         cvShowImage("Camera", frame);
 
         float x, y, radius;
@@ -122,6 +126,9 @@ main(int arg, char** args)
 
     psmove_tracker_free(tracker);
     psmove_disconnect(move);
+#else
+    fprintf(stderr, "Distance calibration not yet supported in OpenCV 4.\n");
+#endif
 
     return 0;
 }

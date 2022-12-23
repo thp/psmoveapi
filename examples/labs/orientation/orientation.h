@@ -40,6 +40,7 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_tracker_opencv.h"
 
 extern "C" {
     void cvShowImage(const char *, void*);
@@ -99,7 +100,7 @@ class Orientation : public QThread
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
 
-                cvShowImage("asdf", psmove_tracker_get_frame(tracker));
+                cvShowImage("asdf", psmove_tracker_opencv_get_frame(tracker));
             }
 
             psmove_tracker_free(tracker);

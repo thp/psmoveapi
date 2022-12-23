@@ -38,6 +38,11 @@
 #  include "xdo_osx.h"
 #else
 #  include "xdo.h"
+#define xdo_mousedown xdo_mouse_down
+#define xdo_mouseup xdo_mouse_up
+#define xdo_keysequence_down xdo_send_keysequence_window_down
+#define xdo_keysequence_up xdo_send_keysequence_window_up
+#define xdo_mousemove_relative xdo_move_mouse_relative
 #endif
 
 /* Scaling factor to convert gyro values to relative pixel coordinates */

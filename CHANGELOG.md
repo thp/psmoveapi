@@ -11,24 +11,48 @@ starting after version 4.0.12, but historic entries might not.
 
 - macOS: Add build support for M1/Apple Silicon (Fixes #440)
 - Linux/Debian: Force building tracker and test programs (Fixes #437)
+- Added `psmove_tracker_opencv.h` for OpenCV-specific functions
+- `psmove_fusion_glm.h`: Convenience wrapper functions returning `glm` types
+- `psmove_tracker_glm.h`: Convenience wrapper functions returning `glm` types
 
 ### Changed
 
-- CI: Migrate from Travis CI to Github Actions
-- Linux: Build OpenCV 3.4 from source
+- CI: Migrate from Travis CI (macOS, Linux), and AppVeyor (Windows) to Github Actions
+- Linux: Build OpenCV from source
 - `CMakeLists.txt`: Add check for 'git submodule init' (Fixes #352)
 - New binary magnetometer calibration format (Fixes #452); this changes the
-  file format and controllers might need to be re-calibrated after the update
+  file format and controllers might need to be re-calibrated after the update;
+  the filename also changed from "BTADDR.magnetometer.csv" to "BTADDR.magnetometer.dat"
+- Update build instructions for newer versions
+- Updated OpenCV to Version 4 (some feature such as camera and distance calibration
+  are currently not ported to OpenCV 4 and have been disabled for now)
+- `external/libusb-1.0`: Updated to revision f3619c40 for VS2022 support
+- `external/PS3EYEDriver`: Update to latest revision
+- `psmove firmware-info`: List firmware info for all connected controllers (not just the first one),
+  print device model number
+- `psmove_fusion_get_position()` now determines the Z coordinate of the controller
+  analytically based on the current projection and projected size on the X axis
+- `external/glm`: Update to version 0.9.9.8
+- New logging system and macros, includes source file names and line numbers
 
 ### Fixed
 
 - Fixed linking on macOS (`libSecurity`)
 - Fix macOS version detection for macOS 11 and newer (fixes #456)
+- `examples/labs/`: Fix building of Qt examples by migrating to Qt 5
 
 ### Removed
 
 - Remove obsolete support for Travis CI/Ubuntu 14.04
 - `contrib/convert-include-guards.py`: Remove (+ change some remaining include guards)
+- Removed support scripts and documentation for building in Pocket C.H.I.P
+- Removed support for MSVC versions older than 2022
+- Removed `libusb_dynamic_crt.patch`
+- Removed SWIG-based language bindings (use the existing `ctypes`-based Python bindings instead) (Fixes #338)
+- Removed support for macOS iSight exposure locking / calibration; PS3EYEDriver replaces it (Fixes #53)
+- Removed support for the proprietary CL Eye Driver + Registry settings on Windows
+- Removed `psmove_tracker_get_frame()` (replaced with `psmove_tracker_opencv_get_frame()`)
+- Removed legacy OpenGL examples and glfw3 (only used for the OpenGL examples)
 
 
 ## [4.0.12] - 2020-12-19

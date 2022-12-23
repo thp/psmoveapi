@@ -55,8 +55,7 @@
 
 
 
-#define LINUXPAIR_DEBUG(msg, ...) \
-        psmove_PRINTF("PAIRING LINUX", msg, ## __VA_ARGS__)
+#define LINUXPAIR_DEBUG(...) PSMOVE_INFO(__VA_ARGS__)
 
 namespace {
 
@@ -134,23 +133,11 @@ private:
         std::list<std::string> services = { "bluetooth.service" };
         std::string verb { start ? "start" : "stop" };
 
-        if (file_exists("/lib/systemd/system/bt_rtk_hciattach@.service")) {
-            LINUXPAIR_DEBUG("Detected: Pocket C.H.I.P\n");
-
-            if (start) {
-                // Need to start this before bluetoothd
-                services.push_front("bt_rtk_hciattach@ttyS1.service");
-            } else {
-                // Need to stop this after bluetoothd
-                services.push_back("bt_rtk_hciattach@ttyS1.service");
-            }
-        }
-
         for (auto &service: services) {
             std::string cmd { "systemctl " + verb + " " + service };
-            LINUXPAIR_DEBUG("Running: '%s'\n", cmd.c_str());
+            LINUXPAIR_DEBUG("Running: '%s'", cmd.c_str());
             if (system(cmd.c_str()) != 0) {
-                LINUXPAIR_DEBUG("Automatic %s of %s failed.\n", verb.c_str(), service.c_str());
+                LINUXPAIR_DEBUG("Automatic %s of %s failed.", verb.c_str(), service.c_str());
             }
             psmove_port_sleep_ms(500);
         }
@@ -180,7 +167,7 @@ linux_bluez5_update_file_content(BluetoothDaemon &bluetoothd, const std::string 
         FILE *fp = fopen(path.c_str(), "r");
 
         if (fp == nullptr) {
-            LINUXPAIR_DEBUG("Cannot open file for reading: %s\n", path.c_str());
+            LINUXPAIR_DEBUG("Cannot open file for reading: %s", path.c_str());
             return false;
         }
         fseek(fp, 0, SEEK_END);
@@ -188,7 +175,7 @@ linux_bluez5_update_file_content(BluetoothDaemon &bluetoothd, const std::string 
         fseek(fp, 0, SEEK_SET);
         std::vector<char> buf(len);
         if (fread(buf.data(), buf.size(), 1, fp) != 1) {
-            LINUXPAIR_DEBUG("Cannot read file: %s\n", path.c_str());
+            LINUXPAIR_DEBUG("Cannot read file: %s", path.c_str());
             fclose(fp);
             return false;
         }
@@ -196,10 +183,10 @@ linux_bluez5_update_file_content(BluetoothDaemon &bluetoothd, const std::string 
         fclose(fp);
 
         if (std::string(buf.data(), buf.size()) == contents) {
-            LINUXPAIR_DEBUG("File %s is already up to date.\n", path.c_str());
+            LINUXPAIR_DEBUG("File %s is already up to date.", path.c_str());
             return true;
         } else {
-            LINUXPAIR_DEBUG("File %s needs updating.\n", path.c_str());
+            LINUXPAIR_DEBUG("File %s needs updating.", path.c_str());
         }
     }
 
@@ -209,11 +196,11 @@ linux_bluez5_update_file_content(BluetoothDaemon &bluetoothd, const std::string 
     FILE *fp = fopen(path.c_str(), "w");
 
     if (fp == nullptr) {
-        LINUXPAIR_DEBUG("Cannot open file for writing: %s\n", path.c_str());
+        LINUXPAIR_DEBUG("Cannot open file for writing: %s", path.c_str());
         return false;
     }
 
-    LINUXPAIR_DEBUG("Writing file: %s\n", path.c_str());
+    LINUXPAIR_DEBUG("Writing file: %s", path.c_str());
     fwrite(contents.c_str(), 1, contents.length(), fp);
     fclose(fp);
 
@@ -225,7 +212,7 @@ void
 print_and_free_dbus_error(DBusError *err)
 {
     if (dbus_error_is_set(err)) {
-        LINUXPAIR_DEBUG("%s\n", err->message);
+        LINUXPAIR_DEBUG("%s", err->message);
         dbus_error_free(err);
     }
 }
@@ -246,12 +233,12 @@ pinagent_request_pincode_message(DBusConnection *conn, DBusMessage *msg, void *d
 
     reply = dbus_message_new_method_return(msg);
     if (!reply) {
-        LINUXPAIR_DEBUG("Failed to create reply message for RequestPinCode\n");
+        LINUXPAIR_DEBUG("Failed to create reply message for RequestPinCode");
         return DBUS_HANDLER_RESULT_NEED_MEMORY;
     }
 
-    LINUXPAIR_DEBUG("Pincode request for device %s\n", path);
-    LINUXPAIR_DEBUG("Sending PIN code '%s'\n", pincode);
+    LINUXPAIR_DEBUG("Pincode request for device %s", path);
+    LINUXPAIR_DEBUG("Sending PIN code '%s'", pincode);
     dbus_message_append_args(reply,
         DBUS_TYPE_STRING, &pincode,
         DBUS_TYPE_INVALID);
@@ -278,7 +265,7 @@ pinagent_release_message(DBusConnection *conn, DBusMessage *msg, void *data)
 
     reply = dbus_message_new_method_return(msg);
     if (!reply) {
-        LINUXPAIR_DEBUG("Failed to create reply message for Release\n");
+        LINUXPAIR_DEBUG("Failed to create reply message for Release");
         return DBUS_HANDLER_RESULT_NEED_MEMORY;
     }
 
@@ -315,7 +302,7 @@ register_agent(DBusConnection *conn, char const *agent_path, char const *capabil
     DBusError err;
 
     if (!dbus_connection_register_object_path(conn, agent_path, &pinagent_vtable, NULL)) {
-        LINUXPAIR_DEBUG("Failed to register DBus object path for agent\n");
+        LINUXPAIR_DEBUG("Failed to register DBus object path for agent");
         return -1;
     }
 
@@ -325,7 +312,7 @@ register_agent(DBusConnection *conn, char const *agent_path, char const *capabil
         "RegisterAgent");
 
     if (!msg) {
-        LINUXPAIR_DEBUG("Failed to create DBus method call: RegisterAgent\n");
+        LINUXPAIR_DEBUG("Failed to create DBus method call: RegisterAgent");
         return -1;
     }
 
@@ -339,7 +326,7 @@ register_agent(DBusConnection *conn, char const *agent_path, char const *capabil
     dbus_message_unref(msg);
 
     if (!reply) {
-        LINUXPAIR_DEBUG("Failed to register agent\n");
+        LINUXPAIR_DEBUG("Failed to register agent");
         print_and_free_dbus_error(&err);
         return -1;
     }
@@ -356,7 +343,7 @@ register_agent(DBusConnection *conn, char const *agent_path, char const *capabil
         "RequestDefaultAgent");
 
     if (!msg) {
-        LINUXPAIR_DEBUG("Failed to create DBus method call: RequestDefaultAgent\n");
+        LINUXPAIR_DEBUG("Failed to create DBus method call: RequestDefaultAgent");
         return -1;
     }
 
@@ -369,7 +356,7 @@ register_agent(DBusConnection *conn, char const *agent_path, char const *capabil
     dbus_message_unref(msg);
 
     if (!reply) {
-        LINUXPAIR_DEBUG("Failed to request default agent\n");
+        LINUXPAIR_DEBUG("Failed to request default agent");
         print_and_free_dbus_error(&err);
         return -1;
     }
@@ -393,7 +380,7 @@ unregister_agent(DBusConnection *conn, char const *agent_path)
         "UnregisterAgent");
 
     if (!msg) {
-        LINUXPAIR_DEBUG("Failed to create DBus method call: UnregisterAgent\n");
+        LINUXPAIR_DEBUG("Failed to create DBus method call: UnregisterAgent");
         return -1;
     }
 
@@ -406,7 +393,7 @@ unregister_agent(DBusConnection *conn, char const *agent_path)
     dbus_message_unref(msg);
 
     if (!reply) {
-        LINUXPAIR_DEBUG("Failed to unregister agent\n");
+        LINUXPAIR_DEBUG("Failed to unregister agent");
         print_and_free_dbus_error(&err);
         return -1;
     }
@@ -435,7 +422,7 @@ get_device_property(DBusConnection *conn, char const *dev, char const *interface
         "Get");
 
     if (!msg) {
-        LINUXPAIR_DEBUG("Failed to create DBus method call: Get\n");
+        LINUXPAIR_DEBUG("Failed to create DBus method call: Get");
         return 0;
     }
 
@@ -449,7 +436,7 @@ get_device_property(DBusConnection *conn, char const *dev, char const *interface
     dbus_message_unref(msg);
 
     if (!reply) {
-        LINUXPAIR_DEBUG("Failed to read DBus device property\n");
+        LINUXPAIR_DEBUG("Failed to read DBus device property");
         print_and_free_dbus_error(&err);
         return 0;
     }
@@ -462,7 +449,7 @@ get_device_property(DBusConnection *conn, char const *dev, char const *interface
     if (DBUS_TYPE_BOOLEAN == dbus_message_iter_get_arg_type(&prop_iter)) {
         dbus_message_iter_get_basic(&prop_iter, &value);
     } else {
-        LINUXPAIR_DEBUG("DBus property has wrong type, must be boolean\n");
+        LINUXPAIR_DEBUG("DBus property has wrong type, must be boolean");
         value = 0;
     }
 
@@ -515,12 +502,12 @@ run_pin_agent()
     dbus_error_init(&err);
     conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
     if (!conn) {
-        LINUXPAIR_DEBUG("Failed to connect to DBus system bus\n");
+        LINUXPAIR_DEBUG("Failed to connect to DBus system bus");
         print_and_free_dbus_error(&err);
         return -1;
     }
 
-    LINUXPAIR_DEBUG("Registering PIN code agent\n");
+    LINUXPAIR_DEBUG("Registering PIN code agent");
     if (register_agent(conn, agent_path, capabilities)) {
         dbus_connection_unref(conn);
         return -1;
@@ -545,17 +532,17 @@ run_pin_agent()
         }
 
         if (dbus_device_id) {
-            LINUXPAIR_DEBUG("Checking device connected: %s\n", dbus_device_id);
+            LINUXPAIR_DEBUG("Checking device connected: %s", dbus_device_id);
 
             if (is_device_connected(conn, dbus_device_id)) {
-                LINUXPAIR_DEBUG("Device connected\n");
+                LINUXPAIR_DEBUG("Device connected");
                 break;
             }
         }
     }
 
     if (!disconnected) {
-        LINUXPAIR_DEBUG("Unregistering PIN code agent\n");
+        LINUXPAIR_DEBUG("Unregistering PIN code agent");
         unregister_agent(conn, agent_path);
     }
 
@@ -654,7 +641,7 @@ _psmove_linux_bt_dev_info(int socket, int dev_id, long arg)
 
     if (ioctl(socket, HCIGETDEVINFO, (void *)&di) == 0) {
         btaddrs->emplace_back(di.bdaddr);
-        LINUXPAIR_DEBUG("Found host adapter: %s (name=%s)\n", btaddrs->back().to_string().c_str(), di.name);
+        LINUXPAIR_DEBUG("Found host adapter: %s (name=%s)", btaddrs->back().to_string().c_str(), di.name);
     } else {
         LINUXPAIR_DEBUG("ioctl(HCIGETDEVINFO): %s", strerror(errno));
     }
@@ -688,7 +675,7 @@ _psmove_linux_get_bluetooth_address(int retries)
             }
         }
 
-        psmove_WARNING("Can't determine Bluetooth address. Make sure Bluetooth is turned on.\n");
+        PSMOVE_WARNING("Can't determine Bluetooth address. Make sure Bluetooth is turned on.");
         return "";
     } else if (btaddrs.size() > 1) {
         // TODO: Normalize prefer_addr using _psmove_normalize_btaddr()?
@@ -727,18 +714,18 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     unsigned short pid = (model == Model_ZCM2) ? PSMOVE_PS4_PID : PSMOVE_PID;
 
     if (controller_addr.empty()) {
-        LINUXPAIR_DEBUG("Cannot parse controller address: '%s'\n", addr);
+        LINUXPAIR_DEBUG("Cannot parse controller address: '%s'", addr);
         return PSMove_False;
     }
 
     if (host_addr.empty()) {
-        LINUXPAIR_DEBUG("Cannot parse host address: '%s'\n", host);
+        LINUXPAIR_DEBUG("Cannot parse host address: '%s'", host);
         return PSMove_False;
     }
 
     std::string bluetooth_dir { "/var/lib/bluetooth/" + host_addr };
     if (!directory_exists(bluetooth_dir)) {
-        LINUXPAIR_DEBUG("Not a directory: %s\n", bluetooth_dir.c_str());
+        LINUXPAIR_DEBUG("Not a directory: %s", bluetooth_dir.c_str());
         return PSMove_False;
     }
 
@@ -749,7 +736,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         bluetoothd.stop();
 
         if (!make_directory(info_dir)) {
-            LINUXPAIR_DEBUG("Cannot create directory: %s\n", info_dir.c_str());
+            LINUXPAIR_DEBUG("Cannot create directory: %s", info_dir.c_str());
             return PSMove_False;
         }
     }
@@ -759,7 +746,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
         bluetoothd.stop();
 
         if (!make_directory(cache_dir)) {
-            LINUXPAIR_DEBUG("Cannot create directory: %s\n", cache_dir.c_str());
+            LINUXPAIR_DEBUG("Cannot create directory: %s", cache_dir.c_str());
             return PSMove_False;
         }
     }

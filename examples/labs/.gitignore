@@ -1,0 +1,17 @@
+**/*.o
+**/moc_*.cpp
+**/moc_*.h
+**/.qmake.stash
+accelerometer3d/Makefile
+accelerometer3d/accelerometer3d
+movetytouch/Makefile
+movetytouch/movetytouch
+paint/Makefile
+paint/paint
+playbackspeed/Makefile
+playbackspeed/playbackspeed
+sensorfilter/Makefile
+sensorfilter/sensorfilter
+whiteboard/Makefile
+whiteboard/whiteboard
+x11mouse/psmove_x11mouse

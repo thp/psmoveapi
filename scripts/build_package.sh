@@ -12,7 +12,7 @@ pkg_tarball() {
 }
 
 pkg_zipfile_7z() {
-    PLATFORM_PKG="7z a"
+    PLATFORM_PKG="7z a -bb1"
     PLATFORM_PKG_EXT=".zip"
 }
 
@@ -26,10 +26,13 @@ if [ -z "$BUILD_TYPE" ]; then
     UNAME=$(uname)
     case "$UNAME" in
         Darwin)
-            BUILD_TYPE="macos-native-clang"
+            BUILD_TYPE="macos-native-clang-$(uname -m)"
             ;;
         Linux)
             BUILD_TYPE="linux-native-clang"
+            ;;
+        MINGW64_NT-*)
+            BUILD_TYPE="windows-native-msvc-x64"
             ;;
         *)
             echo "Could not auto-detect build type, please set \$BUILD_TYPE"
@@ -44,13 +47,12 @@ case "$BUILD_TYPE" in
         PLATFORM_BIN="
         $BUILDDIR/psmove
         $BUILDDIR/test_tracker
+        $BUILDDIR/test_camera
         "
         PLATFORM_LIB="
         $BUILDDIR/libpsmoveapi.so
         $BUILDDIR/libpsmoveapi_tracker.so
         "
-        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
-        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.so"
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"
         JAVA_NATIVE="$BUILDDIR/libpsmove_java.so"
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.so"
@@ -66,13 +68,12 @@ case "$BUILD_TYPE" in
         PLATFORM_BIN="
         $BUILDDIR/psmove.exe
         $BUILDDIR/test_tracker.exe
+        $BUILDDIR/test_camera.exe
         "
         PLATFORM_LIB="
         $BUILDDIR/libpsmoveapi.dll
         $BUILDDIR/libpsmoveapi_tracker.dll
         "
-        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
-        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.dll"
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"
         JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
@@ -95,11 +96,13 @@ case "$BUILD_TYPE" in
                 ;;
         esac
         ;;
-    macos-native-clang)
-        BUILDDIR=build
+    macos-native-clang-*)
+        MAC_ARCH=${BUILD_TYPE#macos-native-clang-}
+        BUILDDIR=build-$MAC_ARCH
         PLATFORM_BIN="
         $BUILDDIR/psmove
         $BUILDDIR/test_tracker
+        $BUILDDIR/test_camera
         "
         PLATFORM_LIB="
         $BUILDDIR/libpsmoveapi.dylib
@@ -107,18 +110,13 @@ case "$BUILD_TYPE" in
         "
         pkg_tarball
 
-        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
-        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.so"
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"
         JAVA_NATIVE="$BUILDDIR/libpsmove_java.jnilib"
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.so"
         PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_macosx.zip"
 
-        # Workaround for macOS to find the sphinx-build binary installed via pip
-        export PATH=$PATH:$HOME/Library/Python/2.7/bin
-
-        PLATFORM_NAME="macos"
-        bash -e -x scripts/macos/build-macos
+        PLATFORM_NAME="macos-$MAC_ARCH"
+        bash -e -x scripts/macos/build-macos "$MAC_ARCH"
         ;;
     windows-native-msvc-*)
         WIN_ARCH=${BUILD_TYPE#windows-native-msvc-}
@@ -126,6 +124,7 @@ case "$BUILD_TYPE" in
         PLATFORM_BIN="
         $BUILDDIR/psmove.exe
         $BUILDDIR/test_tracker.exe
+        $BUILDDIR/test_camera.exe
         "
         PLATFORM_LIB="
         $BUILDDIR/psmoveapi.dll
@@ -133,8 +132,6 @@ case "$BUILD_TYPE" in
         $BUILDDIR/psmoveapi_tracker.dll
         $BUILDDIR/psmoveapi_tracker.lib
         "
-        PYTHON_BINDINGS="$BUILDDIR/psmove.py"
-        PYTHON_BINDINGS_LIB="$BUILDDIR/_psmove.pyd"
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"
         JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
         CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
@@ -142,19 +139,15 @@ case "$BUILD_TYPE" in
 
         pkg_zipfile_7z
 
-        PLATFORM_NAME="windows-msvc2017-${WIN_ARCH}"
+        PLATFORM_NAME="windows-msvc2022-${WIN_ARCH}"
         chmod +x ./scripts/visualc/build_msvc.bat
-        ./scripts/visualc/build_msvc.bat 2017 ${WIN_ARCH}
+        ./scripts/visualc/build_msvc.bat 2022 ${WIN_ARCH}
         ;;
     *)
         echo "Invalid/unknown \$BUILD_TYPE value: '$BUILD_TYPE'"
         exit 1
         ;;
 esac
-
-if [ ! -z "$PSMOVEAPI_CUSTOM_PLATFORM_NAME" ]; then
-    PLATFORM_NAME="$PSMOVEAPI_CUSTOM_PLATFORM_NAME"
-fi
 
 # Git revision identifier
 PSMOVEAPI_REVISION=$(git describe --tags)
@@ -174,10 +167,6 @@ cp -v include/*.h $BUILDDIR/psmove_config.h "$DEST/include/"
 
 mkdir -p "$DEST/bindings/python"
 cp -rv bindings/python/psmoveapi.py "$DEST/bindings/python/"
-if [ -f "$PYTHON_BINDINGS" ]; then
-    cp -rv "$PYTHON_BINDINGS" "$DEST/bindings/python/"
-    cp -rv "$PYTHON_BINDINGS_LIB" "$DEST/bindings/python/"
-fi
 
 if [ -f "$JAVA_JAR" ]; then
     mkdir -p "$DEST/bindings/java"

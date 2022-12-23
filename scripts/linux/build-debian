@@ -8,10 +8,10 @@ PSMOVE_API_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../../"
 cd $PSMOVE_API_ROOT_DIR
 
 if [ ! -d external/opencv/build ]; then
-    echo "Cloning OpenCV 3.4..."
-    git clone --depth 1 --branch 3.4 https://github.com/opencv/opencv.git external/opencv
+    echo "Cloning OpenCV 4.x..."
+    git clone --depth 1 --branch 4.x https://github.com/opencv/opencv.git external/opencv
 
-    echo "Building OpenCV 3.4..."
+    echo "Building OpenCV 4.x..."
     cmake -B external/opencv/build external/opencv -G "Unix Makefiles" \
         -DBUILD_SHARED_LIBS=0 -DBUILD_WITH_STATIC_CRT=OFF -DBUILD_PERF_TESTS=OFF \
         -DBUILD_TESTS=OFF -DBUILD_DOCS=OFF -DBUILD_opencv_apps=OFF -DBUILD_opencv_flann=ON \

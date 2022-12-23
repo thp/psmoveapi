@@ -381,7 +381,7 @@ _psmove_read_data(PSMove *move, unsigned char *data, int length)
             memcpy(data, &(move->input.zcm2), sizeof(move->input.zcm2));
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 }
@@ -396,8 +396,7 @@ void
 psmove_reinit()
 {
     if (psmove_num_open_handles != 0) {
-        psmove_CRITICAL("reinit called with open handles "
-                "(forgot psmove_disconnect?)");
+        PSMOVE_ERROR("reinit called with open handles (forgot psmove_disconnect?)");
         exit(0);
     }
 
@@ -613,7 +612,7 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigne
             psmove_reset_magnetometer_calibration(move);
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -773,7 +772,7 @@ psmove_connect_remote_by_id(int id, moved_client *client, int remote_id)
                 move->client->response_buf.get_serial.btaddr));
     } else {
         /* No serial number -- FATAL? */
-        psmove_WARNING("Cannot retrieve serial number");
+        PSMOVE_WARNING("Cannot retrieve serial number");
         move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
     }
 
@@ -806,7 +805,7 @@ compare_hid_device_info_ptr(const void *a, const void *b)
         return strcmp(dev_a->path, dev_b->path);
     }
 
-    psmove_WARNING("Cannot compare serial number or path when sorting devices");
+    PSMOVE_WARNING("Cannot compare serial number or path when sorting devices");
     return 0;
 }
 
@@ -846,7 +845,7 @@ psmove_connect_by_id(int id)
 
     // enumerate matching HID devices
     for (unsigned int i = 0; i < NUM_PSMOVE_PIDS; i++) {
-        psmove_DEBUG("Enumerating HID devices with PID 0x%04X\n", PSMOVE_PIDS[i]);
+        PSMOVE_DEBUG("Enumerating HID devices with PID 0x%04X", PSMOVE_PIDS[i]);
 
         // NOTE: hidapi returns NULL for PIDs that were not found
         move_hid_devices[i] = hid_enumerate(PSMOVE_VID, PSMOVE_PIDS[i]);
@@ -858,7 +857,7 @@ psmove_connect_by_id(int id)
     for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
         for (cur_dev = move_hid_devices[i]; cur_dev != NULL; cur_dev = cur_dev->next, available++);
     }
-    psmove_DEBUG("Matching HID devices: %d\n", available);
+    PSMOVE_DEBUG("Matching HID devices: %d", available);
 
     // Sort list of devices to have stable ordering of devices
     int n = 0;
@@ -873,14 +872,14 @@ psmove_connect_by_id(int id)
     }
     qsort((void *)devs_sorted, available, sizeof(struct hid_device_info *), compare_hid_device_info_ptr);
 
-#if defined(PSMOVE_DEBUG)
+#if defined(PSMOVE_DEBUG_PRINTS)
     for (i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
         char tmp[64];
         wcstombs(tmp, cur_dev->serial_number, sizeof(tmp));
         printf("devs_sorted[%d]: (handle=%p, serial=%s, path=%s)\n", i, cur_dev, tmp, cur_dev->path);
     }
-#endif /* defined(PSMOVE_DEBUG) */
+#endif /* defined(PSMOVE_DEBUG_PRINTS) */
 
 #ifdef _WIN32
     int count = 0;
@@ -945,7 +944,7 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
 #endif
 
     if (move->type == PSMove_MOVED) {
-        psmove_CRITICAL("Not implemented in MOVED mode");
+        PSMOVE_ERROR("Not implemented in MOVED mode");
         return 0;
     }
 
@@ -966,7 +965,7 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
         }
 
         char *current_host = _psmove_btaddr_to_string(btg+10);
-        psmove_DEBUG("Current host: %s\n", current_host);
+        PSMOVE_DEBUG("Current host: %s", current_host);
         psmove_free_mem(current_host);
 
         if (host != NULL) {
@@ -1002,7 +1001,7 @@ _psmove_get_zcm1_calibration_blob(PSMove *move, char **dest, size_t *size)
         res = hid_get_feature_report(move->handle, cal, sizeof(cal));
 #if defined(__linux)
         if(res == -1) {
-            psmove_WARNING("hid_get_feature_report failed, kernel issue? see %s\n",
+            PSMOVE_WARNING("hid_get_feature_report failed, kernel issue? see %s",
                 "https://github.com/thp/psmoveapi/issues/108");
         }
 #endif
@@ -1057,7 +1056,7 @@ _psmove_get_zcm2_calibration_blob(PSMove *move, char **dest, size_t *size)
         res = hid_get_feature_report(move->handle, cal, sizeof(cal));
 #if defined(__linux)
         if(res == -1) {
-            psmove_WARNING("hid_get_feature_report failed, kernel issue? see %s\n",
+            PSMOVE_WARNING("hid_get_feature_report failed, kernel issue? see %s",
                 "https://github.com/thp/psmoveapi/issues/108");
         }
 #endif
@@ -1167,7 +1166,7 @@ psmove_pair(PSMove *move)
             return PSMove_False;
         }
     } else {
-        psmove_DEBUG("Already paired.\n");
+        PSMOVE_DEBUG("Already paired.");
     }
 
     char *addr = psmove_get_serial(move);
@@ -1223,7 +1222,7 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
             return PSMove_False;
         }
     } else {
-        psmove_DEBUG("Already paired.\n");
+        PSMOVE_DEBUG("Already paired.");
     }
 
     char *addr = psmove_get_serial(move);
@@ -1310,7 +1309,7 @@ psmove_set_led_pwm_frequency(PSMove *move, unsigned long freq)
     psmove_return_val_if_fail(move != NULL, PSMove_False);
 
     if (freq < 733 || freq > 24e6) {
-        psmove_WARNING("Frequency can only assume values between 733 and 24e6.");
+        PSMOVE_WARNING("Frequency can only assume values between 733 and 24e6.");
         return PSMove_False;
     }
 
@@ -1392,7 +1391,7 @@ psmove_update_leds(PSMove *move)
             }
             break;
         default:
-            psmove_CRITICAL("Unknown device type");
+            PSMOVE_ERROR("Unknown device type");
             return 0;
             break;
     }
@@ -1425,7 +1424,7 @@ psmove_poll(PSMove *move)
                     res = hid_read(move->handle, (unsigned char*)(&(move->input.zcm2)), sizeof(move->input.zcm2));
                     break;
                 default:
-                    psmove_CRITICAL("Unknown PS Move model");
+                    PSMOVE_ERROR("Unknown PS Move model");
                     break;
             }
             break;
@@ -1447,7 +1446,7 @@ psmove_poll(PSMove *move)
                         memcpy(&(move->input.zcm2), move->client->response_buf.read_input.data, input_data_size);
                         break;
                     default:
-                        psmove_CRITICAL("Unknown PS Move model");
+                        PSMOVE_ERROR("Unknown PS Move model");
                         break;
                 }
 
@@ -1457,7 +1456,7 @@ psmove_poll(PSMove *move)
             }
             break;
         default:
-            psmove_CRITICAL("Unknown device type");
+            PSMOVE_ERROR("Unknown device type");
     }
 
     if ((move->model == Model_ZCM1 && res == sizeof(move->input.zcm1)) ||
@@ -1472,8 +1471,7 @@ psmove_poll(PSMove *move)
          **/
         int seq = (move->input.common.buttons4 & 0x0F);
         if (seq != ((oldseq + 1) % 16)) {
-            psmove_DEBUG("Warning: Dropped frames (seq %d -> %d)\n",
-                    oldseq, seq);
+            PSMOVE_WARNING("Dropped frames (seq %d -> %d)", oldseq, seq);
         }
 
         if (move->orientation_enabled) {
@@ -1501,7 +1499,7 @@ psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data)
             // EXT data not supported on ZCM2
             return PSMove_False;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             return PSMove_False;
     }
 }
@@ -1619,7 +1617,7 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
     res = hid_send_feature_report(move->handle, send_buf, sizeof(send_buf));
 
     if (res != sizeof(send_buf)) {
-        psmove_DEBUG("Sending Feature Report for read setup failed\n");
+        PSMOVE_WARNING("Sending Feature Report for read setup failed");
         return PSMove_False;
     }
 
@@ -1629,7 +1627,7 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
     res = hid_get_feature_report(move->handle, recv_buf, sizeof(recv_buf));
 
     if (res != sizeof(recv_buf)) {
-        psmove_DEBUG("Sending Feature Report for actual read failed\n");
+        PSMOVE_WARNING("Sending Feature Report for actual read failed");
         return PSMove_False;
     }
 
@@ -1660,7 +1658,7 @@ psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char leng
     }
 
     if (length > sizeof(send_buf) - 9) {
-        psmove_DEBUG("Data too large for send buffer\n");
+        PSMOVE_WARNING("Data too large for send buffer");
         return PSMove_False;
     }
 
@@ -1675,7 +1673,7 @@ psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char leng
     res = hid_send_feature_report(move->handle, send_buf, sizeof(send_buf));
 
     if (res != sizeof(send_buf)) {
-        psmove_DEBUG("Sending Feature Report failed\n");
+        PSMOVE_WARNING("Sending Feature Report failed");
         return PSMove_False;
     }
 
@@ -1762,7 +1760,7 @@ psmove_get_trigger(PSMove *move)
         case Model_ZCM2:
             return move->input.common.trigger;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             return 0;
     }
 }
@@ -1793,7 +1791,7 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
                     base = offsetof(PSMove_Data_Input_Common, gXlow);
                     break;
                 default:
-                    psmove_WARNING("Unknown sensor type");
+                    PSMOVE_WARNING("Unknown sensor type");
                     return;
             }
 
@@ -1814,7 +1812,7 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
                     base = offsetof(PSMove_Data_Input_Common, gXlow);
                     break;
                 default:
-                    psmove_WARNING("Unknown sensor type");
+                    PSMOVE_WARNING("Unknown sensor type");
                     return;
             }
 
@@ -1825,7 +1823,7 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
             result.z = psmove_decode_16bit_twos_complement((void*)&move->input.common, base + 4);
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -1866,7 +1864,7 @@ psmove_get_accelerometer(PSMove *move, int *ax, int *ay, int *az)
             result.z = (int16_t) (move->input.common.aZlow + (move->input.common.aZhigh << 8));
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -1907,7 +1905,7 @@ psmove_get_gyroscope(PSMove *move, int *gx, int *gy, int *gz)
             result.z = (int16_t) (move->input.common.gZlow + (move->input.common.gZhigh << 8));
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -2052,7 +2050,7 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
             // NOTE: This model does not have magnetometers
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -2139,7 +2137,7 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
             serial[i] = '_';
         }
     }
-    snprintf(filename, PATH_MAX, "%s.magnetometer.csv", serial);
+    snprintf(filename, PATH_MAX, "%s.magnetometer.dat", serial);
     psmove_free_mem(serial);
 
     char *filepath = psmove_util_get_file_path(filename);
@@ -2188,7 +2186,7 @@ psmove_save_magnetometer_calibration(PSMove *move)
 
     int res = fwrite(&data, 1, sizeof(data), fp);
     if (res != sizeof(data)) {
-        psmove_WARNING("Error writing calibration data to file (res=%d).\n", res);
+        PSMOVE_WARNING("Error writing calibration data to file (res=%d).", res);
     }
 
     fclose(fp);
@@ -2208,7 +2206,7 @@ psmove_load_magnetometer_calibration(PSMove *move)
 
     if (fp == NULL) {
         char *addr = psmove_get_serial(move);
-        psmove_WARNING("Magnetometer in %s not yet calibrated.\n", addr);
+        PSMOVE_WARNING("Magnetometer in %s not yet calibrated.", addr);
         psmove_free_mem(addr);
         return PSMove_False;
     }
@@ -2221,7 +2219,7 @@ psmove_load_magnetometer_calibration(PSMove *move)
     fclose(fp);
 
     if (res != sizeof(data) || data.endian_magic != PSMOVE_CALIBRATION_MAGIC) {
-        psmove_WARNING("Error reading calibration file (res=%d, magic=0x%08x)\n", res, data.endian_magic);
+        PSMOVE_WARNING("Error reading calibration file (res=%d, magic=0x%08x)", res, data.endian_magic);
         psmove_reset_magnetometer_calibration(move);
         return PSMove_False;
     }
@@ -2527,7 +2525,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     size_t count = strlen(addr);
 
     if (count != 17) {
-        psmove_WARNING("Invalid address: '%s'\n", addr);
+        PSMOVE_WARNING("Invalid address: '%s'", addr);
         return NULL;
     }
 
@@ -2552,7 +2550,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
         } else if ((addr[i] == ':' || addr[i] == '-') && i % 3 == 2) {
             result[i] = separator;
         } else {
-            psmove_WARNING("Invalid character at pos %d: '%c'\n", i, addr[i]);
+            PSMOVE_WARNING("Invalid character at pos %d: '%c'", i, addr[i]);
             free(result);
             return NULL;
         }
@@ -2560,22 +2558,6 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
 
     result[count] = '\0';
     return result;
-}
-
-void
-_psmove_wait_for_button(PSMove *move, int button)
-{
-    /* Wait for press */
-    while ((psmove_get_buttons(move) & button) == 0) {
-        psmove_poll(move);
-        psmove_update_leds(move);
-    }
-
-    /* Wait for release */
-    while ((psmove_get_buttons(move) & button) != 0) {
-        psmove_poll(move);
-        psmove_update_leds(move);
-    }
 }
 
 void
@@ -2592,3 +2574,60 @@ psmove_free_mem(char *buf)
     }
 }
 
+static const char *
+PSMOVE_LOG_LEVELS[] = {
+    "DEBUG",
+    "INFO",
+    "WARNING",
+    "ERROR",
+    "FATAL",
+};
+
+void
+psmove_vlog(const char *filename, int lineno, enum PSMove_LogLevel level, const char *fmt, va_list args)
+{
+#if !defined(PSMOVE_DEBUG_PRINTS)
+    if (level == PSMove_Log_DEBUG) {
+        return;
+    }
+#endif
+
+    const char *slash = strrchr(filename, '/');
+    if (slash == NULL) {
+        slash = strrchr(filename, '\\');
+    }
+    if (slash != NULL) {
+        filename = slash + 1;
+    }
+
+    const char *prefix = "";
+    const char *suffix = "";
+
+    if (level == PSMove_Log_INFO) {
+        prefix = "\033[36m";
+        suffix = "\033[0m";
+    } else if (level == PSMove_Log_WARN) {
+        prefix = "\033[33m";
+        suffix = "\033[0m";
+    } else if (level == PSMove_Log_ERROR || level == PSMove_Log_FATAL) {
+        prefix = "\033[31m";
+        suffix = "\033[0m";
+    }
+
+    fprintf(stderr, "[%s%s%s %s:%d] ",
+            prefix,
+            (level < ARRAY_LENGTH(PSMOVE_LOG_LEVELS)) ? PSMOVE_LOG_LEVELS[level] : "INVALID",
+            suffix,
+            filename, lineno);
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, "\n");
+}
+
+void
+psmove_log(const char *filename, int lineno, enum PSMove_LogLevel level, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    psmove_vlog(filename, lineno, level, fmt, args);
+    va_end(args);
+}

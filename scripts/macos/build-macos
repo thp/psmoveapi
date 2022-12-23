@@ -6,19 +6,27 @@
 # 2022-08-29: Added support for building on M1 / Apple Silicon
 #
 
-case "$(uname -m)" in
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 [x86_64|arm64]"
+    exit 1
+fi
+
+MACOS_CPU_ARCH="$1"
+shift
+
+case "$MACOS_CPU_ARCH" in
     x86_64)
         echo "Configuring for Intel architecture (x86_64)"
-        MACOS_CPU_ARCH="x86_64"
         MACOS_HOMEBREW_LIB=/usr/local/lib
+        MACOS_HOMEBREW_INCLUDE=/usr/local/include
         ;;
     arm64)
         echo "Configuring for Apple architecture (arm64)"
-        MACOS_CPU_ARCH="arm64"
         MACOS_HOMEBREW_LIB=/opt/homebrew/lib
+        MACOS_HOMEBREW_INCLUDE=/opt/homebrew/include
         ;;
     *)
-        echo "Unknown CPU architecture reported by 'uname -m': $(uname -m)"
+        echo "Unknown CPU architecture: $MACOS_CPU_ARCH"
         exit 1
         ;;
 esac
@@ -28,8 +36,8 @@ PSMOVEAPI_CHECKOUT=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../../ && pwd )
 export PSMOVEAPI_CHECKOUT
 
 export OPENCV_CHECKOUT_DIR="$PSMOVEAPI_CHECKOUT/external/opencv"
-export OPENCV_BUILD_DIR="$PSMOVEAPI_CHECKOUT/external/opencv/build"
-export OPENCV_INSTALL_DIR="$OPENCV_CHECKOUT_DIR/build/install"
+export OPENCV_BUILD_DIR="$PSMOVEAPI_CHECKOUT/external/opencv/build-${MACOS_CPU_ARCH}"
+export OPENCV_INSTALL_DIR="$OPENCV_CHECKOUT_DIR/build-${MACOS_CPU_ARCH}/install"
 
 # For parallel builds
 MAKE_ARGS=-j4
@@ -55,7 +63,7 @@ fi
 # otherwise we'd dynamically link against some the Homebrew libusb
 (
     cd "$PSMOVEAPI_CHECKOUT/external/libusb-1.0"
-    export ARCHFLAGS="-arch $MACOS_CPU_ARCH"
+    export ARCHFLAGS="-arch x86_64 -arch arm64"
     export CFLAGS="$CFLAGS $ARCHFLAGS"
     export CXXFLAGS="$CXXFLAGS $ARCHFLAGS"
     ./autogen.sh
@@ -67,13 +75,13 @@ fi
 if [ ! -d "$OPENCV_INSTALL_DIR" ]; then
     cd external
     if [ ! -d opencv ]; then
-		git clone --depth 1 --branch 3.4 https://github.com/opencv/opencv.git
+		git clone --depth 1 --branch 4.x https://github.com/opencv/opencv.git
     fi
     cd opencv
 
-    rm -rf build
-    mkdir -p build
-    cd build
+    rm -rf build-$MACOS_CPU_ARCH
+    mkdir -p build-$MACOS_CPU_ARCH
+    cd build-$MACOS_CPU_ARCH
     cmake -DBUILD_SHARED_LIBS=OFF \
           -DBUILD_PERF_TESTS=OFF \
           -DBUILD_TESTS=OFF \
@@ -107,16 +115,18 @@ fi
 cd "$PSMOVEAPI_CHECKOUT"
 
 # Build PS Move API
-rm -rf build
-mkdir build
-cd build
+rm -rf build-$MACOS_CPU_ARCH
+mkdir build-$MACOS_CPU_ARCH
+cd build-$MACOS_CPU_ARCH
 cmake -DPSMOVE_USE_PS3EYE_DRIVER=ON \
       -DPSMOVE_BUILD_TRACKER=ON \
+      -DPSMOVE_BUILD_NAVCON_TEST=OFF \
       -DPSMOVE_BUILD_JAVA_BINDINGS=ON \
       -DPSMOVE_BUILD_PROCESSING_BINDINGS=ON \
-      -DPSMOVE_BUILD_PYTHON_BINDINGS=ON \
       -DPSMOVE_BUILD_CSHARP_BINDINGS=ON \
       -DCMAKE_OSX_ARCHITECTURES="$MACOS_CPU_ARCH" \
       -DCMAKE_EXE_LINKER_FLAGS=-L$MACOS_HOMEBREW_LIB \
+      -DCMAKE_CXX_FLAGS=-I$MACOS_HOMEBREW_INCLUDE \
+      -DCMAKE_C_FLAGS=-I$MACOS_HOMEBREW_INCLUDE \
       -DOpenCV_DIR="${OPENCV_BUILD_DIR}" ..
 make ${MAKE_ARGS}

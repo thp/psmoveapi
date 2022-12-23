@@ -52,8 +52,8 @@ int main(int argc, char **argv)
             &view, SLOT(backup_frame()));
     QObject::connect(&orientation, SIGNAL(restore_frame()),
             &view, SLOT(restore_frame()));
-    QObject::connect(&orientation, SIGNAL(newimage(void*)),
-            &view, SLOT(newimage(void*)));
+    QObject::connect(&orientation, SIGNAL(newimage(IplImage *)),
+            &view, SLOT(newimage(IplImage *)));
 
     view.show();
 

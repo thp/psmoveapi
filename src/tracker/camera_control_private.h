@@ -33,13 +33,11 @@
 #include "opencv2/core/core_c.h"
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
-#include "opencv2/videoio/videoio_c.h"
+#include <opencv2/videoio.hpp>
 
 #if defined(WIN32)
 #    include <windows.h>
 #endif
-
-#define CL_DRIVER_REG_PATH "Software\\PS3EyeCamera\\Settings"
 
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
 #    include "ps3eye_capi.h"
@@ -54,7 +52,8 @@ struct _CameraControl {
         IplImage *framebgr;
 #endif
 
-	CvCapture* capture;
+	cv::VideoCapture *capture;
+	IplImage *frame;
 
 	IplImage* mapx;
 	IplImage* mapy;

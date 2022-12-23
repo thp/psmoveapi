@@ -57,7 +57,7 @@ public slots:
     void backup_frame();
     void restore_frame();
     void newcolor(int id, int r, int g, int b);
-    void newimage(void *image);
+    void newimage(IplImage *image);
 };
 
 #endif

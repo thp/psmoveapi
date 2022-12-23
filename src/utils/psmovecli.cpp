@@ -50,9 +50,7 @@ extern "C" {
 #undef main
 
 #define main get_firmware_info_main
-extern "C" {
-#include "psmove_get_firmware_info.c"
-}
+#include "psmove_get_firmware_info.cpp"
 #undef main
 
 #define main auth_response_main
@@ -141,7 +139,7 @@ public:
         , done(0)
     {
         char *host_address = psmove_port_get_host_bluetooth_address();
-        printf("Host address: %s\n", host_address ? host_address : "unknown");
+        PSMOVE_INFO("Host address: %s", host_address ? host_address : "unknown");
     }
 
     virtual void connect(Controller *controller) {

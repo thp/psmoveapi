@@ -56,7 +56,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    m_mousePos = event->posF();
+    m_mousePos = event->pos();
     update();
 }
 
@@ -71,7 +71,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     switch (event->button()) {
         case Qt::LeftButton:
-            m_points[m_pointsOffset] = event->posF();
+            m_points[m_pointsOffset] = event->pos();
             m_pointsOffset = (m_pointsOffset + 1) % 4;
             m_mapping.set(m_points);
             break;

@@ -39,6 +39,7 @@
 
 #include "psmove.h"
 #include "psmove_tracker.h"
+#include "psmove_tracker_opencv.h"
 
 class Orientation : public QThread
 {
@@ -47,7 +48,7 @@ class Orientation : public QThread
     signals:
         void newposition(int id, qreal scale, qreal x, qreal y, qreal trigger);
         void newcolor(int id, int r, int g, int b);
-        void newimage(void *image);
+        void newimage(IplImage *image);
         void backup_frame();
         void restore_frame();
 
@@ -144,7 +145,7 @@ class Orientation : public QThread
 
                 psmove_tracker_update_image(tracker);
                 psmove_tracker_update(tracker, NULL);
-                emit newimage(psmove_tracker_get_frame(tracker));
+                emit newimage(psmove_tracker_opencv_get_frame(tracker));
             }
 
             psmove_tracker_free(tracker);

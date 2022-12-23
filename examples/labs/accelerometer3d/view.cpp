@@ -167,7 +167,7 @@ renderController(QQuaternion quaternion, int buttons, int trigger)
     QMatrix4x4 mat;
     mat.rotate(quaternion);
     glScalef(4, 4, 4);
-    glMultMatrixd(mat.data());
+    glMultMatrixd((GLdouble*)mat.data());
 
 
 

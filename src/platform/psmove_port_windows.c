@@ -50,8 +50,7 @@
 #endif
 
 
-#define WINPAIR_DEBUG(msg, ...) \
-        psmove_DEBUG(msg "\n", ## __VA_ARGS__)
+#define WINPAIR_DEBUG(...) PSMOVE_DEBUG(__VA_ARGS__)
 
 
 /* the number of successive checks that we require to be sure the Bluetooth
@@ -791,16 +790,16 @@ psmove_port_sleep_ms(uint32_t duration_ms)
 
     HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if (timer == NULL) {
-        psmove_WARNING("In psmove_port_sleep_ms, CreateWaitableTimer failed (%d)\n", GetLastError());
+        PSMOVE_WARNING("In psmove_port_sleep_ms, CreateWaitableTimer failed (%d)", GetLastError());
         return;
     }
     if (!SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0)) {
-        psmove_WARNING("In psmove_port_sleep_ms, SetWaitableTimer failed (%d)\n", GetLastError());
+        PSMOVE_WARNING("In psmove_port_sleep_ms, SetWaitableTimer failed (%d)", GetLastError());
         CloseHandle(timer);
         return;
     }
     if (WaitForSingleObject(timer, INFINITE) != WAIT_OBJECT_0) {
-        psmove_WARNING("In psmove_port_sleep_ms, WaitForSingleObject failed (%d)\n", GetLastError());
+        PSMOVE_WARNING("In psmove_port_sleep_ms, WaitForSingleObject failed (%d)", GetLastError());
     }
     CloseHandle(timer);
 }
@@ -818,7 +817,7 @@ psmove_port_get_host_bluetooth_address()
 
     HANDLE hRadio;
     if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
-        psmove_WARNING("Failed to find a Bluetooth radio");
+        PSMOVE_WARNING("Failed to find a Bluetooth radio");
         return NULL;
     }
 
@@ -826,7 +825,7 @@ psmove_port_get_host_bluetooth_address()
     radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
 
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
-        psmove_CRITICAL("BluetoothGetRadioInfo");
+        PSMOVE_ERROR("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
         return NULL;
     }
@@ -849,7 +848,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
 
     HANDLE hRadio;
     if (windows_get_first_bluetooth_radio(&hRadio) != 0 || !hRadio) {
-        psmove_WARNING("Failed to find a Bluetooth radio");
+        PSMOVE_WARNING("Failed to find a Bluetooth radio");
         return PSMove_False;
     }
 
@@ -857,7 +856,7 @@ psmove_port_register_psmove(const char *addr, const char *host, enum PSMove_Mode
     radioInfo.dwSize = sizeof(BLUETOOTH_RADIO_INFO);
 
     if (BluetoothGetRadioInfo(hRadio, &radioInfo) != ERROR_SUCCESS) {
-        psmove_CRITICAL("BluetoothGetRadioInfo");
+        PSMOVE_ERROR("BluetoothGetRadioInfo");
         CloseHandle(hRadio);
         return PSMove_False;
     }
@@ -881,7 +880,7 @@ const char *inet_ntop(int af, const void *src, char *dst, int cnt)
     srcaddr.sin_family = af;
     if (WSAAddressToString((struct sockaddr*) &srcaddr, sizeof(struct sockaddr_in), 0, dst, (LPDWORD) &cnt) != 0) {
         DWORD rv = WSAGetLastError();
-        psmove_WARNING("WSAAddressToString(): %lu", rv);
+        PSMOVE_WARNING("WSAAddressToString(): %lu", rv);
         return NULL;
     }
     return dst;

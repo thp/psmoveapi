@@ -143,7 +143,7 @@ psmove_orientation_new(PSMove *move)
     psmove_return_val_if_fail(move != NULL, NULL);
 
     if (!psmove_has_calibration(move)) {
-        psmove_DEBUG("Can't create orientation - no calibration!\n");
+        PSMOVE_WARNING("Can't create orientation - no calibration!");
         return NULL;
     }
 
@@ -172,7 +172,7 @@ psmove_orientation_new(PSMove *move)
             psmove_orientation_set_fusion_type(orientation_state, OrientationFusion_MadgwickIMU);
             break;
         default:
-            psmove_CRITICAL("Unknown PS Move model");
+            PSMOVE_ERROR("Unknown PS Move model");
             break;
     }
 
@@ -343,7 +343,7 @@ psmove_orientation_update(PSMoveOrientation *orientation_state)
     {
         float measured = ((float)orientation_state->sample_freq_measure_count) /
             ((float)(now-orientation_state->sample_freq_measure_start))*1000.f;
-        psmove_DEBUG("Measured sample_freq: %f\n", measured);
+        PSMOVE_DEBUG("Measured sample_freq: %f", measured);
 
         orientation_state->sample_freq = measured;
         orientation_state->sample_freq_measure_start = now;
@@ -419,7 +419,7 @@ psmove_orientation_update(PSMoveOrientation *orientation_state)
 
         if (!psmove_quaternion_is_valid(orientation_state->quaternion)) 
         {
-            psmove_DEBUG("Orientation is NaN!");
+            PSMOVE_WARNING("Orientation is NaN!");
             orientation_state->quaternion = quaternion_backup;
         }
     }
