@@ -18,7 +18,6 @@ fi
 PSMOVEAPI_PLATFORM="$1"
 shift
 
-OPENCV_VERSION=4.6.0
 PSMOVEAPI_VERSION=$(git describe --tags)
 
 MAKE_ARGS="$@"
@@ -40,11 +39,8 @@ sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw3
 
 # Build OpenCV
 if [ ! -d external/opencv ]; then
-    if [ ! -f ${OPENCV_VERSION}.zip ]; then
-        curl -O -L https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip
-    fi
-    unzip ${OPENCV_VERSION}.zip
-    mv opencv-${OPENCV_VERSION} external/opencv
+    echo "Cloning OpenCV 4.x..."
+    git clone --depth 1 --branch 4.x https://github.com/opencv/opencv.git external/opencv
 fi
 cd external/opencv
 mkdir -p ${OPENCV_BUILD_DIR}
@@ -62,6 +58,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN \
       -DWITH_FFMPEG=OFF \
       -DWITH_JASPER=OFF \
       -DWITH_TIFF=OFF \
+      -DWITH_JPEG=OFF \
       ${OPENCV_CHECKOUT_DIR}
 make ${MAKE_ARGS}
 
