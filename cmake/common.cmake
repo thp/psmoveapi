@@ -102,8 +102,9 @@ elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # -Wno-cast-function-type: Avoid GetProcAddress() function pointer casting warning/error for hid.c
     # -Wno-format-zero-length: Avoid issue with libusb build (usbi_dbg(""))
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-format-zero-length")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-cast-function-type -Wno-format-zero-length")
+    # -Wno-enum-conversion: libusb transfer->status = LIBUSB_ERROR_NO_DEVICE;
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-format-zero-length -Wno-enum-conversion")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-cast-function-type -Wno-format-zero-length -Wno-enum-conversion")
   endif()
 endif()
 
