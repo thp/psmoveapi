@@ -20,15 +20,6 @@ if(PSMOVE_BUILD_EXAMPLES)
         target_link_libraries(${EXAMPLE} psmoveapi)
         set_property(TARGET ${EXAMPLE} PROPERTY FOLDER "Examples")
     endforeach()
-
-    if(PSMOVE_BUILD_TRACKER)
-	# C++ examples
-        foreach(EXAMPLE tracker_camera_calibration distance_calibration)
-            add_executable(${EXAMPLE} ${CMAKE_CURRENT_LIST_DIR}/c/${EXAMPLE}.cpp)
-            target_link_libraries(${EXAMPLE} psmoveapi psmoveapi_tracker)
-			set_property(TARGET ${EXAMPLE} PROPERTY FOLDER "Utilities") 
-        endforeach()
-    endif()
 endif()
 
 if(PSMOVE_BUILD_NAVCON_TEST)

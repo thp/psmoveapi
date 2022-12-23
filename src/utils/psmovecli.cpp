@@ -102,6 +102,20 @@ extern "C" {
 #define main test_camera_main
 #include "test_camera.cpp"
 #undef main
+
+#include "opencv2/opencv_modules.hpp"
+#include "opencv2/core/core_c.h"
+#include "opencv2/highgui/highgui_c.h"
+
+#if CV_VERSION_MAJOR <= 3
+#define main tracker_camera_calibration_main
+#include "tracker_camera_calibration.cpp"
+#undef main
+#define main distance_calibration_main
+#include "distance_calibration.cpp"
+#undef main
+#endif /* CV_VERSION_MAJOR <= 3 */
+
 #endif /* PSMOVE_BUILD_TRACKER */
 
 static int
@@ -250,7 +264,14 @@ main(int argc, char *argv[])
 
     subcommands.emplace_back("responsiveness", "Test how quickly the controllers react", test_responsiveness_main);
     subcommands.emplace_back("led-pwm-frequency", "Test LED PWM frequency modulation", test_led_pwm_frequency_main);
+
 #if defined(PSMOVE_BUILD_TRACKER)
+    subcommands.emplace_back(nullptr, "Camera Tracking", nullptr);
+
+#if CV_VERSION_MAJOR <= 3
+    subcommands.emplace_back("calibrate-camera", "Calibrate camera (un)-distortion", tracker_camera_calibration_main);
+    subcommands.emplace_back("calibrate-distance", "Calibrate radius-to-distance curve", distance_calibration_main);
+#endif /* CV_VERSION_MAJOR <= 3 */
     subcommands.emplace_back("test-camera", "Test camera capture (without tracking)", test_camera_main);
     subcommands.emplace_back("test-tracker", "Test tracking of controllers in the camera", test_tracker_main);
 #endif /* PSMOVE_BUILD_TRACKER */
