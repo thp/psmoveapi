@@ -1,14 +1,7 @@
 # Some platform-specific but target-agnostic settings
 
-if (NOT MSVC)
-    if (${CMAKE_VERSION} VERSION_LESS "3.1")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    else()
-        set(CMAKE_C_STANDARD 11)
-        set(CMAKE_CXX_STANDARD 11)
-    endif()
-endif()
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # We recommend using MinGW-w64 for the Windows builds which generates
 # position-independent code by default, so skip this for Windows builds.
