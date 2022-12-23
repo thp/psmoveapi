@@ -677,8 +677,6 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
     psmove_set_leds(move, 0, 0, 0);
     psmove_update_leds(move);
 
-    int i;
-
     /* Preset colors - use them in ascending order if not used yet */
     struct PSMove_RGBValue preset_colors[] = {
         {0xFF, 0x00, 0xFF}, /* magenta */
@@ -688,7 +686,7 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
         {0x00, 0x00, 0xFF}, /* blue */
     };
 
-    for (i=0; i<ARRAY_LENGTH(preset_colors); i++) {
+    for (size_t i=0; i<ARRAY_LENGTH(preset_colors); i++) {
         if (!psmove_tracker_color_is_used(tracker, preset_colors[i])) {
             return psmove_tracker_enable_with_color_internal(tracker,
                     move, preset_colors[i]);
@@ -1551,8 +1549,8 @@ void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move,
         struct PSMove_RGBValue rgb, IplImage* on, IplImage* diff, int delay,
         float dimming_factor)
 {
-    // the time to wait for the controller to set the color up
-    IplImage* frame;
+    IplImage *frame = nullptr;
+
     // switch the LEDs ON and wait for the sphere to be fully lit
 	rgb.r = (unsigned char)(rgb.r * dimming_factor);
 	rgb.g = (unsigned char)(rgb.g * dimming_factor);

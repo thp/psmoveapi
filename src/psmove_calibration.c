@@ -138,11 +138,17 @@ psmove_calibration_decode_12bits(char *data, int offset)
 static inline float
 psmove_calibration_decode_float(char *data, int offset)
 {
-    uint32_t v = (data[offset] & 0xFF)
-        | ((data[offset+1] & 0xFF) <<  8)
-        | ((data[offset+2] & 0xFF) << 16)
-        | ((data[offset+3] & 0xFF) << 24);
-    return *((float *) &v);
+    union {
+        uint32_t u32;
+        float f;
+    } v;
+
+    v.u32 = (data[offset] & 0xFF) |
+            ((data[offset+1] & 0xFF) <<  8) |
+            ((data[offset+2] & 0xFF) << 16) |
+            ((data[offset+3] & 0xFF) << 24);
+
+    return v.f;
 }
 
 
@@ -364,8 +370,6 @@ psmove_calibration_get_zcm2_usb_gyro_values(PSMoveCalibration *calibration,
 void
 psmove_calibration_dump_usb(PSMoveCalibration *calibration)
 {
-    int j;
-
     assert(calibration != NULL);
 
     enum PSMove_Model_Type model = psmove_get_model(calibration->move);
@@ -374,7 +378,7 @@ psmove_calibration_dump_usb(PSMoveCalibration *calibration)
         ? PSMOVE_ZCM1_CALIBRATION_BLOB_SIZE
         : PSMOVE_ZCM2_CALIBRATION_BLOB_SIZE;
 
-    for (j=0; j<calibration_blob_size; j++) {
+    for (size_t j=0; j<calibration_blob_size; j++) {
         printf("%02x", (unsigned char) calibration->usb_calibration[j]);
         if (j % 16 == 15) {
             printf("\n");
@@ -406,7 +410,6 @@ psmove_calibration_new(PSMove *move)
 {
     PSMove_Data_BTAddr addr;
     char *serial;
-    int i;
 
     enum PSMove_Model_Type model = psmove_get_model(move);
 
@@ -428,10 +431,12 @@ psmove_calibration_new(PSMove *move)
         return NULL;
     }
 
-    for (i=0; i<strlen(serial); i++) {
-        if (serial[i] == ':') {
-            serial[i] = '_';
+    char *cur = serial;
+    while (*cur) {
+        if (*cur == ':') {
+            *cur = '_';
         }
+        ++cur;
     }
 
     char *template = malloc(strlen(serial) +

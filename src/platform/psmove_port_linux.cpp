@@ -291,7 +291,13 @@ pinagent_message_handler(DBusConnection *conn, DBusMessage *msg, void *data)
 }
 
 const DBusObjectPathVTable pinagent_vtable = {
+    .unregister_function = nullptr,
     .message_function = pinagent_message_handler,
+
+    .dbus_internal_pad1 = nullptr,
+    .dbus_internal_pad2 = nullptr,
+    .dbus_internal_pad3 = nullptr,
+    .dbus_internal_pad4 = nullptr,
 };
 
 int

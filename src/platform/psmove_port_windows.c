@@ -337,14 +337,14 @@ bluetooth_auth_callback(
             WINPAIR_DEBUG("Not authenticated");
             break;
         default:
-            WINPAIR_DEBUG("BluetoothSendAuthenticationResponseEx failed: %d", GetLastError());
+            WINPAIR_DEBUG("BluetoothSendAuthenticationResponseEx failed: %ld", GetLastError());
             break;
     }
 
     // Signal the thread that the authentication callback completed
     if (!SetEvent(state->hAuthenticationCompleteEvent)) 
     {
-        WINPAIR_DEBUG("Failed to set event: %d", GetLastError());
+        WINPAIR_DEBUG("Failed to set event: %ld", GetLastError());
     }
 
     return TRUE;
@@ -790,16 +790,16 @@ psmove_port_sleep_ms(uint32_t duration_ms)
 
     HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if (timer == NULL) {
-        PSMOVE_WARNING("In psmove_port_sleep_ms, CreateWaitableTimer failed (%d)", GetLastError());
+        PSMOVE_WARNING("In psmove_port_sleep_ms, CreateWaitableTimer failed (%ld)", GetLastError());
         return;
     }
     if (!SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0)) {
-        PSMOVE_WARNING("In psmove_port_sleep_ms, SetWaitableTimer failed (%d)", GetLastError());
+        PSMOVE_WARNING("In psmove_port_sleep_ms, SetWaitableTimer failed (%ld)", GetLastError());
         CloseHandle(timer);
         return;
     }
     if (WaitForSingleObject(timer, INFINITE) != WAIT_OBJECT_0) {
-        PSMOVE_WARNING("In psmove_port_sleep_ms, WaitForSingleObject failed (%d)", GetLastError());
+        PSMOVE_WARNING("In psmove_port_sleep_ms, WaitForSingleObject failed (%ld)", GetLastError());
     }
     CloseHandle(timer);
 }
