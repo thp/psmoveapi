@@ -348,7 +348,7 @@ psmove_set_remote_config(enum PSMove_RemoteConfig config)
 }
 
 void
-_psmove_write_data(PSMove *move, unsigned char *data, int length)
+_psmove_write_data(PSMove *move, unsigned char *data, size_t length)
 {
     if (memcmp(&(move->leds), data, length) != 0) {
         memcpy(&(move->leds), data, length);
@@ -358,7 +358,7 @@ _psmove_write_data(PSMove *move, unsigned char *data, int length)
 }
 
 void
-_psmove_read_data(PSMove *move, unsigned char *data, int length)
+_psmove_read_data(PSMove *move, unsigned char *data, size_t length)
 {
     assert(data != NULL);
 
@@ -853,8 +853,7 @@ psmove_connect_by_id(int id)
 
     // Count available devices
     int available = 0;
-    int i;
-    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+    for (size_t i = 0; i < NUM_PSMOVE_PIDS; i++) {
         for (cur_dev = move_hid_devices[i]; cur_dev != NULL; cur_dev = cur_dev->next, available++);
     }
     PSMOVE_DEBUG("Matching HID devices: %d", available);
@@ -862,7 +861,7 @@ psmove_connect_by_id(int id)
     // Sort list of devices to have stable ordering of devices
     int n = 0;
     struct hid_device_info **devs_sorted = calloc(available, sizeof(struct hid_device_info *));
-    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+    for (size_t i = 0; i < NUM_PSMOVE_PIDS; i++) {
         cur_dev = move_hid_devices[i];
         while (cur_dev && (n < available)) {
             devs_sorted[n] = cur_dev;
@@ -873,7 +872,7 @@ psmove_connect_by_id(int id)
     qsort((void *)devs_sorted, available, sizeof(struct hid_device_info *), compare_hid_device_info_ptr);
 
 #if defined(PSMOVE_DEBUG_PRINTS)
-    for (i=0; i<available; i++) {
+    for (size_t i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
         char tmp[64];
         wcstombs(tmp, cur_dev->serial_number, sizeof(tmp));
@@ -883,7 +882,7 @@ psmove_connect_by_id(int id)
 
 #ifdef _WIN32
     int count = 0;
-    for (i=0; i<available; i++) {
+    for (size_t i=0; i<available; i++) {
         cur_dev = devs_sorted[i];
 
         if (strstr(cur_dev->path, "&col01#") != NULL) {
@@ -907,7 +906,7 @@ psmove_connect_by_id(int id)
     free(devs_sorted);
 
     // free HID device enumerations
-    for (i = 0; i < NUM_PSMOVE_PIDS; i++) {
+    for (size_t i = 0; i < NUM_PSMOVE_PIDS; i++) {
         devs = move_hid_devices[i];
         if (devs) {
             hid_free_enumeration(devs);
@@ -959,7 +958,7 @@ _psmove_read_btaddrs(PSMove *move, PSMove_Data_BTAddr *host, PSMove_Data_BTAddr 
         res = hid_get_feature_report(move->handle, btg, sizeof(btg));
     }
 
-    if (res == report_size) {
+    if (res != -1 && (size_t)res == report_size) {
         if (controller != NULL) {
             memcpy(*controller, btg+1, 6);
         }
@@ -2131,12 +2130,14 @@ psmove_get_magnetometer_calibration_filename(PSMove *move)
     char *serial = psmove_get_serial(move);
     psmove_return_val_if_fail(serial != NULL, NULL);
 
-    int i;
-    for (i=0; i<strlen(serial); i++) {
-        if (serial[i] == ':') {
-            serial[i] = '_';
+    char *cur = serial;
+    while (*cur) {
+        if (*cur == ':') {
+            *cur = '_';
         }
+        ++cur;
     }
+
     snprintf(filename, PATH_MAX, "%s.magnetometer.dat", serial);
     psmove_free_mem(serial);
 
@@ -2530,9 +2531,8 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
     }
 
     char *result = malloc(count + 1);
-    int i;
 
-    for (i=0; i<strlen(addr); i++) {
+    for (size_t i=0; i<count; i++) {
         if (addr[i] >= 'A' && addr[i] <= 'F' && i % 3 != 2) {
             if (lowercase) {
                 result[i] = (char)tolower(addr[i]);
@@ -2550,7 +2550,7 @@ _psmove_normalize_btaddr(const char *addr, int lowercase, char separator)
         } else if ((addr[i] == ':' || addr[i] == '-') && i % 3 == 2) {
             result[i] = separator;
         } else {
-            PSMOVE_WARNING("Invalid character at pos %d: '%c'", i, addr[i]);
+            PSMOVE_WARNING("Invalid character at pos %zu: '%c'", i, addr[i]);
             free(result);
             return NULL;
         }

@@ -104,14 +104,14 @@ struct PSMove_RGBValue {
  * [PRIVATE API] Write raw data blob to device
  **/
 ADDAPI void
-ADDCALL _psmove_write_data(PSMove *move, unsigned char *data, int length);
+ADDCALL _psmove_write_data(PSMove *move, unsigned char *data, size_t length);
 
 
 /**
  * [PRIVATE API] Read raw data blob from device
  **/
 ADDAPI void
-ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, int length);
+ADDCALL _psmove_read_data(PSMove *move, unsigned char *data, size_t length);
 
 /**
  * [PRIVATE API] Internal device open function (hidraw, Linux / for moved)
@@ -244,7 +244,6 @@ ADDCALL _psmove_set_auth_challenge(PSMove *move, PSMove_Data_AuthChallenge *chal
 
 ADDAPI PSMove_Data_AuthResponse *
 ADDCALL _psmove_get_auth_response(PSMove *move);
-
 
 #ifdef __cplusplus
 }
