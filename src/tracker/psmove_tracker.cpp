@@ -1549,8 +1549,8 @@ void psmove_tracker_get_diff(PSMoveTracker* tracker, PSMove* move,
         struct PSMove_RGBValue rgb, IplImage* on, IplImage* diff, int delay,
         float dimming_factor)
 {
-    // the time to wait for the controller to set the color up
-    IplImage* frame;
+    IplImage *frame = nullptr;
+
     // switch the LEDs ON and wait for the sphere to be fully lit
 	rgb.r = (unsigned char)(rgb.r * dimming_factor);
 	rgb.g = (unsigned char)(rgb.g * dimming_factor);
