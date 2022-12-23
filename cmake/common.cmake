@@ -97,14 +97,11 @@ if(MSVC)
   
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
   if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    # -Wno-cast-function-type: Avoid GetProcAddress() function pointer casting warning/error for hid.c
-    # -Wno-format-zero-length: Avoid issue with libusb build (usbi_dbg(""))
-    # -Wno-enum-conversion: libusb transfer->status = LIBUSB_ERROR_NO_DEVICE;
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cast-function-type -Wno-format-zero-length")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-cast-function-type -Wno-format-zero-length -Wno-enum-conversion")
+    # TODO: Could enable some warnings for MinGW here
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
   endif()
 endif()
 
