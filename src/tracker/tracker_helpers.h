@@ -86,10 +86,10 @@ CvScalar
 th_scalar_mul(CvScalar a, double b);
 
 /**
- * Single-value colorspace conversion: BGR -> HSV
+ * Single-value colorspace conversion: RGB -> HSV
  **/
 CvScalar
-th_brg2hsv(CvScalar bgr);
+th_rgb2hsv(CvScalar rgb);
 
 #ifdef __cplusplus
 }

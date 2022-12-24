@@ -101,10 +101,10 @@ th_scalar_mul(CvScalar a, double b)
 }
 
 CvScalar
-th_brg2hsv(CvScalar bgr)
+th_rgb2hsv(CvScalar rgb)
 {
     static IplImage *img_hsv = NULL;
-    static IplImage *img_bgr = NULL;
+    static IplImage *img_rgb = NULL;
 
     /**
      * We use two dummy 1x1 images here, and set/get the color from from these
@@ -116,12 +116,12 @@ th_brg2hsv(CvScalar bgr)
         img_hsv = cvCreateImage(cvSize(1, 1), IPL_DEPTH_8U, 3);
     }
 
-    if (!img_bgr) {
-        img_bgr = cvCreateImage(cvSize(1, 1), IPL_DEPTH_8U, 3);
+    if (!img_rgb) {
+        img_rgb = cvCreateImage(cvSize(1, 1), IPL_DEPTH_8U, 3);
     }
 
-    cvSet(img_bgr, bgr, NULL);
-    cvCvtColor(img_bgr, img_hsv, CV_BGR2HSV);
+    cvSet(img_rgb, rgb, NULL);
+    cvCvtColor(img_rgb, img_hsv, CV_RGB2HSV);
 
     return cvAvg(img_hsv, NULL);
 }

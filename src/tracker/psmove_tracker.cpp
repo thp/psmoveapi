@@ -79,11 +79,11 @@ struct _TrackedController {
     /* Assigned RGB color of the controller */
     struct PSMove_RGBValue color;
 
-    CvScalar eFColor;			// first estimated color (BGR)
+    CvScalar eFColorRGB;		// first estimated color (RGB)
     CvScalar eFColorHSV;		// first estimated color (HSV)
 
-    CvScalar eColor;			// estimated color (BGR)
-    CvScalar eColorHSV; 		// estimated color (HSV)
+    CvScalar eColorRGB;			// estimated color (RGB)
+    CvScalar eColorHSV;			// estimated color (HSV)
 
     int roi_x, roi_y;			// x/y - Coordinates of the ROI
     int roi_level; 	 			// the current index for the level of ROI
@@ -175,6 +175,11 @@ struct _PSMoveTracker {
 };
 
 // -------- START: internal functions only
+
+
+/* Yes, those two functions do the same thing, but we want to have both names for semantics */
+static inline CvScalar bgr2rgb(CvScalar bgr) { return cvScalar(bgr.val[2], bgr.val[1], bgr.val[0], bgr.val[2]); }
+static inline CvScalar rgb2bgr(CvScalar rgb) { return cvScalar(rgb.val[2], rgb.val[1], rgb.val[0], rgb.val[2]); }
 
 /**
  * Adapts the cameras exposure to the current lighting conditions
@@ -326,7 +331,7 @@ psmove_tracker_lookup_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb, 
  * Remember a color value after calibration
  **/
 void
-psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb, CvScalar color);
+psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb, CvScalar colorRGB);
 
 // -------- END: internal functions only
 
@@ -719,9 +724,9 @@ psmove_tracker_enable(PSMoveTracker *tracker, PSMove *move)
 int
 psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct PSMove_RGBValue rgb)
 {
-    CvScalar color;
+    CvScalar colorRGB;
 
-    if (!psmove_tracker_lookup_color(tracker, rgb, &color)) {
+    if (!psmove_tracker_lookup_color(tracker, rgb, &colorRGB)) {
         return 0;
     }
 
@@ -735,8 +740,8 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
     tc->color = rgb;
     tc->auto_update_leds = PSMove_True;
 
-    tc->eColor = tc->eFColor = color;
-    tc->eColorHSV = tc->eFColorHSV = th_brg2hsv(tc->eFColor);
+    tc->eColorRGB = tc->eFColorRGB = colorRGB;
+    tc->eColorHSV = tc->eFColorHSV = th_rgb2hsv(tc->eFColorRGB);
 
     /* Try to track the controller, give up after 100 iterations */
     int i;
@@ -784,14 +789,14 @@ psmove_tracker_lookup_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb, 
 }
 
 void
-psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb, CvScalar color)
+psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb, CvScalar colorRGB)
 {
     unsigned char dimming = (unsigned char)(255 * tracker->settings.dimming_factor);
 
     struct PSMove_RGBValue to;
-    to.r = (unsigned char)color.val[0];
-	to.g = (unsigned char)color.val[1];
-	to.b = (unsigned char)color.val[2];
+    to.r = (unsigned char)colorRGB.val[0];
+    to.g = (unsigned char)colorRGB.val[1];
+    to.b = (unsigned char)colorRGB.val[2];
 
     unsigned char slot = tracker->color_mapping.next_slot++;
     tracker->color_mapping.map[slot].from = rgb;
@@ -825,17 +830,17 @@ psmove_tracker_enable_with_color(PSMoveTracker *tracker, PSMove *move,
     return psmove_tracker_enable_with_color_internal(tracker, move, rgb);
 }
 
-enum PSMove_Bool
+static bool
 psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
-        struct PSMove_RGBValue rgb, CvScalar *color, CvScalar *hsv_color)
+        struct PSMove_RGBValue rgb, CvScalar *colorRGB, CvScalar *colorHSV)
 {
     char *color_str = psmove_util_get_env_string(PSMOVE_TRACKER_COLOR_ENV);
     if (color_str != NULL) {
         int r, g, b;
         if (sscanf(color_str, "%02x%02x%02x", &r, &g, &b) == 3) {
             printf("r: %d, g: %d, b: %d\n", r, g, b);
-            *color = cvScalar(r, g, b, 0);
-            *hsv_color = th_brg2hsv(*color);
+            *colorRGB = cvScalar(r, g, b, 0);
+            *colorHSV = th_rgb2hsv(*colorRGB);
             psmove_free_mem(color_str);
             return PSMove_True;
         } else {
@@ -900,14 +905,14 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
         }
         cvClearMemStorage(tracker->storage);
 
-        // calculate the average color from the first image
-        *color = cvAvg(images[0], mask);
-        *hsv_color = th_brg2hsv(*color);
+        // calculate the average color from the first image (images[0] is in BGR colorspace)
+        *colorRGB = bgr2rgb(cvAvg(images[0], mask));
+        *colorHSV = th_rgb2hsv(*colorRGB);
         PSMOVE_DEBUG("Dimming: %.2f, H: %.2f, S: %.2f, V: %.2f", dimming,
-                hsv_color->val[0], hsv_color->val[1], hsv_color->val[2]);
+                colorHSV->val[0], colorHSV->val[1], colorHSV->val[2]);
 
         if (tracker->settings.dimming_factor == 0.) {
-            if (hsv_color->val[1] > 128) {
+            if (colorHSV->val[1] > 128) {
                 tracker->settings.dimming_factor = dimming;
             break;
             } else if (dimming < 0.01) {
@@ -923,8 +928,8 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
     int valid_countours = 0;
 
     // calculate upper & lower bounds for the color filter
-    CvScalar min = th_scalar_sub(*hsv_color, tracker->rHSV);
-    CvScalar max = th_scalar_add(*hsv_color, tracker->rHSV);
+    CvScalar min = th_scalar_sub(*colorHSV, tracker->rHSV);
+    CvScalar max = th_scalar_add(*colorHSV, tracker->rHSV);
 
     CvPoint firstPosition;
     for (i=0; i<BLINKS; i++) {
@@ -1006,9 +1011,9 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
         return Tracker_CALIBRATED;
     }
 
-    CvScalar color;
-    CvScalar hsv_color;
-    if (psmove_tracker_blinking_calibration(tracker, move, rgb, &color, &hsv_color)) {
+    CvScalar colorRGB;
+    CvScalar colorHSV;
+    if (psmove_tracker_blinking_calibration(tracker, move, rgb, &colorRGB, &colorHSV)) {
         // Find the next free slot to use as TrackedController
         TrackedController *tc = psmove_tracker_find_controller(tracker, NULL);
 
@@ -1017,9 +1022,9 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
             tc->color = rgb;
             tc->auto_update_leds = PSMove_True;
 
-            psmove_tracker_remember_color(tracker, rgb, color);
-            tc->eColor = tc->eFColor = color;
-            tc->eColorHSV = tc->eFColorHSV = hsv_color;
+            psmove_tracker_remember_color(tracker, rgb, colorRGB);
+            tc->eColorRGB = tc->eFColorRGB = colorRGB;
+            tc->eColorHSV = tc->eFColorHSV = colorHSV;
 
             return Tracker_CALIBRATED;
         }
@@ -1058,9 +1063,9 @@ psmove_tracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
     TrackedController *tc = psmove_tracker_find_controller(tracker, move);
 
     if (tc) {
-        *r = (unsigned char)(tc->eColor.val[0]);
-        *g = (unsigned char)(tc->eColor.val[1]);
-        *b = (unsigned char)(tc->eColor.val[2]);
+        *r = (unsigned char)(tc->eColorRGB.val[0]);
+        *g = (unsigned char)(tc->eColorRGB.val[1]);
+        *b = (unsigned char)(tc->eColorRGB.val[2]);
 
         return 1;
     }
@@ -1079,13 +1084,13 @@ psmove_tracker_set_camera_color(PSMoveTracker *tracker, PSMove *move,
 
     if (tc) {
         /* Update the current color */
-        tc->eColor.val[0] = r;
-        tc->eColor.val[1] = g;
-        tc->eColor.val[2] = b;
-        tc->eColorHSV = th_brg2hsv(tc->eColor);
+        tc->eColorRGB.val[0] = r;
+        tc->eColorRGB.val[1] = g;
+        tc->eColorRGB.val[2] = b;
+        tc->eColorHSV = th_rgb2hsv(tc->eColorRGB);
 
         /* Update the "first" color (to avoid re-adaption to old color) */
-        tc->eFColor = tc->eColor;
+        tc->eFColorRGB = tc->eColorRGB;
         tc->eFColorHSV = tc->eColorHSV;
 
         return 1;
@@ -1320,15 +1325,15 @@ psmove_tracker_update_controller(PSMoveTracker *tracker, TrackedController *tc)
                     tc->q3 > tracker->settings.color_update_quality_t3)
                 {
 					// calculate the new estimated color (adaptive color estimation)
-					CvScalar newColor = cvAvg(tracker->frame, roi_m);
+					CvScalar newColorRGB = bgr2rgb(cvAvg(tracker->frame, roi_m));
 
-                                        tc->eColor = th_scalar_mul(th_scalar_add(tc->eColor, newColor), 0.5);
+                                        tc->eColorRGB = th_scalar_mul(th_scalar_add(tc->eColorRGB, newColorRGB), 0.5);
 
-					tc->eColorHSV = th_brg2hsv(tc->eColor);
+					tc->eColorHSV = th_rgb2hsv(tc->eColorRGB);
 					tc->last_color_update = now;
 					// CHECK if the current estimate is too far away from its original estimation
                     if (psmove_tracker_hsvcolor_diff(tc) > tracker->settings.color_adaption_quality_t) {
-						tc->eColor = tc->eFColor;
+						tc->eColorRGB = tc->eFColorRGB;
 						tc->eColorHSV = tc->eFColorHSV;
 						sphere_found = 0;
 					}
@@ -1630,16 +1635,12 @@ psmove_tracker_annotate(PSMoveTracker *tracker, bool statusbar, bool rois)
     CvFont fontSmall = cvFont(0.8, 1);
     CvFont fontNormal = cvFont(1, 1);
 
-	char text[256];
-	CvScalar c;
-	CvScalar avgC;
-	float avgLum = 0;
-	int roi_w = 0;
-	int roi_h = 0;
+    char text[256];
+    int roi_w = 0;
+    int roi_h = 0;
 
-	// general statistics
-	avgC = cvAvg(frame, 0x0);
-    avgLum = (float)th_color_avg(avgC);
+    // general statistics
+    float avgLum = th_color_avg(cvAvg(frame, 0x0));
 
     if (tracker->duration) {
         tracker->debug_fps = (0.85f * tracker->debug_fps + 0.15f *
@@ -1661,11 +1662,13 @@ psmove_tracker_annotate(PSMoveTracker *tracker, bool statusbar, bool rois)
             roi_w = tracker->roiI[tc->roi_level]->width;
             roi_h = tracker->roiI[tc->roi_level]->height;
 
+            CvScalar eColorBGR = rgb2bgr(tc->eColorRGB);
+
             if (tc->is_tracked) {
-                cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
+                cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), eColorBGR, 3, 8, 0);
                 cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), TH_COLOR_WHITE, 1, 8, 0);
             } else {
-                cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), tc->eColor, 3, 8, 0);
+                cvRectangle(frame, cvPoint(tc->roi_x, tc->roi_y), cvPoint(tc->roi_x + roi_w, tc->roi_y + roi_h), eColorBGR, 3, 8, 0);
             }
         }
     }
@@ -1678,13 +1681,14 @@ psmove_tracker_annotate(PSMoveTracker *tracker, bool statusbar, bool rois)
             p.y = (int)tc->y;
             roi_w = tracker->roiI[tc->roi_level]->width;
             roi_h = tracker->roiI[tc->roi_level]->height;
-            c = tc->eColor;
+
+            CvScalar colorBGR = rgb2bgr(tc->eColorRGB);
 
             // Always use full brightness for the overlay color, independent of dimming
-            double w = 255.0 / std::max(1.0, std::max(c.val[0], std::max(c.val[1], c.val[2])));
-            c.val[0] *= w;
-            c.val[1] *= w;
-            c.val[2] *= w;
+            double w = 255.0 / std::max(1.0, std::max(colorBGR.val[0], std::max(colorBGR.val[1], colorBGR.val[2])));
+            colorBGR.val[0] *= w;
+            colorBGR.val[1] *= w;
+            colorBGR.val[2] *= w;
 
             double distance = psmove_tracker_distance_from_radius(tracker, tc->r);
 
@@ -1702,17 +1706,17 @@ psmove_tracker_annotate(PSMoveTracker *tracker, bool statusbar, bool rois)
 
             cvRectangle(frame, cvPoint(x, y), cvPoint(x + textbox_w, y + textbox_h), TH_COLOR_BLACK, CV_FILLED, 8, 0);
 
-            sprintf(text, "RGB:%02x,%02x,%02x", (int)tc->eColor.val[2], (int)tc->eColor.val[1], (int)tc->eColor.val[0]);
-            cvPutText(frame, text, cvPoint(x, y + 10), &fontSmall, c);
+            sprintf(text, "RGB:%02x,%02x,%02x", (int)tc->eColorRGB.val[0], (int)tc->eColorRGB.val[1], (int)tc->eColorRGB.val[2]);
+            cvPutText(frame, text, cvPoint(x, y + 10), &fontSmall, colorBGR);
 
             sprintf(text, "ROI:%dx%d", roi_w, roi_h);
-            cvPutText(frame, text, cvPoint(x, y + 20), &fontSmall, c);
+            cvPutText(frame, text, cvPoint(x, y + 20), &fontSmall, colorBGR);
 
             sprintf(text, "dist: %.2f cm", distance);
-            cvPutText(frame, text, cvPoint(x, y + 30), &fontSmall, c);
+            cvPutText(frame, text, cvPoint(x, y + 30), &fontSmall, colorBGR);
 
             sprintf(text, "radius: %.2f", tc->r);
-            cvPutText(frame, text, cvPoint(x, y + 40), &fontSmall, c);
+            cvPutText(frame, text, cvPoint(x, y + 40), &fontSmall, colorBGR);
 
             cvCircle(frame, p, (int)tc->r, TH_COLOR_WHITE, 1, 8, 0);
         }
