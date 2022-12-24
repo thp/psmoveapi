@@ -533,9 +533,11 @@ ADDCALL psmove_tracker_update(PSMoveTracker *tracker, PSMove *move);
  * production environments you usually do not want to use it.
  *
  * \param tracker A valid \ref PSMoveTracker handle
+ * \param statusbar If true, draw the statusbar on top
+ * \param rois If true, draw the ROIs
  */
 ADDAPI void
-ADDCALL psmove_tracker_annotate(PSMoveTracker* tracker);
+ADDCALL psmove_tracker_annotate(PSMoveTracker* tracker, bool statusbar, bool rois);
 
 /**
  * \brief Get the current camera image as 24-bit RGB data blob
@@ -633,6 +635,22 @@ ADDCALL psmove_tracker_distance_from_radius(PSMoveTracker *tracker,
 ADDAPI void
 ADDCALL psmove_tracker_set_distance_parameters(PSMoveTracker *tracker,
         float height, float center, float hwhm, float shape);
+
+/**
+ * \brief Get an unused color that doesn't conflict with tracked controllers
+ *
+ * Get an unused color that isn't yet used by any tracked controllers
+ *
+ * \param tracker A valid \ref PSMoveTracker handle
+ * \param r Pointer to store the red component of the color
+ * \param g Pointer to store the green component of the color
+ * \param g Pointer to store the blue component of the color
+ *
+ * \return PSMove_True on success, PSMove_False otherwise
+ **/
+ADDAPI enum PSMove_Bool
+ADDCALL psmove_tracker_get_next_unused_color(PSMoveTracker *tracker,
+        unsigned char *r, unsigned char *g, unsigned char *b);
 
 /**
  * \brief Destroy an existing tracker instance and free allocated resources

@@ -866,23 +866,3 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
 
     return (res == 0) ? PSMove_True : PSMove_False;
 }
-
-#if !defined(_MSC_VER)
-// Based on code from: https://memset.wordpress.com/2010/10/09/inet_ntop-for-win32/
-// See also: psmove_sockets.h
-const char *inet_ntop(int af, const void *src, char *dst, int cnt)
-{
-    struct sockaddr_in srcaddr;
-
-    memset(&srcaddr, 0, sizeof(struct sockaddr_in));
-    memcpy(&(srcaddr.sin_addr), src, sizeof(srcaddr.sin_addr));
-
-    srcaddr.sin_family = af;
-    if (WSAAddressToString((struct sockaddr*) &srcaddr, sizeof(struct sockaddr_in), 0, dst, (LPDWORD) &cnt) != 0) {
-        DWORD rv = WSAGetLastError();
-        PSMOVE_WARNING("WSAAddressToString(): %lu", rv);
-        return NULL;
-    }
-    return dst;
-}
-#endif

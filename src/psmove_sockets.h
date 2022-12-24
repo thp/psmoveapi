@@ -34,20 +34,6 @@
 #ifdef _WIN32
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
-#  if defined(_MSC_VER)
-// InetNtop was introduced in Vista/7 and is accessible in Visual C
-#    define inet_ntop InetNtop
-#  else
-// For MinGW, we provide our own implementation in psmove_port_windows.c
-#ifdef __cplusplus
-extern "C" {
-#endif
-ADDAPI const char *
-ADDCALL inet_ntop(int af, const void *src, char *dst, int cnt);
-#ifdef __cplusplus
-}
-#endif
-#  endif
 #else
 #  include <arpa/inet.h>
 #  include <fcntl.h>

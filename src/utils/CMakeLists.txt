@@ -10,6 +10,10 @@ target_link_libraries(psmove psmoveapi)
 set_property(TARGET psmove PROPERTY FOLDER "Utilities")
 list(APPEND PSMOVEAPI_INSTALL_TARGETS psmove)
 
+if (PSMOVE_BUILD_TRACKER)
+  target_link_libraries(psmove psmoveapi_tracker)
+endif()
+
 if(PSMOVE_USE_SIXPAIR)
   if (WIN32)
     include(${CMAKE_CURRENT_LIST_DIR}/libusb.cmake)
