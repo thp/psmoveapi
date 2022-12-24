@@ -834,21 +834,6 @@ static bool
 psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
         struct PSMove_RGBValue rgb, CvScalar *colorRGB, CvScalar *colorHSV)
 {
-    char *color_str = psmove_util_get_env_string(PSMOVE_TRACKER_COLOR_ENV);
-    if (color_str != NULL) {
-        int r, g, b;
-        if (sscanf(color_str, "%02x%02x%02x", &r, &g, &b) == 3) {
-            printf("r: %d, g: %d, b: %d\n", r, g, b);
-            *colorRGB = cvScalar(r, g, b, 0);
-            *colorHSV = th_rgb2hsv(*colorRGB);
-            psmove_free_mem(color_str);
-            return PSMove_True;
-        } else {
-            PSMOVE_WARNING("Cannot parse color: '%s'", color_str);
-        }
-        psmove_free_mem(color_str);
-    }
-
     psmove_tracker_update_image(tracker);
     IplImage* frame = tracker->frame;
     assert(frame != NULL);

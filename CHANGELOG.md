@@ -62,6 +62,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed support for the proprietary CL Eye Driver + Registry settings on Windows
 - Removed `psmove_tracker_get_frame()` (replaced with `psmove_tracker_opencv_get_frame()`)
 - Removed legacy OpenGL examples and glfw3 (only used for the OpenGL examples)
+- Removed support for the `PSMOVE_TRACKER_COLOR` environment variable
 
 
 ## [4.0.12] - 2020-12-19
