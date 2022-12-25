@@ -40,37 +40,13 @@
 #include "psmove.h"
 #include "psmove_tracker.h"
 #include "psmove_tracker_opencv.h"
+#include "psmove_format.h"
 
 #include <memory>
 
 static const char *
 TEST_TRACKER_WINDOW_NAME = "PS Move API: Tracker Test";
 
-
-namespace {
-
-std::string format(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-
-std::string
-format(const char *fmt, ...)
-{
-    std::string result;
-
-    va_list ap;
-    va_start(ap, fmt);
-
-    char *tmp = 0;
-    int res = vasprintf(&tmp, fmt, ap);
-    PSMOVE_VERIFY(res != -1, "vasprintf() failed");
-    va_end(ap);
-
-    result = tmp;
-    free(tmp);
-
-    return result;
-}
-
-};
 
 struct ControllerState {
     ControllerState(PSMove *move) : move(move) {}
