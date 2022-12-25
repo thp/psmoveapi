@@ -30,6 +30,7 @@
 #include "psmove_port.h"
 #include "psmove_sockets.h"
 #include "psmove_private.h"
+#include "psmove_format.h"
 
 #include <unistd.h>
 #include <sys/time.h>
@@ -221,30 +222,6 @@ macosx_get_major_minor_version()
 
     return MacOSVersionNumber(major, minor);
 }
-
-namespace {
-
-std::string format(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
-
-std::string
-format(const char *fmt, ...)
-{
-    std::string result;
-
-    va_list ap;
-    va_start(ap, fmt);
-
-    char *tmp = 0;
-    vasprintf(&tmp, fmt, ap);
-    va_end(ap);
-
-    result = tmp;
-    free(tmp);
-
-    return result;
-}
-
-};
 
 enum PSMove_Bool
 psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model)
