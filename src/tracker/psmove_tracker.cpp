@@ -659,7 +659,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 
 	// prepare structure used for erode and dilate in calibration process
 	int ks = 5; // Kernel Size
-	int kc = (ks + 1) / 2; // Kernel Center
+	int kc = 2; // Kernel Center
 	tracker->kCalib = cvCreateStructuringElementEx(ks, ks, kc, kc, CV_SHAPE_RECT, NULL);
 
 	return tracker;
