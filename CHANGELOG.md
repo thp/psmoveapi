@@ -51,6 +51,7 @@ starting after version 4.0.12, but historic entries might not.
 - Fixed linking on macOS (`libSecurity`)
 - Fix macOS version detection for macOS 11 and newer (fixes #456)
 - `examples/labs/`: Fix building of Qt examples by migrating to Qt 5
+- Fixed the kernel center of CV-related image filters (was off-center before)
 
 ### Removed
 
