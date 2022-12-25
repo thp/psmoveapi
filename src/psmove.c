@@ -2595,7 +2595,7 @@ psmove_vlog(const char *filename, int lineno, enum PSMove_LogLevel level, const 
         suffix = "\033[0m";
     }
 
-    fprintf(stderr, "[%s%s%s %s:%d] ",
+    fprintf(stderr, "[%s%s%s %s:%5d] ",
             prefix,
             (level < ARRAY_LENGTH(PSMOVE_LOG_LEVELS)) ? PSMOVE_LOG_LEVELS[level] : "INVALID",
             suffix,
