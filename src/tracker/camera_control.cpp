@@ -38,6 +38,7 @@
 
 #if defined(__linux)
 #include <sys/stat.h>
+#include <glob.h>
 #endif
 
 #include "camera_control_private.h"
@@ -103,6 +104,21 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
         cc->capture = new cv::VideoCapture(video);
         psmove_free_mem(video);
     } else {
+#if defined(__linux)
+        // Remap camera ID based on available /dev/video* device nodes. This fixes
+        // an issue when disconnecting a PS Eye camera during video capture, which
+        // - when reconnected - might have an non-zero ID.
+        glob_t g;
+        if (glob("/dev/video*", 0, NULL, &g) == 0) {
+            if (g.gl_pathc > (size_t)cc->cameraID) {
+                if (sscanf(g.gl_pathv[cc->cameraID] + strlen("/dev/video"), "%d", &cc->cameraID) != 1) {
+                    PSMOVE_WARNING("Could not determine camera ID from path '%s'", g.gl_pathv[cc->cameraID]);
+                }
+            }
+            globfree(&g);
+        }
+#endif
+
         cc->capture = new cv::VideoCapture(cc->cameraID);
 
         if (cc->capture == NULL) {
@@ -133,9 +149,10 @@ camera_control_count_connected()
     return ps3eye_count_connected();
 #elif defined(__linux)
     int i = 0;
-    struct stat st;
-    while (::stat(("/dev/video" + std::to_string(i)).c_str(), &st) == 0 && S_ISCHR(st.st_mode)) {
-        ++i;
+    glob_t g;
+    if (glob("/dev/video*", 0, NULL, &g) == 0) {
+        i = g.gl_pathc;
+        globfree(&g);
     }
     return i;
 #else

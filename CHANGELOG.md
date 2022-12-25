@@ -43,6 +43,8 @@ starting after version 4.0.12, but historic entries might not.
 - `psmove_tracker_annotate()` got additional parameters for showing/hiding the status bar and ROIs
 - Tracker dimming factor is now limited to between 0.01 (1% intensity) and 1.0 (100% intensity)
 - The MinGW builds now explicitly require Windows 7 as minimum version
+- Camera devices on Linux - when using OpenCV - are now properly detected and enumerated even if
+  there are "holes" in the numbering (e.g. /dev/video1 exists, but /dev/video0 does not)
 
 ### Fixed
 

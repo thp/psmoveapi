@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <linux/limits.h>
+#include <glob.h>
 
 #include "../../psmove_private.h"
 
@@ -45,37 +46,27 @@ linux_find_pseye()
 {
     int result = -1;
 
-    char filename[PATH_MAX];
-    struct stat st;
-    struct v4l2_capability capability;
-    int video_dev;
-    int i = 0;
+    glob_t g;
+    if (glob("/dev/video*", 0, NULL, &g) == 0) {
+        for (size_t i=0; result == -1 && i<g.gl_pathc; ++i) {
+            int video_dev = open(g.gl_pathv[i], O_RDWR);
 
-    while (1) {
-        snprintf(filename, PATH_MAX, "/dev/video%d", i);
+            if (video_dev != -1) {
+                struct v4l2_capability capability;
+                memset(&capability, 0, sizeof(capability));
 
-        if (stat(filename, &st) != 0) {
-            break;
+                if (ioctl(video_dev, VIDIOC_QUERYCAP, &capability) == 0 &&
+                        strcmp((const char *)(capability.driver), "ov534") == 0) {
+                    PSMOVE_DEBUG("Detected PSEye (ov534): %s", g.gl_pathv[i]);
+                    result = i;
+                }
+
+                close(video_dev);
+            }
         }
 
-        video_dev = open(filename, O_RDWR);
-        psmove_return_val_if_fail(video_dev != -1, -1);
-
-        memset(&capability, 0, sizeof(capability));
-        psmove_return_val_if_fail(ioctl(video_dev, VIDIOC_QUERYCAP,
-                    &capability) == 0, -1);
-
-        if (strcmp((const char*)(capability.driver), "ov534") == 0) {
-            PSMOVE_DEBUG("Detected PSEye (ov534): %s", filename);
-            result = i;
-            break;
-        }
-
-        close(video_dev);
-
-        i++;
+        globfree(&g);
     }
 
     return result;
 }
-
