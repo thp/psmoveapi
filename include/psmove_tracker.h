@@ -100,7 +100,7 @@ typedef struct {
 
     /* Settings for camera calibration process */
     enum PSMoveTracker_Exposure exposure_mode;  /* [Exposure_LOW] exposure mode for setting target luminance */
-    int calibration_blink_delay;                /* [200] number of milliseconds to wait between a blink  */
+    int calibration_blink_delay_ms;             /* [200] number of milliseconds to wait between a blink  */
     int calibration_diff_t;                     /* [20] during calibration, all grey values in the diff image below this value are set to black  */
     int calibration_min_size;                   /* [50] minimum size of the estimated glowing sphere during calibration process (in pixel)  */
     int calibration_max_distance;               /* [30] maximum displacement of the separate found blobs  */

@@ -45,6 +45,7 @@ starting after version 4.0.12, but historic entries might not.
 - The MinGW builds now explicitly require Windows 7 as minimum version
 - Camera devices on Linux - when using OpenCV - are now properly detected and enumerated even if
   there are "holes" in the numbering (e.g. /dev/video1 exists, but /dev/video0 does not)
+- Renamed `calibration_blink_delay` in tracker settings to `calibration_blink_delay_ms`
 
 ### Fixed
 
