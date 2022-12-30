@@ -84,3 +84,14 @@ void camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int 
 #endif
 }
 
+bool
+camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct CameraControlFrameLayout *layout)
+{
+    return camera_control_fallback_frame_layout(cc, width, height, layout);
+}
+
+int
+camera_control_get_preferred_camera()
+{
+    return -1;
+}

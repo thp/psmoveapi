@@ -12,6 +12,11 @@ list(APPEND PSMOVEAPI_INSTALL_TARGETS psmove)
 
 if (PSMOVE_BUILD_TRACKER)
   target_link_libraries(psmove psmoveapi_tracker)
+
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+  include_directories(${LIBUSB_INCLUDE_DIRS})
+  target_link_libraries(psmove ${LIBUSB_LIBRARIES})
 endif()
 
 if(PSMOVE_USE_SIXPAIR)

@@ -16,6 +16,7 @@ starting after version 4.0.12, but historic entries might not.
 - `psmove_tracker_glm.h`: Convenience wrapper functions returning `glm` types
 - `psmove_tracker_count_connected()` now returns the number of connected V4L2 video devices on Linux
 - `psmove_tracker_get_next_unused_color()` for previewing the next tracked color
+- Added (Linux) support for PS4 Camera (tested with CUH-ZEY2) and PS5 Camera (tested with CFI-ZEY1)
 
 ### Changed
 
@@ -46,6 +47,7 @@ starting after version 4.0.12, but historic entries might not.
 - Camera devices on Linux - when using OpenCV - are now properly detected and enumerated even if
   there are "holes" in the numbering (e.g. /dev/video1 exists, but /dev/video0 does not)
 - Renamed `calibration_blink_delay` in tracker settings to `calibration_blink_delay_ms`
+- `psmove_tracker.h`: Default value for width/height/framerate is now -1 (to auto-pick a good value)
 
 ### Fixed
 
@@ -67,6 +69,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed `psmove_tracker_get_frame()` (replaced with `psmove_tracker_opencv_get_frame()`)
 - Removed legacy OpenGL examples and glfw3 (only used for the OpenGL examples)
 - Removed support for the `PSMOVE_TRACKER_COLOR` environment variable
+- Removed default width/height/framerate from `psmove_tracker.h`
 
 
 ## [4.0.12] - 2020-12-19

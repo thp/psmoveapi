@@ -43,26 +43,25 @@
 
 #include "camera_control_private.h"
 
-void
-get_metrics(int *width, int *height)
+bool
+camera_control_fallback_frame_layout(CameraControl *cc, int width, int height, struct CameraControlFrameLayout *layout)
 {
-    *width = psmove_util_get_env_int(PSMOVE_TRACKER_WIDTH_ENV);
-    *height = psmove_util_get_env_int(PSMOVE_TRACKER_HEIGHT_ENV);
-
-    if (*width == -1) {
-        *width = PSMOVE_TRACKER_DEFAULT_WIDTH;
+    if (width == -1) {
+        width = 640;
     }
 
-    if (*height == -1) {
-        *height = PSMOVE_TRACKER_DEFAULT_HEIGHT;
+    if (height == -1) {
+        height = 480;
     }
-}
 
+    layout->capture_width = width;
+    layout->capture_height = height;
+    layout->crop_x = 0;
+    layout->crop_x = 0;
+    layout->crop_width = width;
+    layout->crop_height = height;
 
-CameraControl *
-camera_control_new(int cameraID)
-{
-    return camera_control_new_with_settings(cameraID, 0, 0, 0);
+    return true;
 }
 
 CameraControl *
@@ -71,8 +70,16 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
 	CameraControl* cc = (CameraControl*) calloc(1, sizeof(CameraControl));
 	cc->cameraID = cameraID;
 
-    if (framerate <= 0) {
-        framerate = PSMOVE_TRACKER_DEFAULT_FPS;
+    if (width == -1) {
+        width = psmove_util_get_env_int(PSMOVE_TRACKER_WIDTH_ENV);
+    }
+
+    if (height == -1) {
+        height = psmove_util_get_env_int(PSMOVE_TRACKER_HEIGHT_ENV);
+    }
+
+    if (framerate == -1) {
+        framerate = 60;
     }
 
 #if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
@@ -84,18 +91,19 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
         return NULL;
     }
 
-    if (width <= 0 || height <= 0) {
-        get_metrics(&width, &height);
+    if (!camera_control_get_frame_layout(cc, width, height, &(cc->layout))) {
+        free(cc);
+        return NULL;
     }
 
-    cc->eye = ps3eye_open(cameraID, width, height, framerate, PS3EYE_FORMAT_BGR);
+    cc->eye = ps3eye_open(cameraID, cc->layout.capture_width, cc->layout.capture_height, framerate, PS3EYE_FORMAT_BGR);
 
     if (cc->eye == NULL) {
         free(cc);
         return NULL;
     }
 
-    cc->framebgr = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
+    cc->framebgr = cvCreateImage(cvSize(cc->layout.capture_width, cc->layout.capture_height), IPL_DEPTH_8U, 3);
 #else
     char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
 
@@ -126,16 +134,15 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
             return NULL;
         }
 
-        if (width <= 0 || height <= 0) {
-            get_metrics(&width, &height);
+        if (!camera_control_get_frame_layout(cc, width, height, &(cc->layout))) {
+            free(cc);
+            return NULL;
         }
 
-        cc->capture->set(cv::CAP_PROP_FRAME_WIDTH, width);
-        cc->capture->set(cv::CAP_PROP_FRAME_HEIGHT, height);
+        cc->capture->set(cv::CAP_PROP_FRAME_WIDTH, cc->layout.capture_width);
+        cc->capture->set(cv::CAP_PROP_FRAME_HEIGHT, cc->layout.capture_height);
     }
 #endif
-    cc->width = width;
-    cc->height = height;
     cc->deinterlace = PSMove_False;
 
 	return cc;
@@ -227,7 +234,11 @@ camera_control_query_frame( CameraControl* cc)
         }
 
         IplImage tmp = cvIplImage(frame);
-        result = cvCloneImage(&tmp);
+
+        cvSetImageROI(&tmp, cvRect(cc->layout.crop_x, cc->layout.crop_y, cc->layout.crop_width, cc->layout.crop_height));
+        result = cvCreateImage(cvSize(cc->layout.crop_width, cc->layout.crop_height), IPL_DEPTH_8U, 3);
+
+        cvCopy(&tmp, result);
         cc->frame = result;
     }
 #endif

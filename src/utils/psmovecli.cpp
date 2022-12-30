@@ -107,6 +107,8 @@ extern "C" {
 #include "opencv2/core/core_c.h"
 #include "opencv2/highgui/highgui_c.h"
 
+#include "ps4_camera_firmware.cpp"
+
 #if CV_VERSION_MAJOR <= 3
 #define main tracker_camera_calibration_main
 #include "tracker_camera_calibration.cpp"
@@ -274,6 +276,7 @@ main(int argc, char *argv[])
 #endif /* CV_VERSION_MAJOR <= 3 */
     subcommands.emplace_back("test-camera", "Test camera capture (without tracking)", test_camera_main);
     subcommands.emplace_back("test-tracker", "Test tracking of controllers in the camera", test_tracker_main);
+    subcommands.emplace_back("camera-firmware", "Initialize PS4/PS5 camera by uploading its firmware via USB", ps4_camera_firmware_main);
 #endif /* PSMOVE_BUILD_TRACKER */
 
     if (argc == 1 || strcmp(argv[1], "help") == 0) {
