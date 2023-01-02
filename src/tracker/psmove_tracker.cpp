@@ -47,10 +47,6 @@
 #include "camera_control_private.h"
 #include "tracker_helpers.h"
 
-#ifdef __linux
-#  include "platform/psmove_linuxsupport.h"
-#endif
-
 #define ROIS 4                          // the number of levels of regions of interest (roi)
 #define BLINKS 2                        // number of diff images to create during calibration
 #define COLOR_MAPPING_RING_BUFFER_SIZE 256  /* Has to be 256, so that next_slot automatically wraps */
@@ -338,9 +334,9 @@ psmove_tracker_remember_color(PSMoveTracker *tracker, struct PSMove_RGBValue rgb
 void
 psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
 {
-    settings->camera_frame_width = 0;
-    settings->camera_frame_height = 0;
-    settings->camera_frame_rate = 0;
+    settings->camera_frame_width = -1;
+    settings->camera_frame_height = -1;
+    settings->camera_frame_rate = -1;
     settings->camera_auto_gain = PSMove_False;
     settings->camera_gain = 0;
     settings->camera_auto_white_balance = PSMove_False;
@@ -385,21 +381,13 @@ PSMoveTracker *psmove_tracker_new() {
 
 PSMoveTracker *
 psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings) {
-    int camera = 0;
+    int camera = camera_control_get_preferred_camera();
 
-#if defined(__linux) && defined(PSMOVE_USE_PSEYE)
-    /**
-     * On Linux, we might have multiple cameras (e.g. most laptops have
-     * built-in cameras), so we try looking for the one that is handled
-     * by the PSEye driver.
-     **/
-    camera = linux_find_pseye();
     if (camera == -1) {
         /* Could not find the PSEye - fallback to first camera */
-        PSMOVE_INFO("No PSEye found, using first camera instead");
+        PSMOVE_INFO("No preferred camera found, using first available camera");
         camera = 0;
     }
-#endif
 
     int camera_env = psmove_util_get_env_int(PSMOVE_TRACKER_CAMERA_ENV);
     if (camera_env != -1) {

@@ -80,8 +80,6 @@ IF(PSMOVE_BUILD_TRACKER)
         ENDIF(MINGW)
     ELSE() #Linux
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
-            ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.c
-			${CMAKE_CURRENT_LIST_DIR}/platform/psmove_linuxsupport.h
             ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_linux.cpp)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS v4l2)
     ENDIF()
@@ -112,11 +110,6 @@ IF (PSMOVE_USE_PS3EYE_DRIVER AND (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMA
 ELSE()
     set(PSMOVE_USE_PS3EYE_DRIVER OFF)
     set(INFO_USE_PS3EYE_DRIVER "No (disabled)")
-ENDIF()
-
-IF(PSMOVE_USE_PS3EYE_DRIVER)
-    # PS3EYEDriver is based on GPL'd code
-    set(INFO_LICENSE "GPL")
 ENDIF()
 
 IF(PSMOVE_USE_DEBUG_CAPTURE)

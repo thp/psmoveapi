@@ -36,11 +36,6 @@
 extern "C" {
 #endif
 
-/* Defines the range of x/y values for the position getting, etc.. */
-#define PSMOVE_TRACKER_DEFAULT_WIDTH 640
-#define PSMOVE_TRACKER_DEFAULT_HEIGHT 480
-#define PSMOVE_TRACKER_DEFAULT_FPS 60
-
 /* Maximum number of controllers that can be tracked at once */
 #define PSMOVE_TRACKER_MAX_CONTROLLERS 5
 
@@ -88,9 +83,9 @@ enum PSMoveTracker_Exposure {
 typedef struct {
 
     /* Camera Controls*/
-    int camera_frame_width;                     /* [0=auto] */
-    int camera_frame_height;                    /* [0=auto] */
-    int camera_frame_rate;                      /* [0=auto] */
+    int camera_frame_width;                     /* [-1=auto] */
+    int camera_frame_height;                    /* [-1=auto] */
+    int camera_frame_rate;                      /* [-1=auto] */
     enum PSMove_Bool camera_auto_gain;          /* [PSMove_False] */
     int camera_gain;                            /* [0] [0,0xFFFF] */
     enum PSMove_Bool camera_auto_white_balance; /* [PSMove_False] */

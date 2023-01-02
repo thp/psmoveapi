@@ -35,6 +35,8 @@
 #include "opencv2/imgproc/imgproc_c.h"
 #include <opencv2/videoio.hpp>
 
+#include "camera_control.h"
+
 #if defined(WIN32)
 #    include <windows.h>
 #endif
@@ -58,10 +60,9 @@ struct _CameraControl {
 	IplImage* mapx;
 	IplImage* mapy;
 
-        int width;
-        int height;
         enum PSMove_Bool deinterlace;
+        CameraControlFrameLayout layout;
 };
 
-void
-get_metrics(int *width, int *height);
+bool
+camera_control_fallback_frame_layout(CameraControl *cc, int width, int height, struct CameraControlFrameLayout *layout);
