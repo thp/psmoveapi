@@ -62,6 +62,7 @@ kernel driver in OpenCV/V4L2.
 
 - Tested models: CUH-ZEY2 ("round model v2")
 - Tested firmware SHA-1: ``fe86162309518a0ffe267075a2fcf728c5856b3e``
+- Firmware search path: ``/etc/psmoveapi/camera-firmware-ps4.bin``, ``$HOME/.psmoveapi/camera-firmware-ps4.bin``
 
 Supported resolutions:
 
@@ -83,6 +84,7 @@ kernel driver in OpenCV/V4L2.
 
 - Tested models: CFI-ZEY1
 - Tested firmware SHA-1: ``0fa4da31a12b662a9a80abc8b84932770df8f7e1``
+- Firmware search path: ``/etc/psmoveapi/camera-firmware-ps5.bin``, ``$HOME/.psmoveapi/camera-firmware-ps5.bin``
 
 Supported resolutions:
 

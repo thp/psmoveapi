@@ -129,6 +129,28 @@ upload_firmware(libusb_context *context, libusb_device *dev, const std::vector<c
     PSMOVE_INFO("Firmware uploaded");
 }
 
+static std::vector<char>
+load_firmware(const std::string &filename)
+{
+    std::vector<char> firmware_bin;
+
+    FILE *fp = fopen(filename.c_str(), "rb");
+    PSMOVE_VERIFY(fp != nullptr, "Could not open firmware file '%s'", filename.c_str());
+    PSMOVE_VERIFY(fseek(fp, 0, SEEK_END) == 0, "Could not seek in firmware file '%s'", filename.c_str());
+
+    long size = ftell(fp);
+    PSMOVE_VERIFY(size > 0, "Invalid file size for '%s'", filename.c_str());
+    firmware_bin.resize(size);
+
+    PSMOVE_VERIFY(fseek(fp, 0, SEEK_SET) == 0, "Could not seek in firmware file '%s'", filename.c_str());
+    PSMOVE_VERIFY(fread(firmware_bin.data(), firmware_bin.size(), 1, fp) == 1, "Could not read firmware file '%s'", filename.c_str());
+    fclose(fp);
+
+    PSMOVE_INFO("Loaded '%s' with %zu bytes", filename.c_str(), firmware_bin.size());
+
+    return firmware_bin;
+}
+
 int
 ps4_camera_firmware_main(int argc, char *argv[])
 {
@@ -143,20 +165,7 @@ ps4_camera_firmware_main(int argc, char *argv[])
             valid_command_line = false;
             break;
         } else if (firmware_bin.empty()) {
-            const char *firmware_filename = argv[1];
-            FILE *fp = fopen(firmware_filename, "rb");
-            PSMOVE_VERIFY(fp != nullptr, "Could not open firmware file '%s'", firmware_filename);
-            PSMOVE_VERIFY(fseek(fp, 0, SEEK_END) == 0, "Could not seek in firmware file '%s'", firmware_filename);
-
-            long size = ftell(fp);
-            PSMOVE_VERIFY(size > 0, "Invalid file size for '%s'", firmware_filename);
-            firmware_bin.resize(size);
-
-            PSMOVE_VERIFY(fseek(fp, 0, SEEK_SET) == 0, "Could not seek in firmware file '%s'", firmware_filename);
-            PSMOVE_VERIFY(fread(firmware_bin.data(), firmware_bin.size(), 1, fp) == 1, "Could not read firmware file '%s'", firmware_filename);
-            fclose(fp);
-
-            PSMOVE_INFO("Loaded '%s' with %zu bytes", firmware_filename, firmware_bin.size());
+            firmware_bin = load_firmware(argv[1]);
         } else {
             PSMOVE_WARNING("Invalid command line parameter: '%s'", argv[1]);
             valid_command_line = false;
@@ -219,13 +228,20 @@ Optional parameters:
             PSMOVE_INFO("Found OV580 in Boot Mode at %03d:%03d: %s", libusb_get_bus_number(dev),
                     libusb_get_device_address(dev), model);
 
-            if (!firmware_bin.empty()) {
+            if (firmware_bin.empty()) {
+                char *path = nullptr;
+
                 if (camera_is_ps4) {
                     // PS4 CUH-ZEY2 ("round" model v2): fe86162309518a0ffe267075a2fcf728c5856b3e
+                    path = psmove_util_get_file_path("camera-firmware-ps4.bin");
                 } else {
                     // PS5 CFI-ZEY1: 0fa4da31a12b662a9a80abc8b84932770df8f7e1
+                    path = psmove_util_get_file_path("camera-firmware-ps5.bin");
                 }
 
+                upload_firmware(usb_context, dev, load_firmware(path));
+                psmove_free_mem(path);
+            } else {
                 upload_firmware(usb_context, dev, firmware_bin);
             }
         }
