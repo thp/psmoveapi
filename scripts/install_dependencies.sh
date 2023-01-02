@@ -16,7 +16,7 @@ case "$UNAME" in
                                    python3-dev                       \
                                    libxrandr-dev libxinerama-dev libxcursor-dev \
                                    python3-sphinx python3-pip \
-                                   libusb-dev libsdl2-dev
+                                   libusb-dev libusb-1.0-0-dev libsdl2-dev
         ;;
     Darwin)
         brew update
