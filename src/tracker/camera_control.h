@@ -77,23 +77,11 @@ camera_control_delete(CameraControl* cc);
  * Set the camera parameters used during capturing
  *
  * cc         - the camera control to modify
- * autoE      - value range [0-0xFFFF]
- * autoG      - value range [0-0xFFFF]
- * autoWB     - value range [0-0xFFFF]
- * exposure   - value range [0-0xFFFF]
- * gain       - value range [0-0xFFFF]
- * wbRed      - value range [0-0xFFFF]
- * wbGreen    - value range [0-0xFFFF]
- * wbBlue     - value range [0-0xFFFF]
- * contrast   - value range [0-0xFFFF]
- * brightness - value range [0-0xFFFF]
+ * exposure   - exposure (0.0 .. 1.0)
+ * mirror     - whether to mirror the image horizontally
  **/
 void
-camera_control_set_parameters(CameraControl* cc,
-        int autoE, int autoG, int autoWB,
-        int exposure, int gain,
-        int wbRed, int wbGreen, int wbBlue,
-		int contrast, int brightness, enum PSMove_Bool h_flip);
+camera_control_set_parameters(CameraControl* cc, float exposure, bool mirror);
 
 struct CameraControlFrameLayout {
     int capture_width; /**< raw capture device width */

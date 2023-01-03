@@ -66,3 +66,6 @@ struct _CameraControl {
 
 bool
 camera_control_fallback_frame_layout(CameraControl *cc, int width, int height, struct CameraControlFrameLayout *layout);
+
+void
+camera_control_ps3eyedriver_set_parameters(CameraControl* cc, float exposure, bool mirror);

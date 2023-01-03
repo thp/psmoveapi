@@ -66,8 +66,8 @@ kernel driver in OpenCV/V4L2.
 
 Supported resolutions:
 
-- 1280x800 @ 60 Hz
-- **640x400 @ 120 Hz** (default)
+- **1280x800 @ 60 Hz** (default)
+- 640x400 @ 120 Hz
 - 320x192 @ 240 Hz
 
 
@@ -89,8 +89,8 @@ kernel driver in OpenCV/V4L2.
 Supported resolutions:
 
 - 1920x1080 @ 30 Hz
-- 1280x800 @ 60 Hz
+- **1280x800 @ 60 Hz** (default)
 - 960x520 @ 60 Hz
-- **640x376 @ 120 Hz** (default)
+- 640x376 @ 120 Hz
 - 448x256 @ 120 Hz
 - 320x184 @ 240 Hz
