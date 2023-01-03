@@ -123,6 +123,7 @@ ENDIF()
 
 set(PSMOVEAPI_TRACKER_SRC)
 list(APPEND PSMOVEAPI_TRACKER_SRC
+    "${CMAKE_CURRENT_LIST_DIR}/psmove_tracker_hue_calibration.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/psmove_tracker.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/psmove_fusion.cpp"
 

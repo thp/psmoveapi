@@ -91,6 +91,22 @@ th_scalar_mul(CvScalar a, double b);
 CvScalar
 th_rgb2hsv(CvScalar rgb);
 
+/**
+ * Single-value colorspace conversion: HSV -> RGB
+ **/
+CvScalar
+th_hsv2rgb(CvScalar hsv);
+
+/* Yes, those two functions do the same thing, but we want to have both names for semantics */
+static inline CvScalar th_bgr2rgb(CvScalar bgr) { return cvScalar(bgr.val[2], bgr.val[1], bgr.val[0], bgr.val[2]); }
+static inline CvScalar th_rgb2bgr(CvScalar rgb) { return cvScalar(rgb.val[2], rgb.val[1], rgb.val[0], rgb.val[2]); }
+
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * Write to an image file
+ **/
+void
+th_dump_image(const std::string &filename, IplImage *image);

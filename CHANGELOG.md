@@ -19,6 +19,8 @@ starting after version 4.0.12, but historic entries might not.
 - Added (Linux) support for PS4 Camera (tested with CUH-ZEY2) and PS5 Camera (tested with CFI-ZEY1)
 - `psmove_tracker_get_camera_info()` to get some metadata about the current camera
 - new sub-command `test-undistortion` for `psmove` to test a calibration XML file
+- New hue-based fast color calibration: `psmove_tracker_hue_calibration()`
+- Runtime color calibration reset using `psmove_tracker_reset_color_calibration()`
 
 ### Changed
 
@@ -50,6 +52,8 @@ starting after version 4.0.12, but historic entries might not.
 - `psmove_tracker.h`: Default value for width/height/framerate is now -1 (to auto-pick a good value)
 - `psmove_tracker.h`: Camera exposure is now a float between 0.0 and 1.0, independent of camera API
 - Replaced `enum PSMove_Bool`, `PSMove_True` and `PSMove_False` with C99 (`stdbool.h`) / C++ `bool`, `true`, `false`
+- Increased maximum number of tracked controllers from 5 to 7
+- Blinking calibration now takes the new hue-based quality criteria into account, does per-controller dimming
 
 ### Fixed
 
@@ -74,7 +78,12 @@ starting after version 4.0.12, but historic entries might not.
 - Removed default width/height/framerate from `psmove_tracker.h`
 - Removed unused camera settings from `PSMoveTrackerSettings`: auto gain, gain, auto white balance, brightness
 - Removed support for cross-compiling for Windows using MinGW (use MSVC instead on Windows)
-
+- Removed `psmove_tracker_set_dimming()` and `psmove_tracker_get_dimming()`, removed global `dimming_factor` from tracker settings
+  (replaced with automatic per-controller dimming during color calibration)
+- Removed `psmove_tracker_set_camera_color()` without replacement
+- Removed `PSMOVE_TRACKER_ROI_SIZE` environment variable
+- Color mappings are not stored persistently anymore, but always re-calibrated at runtime
+- Removed `psmove_util_get_env_string()` from public API
 
 ## [4.0.12] - 2020-12-19
 

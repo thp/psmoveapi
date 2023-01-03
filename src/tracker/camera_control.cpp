@@ -76,10 +76,9 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
 
     CameraControl *cc = nullptr;
 
-    char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
+    const char *video = getenv(PSMOVE_TRACKER_FILENAME_ENV);
     if (video) {
         cc = new CameraControlVideoFile(video, width, height, framerate);
-        psmove_free_mem(video);
     } else {
         cc = camera_control_driver_new(cameraID, width, height, framerate);
     }
@@ -96,6 +95,10 @@ camera_control_set_deinterlace(CameraControl *cc, bool enabled)
 void
 camera_control_read_calibration(CameraControl* cc, const char *filename)
 {
+    if (filename == nullptr) {
+        filename = getenv(PSMOVE_TRACKER_CAMERA_CALIBRATION_ENV);
+    }
+
     if (filename == nullptr) {
         PSMOVE_INFO("No camera calibration");
         return;

@@ -37,16 +37,16 @@ extern "C" {
 #endif
 
 /* Maximum number of controllers that can be tracked at once */
-#define PSMOVE_TRACKER_MAX_CONTROLLERS 5
+#define PSMOVE_TRACKER_MAX_CONTROLLERS 7
 
 /* Name of the environment variable used to pick a camera */
 #define PSMOVE_TRACKER_CAMERA_ENV "PSMOVE_TRACKER_CAMERA"
 
+/* Name of the environment variable used to load the camera calibration file */
+#define PSMOVE_TRACKER_CAMERA_CALIBRATION_ENV "PSMOVE_TRACKER_CAMERA_CALIBRATION"
+
 /* Name of the environment variable used to choose a pre-recorded video */
 #define PSMOVE_TRACKER_FILENAME_ENV "PSMOVE_TRACKER_FILENAME"
-
-/* Name of the environment variable used to set the biggest ROI size */
-#define PSMOVE_TRACKER_ROI_SIZE_ENV "PSMOVE_TRACKER_ROI_SIZE"
 
 /* Name of the environment variables for the camera image size */
 #define PSMOVE_TRACKER_WIDTH_ENV "PSMOVE_TRACKER_WIDTH"
@@ -71,14 +71,6 @@ enum PSMoveTracker_Status {
     Tracker_TRACKING, /*!< Calibrated and successfully tracked in the camera */
 };
 
-/*! Exposure modes */
-enum PSMoveTracker_Exposure {
-    Exposure_LOW, /*!< Very low exposure: Good tracking, no environment visible */
-    Exposure_MEDIUM, /*!< Middle ground: Good tracking, environment visibile */
-    Exposure_HIGH, /*!< High exposure: Fair tracking, but good environment */
-    Exposure_INVALID, /*!< Invalid exposure value (for returning failures) */
-};
-
 /* A structure to retain the tracker settings. Typically these do not change after init & calib.*/
 typedef struct {
 
@@ -90,17 +82,14 @@ typedef struct {
     bool camera_mirror;             /* [true] mirror camera image horizontally */
 
     /* Settings for camera calibration process */
-    enum PSMoveTracker_Exposure exposure_mode;  /* [Exposure_LOW] exposure mode for setting target luminance */
-    int calibration_blink_delay_ms;             /* [200] number of milliseconds to wait between a blink  */
+    int calibration_blink_delay_ms;             /* [50] number of milliseconds to wait between a blink  */
     int calibration_diff_t;                     /* [20] during calibration, all grey values in the diff image below this value are set to black  */
     int calibration_min_size;                   /* [50] minimum size of the estimated glowing sphere during calibration process (in pixel)  */
     int calibration_max_distance;               /* [30] maximum displacement of the separate found blobs  */
     int calibration_size_std;                   /* [10] maximum standard deviation (in %) of the glowing spheres found during calibration process  */
-    int color_mapping_max_age;                  /* [2*60*60] Only re-use color mappings "younger" than this time in seconds  */
-    float dimming_factor;                       /* [1.f] dimming factor used on LED RGB values  */
     
     /* Settings for OpenCV image processing for sphere detection */
-    int color_hue_filter_range;                 /* [20] +- range of Hue window of the hsv-colorfilter  */
+    int color_hue_filter_range;                 /* [8] +- range of Hue window of the hsv-colorfilter  */
     int color_saturation_filter_range;          /* [85] +- range of Sat window of the hsv-colorfilter  */
     int color_value_filter_range;               /* [85] +- range of Value window of the hsv-colorfilter  */
 
@@ -244,54 +233,15 @@ ADDAPI bool
 ADDCALL psmove_tracker_get_auto_update_leds(PSMoveTracker *tracker, PSMove *move);
 
 /**
- * \brief Set the LED dimming value for all controller
- *
- * Usually it's not necessary to call this function, as the dimming
- * is automatically determined when the first controller is enabled.
- *
- * \param tracker A valid \ref PSMoveTracker handle
- * \param dimming A value in the range from 0 (LEDs switched off) to
- *                1 (full LED intensity)
+ * \brief Set exposure as fraction (0.0 -> 1.0)
  **/
 ADDAPI void
-ADDCALL psmove_tracker_set_dimming(PSMoveTracker *tracker, float dimming);
+ADDCALL psmove_tracker_set_exposure(PSMoveTracker *tracker, float exposure);
 
 /**
- * \brief Get the LED dimming value for all controllers
- *
- * See psmove_tracker_set_dimming() for details.
- *
- * \param tracker A valid \ref PSMoveTracker handle
- *
- * \return The dimming value for the LEDs
+ * \brief Get exposure as fraction (0.0 -> 1.0)
  **/
 ADDAPI float
-ADDCALL psmove_tracker_get_dimming(PSMoveTracker *tracker);
-
-/**
- * \brief Set the desired camera exposure mode
- *
- * This function sets the desired exposure mode. This should be
- * called before controllers are added to the tracker, so that the
- * dimming for the controllers can be determined for the specific
- * exposure setting.
- *
- * \param tracker A valid \ref PSMoveTracker handle
- * \param exposure One of the \ref PSMoveTracker_Exposure values
- **/
-ADDAPI void
-ADDCALL psmove_tracker_set_exposure(PSMoveTracker *tracker, enum PSMoveTracker_Exposure exposure);
-
-/**
- * \brief Get the desired camera exposure mode
- *
- * See psmove_tracker_set_exposure() for details.
- *
- * \param tracker A valid \ref PSMoveTracker handle
- *
- * \return One of the \ref PSMoveTracker_Exposure values
- **/
-ADDAPI enum PSMoveTracker_Exposure
 ADDCALL psmove_tracker_get_exposure(PSMoveTracker *tracker);
 
 /**
@@ -436,30 +386,6 @@ ADDCALL psmove_tracker_get_color(PSMoveTracker *tracker, PSMove *move,
 ADDAPI int
 ADDCALL psmove_tracker_get_camera_color(PSMoveTracker *tracker, PSMove *move,
         unsigned char *r, unsigned char *g, unsigned char *b);
-
-/**
- * \brief Set the sphere color of a controller in the camera image
- *
- * This function should only be used in special situations - it is
- * usually not required to manually set the sphere color as it appears
- * in the camera image, as this color is determined at runtime during
- * blinking calibration. For some use cases, it might be useful to
- * set the color manually (e.g. when the user should be able to select
- * the color in the camera image after lighting changes).
- * 
- * \param tracker A valid \ref PSMoveTracker handle
- * \param move A valid \ref PSMove handle
- * \param r The red component of the color (0..255)
- * \param g The green component of the color (0..255)
- * \param b The blue component of the color (0..255)
- *
- * \return Nonzero if the color was successfully set, zero if
- *         if the controller is not enabled of calibration has not
- *         completed yet.
- **/
-ADDAPI int
-ADDCALL psmove_tracker_set_camera_color(PSMoveTracker *tracker, PSMove *move,
-        unsigned char r, unsigned char g, unsigned char b);
 
 /**
  * \brief Query the tracking status of a motion controller
@@ -650,6 +576,25 @@ struct PSMoveCameraInfo {
 ADDAPI const struct PSMoveCameraInfo *
 ADDCALL psmove_tracker_get_camera_info(PSMoveTracker *tracker);
 
+/**
+ * \brief Multi-color blinking hue calibration
+ *
+ * Pick a set of good hues with a single controller by blinking all
+ * colors and adjusting per-hue dimming for good color tracking.
+ *
+ * After this calibration is done, re-enable controllers to use the
+ * new hues and dimming values.
+ *
+ * \return The number of usable unique controller colors found
+ **/
+ADDAPI int
+ADDCALL psmove_tracker_hue_calibration(PSMoveTracker *tracker, PSMove *move);
+
+/**
+ * \brief Forget previously-created color mapping/hue calibration data
+ **/
+ADDAPI void
+ADDCALL psmove_tracker_reset_color_calibration(PSMoveTracker *tracker);
 
 /**
  * \brief Destroy an existing tracker instance and free allocated resources
