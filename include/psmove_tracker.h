@@ -86,11 +86,7 @@ typedef struct {
     int camera_frame_width;                     /* [-1=auto] */
     int camera_frame_height;                    /* [-1=auto] */
     int camera_frame_rate;                      /* [-1=auto] */
-    enum PSMove_Bool camera_auto_gain;          /* [PSMove_False] */
-    int camera_gain;                            /* [0] [0,0xFFFF] */
-    enum PSMove_Bool camera_auto_white_balance; /* [PSMove_False] */
-    int camera_exposure;                        /* [(255 * 15) / 0xFFFF] [0,0xFFFF] */
-    int camera_brightness;                      /* [0] [0,0xFFFF] */
+    float camera_exposure;                      /* [0.3] [0.0,1.0] */
     enum PSMove_Bool camera_mirror;             /* [PSMove_True] mirror camera image horizontally */
 
     /* Settings for camera calibration process */

@@ -324,3 +324,14 @@ camera_control_delete(CameraControl* cc)
     free(cc);
 }
 
+void
+camera_control_ps3eyedriver_set_parameters(CameraControl* cc, float exposure, bool mirror)
+{
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+    ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN, 0);
+    ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_WHITEBALANCE, 0);
+    ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE, int(0x1FF * std::min(1.f, std::max(0.f, exposure))));
+    ps3eye_set_parameter(cc->eye, PS3EYE_GAIN, 0);
+    ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, mirror);
+#endif
+}

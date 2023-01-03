@@ -218,11 +218,30 @@ camera_control_restore_system_settings(CameraControl *cc,
     delete settings;
 }
 
+static void
+set_v4l2_ctrl(int fd, int cls, int id, int value)
+{
+    struct v4l2_ext_control ctrl;
+    memset(&ctrl, 0, sizeof(ctrl));
+
+    struct v4l2_ext_controls ctrls;
+    memset(&ctrls, 0, sizeof(ctrls));
+
+    ctrls.which = cls;
+    ctrls.count = 1;
+    ctrls.controls = &ctrl;
+
+    ctrl.id = id;
+    ctrl.value = value;
+
+    int res = ioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls);
+    if (res != 0) {
+        PSMOVE_WARNING("Could not set V4L2 class 0x%04x, control 0x%08x value (res=%d)", cls, id, res);
+    }
+}
+
 void
-camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoWB,
-        int exposure, int gain,
-        int wbRed, int wbGreen, int wbBlue,
-        int contrast, int brightness, enum PSMove_Bool h_flip)
+camera_control_set_parameters(CameraControl* cc, float exposure, bool mirror)
 {
     int fd = open_v4l2_device(cc->cameraID);
 
@@ -230,63 +249,33 @@ camera_control_set_parameters(CameraControl* cc, int autoE, int autoG, int autoW
         enum PSCameraDevice camera_type = identify_camera(fd);
         switch (camera_type) {
             case PS_CAMERA_PS3_EYE:
-                v4l2_set_control(fd, V4L2_CID_EXPOSURE, exposure);
-                v4l2_set_control(fd, V4L2_CID_GAIN, gain);
+                v4l2_set_control(fd, V4L2_CID_GAIN, 0);
+                v4l2_set_control(fd, V4L2_CID_AUTOGAIN, 0);
 
-                /**
-                 * Force auto exposure off, workaround by peoro
-                 * https://github.com/thp/psmoveapi/issues/150
-                 **/
-                v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, 0xFFFF);
-                v4l2_set_control(fd, V4L2_CID_AUTOGAIN, autoG);
-                v4l2_set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, autoWB);
+                set_v4l2_ctrl(fd, V4L2_CTRL_CLASS_CAMERA, V4L2_CID_EXPOSURE_AUTO, V4L2_EXPOSURE_MANUAL);
+                set_v4l2_ctrl(fd, V4L2_CTRL_CLASS_USER, V4L2_CID_EXPOSURE, int(0xFF * std::min(1.f, std::max(0.f, exposure))));
+
+                v4l2_set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, 0);
                 break;
             case PS_CAMERA_PS4_CAMERA:
             case PS_CAMERA_PS5_CAMERA:
-                {
-                    struct v4l2_ext_control ctrl;
-                    memset(&ctrl, 0, sizeof(ctrl));
+                set_v4l2_ctrl(fd, V4L2_CTRL_CLASS_CAMERA, V4L2_CID_EXPOSURE_AUTO, V4L2_EXPOSURE_SHUTTER_PRIORITY);
+                set_v4l2_ctrl(fd, V4L2_CTRL_CLASS_CAMERA, V4L2_CID_EXPOSURE_ABSOLUTE, int(330 * std::min(1.f, std::max(0.f, exposure = std::pow(exposure, 2.f)))));
 
-                    struct v4l2_ext_controls ctrls;
-                    memset(&ctrls, 0, sizeof(ctrls));
-
-                    ctrls.which = V4L2_CTRL_CLASS_CAMERA;
-                    ctrls.count = 1;
-                    ctrls.controls = &ctrl;
-
-                    /* Disable auto-exposure */
-                    ctrl.id = V4L2_CID_EXPOSURE_AUTO;
-                    ctrl.value = V4L2_EXPOSURE_SHUTTER_PRIORITY;
-
-                    int res = ioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls);
-                    if (res != 0) {
-                        PSMOVE_WARNING("Could not set manual exposure mode (res=%d)", res);
-                    }
-
-                    /* Set fixed exposure value */
-                    ctrl.id = V4L2_CID_EXPOSURE_ABSOLUTE;
-                    ctrl.value = exposure / 1000;
-                    res = ioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls);
-                    if (res != 0) {
-                        PSMOVE_WARNING("Could not set manual exposure value (res=%d)", res);
-                    }
-
-                    /* Disable auto white balance */
-                    v4l2_set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, 0);
-                }
+                v4l2_set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, 0);
                 break;
             case PS_CAMERA_UNKNOWN:
-                v4l2_set_control(fd, V4L2_CID_EXPOSURE, exposure);
-                v4l2_set_control(fd, V4L2_CID_GAIN, gain);
+                v4l2_set_control(fd, V4L2_CID_GAIN, 0);
+                v4l2_set_control(fd, V4L2_CID_AUTOGAIN, 0);
 
-                v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, autoE);
-                v4l2_set_control(fd, V4L2_CID_AUTOGAIN, autoG);
-                v4l2_set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, autoWB);
-                v4l2_set_control(fd, V4L2_CID_CONTRAST, contrast);
-                v4l2_set_control(fd, V4L2_CID_BRIGHTNESS, brightness);
+                v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, 0);
+                v4l2_set_control(fd, V4L2_CID_EXPOSURE, exposure);
+
+                v4l2_set_control(fd, V4L2_CID_AUTO_WHITE_BALANCE, 0);
                 break;
         }
-        v4l2_set_control(fd, V4L2_CID_HFLIP, h_flip);
+
+        v4l2_set_control(fd, V4L2_CID_HFLIP, mirror);
         v4l2_close(fd);
     }
 }
@@ -322,7 +311,7 @@ camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct
                 PSMOVE_WARNING("Invalid resolution for PS3 Camera: %dx%d", width, height);
                 return false;
             case PS_CAMERA_PS4_CAMERA:
-                if (width == 1280 && height == 800) {
+                if ((width == 1280 && height == 800) || (width == -1 && height == -1)) {
                     // 3448x808 @ 60, 30, 15, 8
                     // first frame: x = 48 y = 0 w = 1280 h = 800
                     // second frame: x = 1328 y = 0 w = 1280 h = 800
@@ -330,10 +319,10 @@ camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct
                     layout->capture_height = 808;
                     layout->crop_x = 48;
                     layout->crop_y = 0;
-                    layout->crop_width = width;
-                    layout->crop_height = height;
+                    layout->crop_width = 1280;
+                    layout->crop_height = 800;
                     return true;
-                } else if ((width == 640 && height == 400) || (width == -1 && height == -1)) {
+                } else if (width == 640 && height == 400) {
                     // 1748x408 @ 120, 60, 30, 15, 8
                     // first frame: x = 48 y = 0 w = 640 h = 400
                     // second frame: x = 688 y = 0 w = 640 h = 400
@@ -341,8 +330,8 @@ camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct
                     layout->capture_height = 408;
                     layout->crop_x = 48;
                     layout->crop_y = 0;
-                    layout->crop_width = 640;
-                    layout->crop_height = 400;
+                    layout->crop_width = width;
+                    layout->crop_height = height;
                     return true;
                 } else if (width == 320 && height == 192) {
                     // 898x200 @ 240.004, 120, 60, 30
@@ -404,12 +393,12 @@ camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct
                     layout->crop_height = height;
                     return true;
                 } else if (width == -1 && height == -1) {
-                    layout->capture_width = 640;
-                    layout->capture_height = 376;
+                    layout->capture_width = 1280 * 2;
+                    layout->capture_height = 800;
                     layout->crop_x = 0;
                     layout->crop_y = 0;
-                    layout->crop_width = layout->capture_width;
-                    layout->crop_height = layout->capture_height;
+                    layout->crop_width = 1280;
+                    layout->crop_height = 800;
                     return true;
                 }
 

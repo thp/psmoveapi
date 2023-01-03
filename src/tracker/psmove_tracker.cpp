@@ -337,11 +337,7 @@ psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
     settings->camera_frame_width = -1;
     settings->camera_frame_height = -1;
     settings->camera_frame_rate = -1;
-    settings->camera_auto_gain = PSMove_False;
-    settings->camera_gain = 0;
-    settings->camera_auto_white_balance = PSMove_False;
-    settings->camera_exposure = (255 * 15) / 0xFFFF;
-    settings->camera_brightness = 0;
+    settings->camera_exposure = 0.3f;
     settings->camera_mirror = PSMove_False;
     settings->exposure_mode = Exposure_LOW;
     settings->calibration_blink_delay_ms = 200;
@@ -446,7 +442,7 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
     float target_luminance = 0;
     switch (tracker->settings.exposure_mode) {
         case Exposure_LOW:
-            target_luminance = 0;
+            target_luminance = 10;
             break;
         case Exposure_MEDIUM:
             target_luminance = 25;
@@ -461,8 +457,7 @@ psmove_tracker_set_exposure(PSMoveTracker *tracker,
 
     tracker->settings.camera_exposure = psmove_tracker_adapt_to_light(tracker, target_luminance);
 
-    camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->settings.camera_exposure,
-            0, 0xffff, 0xffff, 0xffff, -1, -1, tracker->settings.camera_mirror);
+    camera_control_set_parameters(tracker->cc, tracker->settings.camera_exposure, tracker->settings.camera_mirror);
 }
 
 enum PSMoveTracker_Exposure
@@ -489,8 +484,7 @@ psmove_tracker_set_mirror(PSMoveTracker *tracker,
     psmove_return_if_fail(tracker != NULL);
 
     tracker->settings.camera_mirror = enabled;
-	camera_control_set_parameters(tracker->cc, 0, 0, 0, tracker->settings.camera_exposure,
-		0, 0xffff, 0xffff, 0xffff, -1, -1, tracker->settings.camera_mirror);
+    camera_control_set_parameters(tracker->cc, tracker->settings.camera_exposure, tracker->settings.camera_mirror);
 }
 
 enum PSMove_Bool
@@ -1461,8 +1455,8 @@ psmove_tracker_free(PSMoveTracker *tracker)
 int
 psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
 {
-    float minimum_exposure = 2051;
-    float maximum_exposure = 65535;
+    float minimum_exposure = 0.1f;
+    float maximum_exposure = 1.f;
     float current_exposure = (maximum_exposure + minimum_exposure) / 2.0f;
 
     if (tracker->fast_exposure) {
@@ -1484,8 +1478,7 @@ psmove_tracker_adapt_to_light(PSMoveTracker *tracker, float target_luminance)
 
     int i;
     for (i=0; i<7; i++) {
-        camera_control_set_parameters(tracker->cc, 0, 0, 0,
-                (int)current_exposure, 0, 0xffff, 0xffff, 0xffff, -1, -1, tracker->settings.camera_mirror);
+        camera_control_set_parameters(tracker->cc, current_exposure, tracker->settings.camera_mirror);
 
         IplImage* frame;
         psmove_tracker_wait_for_frame(tracker, &frame, 50/*ms*/);

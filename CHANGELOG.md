@@ -48,6 +48,7 @@ starting after version 4.0.12, but historic entries might not.
   there are "holes" in the numbering (e.g. /dev/video1 exists, but /dev/video0 does not)
 - Renamed `calibration_blink_delay` in tracker settings to `calibration_blink_delay_ms`
 - `psmove_tracker.h`: Default value for width/height/framerate is now -1 (to auto-pick a good value)
+- `psmove_tracker.h`: Camera exposure is now a float between 0.0 and 1.0, independent of camera API
 
 ### Fixed
 
@@ -70,6 +71,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed legacy OpenGL examples and glfw3 (only used for the OpenGL examples)
 - Removed support for the `PSMOVE_TRACKER_COLOR` environment variable
 - Removed default width/height/framerate from `psmove_tracker.h`
+- Removed unused camera settings from `PSMoveTrackerSettings`: auto gain, gain, auto white balance, brightness
 
 
 ## [4.0.12] - 2020-12-19
