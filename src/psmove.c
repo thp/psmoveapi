@@ -557,8 +557,14 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigne
     /* Remember the serial number */
     move->serial_number = (char*)calloc(PSMOVE_MAX_SERIAL_LENGTH, sizeof(char));
     if (serial != NULL && wcslen(serial) > 0) {
+        if (move->connection_type == Conn_Unknown) {
+            move->connection_type = Conn_Bluetooth;
+        }
         wcstombs(move->serial_number, serial, PSMOVE_MAX_SERIAL_LENGTH);
     } else {
+        if (move->connection_type == Conn_Unknown) {
+            move->connection_type = Conn_USB;
+        }
         move->serial_number = psmove_get_serial(move);
     }
 
@@ -572,12 +578,6 @@ psmove_connect_internal(const wchar_t *serial, const char *path, int id, unsigne
         }
         free(move);
         return NULL;
-    } else if (move->connection_type == Conn_Unknown) {
-        if (strlen(move->serial_number) == 0) {
-            move->connection_type = Conn_USB;
-        } else {
-            move->connection_type = Conn_Bluetooth;
-        }
     }
 
     /**
