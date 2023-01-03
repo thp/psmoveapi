@@ -640,6 +640,18 @@ ADDAPI enum PSMove_Bool
 ADDCALL psmove_tracker_get_next_unused_color(PSMoveTracker *tracker,
         unsigned char *r, unsigned char *g, unsigned char *b);
 
+
+struct PSMoveCameraInfo {
+    const char *camera_name;
+    const char *camera_api;
+    int width;
+    int height;
+};
+
+ADDAPI const struct PSMoveCameraInfo *
+ADDCALL psmove_tracker_get_camera_info(PSMoveTracker *tracker);
+
+
 /**
  * \brief Destroy an existing tracker instance and free allocated resources
  *

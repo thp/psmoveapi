@@ -17,6 +17,7 @@ starting after version 4.0.12, but historic entries might not.
 - `psmove_tracker_count_connected()` now returns the number of connected V4L2 video devices on Linux
 - `psmove_tracker_get_next_unused_color()` for previewing the next tracked color
 - Added (Linux) support for PS4 Camera (tested with CUH-ZEY2) and PS5 Camera (tested with CFI-ZEY1)
+- `psmove_tracker_get_camera_info()` to get some metadata about the current camera
 
 ### Changed
 
