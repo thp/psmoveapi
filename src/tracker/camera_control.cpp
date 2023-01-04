@@ -143,7 +143,7 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
         cc->capture->set(cv::CAP_PROP_FRAME_HEIGHT, cc->layout.capture_height);
     }
 #endif
-    cc->deinterlace = PSMove_False;
+    cc->deinterlace = false;
 
 	return cc;
 }
@@ -170,7 +170,7 @@ camera_control_count_connected()
 
 void
 camera_control_set_deinterlace(CameraControl *cc,
-        enum PSMove_Bool enabled)
+        bool enabled)
 {
     psmove_return_if_fail(cc != NULL);
 
@@ -243,7 +243,7 @@ camera_control_query_frame( CameraControl* cc)
     }
 #endif
 
-    if (cc->deinterlace == PSMove_True) {
+    if (cc->deinterlace) {
         /**
          * Dirty hack follows:
          *  - Clone image

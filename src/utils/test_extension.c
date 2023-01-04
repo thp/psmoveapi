@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
             /* if the extension device was not connected before, report connect */
             if (!ext_connected) {
                 PSMove_Ext_Device_Info ext;
-                enum PSMove_Bool success = psmove_get_ext_device_info(move, &ext);
+                bool success = psmove_get_ext_device_info(move, &ext);
 
                 if (success) {
                     switch (ext.dev_id) {

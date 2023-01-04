@@ -87,7 +87,7 @@ typedef struct {
     int camera_frame_height;                    /* [-1=auto] */
     int camera_frame_rate;                      /* [-1=auto] */
     float camera_exposure;                      /* [0.3] [0.0,1.0] */
-    enum PSMove_Bool camera_mirror;             /* [PSMove_True] mirror camera image horizontally */
+    bool camera_mirror;             /* [true] mirror camera image horizontally */
 
     /* Settings for camera calibration process */
     enum PSMoveTracker_Exposure exposure_mode;  /* [Exposure_LOW] exposure mode for setting target luminance */
@@ -221,13 +221,13 @@ ADDCALL psmove_tracker_count_connected();
  *
  * \param tracker A valid \ref PSMoveTracker handle
  * \param move A valid \ref PSMove handle
- * \param auto_update_leds \ref PSMove_True to auto-update LEDs from
- *                         the tracker, \ref PSMove_False if the user
+ * \param auto_update_leds \ref true to auto-update LEDs from
+ *                         the tracker, \ref false if the user
  *                         will take care of updating the LEDs
  **/
 ADDAPI void
 ADDCALL psmove_tracker_set_auto_update_leds(PSMoveTracker *tracker, PSMove *move,
-        enum PSMove_Bool auto_update_leds);
+        bool auto_update_leds);
 
 /**
  * \brief Check if the LEDs of a controller are updated automatically
@@ -238,10 +238,10 @@ ADDCALL psmove_tracker_set_auto_update_leds(PSMoveTracker *tracker, PSMove *move
  * \param tracker A valid \ref PSMoveTracker handle
  * \param move A valid \ref PSMove handle
  *
- * \return \ref PSMove_True if the controller's LEDs are set to be
- *         updated automatically, \ref PSMove_False otherwise
+ * \return \ref true if the controller's LEDs are set to be
+ *         updated automatically, \ref false otherwise
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_tracker_get_auto_update_leds(PSMoveTracker *tracker, PSMove *move);
 
 /**
@@ -305,12 +305,12 @@ ADDCALL psmove_tracker_get_exposure(PSMoveTracker *tracker);
  * disabled.
  *
  * \param tracker A valid \ref PSMoveTracker handle
- * \param enabled \ref PSMove_True to enable deinterlacing,
- *                \ref PSMove_False to disable deinterlacing (default)
+ * \param enabled \ref true to enable deinterlacing,
+ *                \ref false to disable deinterlacing (default)
  **/
 ADDAPI void
 ADDCALL psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
-        enum PSMove_Bool enabled);
+        bool enabled);
 
 /**
  * \brief Enable or disable horizontal camera image mirroring
@@ -322,12 +322,12 @@ ADDCALL psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
  * mirroring is set here. By default, mirroring is disabled.
  *
  * \param tracker A valid \ref PSMoveTracker handle
- * \param enabled \ref PSMove_True to mirror the image horizontally,
- *                \ref PSMove_False to leave the image as-is (default)
+ * \param enabled \ref true to mirror the image horizontally,
+ *                \ref false to leave the image as-is (default)
  **/
 ADDAPI void
 ADDCALL psmove_tracker_set_mirror(PSMoveTracker *tracker,
-        enum PSMove_Bool enabled);
+        bool enabled);
 
 /**
  * \brief Query the current camera image mirroring state
@@ -336,10 +336,10 @@ ADDCALL psmove_tracker_set_mirror(PSMoveTracker *tracker,
  *
  * \param tracker A valid \ref PSMoveTracker handle
  *
- * \return \ref PSMove_True if mirroring is enabled,
- *         \ref PSMove_False if mirroring is disabled
+ * \return \ref true if mirroring is enabled,
+ *         \ref false if mirroring is disabled
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_tracker_get_mirror(PSMoveTracker *tracker);
 
 /**
@@ -634,9 +634,9 @@ ADDCALL psmove_tracker_set_distance_parameters(PSMoveTracker *tracker,
  * \param g Pointer to store the green component of the color
  * \param g Pointer to store the blue component of the color
  *
- * \return PSMove_True on success, PSMove_False otherwise
+ * \return true on success, false otherwise
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_tracker_get_next_unused_color(PSMoveTracker *tracker,
         unsigned char *r, unsigned char *g, unsigned char *b);
 

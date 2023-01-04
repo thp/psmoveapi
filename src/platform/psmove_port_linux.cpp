@@ -711,7 +711,7 @@ psmove_port_get_host_bluetooth_address()
     return result.empty() ? nullptr : strdup(result.c_str());
 }
 
-enum PSMove_Bool
+bool
 psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model)
 {
     std::string controller_addr = _psmove_normalize_btaddr_inplace(addr, false, ':');
@@ -721,18 +721,18 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
 
     if (controller_addr.empty()) {
         LINUXPAIR_DEBUG("Cannot parse controller address: '%s'", addr);
-        return PSMove_False;
+        return false;
     }
 
     if (host_addr.empty()) {
         LINUXPAIR_DEBUG("Cannot parse host address: '%s'", host);
-        return PSMove_False;
+        return false;
     }
 
     std::string bluetooth_dir { "/var/lib/bluetooth/" + host_addr };
     if (!directory_exists(bluetooth_dir)) {
         LINUXPAIR_DEBUG("Not a directory: %s", bluetooth_dir.c_str());
-        return PSMove_False;
+        return false;
     }
 
     BluetoothDaemon bluetoothd;
@@ -743,7 +743,7 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
 
         if (!make_directory(info_dir)) {
             LINUXPAIR_DEBUG("Cannot create directory: %s", info_dir.c_str());
-            return PSMove_False;
+            return false;
         }
     }
 
@@ -753,16 +753,16 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
 
         if (!make_directory(cache_dir)) {
             LINUXPAIR_DEBUG("Cannot create directory: %s", cache_dir.c_str());
-            return PSMove_False;
+            return false;
         }
     }
 
     if (!linux_bluez5_update_file_content(bluetoothd, info_dir + "/info", BLUEZ5_INFO_ENTRY(pid))) {
-        return PSMove_False;
+        return false;
     }
 
     if (!linux_bluez5_update_file_content(bluetoothd, cache_dir + "/" + controller_addr, BLUEZ5_CACHE_ENTRY)) {
-        return PSMove_False;
+        return false;
     }
 
     // start agent for automatically entering the PIN code if the ZCM2 requests
@@ -782,6 +782,6 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
         }
     }
 
-    return PSMove_True;
+    return true;
 }
 

@@ -50,6 +50,7 @@ starting after version 4.0.12, but historic entries might not.
 - Renamed `calibration_blink_delay` in tracker settings to `calibration_blink_delay_ms`
 - `psmove_tracker.h`: Default value for width/height/framerate is now -1 (to auto-pick a good value)
 - `psmove_tracker.h`: Camera exposure is now a float between 0.0 and 1.0, independent of camera API
+- Replaced `enum PSMove_Bool`, `PSMove_True` and `PSMove_False` with C99 (`stdbool.h`) / C++ `bool`, `true`, `false`
 
 ### Fixed
 

@@ -55,7 +55,7 @@ camera_control_read_calibration(CameraControl* cc,
 
 void
 camera_control_set_deinterlace(CameraControl *cc,
-        enum PSMove_Bool enabled);
+        bool enabled);
 
 IplImage *
 camera_control_query_frame(CameraControl* cc);

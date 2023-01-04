@@ -74,7 +74,7 @@ class Orientation : public QThread
                 // Retry calibration until it works
             }
 
-            psmove_enable_orientation(move, PSMove_True);
+            psmove_enable_orientation(move, true);
 
             while (!quit) {
                 while (psmove_poll(move)) {

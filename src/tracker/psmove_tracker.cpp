@@ -92,7 +92,7 @@ struct _TrackedController {
 
     int is_tracked;				// 1 if tracked 0 otherwise
     long last_color_update;	// the timestamp when the last color adaption has been performed
-    enum PSMove_Bool auto_update_leds;
+    bool auto_update_leds;
 };
 
 typedef struct _TrackedController TrackedController;
@@ -340,7 +340,7 @@ psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
     settings->camera_frame_height = -1;
     settings->camera_frame_rate = -1;
     settings->camera_exposure = 0.3f;
-    settings->camera_mirror = PSMove_False;
+    settings->camera_mirror = false;
     settings->exposure_mode = Exposure_LOW;
     settings->calibration_blink_delay_ms = 200;
     settings->calibration_diff_t = 20;
@@ -398,7 +398,7 @@ psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings) {
 
 void
 psmove_tracker_set_auto_update_leds(PSMoveTracker *tracker, PSMove *move,
-        enum PSMove_Bool auto_update_leds)
+        bool auto_update_leds)
 {
     psmove_return_if_fail(tracker != NULL);
     psmove_return_if_fail(move != NULL);
@@ -408,14 +408,14 @@ psmove_tracker_set_auto_update_leds(PSMoveTracker *tracker, PSMove *move,
 }
 
 
-enum PSMove_Bool
+bool
 psmove_tracker_get_auto_update_leds(PSMoveTracker *tracker, PSMove *move)
 {
-    psmove_return_val_if_fail(tracker != NULL, PSMove_False);
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(tracker != NULL, false);
+    psmove_return_val_if_fail(move != NULL, false);
 
     TrackedController *tc = psmove_tracker_find_controller(tracker, move);
-    psmove_return_val_if_fail(tc != NULL, PSMove_False);
+    psmove_return_val_if_fail(tc != NULL, false);
     return tc->auto_update_leds;
 }
 
@@ -471,7 +471,7 @@ psmove_tracker_get_exposure(PSMoveTracker *tracker)
 
 void
 psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
-        enum PSMove_Bool enabled)
+        bool enabled)
 {
     psmove_return_if_fail(tracker != NULL);
     psmove_return_if_fail(tracker->cc != NULL);
@@ -481,7 +481,7 @@ psmove_tracker_enable_deinterlace(PSMoveTracker *tracker,
 
 void
 psmove_tracker_set_mirror(PSMoveTracker *tracker,
-        enum PSMove_Bool enabled)
+        bool enabled)
 {
     psmove_return_if_fail(tracker != NULL);
 
@@ -489,10 +489,10 @@ psmove_tracker_set_mirror(PSMoveTracker *tracker,
     camera_control_set_parameters(tracker->cc, tracker->settings.camera_exposure, tracker->settings.camera_mirror);
 }
 
-enum PSMove_Bool
+bool
 psmove_tracker_get_mirror(PSMoveTracker *tracker)
 {
-    psmove_return_val_if_fail(tracker != NULL, PSMove_False);
+    psmove_return_val_if_fail(tracker != NULL, false);
 
     return tracker->settings.camera_mirror;
 }
@@ -657,7 +657,7 @@ psmove_tracker_count_connected()
 	return camera_control_count_connected();
 }
 
-enum PSMove_Bool
+bool
 psmove_tracker_get_next_unused_color(PSMoveTracker *tracker,
          unsigned char *r, unsigned char *g, unsigned char *b)
 {
@@ -676,11 +676,11 @@ psmove_tracker_get_next_unused_color(PSMoveTracker *tracker,
             if (g) *g = color.g;
             if (b) *b = color.b;
 
-            return PSMove_True;
+            return true;
         }
     }
 
-    return PSMove_False;
+    return false;
 }
 
 enum PSMoveTracker_Status
@@ -724,7 +724,7 @@ psmove_tracker_old_color_is_tracked(PSMoveTracker* tracker, PSMove* move, struct
 
     tc->move = move;
     tc->color = rgb;
-    tc->auto_update_leds = PSMove_True;
+    tc->auto_update_leds = true;
 
     tc->eColorRGB = tc->eFColorRGB = colorRGB;
     tc->eColorHSV = tc->eFColorHSV = th_rgb2hsv(tc->eFColorRGB);
@@ -949,17 +949,17 @@ psmove_tracker_blinking_calibration(PSMoveTracker *tracker, PSMove *move,
 
     // CHECK if sphere was found in each BLINK image
     if (valid_countours < BLINKS) {
-        return PSMove_False;
+        return false;
     }
 
     // CHECK if the size of the found contours are similar
     double sizeVariance, sizeAverage;
     th_stats(sizes, BLINKS, &sizeVariance, &sizeAverage);
     if (sqrt(sizeVariance) >= (sizeAverage / 100.0 * tracker->settings.calibration_size_std)) {
-        return PSMove_False;
+        return false;
     }
 
-    return PSMove_True;
+    return true;
 }
 
 
@@ -991,7 +991,7 @@ psmove_tracker_enable_with_color_internal(PSMoveTracker *tracker, PSMove *move,
         if (tc != NULL) {
             tc->move = move;
             tc->color = rgb;
-            tc->auto_update_leds = PSMove_True;
+            tc->auto_update_leds = true;
 
             psmove_tracker_remember_color(tracker, rgb, colorRGB);
             tc->eColorRGB = tc->eFColorRGB = colorRGB;

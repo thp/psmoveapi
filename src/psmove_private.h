@@ -218,7 +218,7 @@ typedef struct {
 ADDAPI PSMove_Firmware_Info *
 ADDCALL _psmove_get_firmware_info(PSMove *move);
 
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode);
 
 /**
@@ -239,7 +239,7 @@ typedef unsigned char PSMove_Data_AuthChallenge[34];
 /* A response data buffer for authentication. */
 typedef unsigned char PSMove_Data_AuthResponse[22];
 
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL _psmove_set_auth_challenge(PSMove *move, PSMove_Data_AuthChallenge *challenge);
 
 ADDAPI PSMove_Data_AuthResponse *
