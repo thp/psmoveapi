@@ -199,6 +199,12 @@ struct TrackerTestApp {
             tmp = format("Exposure: %s (press 'E' to cycle)", exposure_to_string(exposure));
             cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
 
+            const auto camera_info = psmove_tracker_get_camera_info(tracker);
+
+            txt.y += 10;
+            tmp = format("%s %dx%d (%s)", camera_info->camera_name, camera_info->width, camera_info->height, camera_info->camera_api);
+            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
+
             cvShowImage(TEST_TRACKER_WINDOW_NAME, frame);
         }
     }

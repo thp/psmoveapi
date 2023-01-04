@@ -413,3 +413,35 @@ camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct
 
     return camera_control_fallback_frame_layout(cc, width, height, layout);
 }
+
+struct PSMoveCameraInfo
+camera_control_get_camera_info(CameraControl *cc)
+{
+    const char *camera_name = "Unknown camera";
+
+    int fd = open_v4l2_device(cc->cameraID);
+    if (fd != -1) {
+        switch (identify_camera(fd)) {
+            case PS_CAMERA_PS3_EYE:
+                camera_name = "PS3 Eye";
+                break;
+            case PS_CAMERA_PS4_CAMERA:
+                camera_name = "PS4 Camera";
+                break;
+            case PS_CAMERA_PS5_CAMERA:
+                camera_name = "PS5 Camera";
+                break;
+            case PS_CAMERA_UNKNOWN:
+            default:
+                break;
+        }
+        v4l2_close(fd);
+    }
+
+    return PSMoveCameraInfo {
+        camera_name,
+        "V4L2",
+        cc->layout.crop_width,
+        cc->layout.crop_height,
+    };
+}

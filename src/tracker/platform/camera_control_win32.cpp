@@ -64,3 +64,9 @@ camera_control_get_preferred_camera()
 {
     return -1;
 }
+
+struct PSMoveCameraInfo
+camera_control_get_camera_info(CameraControl *cc)
+{
+    return camera_control_fallback_get_camera_info(cc);
+}

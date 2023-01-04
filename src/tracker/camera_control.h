@@ -34,6 +34,7 @@ extern "C" {
 #endif
 
 #include "psmove.h"
+#include "psmove_tracker.h"
 #include "../psmove_private.h"
 
 struct _CameraControl;
@@ -115,6 +116,9 @@ camera_control_backup_system_settings(CameraControl* cc);
 void
 camera_control_restore_system_settings(CameraControl* cc,
         struct CameraControlSystemSettings *settings);
+
+struct PSMoveCameraInfo
+camera_control_get_camera_info(CameraControl *cc);
 
 #ifdef __cplusplus
 }

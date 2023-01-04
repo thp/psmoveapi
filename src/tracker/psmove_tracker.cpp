@@ -168,6 +168,8 @@ struct _PSMoveTracker {
     float debug_fps; // the current FPS achieved by "psmove_tracker_update"
 
     bool fast_exposure; // whether to skip the dynamic exposure setting
+
+    PSMoveCameraInfo camera_info;
 };
 
 // -------- START: internal functions only
@@ -525,6 +527,8 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
         free(tracker);
         return NULL;
     }
+
+    tracker->camera_info = camera_control_get_camera_info(tracker->cc);
 
 	char *intrinsics_xml = psmove_util_get_file_path(settings->intrinsics_xml);
 	char *distortion_xml = psmove_util_get_file_path(settings->distortion_xml);
@@ -1842,4 +1846,10 @@ psmove_tracker_color_is_used(PSMoveTracker *tracker, struct PSMove_RGBValue colo
     }
 
     return 0;
+}
+
+const struct PSMoveCameraInfo *
+psmove_tracker_get_camera_info(PSMoveTracker *tracker)
+{
+    return &tracker->camera_info;
 }

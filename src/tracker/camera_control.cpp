@@ -335,3 +335,23 @@ camera_control_ps3eyedriver_set_parameters(CameraControl* cc, float exposure, bo
     ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, mirror);
 #endif
 }
+
+struct PSMoveCameraInfo
+camera_control_fallback_get_camera_info(CameraControl *cc)
+{
+#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
+    return PSMoveCameraInfo {
+        "PS3 Eye",
+        "PS3EYEDriver",
+        cc->layout.crop_width,
+        cc->layout.crop_height,
+    };
+#else
+    return PSMoveCameraInfo {
+        "Unknown camera",
+        "Unknown API",
+        cc->layout.crop_width,
+        cc->layout.crop_height,
+    };
+#endif
+}

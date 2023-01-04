@@ -69,3 +69,6 @@ camera_control_fallback_frame_layout(CameraControl *cc, int width, int height, s
 
 void
 camera_control_ps3eyedriver_set_parameters(CameraControl* cc, float exposure, bool mirror);
+
+struct PSMoveCameraInfo
+camera_control_fallback_get_camera_info(CameraControl *cc);
