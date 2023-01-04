@@ -51,7 +51,7 @@ main(int argc, char *argv[])
     PSMoveTrackerSettings settings;
     psmove_tracker_settings_set_default(&settings);
     settings.color_mapping_max_age = 0;
-    settings.camera_mirror = PSMove_True;
+    settings.camera_mirror = true;
 
     char *progname = argv[0];
     ++argv;

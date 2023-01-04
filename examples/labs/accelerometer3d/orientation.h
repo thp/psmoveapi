@@ -58,7 +58,7 @@ class Orientation : public QThread
             QQuaternion quaternion;
 
             assert((move = psmove_connect()) != NULL);
-            psmove_enable_orientation(move, PSMove_True);
+            psmove_enable_orientation(move, true);
             assert(psmove_has_orientation(move));
 
             while (true) {

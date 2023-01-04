@@ -266,7 +266,7 @@ struct _PSMove {
     unsigned char leds_dirty;
 
     /* Nonzero if LED update rate limiting is enabled */
-    enum PSMove_Bool leds_rate_limiting;
+    bool leds_rate_limiting;
 
     /* Milliseconds timestamp of last LEDs update (psmove_util_get_ticks) */
     long last_leds_update;
@@ -278,7 +278,7 @@ struct _PSMove {
     PSMoveOrientation *orientation;
 
     /* Is orientation tracking currently enabled? */
-    enum PSMove_Bool orientation_enabled;
+    bool orientation_enabled;
 
 	/* The direction of the magnetic field found during calibration */
 	PSMove_3AxisVector magnetometer_calibration_direction;
@@ -290,7 +290,7 @@ struct _PSMove {
     enum PSMove_Connection_Type connection_type;
 };
 
-enum PSMove_Bool
+bool
 psmove_load_magnetometer_calibration(PSMove *move);
 
 /* End private definitions */
@@ -324,7 +324,7 @@ psmove_get_half_frame(PSMove *move, enum PSMove_Sensor sensor,
 
 /* Start implementation of the API */
 
-enum PSMove_Bool
+bool
 psmove_init(enum PSMove_Version version)
 {
     // Compile-time version of the library is PSMOVE_CURRENT_VERSION
@@ -334,9 +334,9 @@ psmove_init(enum PSMove_Version version)
     // but it's okay if the requested version is less than the implemented version,
     // as we (try to) be backwards compatible with older API users
     if (version <= PSMOVE_CURRENT_VERSION) {
-        return PSMove_True;
+        return true;
     } else {
-        return PSMove_False;
+        return false;
     }
 }
 
@@ -386,7 +386,7 @@ _psmove_read_data(PSMove *move, unsigned char *data, size_t length)
     }
 }
 
-enum PSMove_Bool
+bool
 psmove_is_remote(PSMove *move)
 {
     return move->type == PSMove_MOVED;
@@ -617,13 +617,13 @@ _psmove_get_device_path(PSMove *move)
     return move->device_path;
 }
 
-enum PSMove_Bool
+bool
 _psmove_set_auth_challenge(PSMove *move, PSMove_Data_AuthChallenge *challenge)
 {
     unsigned char buf[sizeof(PSMove_Data_AuthChallenge) + 1];
     int res;
 
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
 
     memset(buf, 0, sizeof(buf));
     buf[0] = PSMove_Req_SetAuthChallenge;
@@ -702,17 +702,17 @@ _psmove_get_firmware_info(PSMove *move)
     return info;
 }
 
-enum PSMove_Bool
+bool
 _psmove_set_operation_mode(PSMove *move, enum PSMove_Operation_Mode mode)
 {
     unsigned char buf[10];
     int res;
     char mode_magic_val;
 
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
 
     /* We currently support setting STDFU or BTDFU mode only */
-    psmove_return_val_if_fail(mode == Mode_STDFU || mode == Mode_BTDFU, PSMove_False);
+    psmove_return_val_if_fail(mode == Mode_STDFU || mode == Mode_BTDFU, false);
 
     switch (mode) {
         case Mode_STDFU:
@@ -1127,16 +1127,16 @@ _psmove_set_btaddr(PSMove *move, PSMove_Data_BTAddr *addr)
     return (res == sizeof(bts));
 }
 
-enum PSMove_Bool
+bool
 psmove_pair(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
 
     PSMove_Data_BTAddr btaddr;
     PSMove_Data_BTAddr current_host;
 
     if (!_psmove_read_btaddrs(move, &current_host, NULL)) {
-        return PSMove_False;
+        return false;
     }
 
     char *host = psmove_port_get_host_bluetooth_address();
@@ -1145,14 +1145,14 @@ psmove_pair(PSMove *move)
                 "Make sure Bluetooth is turned on.\n");
     }
 
-    psmove_return_val_if_fail(host != NULL, PSMove_False);
+    psmove_return_val_if_fail(host != NULL, false);
     if (!_psmove_btaddr_from_string(host, &btaddr)) {
-        return PSMove_False;
+        return false;
     }
 
     if (memcmp(current_host, btaddr, sizeof(PSMove_Data_BTAddr)) != 0) {
         if (!_psmove_set_btaddr(move, &btaddr)) {
-            return PSMove_False;
+            return false;
         }
     } else {
         PSMOVE_DEBUG("Already paired.");
@@ -1160,7 +1160,7 @@ psmove_pair(PSMove *move)
 
     char *addr = psmove_get_serial(move);
 
-    enum PSMove_Bool result = psmove_port_register_psmove(addr, host, move->model);
+    bool result = psmove_port_register_psmove(addr, host, move->model);
 
     psmove_free_mem(addr);
     psmove_free_mem(host);
@@ -1168,7 +1168,7 @@ psmove_pair(PSMove *move)
     return result;
 }
 
-enum PSMove_Bool
+bool
 psmove_host_pair_custom(const char *addr)
 {
     // NOTE: We assume Move Motion controller model ZCM1 to be compatible with
@@ -1176,15 +1176,15 @@ psmove_host_pair_custom(const char *addr)
     return psmove_host_pair_custom_model(addr, Model_ZCM1);
 }
 
-enum PSMove_Bool
+bool
 psmove_host_pair_custom_model(const char *caddr, enum PSMove_Model_Type model)
 {
     char *addr = strdup(caddr);
     char *host = psmove_port_get_host_bluetooth_address();
 
-    psmove_return_val_if_fail(host != NULL, PSMove_False);
+    psmove_return_val_if_fail(host != NULL, false);
 
-    enum PSMove_Bool result = psmove_port_register_psmove(addr, host, model);
+    bool result = psmove_port_register_psmove(addr, host, model);
 
     psmove_free_mem(host);
     psmove_free_mem(addr);
@@ -1193,7 +1193,7 @@ psmove_host_pair_custom_model(const char *caddr, enum PSMove_Model_Type model)
     return result;
 }
 
-enum PSMove_Bool
+bool
 psmove_pair_custom(PSMove *move, const char *new_host_string)
 {
     psmove_return_val_if_fail(move != NULL, 0);
@@ -1202,16 +1202,16 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
     PSMove_Data_BTAddr current_host;
 
     if (!_psmove_read_btaddrs(move, &current_host, NULL)) {
-        return PSMove_False;
+        return false;
     }
 
     if (!_psmove_btaddr_from_string(new_host_string, &new_host)) {
-        return PSMove_False;
+        return false;
     }
 
     if (memcmp(current_host, new_host, sizeof(PSMove_Data_BTAddr)) != 0) {
         if (!_psmove_set_btaddr(move, &new_host)) {
-            return PSMove_False;
+            return false;
         }
     } else {
         PSMOVE_DEBUG("Already paired.");
@@ -1220,7 +1220,7 @@ psmove_pair_custom(PSMove *move, const char *new_host_string)
     char *addr = psmove_get_serial(move);
     char *host = _psmove_btaddr_to_string(new_host);
 
-    enum PSMove_Bool result = psmove_port_register_psmove(addr, host, move->model);
+    bool result = psmove_port_register_psmove(addr, host, move->model);
 
     psmove_free_mem(addr);
     psmove_free_mem(host);
@@ -1292,17 +1292,17 @@ psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
     move->leds_dirty = 1;
 }
 
-enum PSMove_Bool
+bool
 psmove_set_led_pwm_frequency(PSMove *move, unsigned long freq)
 {
     unsigned char buf[7];
     int res;
 
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
 
     if (freq < 733 || freq > 24e6) {
         PSMOVE_WARNING("Frequency can only assume values between 733 and 24e6.");
-        return PSMove_False;
+        return false;
     }
 
     memset(buf, 0, sizeof(buf));
@@ -1390,7 +1390,7 @@ psmove_update_leds(PSMove *move)
 }
 
 void
-psmove_set_rate_limiting(PSMove *move, enum PSMove_Bool enabled)
+psmove_set_rate_limiting(PSMove *move, bool enabled)
 {
     psmove_return_if_fail(move != NULL);
     move->leds_rate_limiting = enabled;
@@ -1476,23 +1476,23 @@ psmove_poll(PSMove *move)
     return 0;
 }
 
-enum PSMove_Bool
+bool
 psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data)
 {
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
-    psmove_return_val_if_fail(data != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
+    psmove_return_val_if_fail(data != NULL, false);
 
     switch (move->model) {
         case Model_ZCM1:
             assert(sizeof(*data) >= sizeof(move->input.zcm1.extdata));
             memcpy(data, move->input.zcm1.extdata, sizeof(move->input.zcm1.extdata));
-            return PSMove_True;
+            return true;
         case Model_ZCM2:
             // EXT data not supported on ZCM2
-            return PSMove_False;
+            return false;
         default:
             PSMOVE_ERROR("Unknown PS Move model");
-            return PSMove_False;
+            return false;
     }
 }
 
@@ -1569,34 +1569,34 @@ psmove_get_button_events(PSMove *move, unsigned int *pressed,
     move->last_buttons = buttons;
 }
 
-enum PSMove_Bool
+bool
 psmove_is_ext_connected(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
 
     if (move->model != Model_ZCM1) {
-        return PSMove_False;
+        return false;
     }
 
     if ((move->input.common.buttons4 & 0x10) != 0) {
-        return PSMove_True;
+        return true;
     }
 
-    return PSMove_False;
+    return false;
 }
 
-enum PSMove_Bool
+bool
 psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
 {
     unsigned char send_buf[PSMOVE_EXT_DEVICE_REPORT_SIZE];
     unsigned char recv_buf[PSMOVE_EXT_DEVICE_REPORT_SIZE];
     int res;
 
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
-    psmove_return_val_if_fail(ext != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
+    psmove_return_val_if_fail(ext != NULL, false);
 
     if (move->model != Model_ZCM1) {
-        return PSMove_False;
+        return false;
     }
 
     /* Send setup Report for the following read operation */
@@ -1610,7 +1610,7 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
 
     if (res != sizeof(send_buf)) {
         PSMOVE_WARNING("Sending Feature Report for read setup failed");
-        return PSMove_False;
+        return false;
     }
 
     /* Send actual read Report */
@@ -1620,7 +1620,7 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
 
     if (res != sizeof(recv_buf)) {
         PSMOVE_WARNING("Sending Feature Report for actual read failed");
-        return PSMove_False;
+        return false;
     }
 
     memset(ext, 0, sizeof(PSMove_Ext_Device_Info));
@@ -1632,26 +1632,26 @@ psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *ext)
     assert(sizeof(ext->dev_info) <= sizeof(recv_buf) - 11);
     memcpy(ext->dev_info, recv_buf + 11, sizeof(ext->dev_info));
 
-    return PSMove_True;
+    return true;
 }
 
-enum PSMove_Bool
+bool
 psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char length)
 {
     unsigned char send_buf[PSMOVE_EXT_DEVICE_REPORT_SIZE];
     int res;
 
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
-    psmove_return_val_if_fail(data != NULL, PSMove_False);
-    psmove_return_val_if_fail(length > 0,   PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
+    psmove_return_val_if_fail(data != NULL, false);
+    psmove_return_val_if_fail(length > 0,   false);
 
     if (move->model != Model_ZCM1) {
-        return PSMove_False;
+        return false;
     }
 
     if (length > sizeof(send_buf) - 9) {
         PSMOVE_WARNING("Data too large for send buffer");
-        return PSMove_False;
+        return false;
     }
 
     /* Send Feature Report */
@@ -1666,10 +1666,10 @@ psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char leng
 
     if (res != sizeof(send_buf)) {
         PSMOVE_WARNING("Sending Feature Report failed");
-        return PSMove_False;
+        return false;
     }
 
-    return PSMove_True;
+    return true;
 }
 
 enum PSMove_Battery_Level
@@ -2005,7 +2005,7 @@ psmove_get_magnetometer_vector(PSMove *move,
 	}
 }
 
-enum PSMove_Bool
+bool
 psmove_has_calibration(PSMove *move)
 {
     psmove_return_val_if_fail(move != NULL, 0);
@@ -2061,7 +2061,7 @@ psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz)
 
 
 void
-psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled)
+psmove_enable_orientation(PSMove *move, bool enabled)
 {
     psmove_return_if_fail(move != NULL);
 
@@ -2071,11 +2071,11 @@ psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled)
     move->orientation_enabled = enabled;
 }
 
-enum PSMove_Bool
+bool
 psmove_has_orientation(PSMove *move)
 {
-    psmove_return_val_if_fail(move != NULL, PSMove_False);
-    psmove_return_val_if_fail(move->orientation != NULL, PSMove_False);
+    psmove_return_val_if_fail(move != NULL, false);
+    psmove_return_val_if_fail(move->orientation != NULL, false);
 
     return move->orientation_enabled;
 }
@@ -2180,11 +2180,11 @@ psmove_save_magnetometer_calibration(PSMove *move)
     fclose(fp);
 }
 
-enum PSMove_Bool
+bool
 psmove_load_magnetometer_calibration(PSMove *move)
 {
     if (move == NULL) {
-        return PSMove_False;
+        return false;
     }
 
     psmove_reset_magnetometer_calibration(move);
@@ -2196,7 +2196,7 @@ psmove_load_magnetometer_calibration(PSMove *move)
         char *addr = psmove_get_serial(move);
         PSMOVE_WARNING("Magnetometer in %s not yet calibrated.", addr);
         psmove_free_mem(addr);
-        return PSMove_False;
+        return false;
     }
 
     struct PSMove_CalibrationData data;
@@ -2209,7 +2209,7 @@ psmove_load_magnetometer_calibration(PSMove *move)
     if (res != sizeof(data) || data.endian_magic != PSMOVE_CALIBRATION_MAGIC) {
         PSMOVE_WARNING("Error reading calibration file (res=%d, magic=0x%08x)", res, data.endian_magic);
         psmove_reset_magnetometer_calibration(move);
-        return PSMove_False;
+        return false;
     }
 
     move->magnetometer_calibration_direction.x = data.mx;
@@ -2222,7 +2222,7 @@ psmove_load_magnetometer_calibration(PSMove *move)
     move->magnetometer_min.z = data.zmin;
     move->magnetometer_max.z = data.zmax;
 
-    return PSMove_True;
+    return true;
 }
 
 float

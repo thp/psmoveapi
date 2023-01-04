@@ -114,7 +114,7 @@ ADDCALL psmove_port_get_host_bluetooth_address();
  * "addr" and "host" might be modified by the function (for normalization),
  * but the ownership of the strings is retained by the caller.
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model);
 
 #ifdef __cplusplus

@@ -223,10 +223,10 @@ macosx_get_major_minor_version()
     return MacOSVersionNumber(major, minor);
 }
 
-enum PSMove_Bool
+bool
 psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model)
 {
-    enum PSMove_Bool result = PSMove_True;
+    bool result = true;
 
     // TODO: Host is ignored for now
 
@@ -237,16 +237,16 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
 
     if (btaddr.length() == 0) {
         OSXPAIR_DEBUG("Not a valid Bluetooth address: %s\n", addr);
-        return PSMove_False;
+        return false;
     }
 
     auto macos_version = macosx_get_major_minor_version();
     if (!macos_version.valid()) {
         OSXPAIR_DEBUG("Cannot detect macOS version.\n");
-        return PSMove_False;
+        return false;
     } else if (macos_version < MacOSVersionNumber(10, 7)) {
         OSXPAIR_DEBUG("No need to add entry for macOS before 10.7.\n");
-        return PSMove_False;
+        return false;
     } else {
         OSXPAIR_DEBUG("Detected: macOS %d.%d\n", macos_version.major, macos_version.minor);
     }
@@ -256,7 +256,7 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
 
     if (macosx_blued_is_paired(btaddr)) {
         OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr.c_str());
-        return PSMove_True;
+        return true;
     }
 
     if (macos_version < MacOSVersionNumber(10, 10))
@@ -283,7 +283,7 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
     OSXPAIR_DEBUG("Running: '%s'\n", command.c_str());
     if (system(command.c_str()) != 0) {
         OSXPAIR_DEBUG("Could not run the command.");
-        result = PSMove_False;
+        result = false;
     }
 
     if (macos_version < MacOSVersionNumber(10, 10))

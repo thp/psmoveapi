@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 
     for(i=0; i<c; i++) {
         moves[i] = psmove_connect_by_id(i);
-        psmove_set_rate_limiting(moves[i], PSMove_True);
+        psmove_set_rate_limiting(moves[i], true);
     }
 
     bool running = true;

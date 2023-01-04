@@ -84,7 +84,7 @@ class MovetyTouch : public QThread
                 moves[i] = psmove_connect_by_id(i);
                 assert(moves[i] != NULL);
 
-                psmove_enable_orientation(moves[i], PSMove_True);
+                psmove_enable_orientation(moves[i], true);
                 assert(psmove_has_orientation(moves[i]));
 
                 while (psmove_tracker_enable(tracker, moves[i])

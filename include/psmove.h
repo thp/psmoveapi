@@ -36,6 +36,7 @@ extern "C" {
 #include "psmove_config.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdarg.h>
 
 #ifdef _WIN32
@@ -208,12 +209,6 @@ enum PSMove_Update_Result {
     Update_Ignored, /*!< LEDs don't need updating, see psmove_set_rate_limiting() */
 };
 
-/*! Boolean type. Use them instead of 0 and 1 to improve code readability. */
-enum PSMove_Bool {
-    PSMove_False = 0, /*!< False, Failure, Disabled (depending on context) */
-    PSMove_True = 1, /*!< True, Success, Enabled (depending on context) */
-};
-
 /*! Remote configuration options, for psmove_set_remote_config() */
 enum PSMove_RemoteConfig {
     PSMove_LocalAndRemote = 0, /*!< Use both local (hidapi) and remote (moved) devices */
@@ -310,10 +305,10 @@ enum PSMove_Version {
  * \param version Should be \ref PSMOVE_CURRENT_VERSION to check for the same
  *                version as was used at compile-time
  *
- * \return \ref PSMove_True on success (version compatible, library initialized)
- * \return \ref PSMove_False otherwise (version mismatch, initialization error)
+ * \return \ref true on success (version compatible, library initialized)
+ * \return \ref false otherwise (version mismatch, initialization error)
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_init(enum PSMove_Version version);
 
 /**
@@ -403,10 +398,10 @@ ADDCALL psmove_connection_type(PSMove *move);
  *
  * \param move A valid \ref PSMove handle
  *
- * \return \ref PSMove_False if the controller is connected locally
- * \return \ref PSMove_True if the controller is connected remotely
+ * \return \ref false if the controller is connected locally
+ * \return \ref true if the controller is connected remotely
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_is_remote(PSMove *move);
 
 /**
@@ -474,10 +469,10 @@ ADDCALL psmove_get_model(PSMove *move);
  *
  * \param move A valid \ref PSMove handle
  *
- * \return \ref PSMove_True if the pairing was successful
- * \return \ref PSMove_False if the pairing failed
+ * \return \ref true if the pairing was successful
+ * \return \ref false if the pairing failed
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_pair(PSMove *move);
 
 /**
@@ -485,7 +480,7 @@ ADDCALL psmove_pair(PSMove *move);
  *
  * \param addr The Bluetooth address of the PS move to add
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_host_pair_custom(const char *addr);
 
 /**
@@ -498,7 +493,7 @@ ADDCALL psmove_host_pair_custom(const char *addr);
  * \param addr The Bluetooth address of the PS move to add
  * \param model The hardware model type of the controller
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type model);
 
 /**
@@ -510,10 +505,10 @@ ADDCALL psmove_host_pair_custom_model(const char *addr, enum PSMove_Model_Type m
  * \param move A valid \ref PSMove handle
  * \param new_host_string The host address in the format \c "aa:bb:cc:dd:ee:ff"
  *
- * \return \ref PSMove_True if the pairing was successful
- * \return \ref PSMove_False if the pairing failed
+ * \return \ref true if the pairing was successful
+ * \return \ref false if the pairing failed
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_pair_custom(PSMove *move, const char *new_host_string);
 
 /**
@@ -530,11 +525,11 @@ ADDCALL psmove_pair_custom(PSMove *move, const char *new_host_string);
  *          be decreased, especially on Linux.
  *
  * \param move A valid \ref PSMove handle
- * \param enabled \ref PSMove_True to enable rate limiting,
- *                \ref PSMove_False to disable
+ * \param enabled \ref true to enable rate limiting,
+ *                \ref false to disable
  **/
 ADDAPI void
-ADDCALL psmove_set_rate_limiting(PSMove *move, enum PSMove_Bool enabled);
+ADDCALL psmove_set_rate_limiting(PSMove *move, bool enabled);
 
 /**
  * \brief Set the RGB LEDs on the PS Move controller.
@@ -586,10 +581,10 @@ ADDCALL psmove_set_leds(PSMove *move, unsigned char r, unsigned char g,
  *
  * \param freq The PWM frequency in Hertz (range is 733 Hz to 24 MHz)
  *
- * \return \ref PSMove_True on success
- * \return \ref PSMove_False on error
+ * \return \ref true on success
+ * \return \ref false on error
  */
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_set_led_pwm_frequency(PSMove *move, unsigned long freq);
 
 /**
@@ -692,11 +687,11 @@ ADDCALL psmove_poll(PSMove *move);
  * \param move A valid \ref PSMove handle
  * \param data Pointer to store the data, must not be \ref NULL
  *
- * \return \ref PSMove_True on success
- * \return \ref PSMove_False on error
+ * \return \ref true on success
+ * \return \ref false on error
  * 
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data);
 
 /**
@@ -706,10 +701,10 @@ ADDCALL psmove_get_ext_data(PSMove *move, PSMove_Ext_Data *data);
  * \param data Pointer to the data which to send
  * \param length Number of bytes in \ref data
  *
- * \return \ref PSMove_True on success
- * \return \ref PSMove_False on error
+ * \return \ref true on success
+ * \return \ref false on error
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_send_ext_data(PSMove *move, const unsigned char *data, unsigned char length);
 
 /**
@@ -783,10 +778,10 @@ ADDCALL psmove_get_button_events(PSMove *move, unsigned int *pressed,
  *
  * \param move A valid \ref PSMove handle
  *
- * \return \ref PSMove_True if an extension device is connected
- * \return \ref PSMove_False if no extension device is connected or in case of an error
+ * \return \ref true if an extension device is connected
+ * \return \ref false if no extension device is connected or in case of an error
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_is_ext_connected(PSMove *move);
 
 /**
@@ -799,10 +794,10 @@ ADDCALL psmove_is_ext_connected(PSMove *move);
  * \param ext Pointer to a \ref PSMove_Ext_Device_Info that will store the
  *            information. Must not be \ref NULL.
  *
- * \return \ref PSMove_True on success
- * \return \ref PSMove_False on error
+ * \return \ref true on success
+ * \return \ref false on error
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_get_ext_device_info(PSMove *move, PSMove_Ext_Device_Info *info);
 
 /**
@@ -957,7 +952,7 @@ ADDCALL psmove_get_magnetometer(PSMove *move, int *mx, int *my, int *mz);
 /**
  * \brief Get the calibrated accelerometer values (in g) from the controller.
  *
- * Assuming that psmove_has_calibration() returns \ref PSMove_True, this
+ * Assuming that psmove_has_calibration() returns \ref true, this
  * function will give you the calibrated accelerometer values in g. To get
  * the raw accelerometer readings, use psmove_get_accelerometer().
  *
@@ -993,7 +988,7 @@ ADDCALL psmove_get_accelerometer_frame(PSMove *move, enum PSMove_Frame frame,
 /**
  * \brief Get the calibrated gyroscope values (in rad/s) from the controller.
  *
- * Assuming that psmove_has_calibration() returns \ref PSMove_True, this
+ * Assuming that psmove_has_calibration() returns \ref true, this
  * function will give you the calibrated gyroscope values in rad/s. To get
  * the raw gyroscope readings, use psmove_get_gyroscope().
  *
@@ -1140,9 +1135,9 @@ ADDCALL psmove_get_magnetometer_calibration_range(PSMove *move);
  *
  * \param move A valid \ref PSMove handle
  *
- * \return \ref PSMove_True if calibration is supported, \ref PSMove_False otherwise
+ * \return \ref true if calibration is supported, \ref false otherwise
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_has_calibration(PSMove *move);
 
 /**
@@ -1173,10 +1168,10 @@ ADDCALL psmove_dump_calibration(PSMove *move);
  * orientation features can be used.
  *
  * \param move A valid \ref PSMove handle
- * \param enabled \ref PSMove_True to enable orientation tracking, \ref PSMove_False to disable
+ * \param enabled \ref true to enable orientation tracking, \ref false to disable
  **/
 ADDAPI void
-ADDCALL psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled);
+ADDCALL psmove_enable_orientation(PSMove *move, bool enabled);
 
 /**
  * \brief Check if orientation tracking is available for this controller.
@@ -1188,15 +1183,15 @@ ADDCALL psmove_enable_orientation(PSMove *move, enum PSMove_Bool enabled);
  * intensive, especially on embedded systems), you have to enable the
  * orientation tracking manually via psmove_enable_orientation()).
  *
- * If this function returns \ref PSMove_False, the orientation features
+ * If this function returns \ref false, the orientation features
  * will not work - check for missing calibration data and make sure that
  * you have called psmove_enable_orientation() first.
  *
  * \param move A valid \ref PSMove handle
  *
- * \return \ref PSMove_True if calibration is supported, \ref PSMove_False otherwise
+ * \return \ref true if calibration is supported, \ref false otherwise
  **/
-ADDAPI enum PSMove_Bool
+ADDAPI bool
 ADDCALL psmove_has_orientation(PSMove *move);
 
 /**

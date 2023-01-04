@@ -95,7 +95,7 @@ struct TrackerTestApp {
         psmove_tracker_settings_set_default(&settings);
 
         settings.exposure_mode = exposure;
-        settings.camera_mirror = PSMove_True;
+        settings.camera_mirror = true;
 
         PSMOVE_INFO("Trying to init PSMoveTracker...");
         tracker = psmove_tracker_new_with_settings(&settings);

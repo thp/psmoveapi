@@ -322,7 +322,7 @@ psmove_dev::psmove_dev(move_daemon *moved, const char *path, const wchar_t *seri
 
     assigned_id = moved->get_next_id();
 
-    psmove_set_rate_limiting(move, PSMove_False);
+    psmove_set_rate_limiting(move, false);
 }
 
 void
