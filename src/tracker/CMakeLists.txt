@@ -75,9 +75,6 @@ IF(PSMOVE_BUILD_TRACKER)
             ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_win32.cpp)
         list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS vfw32 comctl32)
         #OpenCV extra dependencies: comctl32 gdi32 ole32 setupapi ws2_32 vfw32
-        IF(MINGW)
-            list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS stdc++)
-        ENDIF(MINGW)
     ELSE() #Linux
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
             ${CMAKE_CURRENT_LIST_DIR}/platform/camera_control_linux.cpp)

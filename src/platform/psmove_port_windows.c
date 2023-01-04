@@ -44,11 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* define flag that seems to be missing in MinGW */
-#ifndef BLUETOOTH_SERVICE_ENABLE
-#    define BLUETOOTH_SERVICE_ENABLE 0x01
-#endif
-
 
 #define WINPAIR_DEBUG(...) PSMOVE_DEBUG(__VA_ARGS__)
 
