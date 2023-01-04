@@ -366,8 +366,7 @@ psmove_tracker_settings_set_default(PSMoveTrackerSettings *settings)
     settings->color_update_quality_t1 = 0.8f;
     settings->color_update_quality_t2 = 0.2f;
     settings->color_update_quality_t3 = 6.f;
-    settings->intrinsics_xml = "intrinsics.xml";
-    settings->distortion_xml = "distortion.xml";
+    settings->camera_calibration_filename = nullptr;
 }
 
 PSMoveTracker *psmove_tracker_new() {
@@ -516,11 +515,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 
     tracker->camera_info = camera_control_get_camera_info(tracker->cc);
 
-	char *intrinsics_xml = psmove_util_get_file_path(settings->intrinsics_xml);
-	char *distortion_xml = psmove_util_get_file_path(settings->distortion_xml);
-	camera_control_read_calibration(tracker->cc, intrinsics_xml, distortion_xml);
-	psmove_free_mem(intrinsics_xml);
-	psmove_free_mem(distortion_xml);
+    camera_control_read_calibration(tracker->cc, settings->camera_calibration_filename);
 
     tracker->cc_settings = camera_control_backup_system_settings(tracker->cc);
 

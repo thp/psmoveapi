@@ -40,8 +40,6 @@ CameraControl::CameraControl(int camera_id, int width, int height, int framerate
 CameraControl::~CameraControl()
 {
     cvReleaseImage(&frame3chUndistort);
-    cvReleaseImage(&mapx);
-    cvReleaseImage(&mapy);
 }
 
 CameraControlFrameLayout

@@ -1,7 +1,7 @@
 
  /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2012, 2023 Thomas Perl <m@thp.io>
  * Copyright (c) 2012 Benjamin Venditt <benjamin.venditti@gmail.com>
  * All rights reserved.
  *
@@ -34,221 +34,241 @@
 #include "psmove.h"
 #include "psmove_tracker.h"
 #include "psmove_tracker_opencv.h"
-
-#ifdef WIN32
-#    include <windows.h>
-#endif
+#include "../psmove_format.h"
 
 #include "opencv2/core/core_c.h"
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
 
-#define CAM_TO_USE 0
 #define SPACE_KEY 32
 #define ESC_KEY 27
-#define TEXT_COLOR cvScalar(0xFF, 0xFF, 0xFF, 0)
-#define TEXT_POS cvPoint(20,30)
 
-#define INTRINSICS_XML "intrinsics.xml"
-#define DISTORTION_XML "distortion.xml"
+void
+put_text(IplImage *img, const std::string &text)
+{
+    CvFont font = cvFont(1, 1);
 
-void put_text(IplImage* img, const char* text) {
-	CvFont font = cvFont(1.5, 1);
-	cvPutText(img, text, TEXT_POS, &font, TEXT_COLOR);
+    cvPutText(img, text.c_str(), cvPoint(19, 29), &font, cvScalar(0, 0, 0, 255));
+    cvPutText(img, text.c_str(), cvPoint(20, 30), &font, cvScalar(255, 255, 255, 255));
 }
 
 IplImage *
 capture_frame(PSMoveTracker *tracker)
 {
-    psmove_tracker_update_image(tracker);
-    return psmove_tracker_opencv_get_frame(tracker);
+    IplImage *frame = nullptr;
+
+    while (frame == nullptr) {
+        psmove_tracker_update_image(tracker);
+        frame = psmove_tracker_opencv_get_frame(tracker);
+    }
+
+    return frame;
 }
 
-int main(int arg, char** args) {
-	int board_w = 4; // Board width in squares
-	int board_h = 7; // Board height
-	int n_boards = 10; // Number of boards
-	int board_n = board_w * board_h;
-	int user_canceled = 0;
-	CvSize board_sz = cvSize(board_w, board_h);
+int
+camera_calibration_main(int argc, char *argv[])
+{
+    if (argc == 1) {
+        PSMOVE_FATAL("Usage: %s filename.xml", argv[0]);
+        return 1;
+    }
 
-	PSMoveTracker* tracker = psmove_tracker_new();
-	if (tracker == NULL) {
-		printf("Could not create tracker.\n");
-		return 2;
-	}
-	psmove_tracker_set_exposure(tracker, Exposure_HIGH);
+    const char *output_filename = argv[1];
 
-    char *intrinsics_xml = psmove_util_get_file_path(INTRINSICS_XML);
-    char *distortion_xml = psmove_util_get_file_path(DISTORTION_XML);
+    int board_w = 9; // Board width in squares
+    int board_h = 6; // Board height
 
-	// Allocate Memory
-	CvMat* image_points = cvCreateMat(n_boards * board_n, 2, CV_32FC1);
-	CvMat* object_points = cvCreateMat(n_boards * board_n, 3, CV_32FC1);
-	CvMat* point_counts = cvCreateMat(n_boards, 1, CV_32SC1);
-	CvMat* intrinsic_matrix = cvCreateMat(3, 3, CV_32FC1);
-	CvMat* distortion_coeffs = cvCreateMat(5, 1, CV_32FC1);
-	IplImage *image = capture_frame(tracker);
+    size_t n_boards = 10; // Number of boards
+    size_t board_n = board_w * board_h;
+    bool user_canceled = false;
 
-	CvPoint2D32f* corners = (CvPoint2D32f*)calloc(board_n, sizeof(CvPoint2D32f));
-	int i = 0;
-	int j = 0;
-	for (i = 0; i < board_n; i++)
-		corners[i] = cvPoint2D32f(0, 0);
+    CvSize board_sz = cvSize(board_w, board_h);
 
-	int corner_count;
-	int successes = 0;
-	int step = 0;
+    PSMoveTracker *tracker = psmove_tracker_new();
+    PSMOVE_VERIFY(tracker != nullptr, "Could not create tracker");
+    psmove_tracker_set_exposure(tracker, Exposure_HIGH);
 
-	IplImage *gray_image1 = cvCreateImage(cvGetSize(image), image->depth, 1);
-	IplImage *gray_image2 = cvCreateImage(cvGetSize(image), image->depth, 1);
-	// Capture Corner views loop until we've got n_boards
-	// succesful captures (all corners on the board are found)
-	while (successes < n_boards) {
-		int key = cvWaitKey(1);
-		user_canceled = key == ESC_KEY;
-		if (user_canceled)
-			break;
+    std::vector<std::vector<cv::Vec2f>> image_points;
+    std::vector<std::vector<cv::Vec3f>> object_points;
 
-		image = capture_frame(tracker); // Get next image
-		cvCvtColor(image, gray_image1, CV_BGR2GRAY);
-		corner_count = 0;
-		int has_checkBoard = cvCheckChessboard(gray_image1, board_sz);
+    for (size_t y=0; y<n_boards; ++y) {
+        std::vector<cv::Vec2f> image_row;
+        std::vector<cv::Vec3f> object_row;
+        for (size_t x=0; x<board_n; ++x) {
+            image_row.emplace_back(cv::Vec2f(0.f, 0.f));
+            object_row.emplace_back(cv::Vec3f(0.f, 0.f, 0.f));
+        }
+        image_points.emplace_back(image_row);
+        object_points.emplace_back(object_row);
+    }
 
-		if (has_checkBoard) {
-			// Find chessboard corners:
-			int found = cvFindChessboardCorners(gray_image1, board_sz, corners, &corner_count, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
+    IplImage *image = capture_frame(tracker);
 
-			// Get subpixel accuracy on those corners
-			cvFindCornerSubPix(gray_image1, corners, corner_count, cvSize(11, 11), cvSize(-1, -1), cvTermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
-			// Draw it
-			cvDrawChessboardCorners(image, board_sz, corners, corner_count, found);
+    size_t successes = 0;
 
-			char text[222];
-			sprintf(text, "captured %d/%d (press 'SPACE' to capture!)", successes, n_boards);
+    IplImage *gray_image1 = cvCreateImage(cvGetSize(image), image->depth, 1);
 
-			if (corner_count == board_n)
-				put_text(image, text);
-			else
-				put_text(image, "press 'ESC' to exit");
+    // Capture Corner views loop until we've got n_boards
+    // succesful captures (all corners on the board are found)
+    while (successes < n_boards) {
+        int key = cvWaitKey(1) & 0xFF;
+        if (key == ESC_KEY) {
+            user_canceled = true;
+            break;
+        }
 
-			// If we got a good board, add it to our data
-			if (corner_count == board_n && key == SPACE_KEY) {
-				step = successes * board_n;
-				for (i = step, j = 0; j < board_n; ++i, ++j) {
-					CV_MAT_ELEM( *image_points, float, i, 0 ) = corners[j].x;
-					CV_MAT_ELEM( *image_points, float, i, 1 ) = corners[j].y;
-					CV_MAT_ELEM( *object_points, float, i, 0 ) = (float)(j / board_w);
-					CV_MAT_ELEM( *object_points, float, i, 1 ) = (float)(j % board_w);
-					CV_MAT_ELEM( *object_points, float, i, 2 ) = 0.0f;
-				}
-				CV_MAT_ELEM( *point_counts, int, successes, 0 ) = board_n;
-				successes++;
-			}
-		} else {
-			put_text(image, "press 'ESC' to exit");
-		}
-		cvShowImage("Calibration", image);
-	}
+        image = capture_frame(tracker);
+        cvCvtColor(image, gray_image1, CV_BGR2GRAY);
 
-	if (!user_canceled) {
-		// Allocate matrices according to how many chessboards found
-		CvMat* object_points2 = cvCreateMat(successes * board_n, 3, CV_32FC1);
-		CvMat* image_points2 = cvCreateMat(successes * board_n, 2, CV_32FC1);
-		CvMat* point_counts2 = cvCreateMat(successes, 1, CV_32SC1);
+        int has_checkBoard = cv::checkChessboard(cv::cvarrToMat(gray_image1), board_sz);
 
-		// Transfer the points into the correct size matrices
-		for (i = 0; i < successes * board_n; ++i) {
-			CV_MAT_ELEM( *image_points2, float, i, 0) = CV_MAT_ELEM( *image_points, float, i, 0 );
-			CV_MAT_ELEM( *image_points2, float, i, 1) = CV_MAT_ELEM( *image_points, float, i, 1 );
-			CV_MAT_ELEM( *object_points2, float, i, 0) = CV_MAT_ELEM( *object_points, float, i, 0 );
-			CV_MAT_ELEM( *object_points2, float, i, 1) = CV_MAT_ELEM( *object_points, float, i, 1 );
-			CV_MAT_ELEM( *object_points2, float, i, 2) = CV_MAT_ELEM( *object_points, float, i, 2 );
-		}
+        if (has_checkBoard) {
+            std::vector<cv::Point2f> corners(board_n);
 
-		for (i = 0; i < successes; ++i) {
-			CV_MAT_ELEM( *point_counts2, int, i, 0 ) = CV_MAT_ELEM( *point_counts, int, i, 0 );
-		}
-		cvReleaseMat(&object_points);
-		cvReleaseMat(&image_points);
-		cvReleaseMat(&point_counts);
+            // Find chessboard corners:
+            bool found = cv::findChessboardCorners(cv::cvarrToMat(gray_image1), board_sz, corners, cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE);
 
-		// At this point we have all the chessboard corners we need
-		// Initiliazie the intrinsic matrix such that the two focal lengths
-		// have a ratio of 1.0
+            // Get subpixel accuracy on those corners
+            if (found) {
+                int dx = 3;
+                int dy = 3;
 
-		CV_MAT_ELEM( *intrinsic_matrix, float, 0, 0 ) = 1.0;
-		CV_MAT_ELEM( *intrinsic_matrix, float, 1, 1 ) = 1.0;
+                for (auto &p: corners) {
+                    dx = int(std::min(float(dx), std::min(float(image->width) - 1.f - p.x, p.x)));
+                    dy = int(std::min(float(dy), std::min(float(image->height) - 1.f - p.y, p.y)));
+                }
 
-		// Calibrate the camera
-		CvTermCriteria default_termination = cvTermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 30, DBL_EPSILON);
-		cvCalibrateCamera2(object_points2, image_points2, point_counts2,
-                        cvGetSize(image), intrinsic_matrix, distortion_coeffs,
-                        NULL, NULL, CV_CALIB_FIX_ASPECT_RATIO, default_termination);
+                cv::find4QuadCornerSubpix(cv::cvarrToMat(gray_image1), corners, cvSize(dx, dy));
+            }
 
-		// Save the intrinsics and distortions
-		CvAttrList empty_attribues = cvAttrList(0, 0);
-		cvSave(intrinsics_xml, intrinsic_matrix, 0, 0, empty_attribues);
-		cvSave(distortion_xml, distortion_coeffs, 0, 0, empty_attribues);
+            // Draw it
+            cv::drawChessboardCorners(cv::cvarrToMat(image), board_sz, corners, found);
 
-		// Example of loading these matrices back in
-		CvMat *intrinsic = (CvMat*) cvLoad(intrinsics_xml, 0, 0, 0);
-		CvMat *distortion = (CvMat*) cvLoad(distortion_xml, 0, 0, 0);
+            if (found && corners.size() == board_n) {
+                put_text(image, format("captured %d/%d (press 'SPACE' to capture)", int(successes), int(n_boards)));
 
-		image = capture_frame(tracker);
+                // If we got a good board, add it to our data
+                if (key == SPACE_KEY) {
+                    for (size_t j = 0; j < board_n; ++j) {
+                        image_points[successes][j] = cv::Vec2f(corners[j].x, corners[j].y);
+                        object_points[successes][j] = cv::Vec3f(float(j / board_w), float(j % board_w), 0.f);
+                    }
 
-		// Build the undistort map that we will use for all subsequent frames
-		IplImage* mapx = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, 1);
-		IplImage* mapy = cvCreateImage(cvGetSize(image), IPL_DEPTH_32F, 1);
-		cvInitUndistortMap(intrinsic, distortion, mapx, mapy);
+                    successes++;
+                }
+            } else {
+                put_text(image, "press 'ESC' to exit");
+            }
+        } else {
+            put_text(image, "press 'ESC' to exit");
+        }
+        cvShowImage("Calibration", image);
+    }
 
-		// Run the camera to the screen, now showing the raw and undistorted image
-		while (image) {
-			IplImage *t = cvCloneImage(image);
-			put_text(image, "press 'P' to pause or 'ESC' to exit");
-			cvShowImage("Calibration", image); // Show raw image
-			cvRemap(t, image, mapx, mapy, CV_INTER_LINEAR + CV_WARP_FILL_OUTLIERS, cvScalarAll(0)); // undistort image
-			cvShowImage("Undistorted", image); // Show corrected image
-
-			cvCvtColor(image, gray_image1, CV_BGR2GRAY);
-			cvCvtColor(t, gray_image2, CV_BGR2GRAY);
-			cvAbsDiff(gray_image1, gray_image2, gray_image1);
-			cvShowImage("Difference", gray_image1); // Show corrected image
-
-			cvReleaseImage(&t);
-			// Handle pause/unpause and esc
-			int c = cvWaitKey(15);
-			if (c == 'p') {
-				c = 0;
-				while (c != 'p' && c != ESC_KEY) {
-					c = cvWaitKey(250);
-				}
-			}
-			if (c == ESC_KEY)
-				break;
-			image = capture_frame(tracker);
-		}
-
-		cvReleaseMat(&intrinsic_matrix);
-		cvReleaseMat(&distortion_coeffs);
-		cvReleaseMat(&object_points2);
-		cvReleaseMat(&image_points2);
-		cvReleaseMat(&point_counts2);
-
-		cvReleaseImage(&mapx);
-		cvReleaseImage(&mapy);
-	}
-
-	cvReleaseImage(&gray_image1);
-	cvReleaseImage(&gray_image2);
-
-    free(intrinsics_xml);
-    free(distortion_xml);
-	free(corners);
+    cvReleaseImage(&gray_image1);
 
     psmove_tracker_free(tracker);
 
-	return 0;
+    if (!user_canceled) {
+        float intrinsic_init[] = {
+            1.f, 0.f, 0.f,
+            0.f, 1.f, 0.f,
+            0.f, 0.f, 1.f,
+        };
+        cv::Mat intrinsic_matrix(3, 3, CV_32FC1, intrinsic_init);
+        cv::Mat distortion_coeffs(5, 1, CV_32FC1);
+
+        // Calibrate the camera
+        std::vector<cv::Mat> rvecs;
+        std::vector<cv::Mat> tvecs;
+        std::vector<double> stdDeviationsIntrinsics;
+        std::vector<double> stdDeviationsExtrinsics;
+        std::vector<double> perViewErrors;
+
+        double totalError = cv::calibrateCamera(object_points, image_points,
+                cvGetSize(image), intrinsic_matrix, distortion_coeffs,
+                rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors,
+                cv::CALIB_FIX_ASPECT_RATIO, cvTermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 30, DBL_EPSILON));
+
+        PSMOVE_INFO("Total error from cv::calibrateCamera(): %lf", totalError);
+
+        PSMOVE_INFO("Writing to %s", output_filename);
+        cv::FileStorage out(output_filename, cv::FileStorage::WRITE);
+        out << "intrinsic_matrix" << intrinsic_matrix;
+        out << "distortion_coeffs" << distortion_coeffs;
+        out.release();
+    }
+
+    return 0;
 }
 
+int
+verify_camera_calibration_main(int argc, char *argv[])
+{
+    if (argc == 1) {
+        PSMOVE_FATAL("Usage: %s filename.xml", argv[0]);
+        return 1;
+    }
+
+    const char *input_filename = argv[1];
+
+    cv::Mat intrinsic_matrix(3, 3, CV_32FC1);
+    cv::Mat distortion_coeffs(5, 1, CV_32FC1);
+
+    PSMOVE_INFO("Reading from %s", input_filename);
+    cv::FileStorage in(input_filename, cv::FileStorage::READ);
+    in["intrinsic_matrix"] >> intrinsic_matrix;
+    in["distortion_coeffs"] >> distortion_coeffs;
+    in.release();
+
+    PSMoveTracker *tracker = psmove_tracker_new();
+    PSMOVE_VERIFY(tracker != nullptr, "Could not create tracker");
+    psmove_tracker_set_exposure(tracker, Exposure_HIGH);
+
+    IplImage *image = capture_frame(tracker);
+
+    // Build the undistort map that we will use for all subsequent frames
+    cv::Mat mapx(cvGetSize(image), IPL_DEPTH_32F);
+    cv::Mat mapy(cvGetSize(image), IPL_DEPTH_32F);
+
+    cv::Mat R;
+    cv::initUndistortRectifyMap(intrinsic_matrix, distortion_coeffs, R, intrinsic_matrix, cvGetSize(image), CV_32FC1, mapx, mapy);
+
+    IplImage *gray_image1 = cvCreateImage(cvGetSize(image), image->depth, 1);
+    IplImage *gray_image2 = cvCreateImage(cvGetSize(image), image->depth, 1);
+
+    // Run the camera to the screen, now showing the raw and undistorted image
+    while (image) {
+        IplImage *t = cvCloneImage(image);
+        put_text(image, "press 'P' to pause or 'ESC' to exit");
+        cvShowImage("Camera Feed", image); // Show raw image
+        cv::remap(cv::cvarrToMat(t), cv::cvarrToMat(image), mapx, mapy, cv::INTER_LINEAR); // undistort image
+        cvShowImage("Undistorted", image); // Show corrected image
+
+        cvCvtColor(image, gray_image1, CV_BGR2GRAY);
+        cvCvtColor(t, gray_image2, CV_BGR2GRAY);
+        cvAbsDiff(gray_image1, gray_image2, gray_image1);
+        cvShowImage("Difference", gray_image1); // Show corrected image
+
+        cvReleaseImage(&t);
+        // Handle pause/unpause and esc
+        int c = cvWaitKey(15) & 0xFF;
+        if (c == 'p') {
+            c = 0;
+            while (c != 'p' && c != ESC_KEY) {
+                c = cvWaitKey(250) & 0xFF;
+            }
+        }
+        if (c == ESC_KEY)
+            break;
+        image = capture_frame(tracker);
+    }
+
+    cvReleaseImage(&gray_image1);
+    cvReleaseImage(&gray_image2);
+
+    psmove_tracker_free(tracker);
+
+    return 0;
+}

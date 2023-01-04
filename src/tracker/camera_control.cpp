@@ -39,7 +39,8 @@
 #include "camera_control_driver.h"
 
 #include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 
 
 CameraControl *
@@ -93,38 +94,35 @@ camera_control_set_deinterlace(CameraControl *cc, bool enabled)
 }
 
 void
-camera_control_read_calibration(CameraControl* cc,
-        char* intrinsicsFile, char* distortionFile)
+camera_control_read_calibration(CameraControl* cc, const char *filename)
 {
-#if CV_VERSION_MAJOR <= 3
-    CvMat *intrinsic = (CvMat*) cvLoad(intrinsicsFile, 0, 0, 0);
-    CvMat *distortion = (CvMat*) cvLoad(distortionFile, 0, 0, 0);
-
-    if (cc->mapx) {
-        cvReleaseImage(&cc->mapx);
-    }
-    if (cc->mapy) {
-        cvReleaseImage(&cc->mapy);
+    if (filename == nullptr) {
+        PSMOVE_INFO("No camera calibration");
+        return;
     }
 
-    if (intrinsic && distortion) {
-        if (!cc->frame3chUndistort) {
-            cc->frame3chUndistort = cvCloneImage(
-                    camera_control_query_frame(cc));
-        }
+    cv::Mat intrinsic_matrix(3, 3, CV_32FC1);
+    cv::Mat distortion_coeffs(5, 1, CV_32FC1);
 
-		cc->mapx = cvCreateImage(cvSize(cc->width, cc->height), IPL_DEPTH_32F, 1);
-		cc->mapy = cvCreateImage(cvSize(cc->width, cc->height), IPL_DEPTH_32F, 1);
+    PSMOVE_INFO("Reading camera calibration from %s", filename);
+    cv::FileStorage in(filename, cv::FileStorage::READ);
+    in["intrinsic_matrix"] >> intrinsic_matrix;
+    in["distortion_coeffs"] >> distortion_coeffs;
+    in.release();
 
-        cvInitUndistortMap(intrinsic, distortion, cc->mapx, cc->mapy);
+    CvSize size = cvSize(cc->layout.crop_width, cc->layout.crop_height);
 
-        // TODO: Shouldn't we free intrinsic and distortion here?
-    } else {
-        PSMOVE_WARNING("No lens calibration files found.");
+    // Build the undistort map that we will use for all subsequent frames
+    cc->mapx.create(size, IPL_DEPTH_32F);
+    cc->mapy.create(size, IPL_DEPTH_32F);
+
+    cv::Mat R;
+    cv::initUndistortRectifyMap(intrinsic_matrix, distortion_coeffs, R, intrinsic_matrix, size, CV_32FC1, cc->mapx, cc->mapy);
+    cc->undistort = true;
+
+    if (!cc->frame3chUndistort) {
+        cc->frame3chUndistort = cvCreateImage(size, 8, 3);
     }
-#else
-    PSMOVE_WARNING("Camera calibration not yet supported in OpenCV 4");
-#endif
 }
 
 IplImage *
@@ -163,11 +161,8 @@ camera_control_query_frame(CameraControl *cc)
     }
 
     // undistort image
-    if (cc->mapx && cc->mapy) {
-        cvRemap(result, cc->frame3chUndistort,
-                cc->mapx, cc->mapy,
-                CV_INTER_LINEAR | CV_WARP_FILL_OUTLIERS,
-                cvScalarAll(0));
+    if (cc->undistort) {
+        cv::remap(cv::cvarrToMat(result), cv::cvarrToMat(cc->frame3chUndistort), cc->mapx, cc->mapy, cv::INTER_LINEAR);
         result = cc->frame3chUndistort;
     }
 

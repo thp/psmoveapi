@@ -126,9 +126,8 @@ typedef struct {
     float color_update_quality_t2;              /* [0.2] maximum allowed change of the radius in percent, compared to the last estimated radius */
     float color_update_quality_t3;              /* [6.f] minimum radius */
 
-	/* Camera calibration */
-	const char* intrinsics_xml;					/* [intrinsics.xml] File to read intrinsics matrix from */
-	const char* distortion_xml;					/* [distortion.xml] File to read distortion coefficients from */
+    /* Camera calibration */
+    const char *camera_calibration_filename;    /* [nullptr] Camera calibration XML file for undistortion (see "psmove calibrate-camera") */
 } PSMoveTrackerSettings; /*!< Structure for storing tracker settings */
 
 /**

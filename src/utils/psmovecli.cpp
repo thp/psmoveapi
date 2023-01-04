@@ -103,20 +103,12 @@ extern "C" {
 #include "test_camera.cpp"
 #undef main
 
-#include "opencv2/opencv_modules.hpp"
-#include "opencv2/core/core_c.h"
-#include "opencv2/highgui/highgui_c.h"
-
 #include "ps4_camera_firmware.cpp"
-
-#if CV_VERSION_MAJOR <= 3
-#define main tracker_camera_calibration_main
 #include "tracker_camera_calibration.cpp"
-#undef main
+
 #define main distance_calibration_main
 #include "distance_calibration.cpp"
 #undef main
-#endif /* CV_VERSION_MAJOR <= 3 */
 
 #endif /* PSMOVE_BUILD_TRACKER */
 
@@ -270,10 +262,9 @@ main(int argc, char *argv[])
 #if defined(PSMOVE_BUILD_TRACKER)
     subcommands.emplace_back(nullptr, "Camera Tracking", nullptr);
 
-#if CV_VERSION_MAJOR <= 3
-    subcommands.emplace_back("calibrate-camera", "Calibrate camera (un)-distortion", tracker_camera_calibration_main);
     subcommands.emplace_back("calibrate-distance", "Calibrate radius-to-distance curve", distance_calibration_main);
-#endif /* CV_VERSION_MAJOR <= 3 */
+    subcommands.emplace_back("calibrate-camera", "Calibrate camera (un)-distortion", camera_calibration_main);
+    subcommands.emplace_back("test-undistortion", "Test a camera calibration file", verify_camera_calibration_main);
     subcommands.emplace_back("test-camera", "Test camera capture (without tracking)", test_camera_main);
     subcommands.emplace_back("test-tracker", "Test tracking of controllers in the camera", test_tracker_main);
     subcommands.emplace_back("camera-firmware", "Initialize PS4/PS5 camera by uploading its firmware via USB", ps4_camera_firmware_main);

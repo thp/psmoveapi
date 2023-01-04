@@ -18,6 +18,7 @@ starting after version 4.0.12, but historic entries might not.
 - `psmove_tracker_get_next_unused_color()` for previewing the next tracked color
 - Added (Linux) support for PS4 Camera (tested with CUH-ZEY2) and PS5 Camera (tested with CFI-ZEY1)
 - `psmove_tracker_get_camera_info()` to get some metadata about the current camera
+- new sub-command `test-undistortion` for `psmove` to test a calibration XML file
 
 ### Changed
 
@@ -28,8 +29,7 @@ starting after version 4.0.12, but historic entries might not.
   file format and controllers might need to be re-calibrated after the update;
   the filename also changed from "BTADDR.magnetometer.csv" to "BTADDR.magnetometer.dat"
 - Update build instructions for newer versions
-- Updated OpenCV to Version 4 (some feature such as camera and distance calibration
-  are currently not ported to OpenCV 4 and have been disabled for now)
+- Updated OpenCV to Version 4
 - `external/libusb-1.0`: Updated to revision f3619c40 for VS2022 support
 - `external/PS3EYEDriver`: Update to latest revision
 - `psmove firmware-info`: List firmware info for all connected controllers (not just the first one),

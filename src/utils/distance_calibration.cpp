@@ -35,6 +35,7 @@
 #include "opencv2/opencv_modules.hpp"
 #include "opencv2/core/core_c.h"
 #include "opencv2/highgui/highgui_c.h"
+#include "opencv2/imgcodecs.hpp"
 
 #include "psmove.h"
 #include "psmove_tracker.h"
@@ -51,12 +52,11 @@ typedef struct measurement measurement;
 #define MEASUREMENTS_CM_STEP 5
 
 void
-save(void *image, int distance)
+save(IplImage *image, int distance)
 {
     char path[512];
     snprintf(path, sizeof(path), "distance_%03d.jpg", distance);
-    int imgParams[] = { CV_IMWRITE_JPEG_QUALITY, 90, 0 };
-    cvSaveImage(path, image, imgParams);
+    cv::imwrite(path, cv::cvarrToMat((IplImage *)image));
 }
 
 int
