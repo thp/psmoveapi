@@ -36,39 +36,30 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#if defined(__linux)
-#include <sys/stat.h>
-#include <glob.h>
-#endif
+#include "camera_control_driver.h"
 
-#include "camera_control_private.h"
+#include "opencv2/highgui/highgui_c.h"
+#include "opencv2/imgproc/imgproc_c.h"
 
-bool
-camera_control_fallback_frame_layout(CameraControl *cc, int width, int height, struct CameraControlFrameLayout *layout)
-{
-    if (width == -1) {
-        width = 640;
-    }
-
-    if (height == -1) {
-        height = 480;
-    }
-
-    layout->capture_width = width;
-    layout->capture_height = height;
-    layout->crop_x = 0;
-    layout->crop_x = 0;
-    layout->crop_width = width;
-    layout->crop_height = height;
-
-    return true;
-}
 
 CameraControl *
 camera_control_new_with_settings(int cameraID, int width, int height, int framerate)
 {
-	CameraControl* cc = (CameraControl*) calloc(1, sizeof(CameraControl));
-	cc->cameraID = cameraID;
+    int camera_env = psmove_util_get_env_int(PSMOVE_TRACKER_CAMERA_ENV);
+    if (camera_env != -1) {
+        cameraID = camera_env;
+        PSMOVE_DEBUG("Using camera %d (%s is set)", cameraID, PSMOVE_TRACKER_CAMERA_ENV);
+    }
+
+    if (cameraID == -1) {
+        cameraID = camera_control_driver_get_preferred_camera();
+
+        if (cameraID == -1) {
+            /* Could not find the PSEye - fallback to first camera */
+            PSMOVE_INFO("No preferred camera found, using first available camera");
+            cameraID = 0;
+        }
+    }
 
     if (width == -1) {
         width = psmove_util_get_env_int(PSMOVE_TRACKER_WIDTH_ENV);
@@ -82,98 +73,22 @@ camera_control_new_with_settings(int cameraID, int width, int height, int framer
         framerate = 60;
     }
 
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    ps3eye_init();
-    int cams = ps3eye_count_connected();
+    CameraControl *cc = nullptr;
 
-    if (cams <= cameraID) {
-        free(cc);
-        return NULL;
-    }
-
-    if (!camera_control_get_frame_layout(cc, width, height, &(cc->layout))) {
-        free(cc);
-        return NULL;
-    }
-
-    cc->eye = ps3eye_open(cameraID, cc->layout.capture_width, cc->layout.capture_height, framerate, PS3EYE_FORMAT_BGR);
-
-    if (cc->eye == NULL) {
-        free(cc);
-        return NULL;
-    }
-
-    cc->framebgr = cvCreateImage(cvSize(cc->layout.capture_width, cc->layout.capture_height), IPL_DEPTH_8U, 3);
-#else
     char *video = psmove_util_get_env_string(PSMOVE_TRACKER_FILENAME_ENV);
-
     if (video) {
-        PSMOVE_INFO("Using '%s' as video input.", video);
-        cc->capture = new cv::VideoCapture(video);
+        cc = new CameraControlVideoFile(video, width, height, framerate);
         psmove_free_mem(video);
     } else {
-#if defined(__linux)
-        // Remap camera ID based on available /dev/video* device nodes. This fixes
-        // an issue when disconnecting a PS Eye camera during video capture, which
-        // - when reconnected - might have an non-zero ID.
-        glob_t g;
-        if (glob("/dev/video*", 0, NULL, &g) == 0) {
-            if (g.gl_pathc > (size_t)cc->cameraID) {
-                if (sscanf(g.gl_pathv[cc->cameraID] + strlen("/dev/video"), "%d", &cc->cameraID) != 1) {
-                    PSMOVE_WARNING("Could not determine camera ID from path '%s'", g.gl_pathv[cc->cameraID]);
-                }
-            }
-            globfree(&g);
-        }
-#endif
-
-        cc->capture = new cv::VideoCapture(cc->cameraID);
-
-        if (cc->capture == NULL) {
-            free(cc);
-            return NULL;
-        }
-
-        if (!camera_control_get_frame_layout(cc, width, height, &(cc->layout))) {
-            free(cc);
-            return NULL;
-        }
-
-        cc->capture->set(cv::CAP_PROP_FRAME_WIDTH, cc->layout.capture_width);
-        cc->capture->set(cv::CAP_PROP_FRAME_HEIGHT, cc->layout.capture_height);
+        cc = camera_control_driver_new(cameraID, width, height, framerate);
     }
-#endif
-    cc->deinterlace = false;
 
-	return cc;
-}
-
-int
-camera_control_count_connected()
-{
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    ps3eye_init();
-    return ps3eye_count_connected();
-#elif defined(__linux)
-    int i = 0;
-    glob_t g;
-    if (glob("/dev/video*", 0, NULL, &g) == 0) {
-        i = g.gl_pathc;
-        globfree(&g);
-    }
-    return i;
-#else
-    PSMOVE_WARNING("Getting number of connected cameras not implemented");
-    return -1;
-#endif
+    return cc;
 }
 
 void
-camera_control_set_deinterlace(CameraControl *cc,
-        bool enabled)
+camera_control_set_deinterlace(CameraControl *cc, bool enabled)
 {
-    psmove_return_if_fail(cc != NULL);
-
     cc->deinterlace = enabled;
 }
 
@@ -213,35 +128,9 @@ camera_control_read_calibration(CameraControl* cc,
 }
 
 IplImage *
-camera_control_query_frame( CameraControl* cc)
+camera_control_query_frame(CameraControl *cc)
 {
-    IplImage *result = nullptr;
-
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    // Get raw data pointer
-    unsigned char *cvpixels;
-    cvGetRawData(cc->framebgr, &cvpixels, 0, 0);
-
-	// Grab frame to buffer
-	ps3eye_grab_frame(cc->eye, cvpixels);
-
-    result = cc->framebgr;
-#else
-    cv::Mat frame;
-    if (cc->capture->read(frame)) {
-        if (cc->frame != nullptr) {
-            cvReleaseImage(&cc->frame);
-        }
-
-        IplImage tmp = cvIplImage(frame);
-
-        cvSetImageROI(&tmp, cvRect(cc->layout.crop_x, cc->layout.crop_y, cc->layout.crop_width, cc->layout.crop_height));
-        result = cvCreateImage(cvSize(cc->layout.crop_width, cc->layout.crop_height), IPL_DEPTH_8U, 3);
-
-        cvCopy(&tmp, result);
-        cc->frame = result;
-    }
-#endif
+    IplImage *result = cc->query_frame();
 
     if (cc->deinterlace) {
         /**
@@ -282,7 +171,6 @@ camera_control_query_frame( CameraControl* cc)
         result = cc->frame3chUndistort;
     }
 
-
 #if defined(CAMERA_CONTROL_DEBUG_CAPTURED_IMAGE)
     cvShowImage("camera input", result);
     cvWaitKey(1);
@@ -291,67 +179,39 @@ camera_control_query_frame( CameraControl* cc)
     return result;
 }
 
+struct PSMoveCameraInfo
+camera_control_get_camera_info(CameraControl *cc)
+{
+    return cc->get_camera_info();
+}
+
+void
+camera_control_set_parameters(CameraControl *cc, float exposure, bool mirror)
+{
+    cc->set_parameters(exposure, mirror);
+}
+
+struct CameraControlSystemSettings *
+camera_control_backup_system_settings(CameraControl *cc)
+{
+    return cc->backup_system_settings();
+}
+
+void
+camera_control_restore_system_settings(CameraControl* cc,
+        struct CameraControlSystemSettings *settings)
+{
+    cc->restore_system_settings(settings);
+}
+
 void
 camera_control_delete(CameraControl* cc)
 {
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    cvReleaseImage(&cc->framebgr);
-
-    ps3eye_close(cc->eye);
-    ps3eye_uninit();
-#else
-    if (cc->frame != nullptr) {
-        cvReleaseImage(&cc->frame);
-    }
-
-    // linux, others and windows opencv only
-    delete cc->capture;
-    cc->capture = nullptr;
-#endif
-
-    if (cc->frame3chUndistort) {
-        cvReleaseImage(&cc->frame3chUndistort);
-    }
-
-    if (cc->mapx) {
-        cvReleaseImage(&cc->mapx);
-    }
-
-    if (cc->mapy) {
-        cvReleaseImage(&cc->mapy);
-    }
-
-    free(cc);
+    delete cc;
 }
 
-void
-camera_control_ps3eyedriver_set_parameters(CameraControl* cc, float exposure, bool mirror)
+int
+camera_control_count_connected()
 {
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_GAIN, 0);
-    ps3eye_set_parameter(cc->eye, PS3EYE_AUTO_WHITEBALANCE, 0);
-    ps3eye_set_parameter(cc->eye, PS3EYE_EXPOSURE, int(0x1FF * std::min(1.f, std::max(0.f, exposure))));
-    ps3eye_set_parameter(cc->eye, PS3EYE_GAIN, 0);
-    ps3eye_set_parameter(cc->eye, PS3EYE_HFLIP, mirror);
-#endif
-}
-
-struct PSMoveCameraInfo
-camera_control_fallback_get_camera_info(CameraControl *cc)
-{
-#if defined(CAMERA_CONTROL_USE_PS3EYE_DRIVER)
-    return PSMoveCameraInfo {
-        "PS3 Eye",
-        "PS3EYEDriver",
-        cc->layout.crop_width,
-        cc->layout.crop_height,
-    };
-#else
-    return PSMoveCameraInfo {
-        "Unknown camera",
-        "Unknown API",
-        cc->layout.crop_width,
-        cc->layout.crop_height,
-    };
-#endif
+    return camera_control_driver_count_connected();
 }

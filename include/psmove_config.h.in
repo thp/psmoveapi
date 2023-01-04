@@ -32,7 +32,7 @@
 /* This file is auto-generated from psmove_config.h.in by CMake */
 
 #cmakedefine PSMOVE_BUILD_TRACKER
-#cmakedefine PSMOVE_USE_PSEYE
+#cmakedefine PSMOVE_USE_PS3EYE_DRIVER
 #cmakedefine PSMOVE_USE_SIXPAIR
 
 /* Version information */

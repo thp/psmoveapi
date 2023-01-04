@@ -37,11 +37,8 @@ extern "C" {
 #include "psmove_tracker.h"
 #include "../psmove_private.h"
 
-struct _CameraControl;
-typedef struct _CameraControl CameraControl;
-
-int
-camera_control_get_preferred_camera();
+struct CameraControl;
+typedef struct CameraControl CameraControl;
 
 CameraControl *
 camera_control_new_with_settings(int cameraID, int width, int height, int framerate);
@@ -63,17 +60,6 @@ camera_control_query_frame(CameraControl* cc);
 void
 camera_control_delete(CameraControl* cc);
 
-
-
-/* Platform-specific functions (implement in camera_control_<os>.c) */
-
-
-/**
-
-// if a negative value is passed, that means it is not changed
-
-*/
-
 /**
  * Set the camera parameters used during capturing
  *
@@ -83,28 +69,6 @@ camera_control_delete(CameraControl* cc);
  **/
 void
 camera_control_set_parameters(CameraControl* cc, float exposure, bool mirror);
-
-struct CameraControlFrameLayout {
-    int capture_width; /**< raw capture device width */
-    int capture_height; /**< raw capture device height */
-
-    int crop_x; /**< absolute frame top left X coordinate */
-    int crop_y; /**< absolute frame top left Y coordinate */
-    int crop_width; /**< cropped frame width */
-    int crop_height; /**< cropped frame height */
-};
-
-/**
- * Get capture frame size and cropping information of camera
- *
- * \param cc Camera control object
- * \param width User-requested width, or -1 if unset
- * \param height User-requested height, or -1 if unset
- * \param layout Frame layout information [OUT]
- * \return true if the requested size is valid, false otherwise
- **/
-bool
-camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct CameraControlFrameLayout *layout);
 
 /* Opaque structure for storing system settings */
 

@@ -1,6 +1,6 @@
 /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2012, 2023 Thomas Perl <m@thp.io>
  * Copyright (c) 2012 Benjamin Venditti <benjamin.venditti@gmail.com>
  * All rights reserved.
  *
@@ -27,10 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-#include "../camera_control.h"
-#include "../camera_control_private.h"
+#include "camera_control.h"
+#include "camera_control_driver.h"
 
-#include "../../psmove_private.h"
+#include "../psmove_private.h"
 
 #include <linux/videodev2.h>
 #include <libv4l2.h>
@@ -42,6 +42,54 @@
 #include <sys/stat.h>
 #include <linux/limits.h>
 #include <glob.h>
+
+
+struct CameraControlV4L2 : public CameraControlOpenCV {
+    CameraControlV4L2(int camera_id, int width, int height, int framerate);
+    virtual ~CameraControlV4L2();
+
+    virtual CameraControlFrameLayout get_frame_layout(int width, int height) override;
+    virtual void set_parameters(float exposure, bool mirror) override;
+    virtual PSMoveCameraInfo get_camera_info() override;
+
+    virtual CameraControlSystemSettings *backup_system_settings() override;
+    virtual void restore_system_settings(CameraControlSystemSettings *settings) override;
+};
+
+static int
+remap_camera_id(int camera_id)
+{
+    // Remap camera ID based on available /dev/video* device nodes. This fixes
+    // an issue when disconnecting a PS Eye camera during video capture, which
+    // - when reconnected - might have an non-zero ID.
+    glob_t g;
+    if (glob("/dev/video*", 0, NULL, &g) == 0) {
+        if (g.gl_pathc > (size_t)camera_id) {
+            if (sscanf(g.gl_pathv[camera_id] + strlen("/dev/video"), "%d", &camera_id) != 1) {
+                PSMOVE_WARNING("Could not determine camera ID from path '%s'", g.gl_pathv[camera_id]);
+            }
+        }
+        globfree(&g);
+    }
+
+    return camera_id;
+}
+
+CameraControlV4L2::CameraControlV4L2(int camera_id, int width, int height, int framerate)
+    : CameraControlOpenCV(remap_camera_id(camera_id), width, height, framerate)
+{
+    capture = new cv::VideoCapture(cameraID);
+
+    layout = get_frame_layout(width, height);
+
+    capture->set(cv::CAP_PROP_FRAME_WIDTH, layout.capture_width);
+    capture->set(cv::CAP_PROP_FRAME_HEIGHT, layout.capture_height);
+    capture->set(cv::CAP_PROP_FPS, framerate);
+}
+
+CameraControlV4L2::~CameraControlV4L2()
+{
+}
 
 int open_v4l2_device(int id)
 {
@@ -132,38 +180,6 @@ identify_camera(int fd)
     return PS_CAMERA_UNKNOWN;
 }
 
-int
-camera_control_get_preferred_camera()
-{
-    int result = -1;
-
-    glob_t g;
-    if (glob("/dev/video*", 0, NULL, &g) == 0) {
-        for (size_t i=0; result == -1 && i<g.gl_pathc; ++i) {
-            int fd = open(g.gl_pathv[i], O_RDWR);
-
-            if (fd != -1) {
-                switch (identify_camera(fd)) {
-                    case PS_CAMERA_PS3_EYE:
-                    case PS_CAMERA_PS4_CAMERA:
-                    case PS_CAMERA_PS5_CAMERA:
-                        result = i;
-                        break;
-                    case PS_CAMERA_UNKNOWN:
-                    default:
-                        break;
-                }
-
-                close(fd);
-            }
-        }
-
-        globfree(&g);
-    }
-
-    return result;
-}
-
 
 struct CameraControlSystemSettings {
     int AutoAEC;
@@ -174,12 +190,12 @@ struct CameraControlSystemSettings {
     int Brightness;
 };
 
-struct CameraControlSystemSettings *
-camera_control_backup_system_settings(CameraControl *cc)
+CameraControlSystemSettings *
+CameraControlV4L2::backup_system_settings()
 {
     struct CameraControlSystemSettings *settings = NULL;
 
-    int fd = open_v4l2_device(cc->cameraID);
+    int fd = open_v4l2_device(cameraID);
     if (fd != -1) {
         auto settings = new CameraControlSystemSettings;
         settings->AutoAEC = v4l2_get_control(fd, V4L2_CID_EXPOSURE_AUTO);
@@ -196,14 +212,13 @@ camera_control_backup_system_settings(CameraControl *cc)
 }
 
 void
-camera_control_restore_system_settings(CameraControl *cc,
-        struct CameraControlSystemSettings *settings)
+CameraControlV4L2::restore_system_settings(struct CameraControlSystemSettings *settings)
 {
     if (!settings) {
         return;
     }
 
-    int fd = open_v4l2_device(cc->cameraID);
+    int fd = open_v4l2_device(cameraID);
     if (fd != -1) {
         v4l2_set_control(fd, V4L2_CID_EXPOSURE_AUTO, settings->AutoAEC);
         v4l2_set_control(fd, V4L2_CID_AUTOGAIN, settings->AutoAGC);
@@ -241,9 +256,9 @@ set_v4l2_ctrl(int fd, int cls, int id, int value)
 }
 
 void
-camera_control_set_parameters(CameraControl* cc, float exposure, bool mirror)
+CameraControlV4L2::set_parameters(float exposure, bool mirror)
 {
-    int fd = open_v4l2_device(cc->cameraID);
+    int fd = open_v4l2_device(cameraID);
 
     if (fd != -1) {
         enum PSCameraDevice camera_type = identify_camera(fd);
@@ -280,74 +295,76 @@ camera_control_set_parameters(CameraControl* cc, float exposure, bool mirror)
     }
 }
 
-bool
-camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct CameraControlFrameLayout *layout)
+CameraControlFrameLayout
+CameraControlV4L2::get_frame_layout(int width, int height)
 {
-    int fd = open_v4l2_device(cc->cameraID);
+    CameraControlFrameLayout result;
+
+    int fd = open_v4l2_device(cameraID);
 
     if (fd != -1) {
         enum PSCameraDevice camera_type = identify_camera(fd);
         switch (camera_type) {
             case PS_CAMERA_PS3_EYE:
                 if (width == 320 && height == 240) {
-                    layout->capture_width = width;
-                    layout->capture_height = height;
-                    layout->crop_x = 0;
-                    layout->crop_y = 0;
-                    layout->crop_width = width;
-                    layout->crop_height = height;
-                    return true;
+                    result.capture_width = width;
+                    result.capture_height = height;
+                    result.crop_x = 0;
+                    result.crop_y = 0;
+                    result.crop_width = width;
+                    result.crop_height = height;
+                    return result;
                 } else if ((width == 640 && height == 480) || (width == -1 && height == -1)) {
                     // TODO: Lower-resolution modes
-                    layout->capture_width = 640;
-                    layout->capture_height = 480;
-                    layout->crop_x = 0;
-                    layout->crop_y = 0;
-                    layout->crop_width = layout->capture_width;
-                    layout->crop_height = layout->capture_height;
-                    return true;
+                    result.capture_width = 640;
+                    result.capture_height = 480;
+                    result.crop_x = 0;
+                    result.crop_y = 0;
+                    result.crop_width = result.capture_width;
+                    result.crop_height = result.capture_height;
+                    return result;
                 }
 
-                PSMOVE_WARNING("Invalid resolution for PS3 Camera: %dx%d", width, height);
-                return false;
+                PSMOVE_FATAL("Invalid resolution for PS3 Camera: %dx%d", width, height);
+                return CameraControlOpenCV::get_frame_layout(width, height);
             case PS_CAMERA_PS4_CAMERA:
                 if ((width == 1280 && height == 800) || (width == -1 && height == -1)) {
                     // 3448x808 @ 60, 30, 15, 8
                     // first frame: x = 48 y = 0 w = 1280 h = 800
                     // second frame: x = 1328 y = 0 w = 1280 h = 800
-                    layout->capture_width = 3448;
-                    layout->capture_height = 808;
-                    layout->crop_x = 48;
-                    layout->crop_y = 0;
-                    layout->crop_width = 1280;
-                    layout->crop_height = 800;
-                    return true;
+                    result.capture_width = 3448;
+                    result.capture_height = 808;
+                    result.crop_x = 48;
+                    result.crop_y = 0;
+                    result.crop_width = 1280;
+                    result.crop_height = 800;
+                    return result;
                 } else if (width == 640 && height == 400) {
                     // 1748x408 @ 120, 60, 30, 15, 8
                     // first frame: x = 48 y = 0 w = 640 h = 400
                     // second frame: x = 688 y = 0 w = 640 h = 400
-                    layout->capture_width = 1748;
-                    layout->capture_height = 408;
-                    layout->crop_x = 48;
-                    layout->crop_y = 0;
-                    layout->crop_width = width;
-                    layout->crop_height = height;
-                    return true;
+                    result.capture_width = 1748;
+                    result.capture_height = 408;
+                    result.crop_x = 48;
+                    result.crop_y = 0;
+                    result.crop_width = width;
+                    result.crop_height = height;
+                    return result;
                 } else if (width == 320 && height == 192) {
                     // 898x200 @ 240.004, 120, 60, 30
                     // first frame: x = 48 y = 0 w = 320 h = 192
                     // second frame: x = 368 y = 0 w = 320 h = 192
-                    layout->capture_width = 898;
-                    layout->capture_height = 200;
-                    layout->crop_x = 48;
-                    layout->crop_y = 0;
-                    layout->crop_width = width;
-                    layout->crop_height = height;
-                    return true;
+                    result.capture_width = 898;
+                    result.capture_height = 200;
+                    result.crop_x = 48;
+                    result.crop_y = 0;
+                    result.crop_width = width;
+                    result.crop_height = height;
+                    return result;
                 }
 
-                PSMOVE_WARNING("Invalid resolution for PS4 Camera: %dx%d", width, height);
-                return false;
+                PSMOVE_FATAL("Invalid resolution for PS4 Camera: %dx%d", width, height);
+                return CameraControlOpenCV::get_frame_layout(width, height);
             case PS_CAMERA_PS5_CAMERA:
                 // "Simple" Stereo Modes:
                 // 3840x1080 (1920x1080 @ 2x) @ 30, 15, 8
@@ -374,36 +391,36 @@ camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct
                         (width == 960 && height == 520) ||
                         (width == 448 && height == 256) ||
                         (width == 640 && height == 376)) {
-                    layout->capture_width = width;
-                    layout->capture_height = height;
-                    layout->crop_x = 0;
-                    layout->crop_y = 0;
-                    layout->crop_width = width;
-                    layout->crop_height = height;
-                    return true;
+                    result.capture_width = width;
+                    result.capture_height = height;
+                    result.crop_x = 0;
+                    result.crop_y = 0;
+                    result.crop_width = width;
+                    result.crop_height = height;
+                    return result;
                 } else if ((width == 1280 && height == 800) ||
                            (width == 320 && height == 184)) {
                     // Need to use the stereo modes for those two resolutions, as the
                     // non-stereo modes resulted in a horizontally-shaking picture
-                    layout->capture_width = width * 2;
-                    layout->capture_height = height;
-                    layout->crop_x = 0;
-                    layout->crop_y = 0;
-                    layout->crop_width = width;
-                    layout->crop_height = height;
-                    return true;
+                    result.capture_width = width * 2;
+                    result.capture_height = height;
+                    result.crop_x = 0;
+                    result.crop_y = 0;
+                    result.crop_width = width;
+                    result.crop_height = height;
+                    return result;
                 } else if (width == -1 && height == -1) {
-                    layout->capture_width = 1280 * 2;
-                    layout->capture_height = 800;
-                    layout->crop_x = 0;
-                    layout->crop_y = 0;
-                    layout->crop_width = 1280;
-                    layout->crop_height = 800;
-                    return true;
+                    result.capture_width = 1280 * 2;
+                    result.capture_height = 800;
+                    result.crop_x = 0;
+                    result.crop_y = 0;
+                    result.crop_width = 1280;
+                    result.crop_height = 800;
+                    return result;
                 }
 
-                PSMOVE_WARNING("Invalid resolution for PS5 Camera: %dx%d", width, height);
-                return false;
+                PSMOVE_FATAL("Invalid resolution for PS5 Camera: %dx%d", width, height);
+                return CameraControlOpenCV::get_frame_layout(width, height);
             case PS_CAMERA_UNKNOWN:
                 // TODO: Maybe query resolution from V4L2 (see above)
                 break;
@@ -411,15 +428,15 @@ camera_control_get_frame_layout(CameraControl *cc, int width, int height, struct
         v4l2_close(fd);
     }
 
-    return camera_control_fallback_frame_layout(cc, width, height, layout);
+    return CameraControlOpenCV::get_frame_layout(width, height);
 }
 
-struct PSMoveCameraInfo
-camera_control_get_camera_info(CameraControl *cc)
+PSMoveCameraInfo
+CameraControlV4L2::get_camera_info()
 {
     const char *camera_name = "Unknown camera";
 
-    int fd = open_v4l2_device(cc->cameraID);
+    int fd = open_v4l2_device(cameraID);
     if (fd != -1) {
         switch (identify_camera(fd)) {
             case PS_CAMERA_PS3_EYE:
@@ -441,7 +458,57 @@ camera_control_get_camera_info(CameraControl *cc)
     return PSMoveCameraInfo {
         camera_name,
         "V4L2",
-        cc->layout.crop_width,
-        cc->layout.crop_height,
+        layout.crop_width,
+        layout.crop_height,
     };
+}
+
+CameraControl *
+camera_control_driver_new(int camera_id, int width, int height, int framerate)
+{
+    return new CameraControlV4L2(camera_id, width, height, framerate);
+}
+
+int
+camera_control_driver_get_preferred_camera()
+{
+    int result = -1;
+
+    glob_t g;
+    if (glob("/dev/video*", 0, NULL, &g) == 0) {
+        for (size_t i=0; result == -1 && i<g.gl_pathc; ++i) {
+            int fd = open(g.gl_pathv[i], O_RDWR);
+
+            if (fd != -1) {
+                switch (identify_camera(fd)) {
+                    case PS_CAMERA_PS3_EYE:
+                    case PS_CAMERA_PS4_CAMERA:
+                    case PS_CAMERA_PS5_CAMERA:
+                        result = i;
+                        break;
+                    case PS_CAMERA_UNKNOWN:
+                    default:
+                        break;
+                }
+
+                close(fd);
+            }
+        }
+
+        globfree(&g);
+    }
+
+    return result;
+}
+
+int
+camera_control_driver_count_connected()
+{
+    int i = 0;
+    glob_t g;
+    if (glob("/dev/video*", 0, NULL, &g) == 0) {
+        i = g.gl_pathc;
+        globfree(&g);
+    }
+    return i;
 }

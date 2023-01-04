@@ -44,7 +44,6 @@
 #include "../psmove_port.h"
 
 #include "camera_control.h"
-#include "camera_control_private.h"
 #include "tracker_helpers.h"
 
 #define ROIS 4                          // the number of levels of regions of interest (roi)
@@ -378,22 +377,9 @@ PSMoveTracker *psmove_tracker_new() {
 }
 
 PSMoveTracker *
-psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings) {
-    int camera = camera_control_get_preferred_camera();
-
-    if (camera == -1) {
-        /* Could not find the PSEye - fallback to first camera */
-        PSMOVE_INFO("No preferred camera found, using first available camera");
-        camera = 0;
-    }
-
-    int camera_env = psmove_util_get_env_int(PSMOVE_TRACKER_CAMERA_ENV);
-    if (camera_env != -1) {
-        camera = camera_env;
-        PSMOVE_DEBUG("Using camera %d (%s is set)", camera, PSMOVE_TRACKER_CAMERA_ENV);
-    }
-
-    return psmove_tracker_new_with_camera_and_settings(camera, settings);
+psmove_tracker_new_with_settings(PSMoveTrackerSettings *settings)
+{
+    return psmove_tracker_new_with_camera_and_settings(-1, settings);
 }
 
 void
