@@ -44,7 +44,6 @@ starting after version 4.0.12, but historic entries might not.
 - Camera tracking-related tools are now merged into the `psmove` CLI utility
 - `psmove_tracker_annotate()` got additional parameters for showing/hiding the status bar and ROIs
 - Tracker dimming factor is now limited to between 0.01 (1% intensity) and 1.0 (100% intensity)
-- The MinGW builds now explicitly require Windows 7 as minimum version
 - Camera devices on Linux - when using OpenCV - are now properly detected and enumerated even if
   there are "holes" in the numbering (e.g. /dev/video1 exists, but /dev/video0 does not)
 - Renamed `calibration_blink_delay` in tracker settings to `calibration_blink_delay_ms`
@@ -74,6 +73,7 @@ starting after version 4.0.12, but historic entries might not.
 - Removed support for the `PSMOVE_TRACKER_COLOR` environment variable
 - Removed default width/height/framerate from `psmove_tracker.h`
 - Removed unused camera settings from `PSMoveTrackerSettings`: auto gain, gain, auto white balance, brightness
+- Removed support for cross-compiling for Windows using MinGW (use MSVC instead on Windows)
 
 
 ## [4.0.12] - 2020-12-19

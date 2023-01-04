@@ -8,7 +8,6 @@ UNAME=$(uname)
 case "$UNAME" in
     Linux)
         sudo apt-get update -qq
-        sudo apt-get install -q -y mingw-w64 g++-mingw-w64
         sudo apt-get install -q -y build-essential cmake             \
                                    libudev-dev libbluetooth-dev      \
                                    libdbus-1-dev                     \

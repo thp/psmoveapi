@@ -81,36 +81,6 @@ The resulting binaries will be placed in ``build-x86/`` (for the 32-bit build)
 and ``build-x64/`` (for the 64-bit build).
 
 
-Cross-Compiling for Windows (MinGW)
------------------------------------
-
-To cross-compile for Windows on Ubuntu::
-
-    sudo apt-get install mingw-w64 cmake
-
-To build manually without the tracker::
-
-    mkdir build-win32
-    cd build-win32
-    cmake \
-        -DCMAKE_TOOLCHAIN_FILE=../cmake/i686-w64-mingw32.toolchain \
-        -DPSMOVE_BUILD_TRACKER=OFF \
-        ..
-
-    mkdir build-win64
-    cd build-win64
-    cmake \
-        -DCMAKE_TOOLCHAIN_FILE=../cmake/x86_64-w64-mingw32.toolchain \
-        -DPSMOVE_BUILD_TRACKER=OFF \
-        ..
-
-Or use the ready-made build script::
-
-    bash -x scripts/mingw64/cross-compile x86_64-w64-mingw32
-    bash -x scripts/mingw64/cross-compile i686-w64-mingw32
-
-
-
 Python bindings
 ---------------
 

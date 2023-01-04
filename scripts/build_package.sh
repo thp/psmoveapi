@@ -29,7 +29,7 @@ if [ -z "$BUILD_TYPE" ]; then
             BUILD_TYPE="macos-native-clang-$(uname -m)"
             ;;
         Linux)
-            BUILD_TYPE="linux-native-clang"
+            BUILD_TYPE="linux-native-gcc"
             ;;
         MINGW64_NT-*)
             BUILD_TYPE="windows-native-msvc-x64"
@@ -42,7 +42,7 @@ if [ -z "$BUILD_TYPE" ]; then
 fi
 
 case "$BUILD_TYPE" in
-    linux-native-clang)
+    linux-native-gcc)
         BUILDDIR=build
         PLATFORM_BIN="
         $BUILDDIR/psmove
@@ -60,37 +60,6 @@ case "$BUILD_TYPE" in
 
         PLATFORM_NAME="linux"
         bash -e -x scripts/linux/build-debian
-        ;;
-    linux-cross-mingw*)
-        BUILDDIR=build
-        PLATFORM_BIN="
-        $BUILDDIR/psmove.exe
-        "
-        PLATFORM_LIB="
-        $BUILDDIR/libpsmoveapi.dll
-        $BUILDDIR/libpsmoveapi_tracker.dll
-        "
-        JAVA_JAR="$BUILDDIR/psmoveapi.jar"
-        JAVA_NATIVE="$BUILDDIR/psmove_java.dll"
-        CSHARP_NATIVE="$BUILDDIR/psmoveapi_csharp.dll"
-        PROCESSING_BINDINGS="$BUILDDIR/psmove_processing_windows.zip"
-
-        pkg_zipfile_zip
-
-        case "$BUILD_TYPE" in
-            linux-cross-mingw64)
-                PLATFORM_NAME="mingw64"
-                bash -e -x scripts/mingw64/cross-compile x86_64-w64-mingw32
-                ;;
-            linux-cross-mingw32)
-                PLATFORM_NAME="mingw32"
-                bash -e -x scripts/mingw64/cross-compile i686-w64-mingw32
-                ;;
-            *)
-                echo "Invalid \$BUILD_TYPE: '$BUILD_TYPE'"
-                exit 1
-                ;;
-        esac
         ;;
     macos-native-clang-*)
         MAC_ARCH=${BUILD_TYPE#macos-native-clang-}

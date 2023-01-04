@@ -69,13 +69,6 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     list(APPEND PSMOVEAPI_REQUIRED_LIBS setupapi bthprops kernel32 ws2_32 winmm version imm32)
 
-    IF(MINGW)
-        # http://stackoverflow.com/questions/4702732/the-program-cant-start-because-libgcc-s-dw2-1-dll-is-missing
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
-        set(CMAKE_STATIC_LIBRARY_FLAGS "${CMAKE_STATIC_LIBRARY_FLAGS} -static -static-libgcc -static-libstdc++")
-    ENDIF(MINGW)
-
     set(HIDAPI_SRC ${ROOT_DIR}/external/hidapi/windows/hid.c)
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
