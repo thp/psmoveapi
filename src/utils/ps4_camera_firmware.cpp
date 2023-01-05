@@ -119,7 +119,12 @@ upload_firmware(libusb_context *context, libusb_device *dev, const std::vector<c
 
     std::vector<uint8_t> chunk = { 0x5b };
     res = libusb_control_transfer(handle, 0x40, 0x00, 0x2200, 0x8018, chunk.data(), chunk.size(), 1000);
+
+#if defined(__APPLE__)
+    PSMOVE_VERIFY(res == -1, "res = %d", res);
+#else
     PSMOVE_VERIFY(res == LIBUSB_ERROR_NO_DEVICE, "res = %d", res);
+#endif
 
     // As the device gets disconnected, we don't do libusb_close() here, and
     // instead rely on the process being closed and all resources freed. This
