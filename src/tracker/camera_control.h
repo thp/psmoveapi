@@ -47,8 +47,7 @@ int
 camera_control_count_connected();
 
 void
-camera_control_read_calibration(CameraControl* cc,
-        char* intrinsicsFile, char* distortionFile);
+camera_control_read_calibration(CameraControl* cc, const char *filename);
 
 void
 camera_control_set_deinterlace(CameraControl *cc,

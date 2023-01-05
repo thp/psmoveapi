@@ -66,8 +66,9 @@ struct CameraControl {
     IplImage *frame { nullptr };
 
     IplImage *frame3chUndistort { nullptr };
-    IplImage *mapx { nullptr };
-    IplImage *mapy { nullptr };
+    bool undistort { false };
+    cv::Mat mapx;
+    cv::Mat mapy;
 
     bool deinterlace { false };
 };
