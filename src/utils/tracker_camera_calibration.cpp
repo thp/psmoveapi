@@ -107,7 +107,9 @@ camera_calibration_main(int argc, char *argv[])
 
     size_t successes = 0;
 
-    IplImage *gray_image1 = cvCreateImage(cvGetSize(image), image->depth, 1);
+    CvSize size = cvGetSize(image);
+
+    IplImage *gray_image1 = cvCreateImage(size, image->depth, 1);
 
     // Capture Corner views loop until we've got n_boards
     // succesful captures (all corners on the board are found)
@@ -166,10 +168,6 @@ camera_calibration_main(int argc, char *argv[])
         cvShowImage("Calibration", image);
     }
 
-    cvReleaseImage(&gray_image1);
-
-    psmove_tracker_free(tracker);
-
     if (!user_canceled) {
         float intrinsic_init[] = {
             1.f, 0.f, 0.f,
@@ -187,7 +185,7 @@ camera_calibration_main(int argc, char *argv[])
         std::vector<double> perViewErrors;
 
         double totalError = cv::calibrateCamera(object_points, image_points,
-                cvGetSize(image), intrinsic_matrix, distortion_coeffs,
+                size, intrinsic_matrix, distortion_coeffs,
                 rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors,
                 cv::CALIB_FIX_ASPECT_RATIO, cvTermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 30, DBL_EPSILON));
 
@@ -199,6 +197,9 @@ camera_calibration_main(int argc, char *argv[])
         out << "distortion_coeffs" << distortion_coeffs;
         out.release();
     }
+
+    cvReleaseImage(&gray_image1);
+    psmove_tracker_free(tracker);
 
     return 0;
 }
