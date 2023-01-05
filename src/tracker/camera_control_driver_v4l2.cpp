@@ -29,6 +29,7 @@
 
 #include "camera_control.h"
 #include "camera_control_driver.h"
+#include "camera_control_layouts.h"
 
 #include "../psmove_private.h"
 
@@ -97,13 +98,6 @@ int open_v4l2_device(int id)
     snprintf(device_file, sizeof(device_file), "/dev/video%d", id);
     return v4l2_open(device_file, O_RDWR, 0);
 }
-
-enum PSCameraDevice {
-    PS_CAMERA_UNKNOWN = 0,
-    PS_CAMERA_PS3_EYE = 3,
-    PS_CAMERA_PS4_CAMERA = 4,
-    PS_CAMERA_PS5_CAMERA = 5,
-};
 
 static enum PSCameraDevice
 identify_camera(int fd)
@@ -295,132 +289,19 @@ CameraControlV4L2::set_parameters(float exposure, bool mirror)
     }
 }
 
+
 CameraControlFrameLayout
 CameraControlV4L2::get_frame_layout(int width, int height)
 {
-    CameraControlFrameLayout result;
-
     int fd = open_v4l2_device(cameraID);
 
     if (fd != -1) {
         enum PSCameraDevice camera_type = identify_camera(fd);
         switch (camera_type) {
             case PS_CAMERA_PS3_EYE:
-                if (width == 320 && height == 240) {
-                    result.capture_width = width;
-                    result.capture_height = height;
-                    result.crop_x = 0;
-                    result.crop_y = 0;
-                    result.crop_width = width;
-                    result.crop_height = height;
-                    return result;
-                } else if ((width == 640 && height == 480) || (width == -1 && height == -1)) {
-                    // TODO: Lower-resolution modes
-                    result.capture_width = 640;
-                    result.capture_height = 480;
-                    result.crop_x = 0;
-                    result.crop_y = 0;
-                    result.crop_width = result.capture_width;
-                    result.crop_height = result.capture_height;
-                    return result;
-                }
-
-                PSMOVE_FATAL("Invalid resolution for PS3 Camera: %dx%d", width, height);
-                return CameraControlOpenCV::get_frame_layout(width, height);
             case PS_CAMERA_PS4_CAMERA:
-                if ((width == 1280 && height == 800) || (width == -1 && height == -1)) {
-                    // 3448x808 @ 60, 30, 15, 8
-                    // first frame: x = 48 y = 0 w = 1280 h = 800
-                    // second frame: x = 1328 y = 0 w = 1280 h = 800
-                    result.capture_width = 3448;
-                    result.capture_height = 808;
-                    result.crop_x = 48;
-                    result.crop_y = 0;
-                    result.crop_width = 1280;
-                    result.crop_height = 800;
-                    return result;
-                } else if (width == 640 && height == 400) {
-                    // 1748x408 @ 120, 60, 30, 15, 8
-                    // first frame: x = 48 y = 0 w = 640 h = 400
-                    // second frame: x = 688 y = 0 w = 640 h = 400
-                    result.capture_width = 1748;
-                    result.capture_height = 408;
-                    result.crop_x = 48;
-                    result.crop_y = 0;
-                    result.crop_width = width;
-                    result.crop_height = height;
-                    return result;
-                } else if (width == 320 && height == 192) {
-                    // 898x200 @ 240.004, 120, 60, 30
-                    // first frame: x = 48 y = 0 w = 320 h = 192
-                    // second frame: x = 368 y = 0 w = 320 h = 192
-                    result.capture_width = 898;
-                    result.capture_height = 200;
-                    result.crop_x = 48;
-                    result.crop_y = 0;
-                    result.crop_width = width;
-                    result.crop_height = height;
-                    return result;
-                }
-
-                PSMOVE_FATAL("Invalid resolution for PS4 Camera: %dx%d", width, height);
-                return CameraControlOpenCV::get_frame_layout(width, height);
             case PS_CAMERA_PS5_CAMERA:
-                // "Simple" Stereo Modes:
-                // 3840x1080 (1920x1080 @ 2x) @ 30, 15, 8
-                // 1920x520 (960x520 @ 2x) @ 60
-                // 2560x800 (1280x800 @ 2x) @ 60, 30, 15, 8
-                // 1280x376 (640x376 @ 2x) @ 120
-                // 640x184 (320x184 @ 2x) @ 240.004
-                // 896x256 (448x256 @ 2x) @ 120
-
-                // Single Frame Modes:
-                // 1920x1080 @ 30, 15, 8
-                // 960x520 @ 60
-                // 448x256 @ 120
-                // 640x376 @ 120
-
-                // "PS4-ish" Modes (Audio, mipmaps?):
-                // 5148x1088 @ 30, 15, 8 --> PS4-ish "weird" layout
-
-                // Unusable (shaking horizontally)
-                // 1280x800 @ 60, 30, 15
-                // 320x184 @ 240.004
-
-                if ((width == 1920 && height == 1080) ||
-                        (width == 960 && height == 520) ||
-                        (width == 448 && height == 256) ||
-                        (width == 640 && height == 376)) {
-                    result.capture_width = width;
-                    result.capture_height = height;
-                    result.crop_x = 0;
-                    result.crop_y = 0;
-                    result.crop_width = width;
-                    result.crop_height = height;
-                    return result;
-                } else if ((width == 1280 && height == 800) ||
-                           (width == 320 && height == 184)) {
-                    // Need to use the stereo modes for those two resolutions, as the
-                    // non-stereo modes resulted in a horizontally-shaking picture
-                    result.capture_width = width * 2;
-                    result.capture_height = height;
-                    result.crop_x = 0;
-                    result.crop_y = 0;
-                    result.crop_width = width;
-                    result.crop_height = height;
-                    return result;
-                } else if (width == -1 && height == -1) {
-                    result.capture_width = 1280 * 2;
-                    result.capture_height = 800;
-                    result.crop_x = 0;
-                    result.crop_y = 0;
-                    result.crop_width = 1280;
-                    result.crop_height = 800;
-                    return result;
-                }
-
-                PSMOVE_FATAL("Invalid resolution for PS5 Camera: %dx%d", width, height);
-                return CameraControlOpenCV::get_frame_layout(width, height);
+                return choose_camera_layout(camera_type, width, height);
             case PS_CAMERA_UNKNOWN:
                 // TODO: Maybe query resolution from V4L2 (see above)
                 break;

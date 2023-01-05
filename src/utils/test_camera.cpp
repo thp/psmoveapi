@@ -98,6 +98,21 @@ main(int argc, char *argv[])
 
         IplImage *frame = psmove_tracker_opencv_get_frame(tracker);
         if (frame) {
+            for (int col=0; col<7; ++col) {
+                int x = col * (frame->width - 1) / 6;
+                cv::line(cv::cvarrToMat(frame), cv::Point(x, 0), cv::Point(x, frame->height - 1), cvScalar(255, (col==3)?255:0, 0, 0));
+
+                int y = col * (frame->height - 1) / 6;
+                cv::line(cv::cvarrToMat(frame), cv::Point(0, y), cv::Point(frame->width - 1, y), cvScalar(0, (col==3)?255:0, 255, 0));
+            }
+
+            const auto camera_info = psmove_tracker_get_camera_info(tracker);
+
+            CvFont fontSmall = cvFont(0.8, 1);
+            CvPoint txt = cvPoint(30, 30);
+            std::string tmp = format("%s %dx%d (%s)", camera_info->camera_name, camera_info->width, camera_info->height, camera_info->camera_api);
+            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
+
             cvShowImage("live camera feed", frame);
         }
     }

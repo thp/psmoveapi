@@ -581,6 +581,7 @@ psmove_tracker_new_with_camera_and_settings(int camera, PSMoveTrackerSettings *s
 
     // We need to grab an image from the camera to determine the frame size
     psmove_tracker_update_image(tracker);
+    frame = tracker->frame;
 
     tracker->settings.search_tile_width = w;
     tracker->settings.search_tile_height = h;

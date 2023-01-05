@@ -67,14 +67,12 @@ IF(PSMOVE_BUILD_TRACKER)
         IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
             find_library(QUARTZCORE QuartzCore)
             find_library(APPKIT AppKit)
-            find_library(QTKIT QTKit)
             find_library(AVFOUNDATION AVFoundation)
             find_library(SECURITY Security)
             list(APPEND PSMOVEAPI_TRACKER_REQUIRED_LIBS
                 stdc++
                 ${QUARTZCORE}
                 ${APPKIT}
-                ${QTKIT}
                 ${AVFOUNDATION}
                 ${SECURITY})
         ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -102,6 +100,10 @@ IF(PSMOVE_BUILD_TRACKER)
         set(INFO_CAMERA_CONTROL_DRIVER "PS3EYEDriver")
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
             ${CMAKE_CURRENT_LIST_DIR}/camera_control_driver_ps3eyedriver.cpp)
+    ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(INFO_CAMERA_CONTROL_DRIVER "AVFoundation")
+        list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
+            ${CMAKE_CURRENT_LIST_DIR}/camera_control_driver_avfoundation.mm)
     ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         set(INFO_CAMERA_CONTROL_DRIVER "V4L2")
         list(APPEND PSMOVEAPI_TRACKER_PLATFORM_SRC
@@ -132,6 +134,9 @@ list(APPEND PSMOVEAPI_TRACKER_SRC
 
     "${CMAKE_CURRENT_LIST_DIR}/camera_control_driver.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/camera_control_driver.h"
+
+    "${CMAKE_CURRENT_LIST_DIR}/camera_control_layouts.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/camera_control_layouts.h"
 
     "${ROOT_DIR}/include/psmove_fusion.h"
     "${ROOT_DIR}/include/psmove_tracker.h"

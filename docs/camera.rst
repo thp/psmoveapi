@@ -7,15 +7,13 @@ as it relates to tracking and the different variants for different OSes.
 PS3 Camera
 ----------
 
-This camera is supported on macOS, Linux and Windows. On macOS and Windows,
-PS3EYEDriver is used together with libusb. On Linux, the kernel includes
-built-in support for the camera using the ``ov534`` driver.
+This camera is always supported on Linux, and supported on macOS and Windows
+when using the PS3EYEDriver camera control driver.
+
+On Linux, the kernel includes built-in support for the camera using the
+``ov534`` driver, so the V4L2 camera control driver also support the PS3 Eye.
 
 The camera needs a USB 2.0 port.
-
-``PS3EYEDriver`` is the recommended and default way of interfacing with the
-camera on Windows and macOS. On Linux, the kernel has a built-in driver
-for the PS3 Eye camera, which is used via OpenCV/V4L2 by default.
 
 On Windows, you need to install `Zadig`_ (WinUSB driver) for the
 "USBCamera-B4.09.24.1" (or similar) device so that the PS3EYEDriver
@@ -36,8 +34,10 @@ Supported resolutions:
 PS4 Camera
 ----------
 
-This camera is currently supported on Linux only. You need to upload a
-firmware binary blob using the ``psmove camera-firmware`` command.
+This camera is currently supported on Linux when using the V4L2 camera control
+driver, and macOS when using the AVFoundation camera control driver.
+
+You need to upload a firmware binary blob using the ``psmove camera-firmware`` command.
 
 The camera needs a USB 3.0 port.
 
@@ -57,8 +57,9 @@ is no way yet to distinguish the PS4 and PS5 cameras from the USB
 descriptor in boot mode only, which is probably why the CFI-ZAA1 appears
 as USB parent device during enumeration).
 
-After the firmware upload the camera is supported using the ``uvcvideo``
-kernel driver in OpenCV/V4L2.
+After the firmware upload the camera is supported using
+the ``uvcvideo`` kernel driver in OpenCV/V4L2 (Linux)
+and ``UVCService`` on OpenCV/AVFoundation (macOS).
 
 - Tested models: CUH-ZEY2 ("round model v2")
 - Tested firmware SHA-1: ``fe86162309518a0ffe267075a2fcf728c5856b3e``
@@ -74,13 +75,16 @@ Supported resolutions:
 PS5 Camera
 ----------
 
-This camera is currently supported on Linux only. You need to upload a
-firmware binary blob using the ``psmove camera-firmware`` command.
+This camera is currently supported on Linux when using the V4L2 camera control
+driver, and macOS when using the AVFoundation camera control driver.
+
+You need to upload a firmware binary blob using the ``psmove camera-firmware`` command.
 
 The camera needs a USB 3.0 port.
 
-After the firmware upload the camera is supported using the ``uvcvideo``
-kernel driver in OpenCV/V4L2.
+After the firmware upload the camera is supported using
+the ``uvcvideo`` kernel driver in OpenCV/V4L2 (Linux)
+and ``UVCService`` on OpenCV/AVFoundation (macOS).
 
 - Tested models: CFI-ZEY1
 - Tested firmware SHA-1: ``0fa4da31a12b662a9a80abc8b84932770df8f7e1``
