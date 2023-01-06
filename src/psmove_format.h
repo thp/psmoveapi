@@ -22,8 +22,16 @@ format(const char *fmt, ...)
     va_start(ap, fmt);
 
     char *tmp = 0;
+#if defined(_WIN32)
+    size_t len = 4096;
+    tmp = (char *)malloc(len);
+    int res = vsnprintf(tmp, len, fmt, ap);
+    PSMOVE_VERIFY(res != -1, "vsnprintf() failed");
+#else
     int res = vasprintf(&tmp, fmt, ap);
     PSMOVE_VERIFY(res != -1, "vasprintf() failed");
+#endif
+
     va_end(ap);
 
     result = tmp;

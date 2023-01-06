@@ -122,6 +122,8 @@ upload_firmware(libusb_context *context, libusb_device *dev, const std::vector<c
 
 #if defined(__APPLE__)
     PSMOVE_VERIFY(res == -1, "res = %d", res);
+#elif defined(_WIN32)
+    PSMOVE_VERIFY(res == 1, "res = %d", res);
 #else
     PSMOVE_VERIFY(res == LIBUSB_ERROR_NO_DEVICE, "res = %d", res);
 #endif

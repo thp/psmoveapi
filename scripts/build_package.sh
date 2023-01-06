@@ -86,11 +86,11 @@ case "$BUILD_TYPE" in
         BUILDDIR="build-${WIN_ARCH}"
         PLATFORM_BIN="
         $BUILDDIR/psmove.exe
+        $BUILDDIR/psmoveapi.dll
+        $BUILDDIR/psmoveapi_tracker.dll
         "
         PLATFORM_LIB="
-        $BUILDDIR/psmoveapi.dll
         $BUILDDIR/psmoveapi.lib
-        $BUILDDIR/psmoveapi_tracker.dll
         $BUILDDIR/psmoveapi_tracker.lib
         "
         JAVA_JAR="$BUILDDIR/psmoveapi.jar"

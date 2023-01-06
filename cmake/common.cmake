@@ -88,7 +88,11 @@ if(MSVC)
   AddFlag(CMAKE_C_FLAGS "/wd4200") #nonstandard extension used : zero-sized array in struct/union
   AddFlag(CMAKE_C_FLAGS "/wd4510") #default constructor could not be generated
   AddFlag(CMAKE_C_FLAGS "/wd4610") #struct 'libusb_version' can never be instantiated - user defined constructor required
-  
+
+  # Opt-in to the "preprocessor conformance mode" for variadic macros
+  AddFlag(CMAKE_CXX_FLAGS "/Zc:preprocessor")
+  AddFlag(CMAKE_C_FLAGS "/Zc:preprocessor")
+
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   # Required by pthread, must be defined before include of any standard header
