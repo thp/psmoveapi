@@ -1,6 +1,6 @@
 /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2016 Thomas Perl <m@thp.io>
+ * Copyright (c) 2016, 2023 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -146,7 +146,7 @@ macosx_blued_running()
     return running;
 }
 
-static int
+static bool
 macosx_blued_is_paired(const std::string &btaddr)
 {
     FILE *fp = popen("defaults read " OSX_BT_CONFIG_PATH " HIDDevices", "r");
@@ -197,6 +197,12 @@ operator<(const MacOSVersionNumber &a, const MacOSVersionNumber &b)
     return (a.major <= b.major && a.minor < b.minor);
 }
 
+bool
+operator>=(const MacOSVersionNumber &a, const MacOSVersionNumber &b)
+{
+    return !(a < b);
+}
+
 static MacOSVersionNumber
 macosx_get_major_minor_version()
 {
@@ -243,6 +249,9 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
     auto macos_version = macosx_get_major_minor_version();
     if (!macos_version.valid()) {
         OSXPAIR_DEBUG("Cannot detect macOS version.\n");
+        return false;
+    } else if (macos_version >= MacOSVersionNumber(13, 0)) {
+        PSMOVE_WARNING("Pairing not yet supported on macOS Ventura, see https://github.com/thp/psmoveapi/issues/457");
         return false;
     } else if (macos_version < MacOSVersionNumber(10, 7)) {
         OSXPAIR_DEBUG("No need to add entry for macOS before 10.7.\n");
