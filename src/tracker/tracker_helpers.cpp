@@ -32,6 +32,7 @@
 #include "tracker_helpers.h"
 
 #include "opencv2/imgproc/imgproc_c.h"
+#include "opencv2/imgcodecs.hpp"
 
 void
 th_stats(double *a, int n, double *variance, double *avg)
@@ -126,3 +127,35 @@ th_rgb2hsv(CvScalar rgb)
     return cvAvg(img_hsv, NULL);
 }
 
+
+CvScalar
+th_hsv2rgb(CvScalar hsv)
+{
+    static IplImage *img_hsv = NULL;
+    static IplImage *img_rgb = NULL;
+
+    /**
+     * We use two dummy 1x1 images here, and set/get the color from from these
+     * images (using cvSet/cvAvg) in order to be able to use cvCvtColor() and
+     * the same algorithm used when using cvCvtColor() on the camera image.
+     **/
+
+    if (!img_hsv) {
+        img_hsv = cvCreateImage(cvSize(1, 1), IPL_DEPTH_8U, 3);
+    }
+
+    if (!img_rgb) {
+        img_rgb = cvCreateImage(cvSize(1, 1), IPL_DEPTH_8U, 3);
+    }
+
+    cvSet(img_hsv, hsv, NULL);
+    cvCvtColor(img_hsv, img_rgb, CV_HSV2RGB);
+
+    return cvAvg(img_rgb, NULL);
+}
+
+void
+th_dump_image(const std::string &filename, IplImage *image)
+{
+    cv::imwrite(filename, cv::cvarrToMat(image));
+}

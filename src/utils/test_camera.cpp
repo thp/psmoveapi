@@ -50,7 +50,6 @@ main(int argc, char *argv[])
 {
     PSMoveTrackerSettings settings;
     psmove_tracker_settings_set_default(&settings);
-    settings.color_mapping_max_age = 0;
     settings.camera_mirror = true;
 
     char *progname = argv[0];
@@ -63,11 +62,11 @@ main(int argc, char *argv[])
             --argc;
 
             if (strcmp(argv[0], "low") == 0) {
-                settings.exposure_mode = Exposure_LOW;
+                settings.camera_exposure = 0.1f;
             } else if (strcmp(argv[0], "medium") == 0) {
-                settings.exposure_mode = Exposure_MEDIUM;
+                settings.camera_exposure = 0.5f;
             } else if (strcmp(argv[0], "high") == 0) {
-                settings.exposure_mode = Exposure_HIGH;
+                settings.camera_exposure = 1.f;
             } else {
                 usage(progname);
                 return 1;

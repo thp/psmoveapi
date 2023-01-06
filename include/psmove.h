@@ -1565,21 +1565,6 @@ ADDAPI int
 ADDCALL psmove_util_get_env_int(const char *name);
 
 /**
- * \brief Get a string from an environment variable
- *
- * Utility function used to get configuration from environment
- * variables.
- *
- * \param name The name of the environment variable
- *
- * \return The string value of the environment variable, or NULL if the
- *         variable is not set. The caller must free the result using
- *         \ref psmove_free_mem() when it is not needed anymore.
- **/
-ADDAPI char *
-ADDCALL psmove_util_get_env_string(const char *name);
-
-/**
  * \brief Sleep for a specific amount of milliseconds.
  *
  * \param ms The amount of milliseconds to sleep

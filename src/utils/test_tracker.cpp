@@ -77,13 +77,7 @@ struct TrackerTestApp {
         controllers.clear();
     }
 
-    void set_dimming(float dimming)
-    {
-        psmove_tracker_set_dimming(tracker, dimming);
-        this->dimming = psmove_tracker_get_dimming(tracker);
-    }
-
-    void set_exposure(enum PSMoveTracker_Exposure exposure)
+    void set_exposure(float exposure)
     {
         psmove_tracker_set_exposure(tracker, exposure);
         this->exposure = psmove_tracker_get_exposure(tracker);
@@ -94,7 +88,7 @@ struct TrackerTestApp {
         PSMoveTrackerSettings settings;
         psmove_tracker_settings_set_default(&settings);
 
-        settings.exposure_mode = exposure;
+        settings.camera_exposure = exposure;
         settings.camera_mirror = true;
 
         PSMOVE_INFO("Trying to init PSMoveTracker...");
@@ -150,7 +144,7 @@ struct TrackerTestApp {
                         color.val[0] = b;
 
                         if (!controller->is_tracking) {
-                            psmove_set_leds(controller->move, r * dimming, g * dimming, b * dimming);
+                            psmove_set_leds(controller->move, r, g, b);
                             psmove_update_leds(controller->move);
                         }
                     } else {
@@ -177,49 +171,26 @@ struct TrackerTestApp {
             }
 
             CvPoint txt { x, y };
-            std::string tmp;
 
-            txt.y += 10;
-            tmp = format("Hover to highlight, click to toggle tracking");
-            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
+            auto println = [&] (const std::string &text) {
+                txt.y += 10;
+                txt.x -= 1; txt.y -= 1;
+                cvPutText(frame, text.c_str(), txt, &fontSmall, CvScalar{0.0, 0.0, 0.0, 0.0});
+                txt.x += 1; txt.y += 1;
+                cvPutText(frame, text.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
+            };
 
-            txt.y += 10;
-            tmp = format("dimming: %.2f (use '1' and '2' to adjust)", dimming);
-            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
-
-            txt.y += 10;
-            tmp = format("Press 'R' to reset tracking for all");
-            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
-
-            txt.y += 10;
-            tmp = format("Press 'D' to toggle ROI, 'S' to toggle statusbar");
-            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
-
-            txt.y += 10;
-            tmp = format("Exposure: %s (press 'E' to cycle)", exposure_to_string(exposure));
-            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
+            println(format("Hover to highlight, click to toggle tracking"));
+            println(format("Press 'R' to reset tracking for all"));
+            println(format("Press 'D' to toggle ROI, 'S' to toggle statusbar"));
+            println(format("Press 'H' to hue-calibrate, 'B' to blink-calibrate"));
+            println(format("Exposure: %.2f (press 'E' to cycle)", exposure));
 
             const auto camera_info = psmove_tracker_get_camera_info(tracker);
 
-            txt.y += 10;
-            tmp = format("%s %dx%d (%s)", camera_info->camera_name, camera_info->width, camera_info->height, camera_info->camera_api);
-            cvPutText(frame, tmp.c_str(), txt, &fontSmall, CvScalar{255.0, 255.0, 255.0, 255.0});
+            println(format("%s %dx%d (%s)", camera_info->camera_name, camera_info->width, camera_info->height, camera_info->camera_api));
 
             cvShowImage(TEST_TRACKER_WINDOW_NAME, frame);
-        }
-    }
-
-    static const char *exposure_to_string(enum PSMoveTracker_Exposure exposure)
-    {
-        switch (exposure) {
-            case Exposure_LOW:
-                return "LOW";
-            case Exposure_MEDIUM:
-                return "MEDIUM";
-            case Exposure_HIGH:
-                return "HIGH";
-            default:
-                return "???";
         }
     }
 
@@ -269,12 +240,22 @@ struct TrackerTestApp {
         }
     }
 
+    void hue_calibration()
+    {
+        int res = psmove_tracker_hue_calibration(tracker, controllers[0]->move);
+        PSMOVE_INFO("Hue calibration found %d colors", res);
+    }
+
+    void reset_color_calibration()
+    {
+        psmove_tracker_reset_color_calibration(tracker);
+    }
+
     PSMoveTracker *tracker { nullptr };
     std::vector<std::unique_ptr<ControllerState>> controllers;
-    float dimming { 1.f };
     bool draw_statusbar { false };
     bool draw_rois { false };
-    enum PSMoveTracker_Exposure exposure { Exposure_LOW };
+    float exposure { 0.1f };
 };
 
 static void
@@ -309,26 +290,27 @@ main(int arg, char *args[])
             break;
         }
 
-        if (key == '1' || key == '2') {
-            float step = 0.05f;
-            if (app.dimming <= 0.2f) {
-                step = 0.01f;
-            }
-            app.set_dimming(app.dimming + ((key == '1') ? -1.f : +1.f) * step);
-        } else if (key == 'r') {
+        if (key == 'r') {
             app.reset();
         } else if (key == 's') {
             app.draw_statusbar = !app.draw_statusbar;
         } else if (key == 'd') {
             app.draw_rois = !app.draw_rois;
         } else if (key == 'e') {
-            if (app.exposure == Exposure_LOW) {
-                app.set_exposure(Exposure_MEDIUM);
-            } else if (app.exposure == Exposure_MEDIUM) {
-                app.set_exposure(Exposure_HIGH);
+            if (app.exposure == 0.1f) {
+                app.set_exposure(0.5f);
+            } else if (app.exposure == 0.5f) {
+                app.set_exposure(1.f);
             } else {
-                app.set_exposure(Exposure_LOW);
+                app.set_exposure(0.1f);
             }
+        } else if (key == 'h') {
+            app.reset_color_calibration();
+            app.hue_calibration();
+            app.reset();
+        } else if (key == 'b') {
+            app.reset_color_calibration();
+            app.reset();
         }
 
         app.update();

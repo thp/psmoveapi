@@ -20,13 +20,6 @@ PSMOVE_TRACKER_FILENAME
 
          export PSMOVE_TRACKER_FILENAME=demo.avi # Will play demo.avi
 
-PSMOVE_TRACKER_ROI_SIZE
-    If set, this controls the size of the biggest (initial) ROI that will be used to track the controller. Bigger means slower in general, but recovery from tracking loss might be faster.
-
-    Example: ::
-
-        export PSMOVE_TRACKER_ROI_SIZE=200
-
 PSMOVE_TRACKER_WIDTH, PSMOVE_TRACKER_HEIGHT
     If set, these variables control the desired size of the camera picture.
 
@@ -36,3 +29,9 @@ PSMOVE_TRACKER_WIDTH, PSMOVE_TRACKER_HEIGHT
         export PSMOVE_TRACKER_HEIGHT=720
 
 
+PSMOVE_TRACKER_CAMERA_CALIBRATION
+    If set, this points to an XML file created by ``psmove calibrate-camera``.
+
+    Example: ::
+
+       export PSMOVE_TRACKER_CAMERA_CALIBRATION=pseye.xml

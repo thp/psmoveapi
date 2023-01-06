@@ -2496,18 +2496,6 @@ psmove_util_get_env_int(const char *name)
 }
 
 char *
-psmove_util_get_env_string(const char *name)
-{
-    char *env = getenv(name);
-
-    if (env) {
-        return strdup(env);
-    }
-
-    return NULL;
-}
-
-char *
 _psmove_normalize_btaddr_inplace(char *addr, bool lowercase, char separator)
 {
     size_t count = strlen(addr);

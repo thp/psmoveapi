@@ -87,7 +87,7 @@ camera_calibration_main(int argc, char *argv[])
 
     PSMoveTracker *tracker = psmove_tracker_new();
     PSMOVE_VERIFY(tracker != nullptr, "Could not create tracker");
-    psmove_tracker_set_exposure(tracker, Exposure_HIGH);
+    psmove_tracker_set_exposure(tracker, 1.f);
 
     std::vector<std::vector<cv::Vec2f>> image_points;
     std::vector<std::vector<cv::Vec3f>> object_points;
@@ -225,7 +225,7 @@ verify_camera_calibration_main(int argc, char *argv[])
 
     PSMoveTracker *tracker = psmove_tracker_new();
     PSMOVE_VERIFY(tracker != nullptr, "Could not create tracker");
-    psmove_tracker_set_exposure(tracker, Exposure_HIGH);
+    psmove_tracker_set_exposure(tracker, 1.f);
 
     IplImage *image = capture_frame(tracker);
 
