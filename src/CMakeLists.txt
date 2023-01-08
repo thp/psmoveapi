@@ -104,11 +104,6 @@ ENDIF()
 
 include_directories(${ROOT_DIR}/include)
 
-configure_file(${ROOT_DIR}/include/psmove_config.h.in
-    ${CMAKE_BINARY_DIR}/psmove_config.h
-    @ONLY)
-
-
 list(APPEND PSMOVEAPI_MOVED_SRC
     "${CMAKE_CURRENT_LIST_DIR}/daemon/moved_client.cpp")
 
@@ -178,10 +173,6 @@ if(NOT PSMOVEAPI_LIB_DEST)
     endif()
 endif()
 
-configure_file(${ROOT_DIR}/contrib/psmoveapi.pc.in
-    ${CMAKE_BINARY_DIR}/psmoveapi.pc
-    @ONLY)
-
 include(${CMAKE_CURRENT_LIST_DIR}/tracker/CMakeLists.txt)
 include(${CMAKE_CURRENT_LIST_DIR}/utils/CMakeLists.txt)
 
@@ -209,3 +200,11 @@ message("")
 message("  Build configuration")
 message("    Debug build:      " ${INFO_USE_DEBUG})
 message("    Library license:  " ${INFO_LICENSE} " (see README.md for details)")
+
+configure_file(${ROOT_DIR}/include/psmove_config.h.in
+    ${CMAKE_BINARY_DIR}/psmove_config.h
+    @ONLY)
+
+configure_file(${ROOT_DIR}/contrib/psmoveapi.pc.in
+    ${CMAKE_BINARY_DIR}/psmoveapi.pc
+    @ONLY)
