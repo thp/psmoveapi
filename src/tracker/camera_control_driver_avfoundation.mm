@@ -113,9 +113,24 @@ struct DetectedCameras {
             { AVCaptureExposureModeCustom,                 "Custom" },
         };
 
+        static std::map<AVCaptureWhiteBalanceMode, std::string> WB_MODE_TO_STRING = {
+            { AVCaptureWhiteBalanceModeLocked,             "Locked" },
+            { AVCaptureWhiteBalanceModeAutoWhiteBalance,   "AutoWhiteBalance" },
+            { AVCaptureWhiteBalanceModeContinuousAutoWhiteBalance, "ContinuousAutoWhiteBalance" },
+        };
+
         auto exposureModeToString = [] (AVCaptureExposureMode mode) -> std::string {
             auto it = MODE_TO_STRING.find(mode);
             if (it == MODE_TO_STRING.end()) {
+                return std::to_string(mode);
+            }
+
+            return it->second;
+        };
+
+        auto whiteBalanceModeToString = [] (AVCaptureWhiteBalanceMode mode) -> std::string {
+            auto it = WB_MODE_TO_STRING.find(mode);
+            if (it == WB_MODE_TO_STRING.end()) {
                 return std::to_string(mode);
             }
 
@@ -128,11 +143,22 @@ struct DetectedCameras {
                 PSMOVE_INFO("Camera Device: %s", [capture_device.modelID UTF8String]);
 
                 PSMOVE_INFO(" - Exposure mode: %s", exposureModeToString(capture_device.exposureMode).c_str());
+                PSMOVE_INFO(" - White balance mode: %s", whiteBalanceModeToString(capture_device.whiteBalanceMode).c_str());
+                PSMOVE_INFO(" - Exposure PoI supported: %s", capture_device.isExposurePointOfInterestSupported ? "true" : "false");
 
-                PSMOVE_INFO(" - Supported modes:");
+                PSMOVE_INFO(" - Supported exposure modes:");
                 bool found = false;
                 for (const auto &mode_string: MODE_TO_STRING) {
                     if ([capture_device isExposureModeSupported: mode_string.first]) {
+                        PSMOVE_INFO("   - %s", mode_string.second.c_str());
+                        found = true;
+                    }
+                }
+
+                PSMOVE_INFO(" - Supported white balance modes:");
+                found = false;
+                for (const auto &mode_string: WB_MODE_TO_STRING) {
+                    if ([capture_device isWhiteBalanceModeSupported: mode_string.first]) {
                         PSMOVE_INFO("   - %s", mode_string.second.c_str());
                         found = true;
                     }
