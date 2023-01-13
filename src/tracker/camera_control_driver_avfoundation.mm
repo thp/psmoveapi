@@ -49,6 +49,9 @@ struct CameraControlAVFoundation : public CameraControlOpenCV {
 
     virtual CameraControlSystemSettings *backup_system_settings() override;
     virtual void restore_system_settings(CameraControlSystemSettings *settings) override;
+
+    int default_width;
+    int default_height;
 };
 
 CameraControlAVFoundation::CameraControlAVFoundation(int camera_id, int width, int height, int framerate)
@@ -56,10 +59,12 @@ CameraControlAVFoundation::CameraControlAVFoundation(int camera_id, int width, i
 {
     capture = new cv::VideoCapture(cameraID);
 
+    // Fall back to default capture width of the device if we don't detect a PS3/PS4/PS5 camera
+    default_width = capture->get(cv::CAP_PROP_FRAME_WIDTH);
+    default_height = capture->get(cv::CAP_PROP_FRAME_HEIGHT);
+
     layout = get_frame_layout(width, height);
 
-    capture->set(cv::CAP_PROP_FRAME_WIDTH, layout.capture_width);
-    capture->set(cv::CAP_PROP_FRAME_HEIGHT, layout.capture_height);
     capture->set(cv::CAP_PROP_FPS, framerate);
 }
 
@@ -241,7 +246,7 @@ CameraControlAVFoundation::get_frame_layout(int width, int height)
             break;
     }
 
-    return CameraControlOpenCV::get_frame_layout(width, height);
+    return CameraControlFrameLayout { default_width, default_height, 0, 0, default_width, default_height };
 }
 
 PSMoveCameraInfo
