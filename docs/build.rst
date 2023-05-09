@@ -33,6 +33,13 @@ build machine (using ``uname -m`` for detection). By default, on
 an Apple Silicon machine, this builds for ``arm64``, and for
 Intel machines, ``x86_64`` is the build target.
 
+The build script assumes Homebrew is installed in the system-wide
+default folder. For Intel, this is ``/usr/local`` and for Apple
+Silicon, this is ``/opt/homebrew``. If your local installation
+differs, you might have to adjust ``MACOS_HOMEBREW_LIB`` and
+``MACOS_HOMEBREW_INCLUDE`` in ``scripts/macos/build-macos``, so
+that the build script and CMake can find headers and libraries.
+
 
 Building on Ubuntu 22.04
 ------------------------
