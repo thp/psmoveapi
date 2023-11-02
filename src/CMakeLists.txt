@@ -194,6 +194,7 @@ install(TARGETS ${PSMOVEAPI_INSTALL_TARGETS}
 )
 
 install(FILES ${PSMOVEAPI_HEADERS} DESTINATION include/psmoveapi)
+install(FILES ${CMAKE_BINARY_DIR}/psmove_config.h DESTINATION include/psmoveapi)
 install(FILES README.md COPYING DESTINATION share/psmoveapi)
 
 message("")
