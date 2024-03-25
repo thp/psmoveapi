@@ -1463,7 +1463,7 @@ psmove_poll(PSMove *move)
          **/
         int seq = (move->input.common.buttons4 & 0x0F);
         if (seq != ((oldseq + 1) % 16)) {
-            PSMOVE_WARNING("Dropped frames (seq %d -> %d)", oldseq, seq);
+            PSMOVE_DEBUG("Dropped frames (seq %d -> %d)", oldseq, seq);
         }
 
         if (move->orientation_enabled) {
