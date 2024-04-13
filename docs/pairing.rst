@@ -76,16 +76,25 @@ button on your controller, follow these steps:
 Starting with macOS Sierra, at most 2 Move controllers can be connected via Bluetooth at the same time when using the built-in Bluetooth adapter. This is due to some internal changes Apple made and did work on the same hardware prior to updating to Sierra. If you need more controllers at the same time, you can use an external Bluetooth adapter.
 
 
-Ubuntu Linux
-~~~~~~~~~~~~
+Linux
+~~~~~
 
-If you wish to access the PSMove controller via USB or Bluetooth without
-requiring root-level permissions then it is necessary to copy the
+On Ubuntu if you wish to access the PSMove controller via USB or Bluetooth
+without requiring root-level permissions then it is necessary to copy the
 ``contrib/99-psmove.rules`` file to ``/etc/udev/rules.d/``::
 
    sudo cp contrib/99-psmove.rules /etc/udev/rules.d/
    sudo udevadm trigger
 
+For security reasons (see https://github.com/advisories/GHSA-qjcj-xg77-6c32 ),
+many distros now use a default configuration of bluez that prevents connections
+from unauthenticated bluetooth devices (like PSMove controllers). To enable
+PSMove controller connections you may need to set ClassicBondedOnly to false in
+``/etc/bluetooth/input.cfg``
+
+Warning: This workaround does essentially 'un-fix' the security fix, so be
+aware that making this change does theoretically make your machine more
+vulnerable to attacks via unauthenticated bluetooth input devices.
 
 Windows
 ~~~~~~~
