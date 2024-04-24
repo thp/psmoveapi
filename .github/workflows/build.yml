@@ -19,12 +19,10 @@ jobs:
         include:
           - build_host: ubuntu-latest
             build_type: linux-native-gcc
-          - build_host: macos-latest
+          - build_host: macos-13
             build_type: macos-native-clang-x86_64
-          # Disabled until Github Actions gets support for M1 Macs.
-          # See also: https://github.com/actions/runner-images/issues/2187
-          #- build_host: macos-latest
-          #  build_type: macos-native-clang-arm64
+          - build_host: macos-latest
+            build_type: macos-native-clang-arm64
           - build_host: windows-latest
             build_type: windows-native-msvc-x64
     env:

@@ -21,7 +21,7 @@ case "$UNAME" in
         brew update
         brew install --force cmake git libtool automake autoconf python libusb-compat sdl2 || true
         brew unlink libtool ; brew link --overwrite libtool
-        pip3 install --user sphinx
+        pip3 install --user --break-system-packages sphinx
         ;;
     MINGW64_NT-*)
         # Nothing to do, Windows OS
