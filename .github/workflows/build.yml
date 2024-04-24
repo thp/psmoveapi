@@ -19,6 +19,8 @@ jobs:
         include:
           - build_host: ubuntu-latest
             build_type: linux-native-gcc
+          - build_host: macos-13
+            build_type: macos-native-clang-x86_64
           - build_host: macos-latest
             build_type: macos-native-clang-arm64
           - build_host: windows-latest
