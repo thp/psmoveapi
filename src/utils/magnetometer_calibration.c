@@ -227,7 +227,9 @@ main(int arg, char** args)
 			}
 			else
 			{
-				printf("Ignoring non-Bluetooth PS Move #%d\n", i);
+				printf("Ignoring PS Move #%d; you need to connect it via Bluetooth (not USB) for calibration.\n", i);
+				psmove_disconnect(move);
+				continue;
 			}
 		}
 		else
