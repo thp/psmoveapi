@@ -157,6 +157,7 @@ public:
     {
         char *host_address = psmove_port_get_host_bluetooth_address();
         PSMOVE_INFO("Host address: %s", host_address ? host_address : "unknown");
+        psmove_free_mem(host_address);
     }
 
     virtual void connect(Controller *controller) {
