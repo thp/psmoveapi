@@ -1,6 +1,6 @@
 /**
  * PS Move API - An interface for the PS Move Motion Controller
- * Copyright (c) 2016, 2023 Thomas Perl <m@thp.io>
+ * Copyright (c) 2016, 2023, 2025 Thomas Perl <m@thp.io>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,8 @@ int IOBluetoothPreferenceGetControllerPowerState();
 
 #define OSXPAIR_DEBUG(...) PSMOVE_INFO(__VA_ARGS__)
 
+namespace {
+
 struct ScopedNSAutoreleasePool {
     ScopedNSAutoreleasePool()
         : pool([[NSAutoreleasePool alloc] init])
@@ -68,8 +70,31 @@ struct ScopedNSAutoreleasePool {
     }
 
 private:
+    ScopedNSAutoreleasePool(const ScopedNSAutoreleasePool &) = delete;
+    ScopedNSAutoreleasePool &operator=(const ScopedNSAutoreleasePool &) = delete;
+
     NSAutoreleasePool *pool;
 };
+
+std::vector<std::string>
+subprocess(const std::string &cmdline)
+{
+    FILE *fp = popen(cmdline.c_str(), "r");
+    if (!fp) {
+        return {};
+    }
+
+    std::vector<std::string> result;
+    char line[1024];
+    while (fgets(line, sizeof(line), fp)) {
+        // Remove trailing newline
+        line[strlen(line)-1] = '\0';
+        result.emplace_back(line);
+    }
+
+    pclose(fp);
+    return result;
+}
 
 static int
 macosx_bluetooth_set_powered(int powered)
@@ -95,64 +120,21 @@ macosx_bluetooth_set_powered(int powered)
     return 1;
 }
 
-static char *
-macosx_get_btaddr()
-{
-    ScopedNSAutoreleasePool pool;
-
-    char *result;
-
-    macosx_bluetooth_set_powered(1);
-
-    IOBluetoothHostController *controller =
-        [IOBluetoothHostController defaultController];
-
-    NSString *addr = [controller addressAsString];
-    psmove_return_val_if_fail(addr != NULL, NULL);
-
-    result = strdup([addr UTF8String]);
-    psmove_return_val_if_fail(result != NULL, NULL);
-
-    char *tmp = result;
-    while (*tmp) {
-        if (*tmp == '-') {
-            *tmp = ':';
-        }
-
-        tmp++;
-    }
-
-    return result;
-}
-
-static int
+static bool
 macosx_blued_running()
 {
-    FILE *fp = popen("ps -axo comm", "r");
-    char command[1024];
-    int running = 0;
-
-    while (fgets(command, sizeof(command), fp)) {
-        /* Remove trailing newline */
-        command[strlen(command)-1] = '\0';
-
-        if (strcmp(command, "/usr/sbin/blued") == 0) {
-            running = 1;
+    for (const auto &line: subprocess("/bin/ps -axo comm")) {
+        if (line == "/usr/sbin/blued") {
+            return true;
         }
     }
 
-    pclose(fp);
-
-    return running;
+    return false;
 }
 
 static bool
 macosx_blued_is_paired(const std::string &btaddr)
 {
-    FILE *fp = popen("defaults read " OSX_BT_CONFIG_PATH " HIDDevices", "r");
-    char line[1024];
-    int found = 0;
-
     /**
      * Example output that we need to parse:
      *
@@ -164,26 +146,55 @@ macosx_blued_is_paired(const std::string &btaddr)
      *
      **/
 
-    while (fgets(line, sizeof(line), fp)) {
-        char *entry = strchr(line, '"');
-        if (entry) {
-            entry++;
-            char *delim = strchr(entry, '"');
-            if (delim) {
-                *delim = '\0';
-                if (strcmp(entry, btaddr.c_str()) == 0) {
-                    found = 1;
+    for (const auto &line: subprocess("/usr/bin/defaults read " OSX_BT_CONFIG_PATH " HIDDevices")) {
+        size_t pos = line.find('"');
+        if (pos != std::string::npos) {
+            ++pos;
+            size_t rpos = line.rfind('"');
+            if (rpos != std::string::npos) {
+                std::string entry = line.substr(pos, rpos - pos);
+                if (entry == btaddr) {
+                    return true;
                 }
             }
         }
     }
 
-    pclose(fp);
-    return found;
+    return false;
 }
 
-struct MacOSVersionNumber {
-    MacOSVersionNumber(int major=-1, int minor=-1) : major(major), minor(minor) {}
+struct MacOSVersion {
+    static MacOSVersion
+    running()
+    {
+        for (const auto &line: subprocess("/usr/bin/sw_vers -productVersion")) {
+            int major, minor, patch = 0;
+            int assigned = sscanf(line.c_str(), "%d.%d.%d", &major, &minor, &patch);
+
+            /**
+             * On Mac OS X 10.8.0, the command returns "10.8", so we allow parsing
+             * only the first two numbers of the triplet, leaving the patch version
+             * to the default (0) set above.
+             *
+             * See: https://github.com/thp/psmoveapi/issues/32
+             **/
+            if (assigned == 2 || assigned == 3) {
+                return MacOSVersion {major, minor};
+            }
+        }
+
+        return MacOSVersion {};
+    }
+
+    explicit MacOSVersion(int major=-1, int minor=-1) : major(major), minor(minor) {}
+
+    bool operator<(const MacOSVersion &other) const {
+        return major < other.major || (major == other.major && minor < other.minor);
+    }
+
+    bool operator>=(const MacOSVersion &other) const {
+        return major > other.major || (major == other.major && minor >= other.minor);
+    }
 
     bool valid() const { return major != -1 && minor != -1; }
 
@@ -191,49 +202,11 @@ struct MacOSVersionNumber {
     int minor;
 };
 
-bool
-operator<(const MacOSVersionNumber &a, const MacOSVersionNumber &b)
-{
-    return (a.major <= b.major && a.minor < b.minor);
-}
-
-bool
-operator>=(const MacOSVersionNumber &a, const MacOSVersionNumber &b)
-{
-    return !(a < b);
-}
-
-static MacOSVersionNumber
-macosx_get_major_minor_version()
-{
-    char tmp[1024];
-    int major, minor, patch = 0;
-    FILE *fp;
-
-    fp = popen("sw_vers -productVersion", "r");
-    psmove_return_val_if_fail(fp != NULL, MacOSVersionNumber());
-    psmove_return_val_if_fail(fgets(tmp, sizeof(tmp), fp) != NULL, MacOSVersionNumber());
-    pclose(fp);
-
-    int assigned = sscanf(tmp, "%d.%d.%d", &major, &minor, &patch);
-
-    /**
-     * On Mac OS X 10.8.0, the command returns "10.8", so we allow parsing
-     * only the first two numbers of the triplet, leaving the patch version
-     * to the default (0) set above.
-     *
-     * See: https://github.com/thp/psmoveapi/issues/32
-     **/
-    psmove_return_val_if_fail(assigned == 2 || assigned == 3, MacOSVersionNumber());
-
-    return MacOSVersionNumber(major, minor);
-}
+} // end anonymous namespace
 
 bool
 psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model)
 {
-    bool result = true;
-
     // TODO: Host is ignored for now
 
     // TODO: FIXME: If necessary, handle different controller models differently.
@@ -246,56 +219,53 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
         return false;
     }
 
-    auto macos_version = macosx_get_major_minor_version();
+    auto macos_version = MacOSVersion::running();
     if (!macos_version.valid()) {
         OSXPAIR_DEBUG("Cannot detect macOS version.\n");
         return false;
-    } else if (macos_version >= MacOSVersionNumber(13, 0)) {
+    } else if (macos_version >= MacOSVersion(13, 0)) {
         PSMOVE_WARNING("Pairing not yet supported on macOS Ventura, see https://github.com/thp/psmoveapi/issues/457");
         return false;
-    } else if (macos_version < MacOSVersionNumber(10, 7)) {
+    } else if (macos_version < MacOSVersion(10, 7)) {
         OSXPAIR_DEBUG("No need to add entry for macOS before 10.7.\n");
         return false;
-    } else {
-        OSXPAIR_DEBUG("Detected: macOS %d.%d\n", macos_version.major, macos_version.minor);
     }
 
-    std::string command = format("defaults write %s HIDDevices -array-add %s",
-                                 OSX_BT_CONFIG_PATH, btaddr.c_str());
+    OSXPAIR_DEBUG("Detected: macOS %d.%d\n", macos_version.major, macos_version.minor);
 
     if (macosx_blued_is_paired(btaddr)) {
         OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr.c_str());
         return true;
     }
 
-    if (macos_version < MacOSVersionNumber(10, 10))
-    {
+    if (macos_version < MacOSVersion(10, 10)) {
         if (!macosx_bluetooth_set_powered(0)) {
             OSXPAIR_DEBUG("Cannot shutdown Bluetooth (shut it down manually).\n");
         }
 
-        int i = 0;
         OSXPAIR_DEBUG("Waiting for blued shutdown (takes ca. 42s) ...\n");
         while (macosx_blued_running()) {
             psmove_port_sleep_ms(1000);
-            i++;
         }
         OSXPAIR_DEBUG("blued successfully shutdown.\n");
     }
 
+    std::string command = format("/usr/bin/defaults write %s HIDDevices -array-add %s",
+                                 OSX_BT_CONFIG_PATH, btaddr.c_str());
     if (geteuid() != 0) {
         // Not running using setuid or sudo, must use osascript to gain privileges
-        command = format("osascript -e 'do shell script \"%s\" with administrator privileges'",
+        command = format("/usr/bin/osascript -e 'do shell script \"%s\" with administrator privileges'",
                          command.c_str());
     }
 
     OSXPAIR_DEBUG("Running: '%s'\n", command.c_str());
+    bool result = true;
     if (system(command.c_str()) != 0) {
         OSXPAIR_DEBUG("Could not run the command.");
         result = false;
     }
 
-    if (macos_version < MacOSVersionNumber(10, 10))
+    if (macos_version < MacOSVersion(10, 10))
     {
         // FIXME: In OS X 10.7 this might not work - fork() and call set_powered(1)
         // from a fresh process (e.g. like "blueutil 1") to switch Bluetooth on
@@ -369,5 +339,23 @@ psmove_port_close_socket(int socket)
 char *
 psmove_port_get_host_bluetooth_address()
 {
-    return macosx_get_btaddr();
+    ScopedNSAutoreleasePool pool;
+
+    macosx_bluetooth_set_powered(1);
+
+    IOBluetoothHostController *controller =
+        [IOBluetoothHostController defaultController];
+
+    NSString *addr = [controller addressAsString];
+    psmove_return_val_if_fail(addr != NULL, NULL);
+
+    char *result = strdup([addr UTF8String]);
+    psmove_return_val_if_fail(result != NULL, NULL);
+
+    if (_psmove_normalize_btaddr_inplace(result, true, ':') == NULL) {
+        free(result);
+        return NULL;
+    }
+
+    return result;
 }
