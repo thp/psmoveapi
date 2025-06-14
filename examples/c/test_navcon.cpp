@@ -34,6 +34,7 @@
 #include <limits.h>
 
 #include <algorithm>
+#include <cstring>
 
 #include "SDL.h"
 #include "psmove.h"
