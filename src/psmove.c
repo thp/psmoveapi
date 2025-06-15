@@ -2600,3 +2600,19 @@ psmove_log(const char *filename, int lineno, enum PSMove_LogLevel level, const c
     psmove_vlog(filename, lineno, level, fmt, args);
     va_end(args);
 }
+
+bool
+_psmove_btaddrs_equal(const char *addr1, const char *addr2)
+{
+    PSMove_Data_BTAddr a1;
+    if (_psmove_btaddr_from_string(addr1, &a1) == 0) {
+        return false;
+    }
+
+    PSMove_Data_BTAddr a2;
+    if (_psmove_btaddr_from_string(addr2, &a2) == 0) {
+        return false;
+    }
+
+    return memcmp(a1, a2, sizeof(PSMove_Data_BTAddr)) == 0;
+}

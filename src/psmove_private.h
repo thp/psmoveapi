@@ -166,6 +166,9 @@ typedef unsigned char PSMove_Data_BTAddr[6];
 ADDAPI int
 ADDCALL _psmove_btaddr_from_string(const char *string, PSMove_Data_BTAddr *dest);
 
+/* Return true if the two addresses are equal */
+ADDAPI bool
+ADDCALL _psmove_btaddrs_equal(const char *addr1, const char *addr2);
 
 /**
  * Formats the contents of addr to a newly-allocated string and

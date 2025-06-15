@@ -106,7 +106,7 @@ macosx_bluetooth_set_powered(int powered)
         return 1;
     }
 
-    OSXPAIR_DEBUG("Switching Bluetooth %s...\n", powered?"on":"off");
+    OSXPAIR_DEBUG("Switching Bluetooth %s...", powered?"on":"off");
     IOBluetoothPreferenceSetControllerPowerState(powered);
 
     // Wait a bit for Bluetooth to be (de-)activated
@@ -207,7 +207,17 @@ struct MacOSVersion {
 bool
 psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model)
 {
-    // TODO: Host is ignored for now
+    char *tmp = psmove_port_get_host_bluetooth_address();
+    std::string mac_host_addr = tmp;
+    free(tmp);
+
+    // We can have this check here, since macOS doesn't support multiple BT adapters
+    // at the same time (connecting an external one might disable the internal one)
+    if (!_psmove_btaddrs_equal(host, mac_host_addr.c_str())) {
+        OSXPAIR_DEBUG("Not registering controller: Host address %s is not this machine (%s)",
+                host, mac_host_addr.c_str());
+        return false;
+    }
 
     // TODO: FIXME: If necessary, handle different controller models differently.
 
@@ -215,39 +225,39 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
     std::string btaddr = _psmove_normalize_btaddr_inplace(addr, true, '-');
 
     if (btaddr.length() == 0) {
-        OSXPAIR_DEBUG("Not a valid Bluetooth address: %s\n", addr);
+        OSXPAIR_DEBUG("Not a valid Bluetooth address: %s", addr);
         return false;
     }
 
     auto macos_version = MacOSVersion::running();
     if (!macos_version.valid()) {
-        OSXPAIR_DEBUG("Cannot detect macOS version.\n");
+        OSXPAIR_DEBUG("Cannot detect macOS version.");
         return false;
     } else if (macos_version >= MacOSVersion(13, 0)) {
         PSMOVE_WARNING("Pairing not yet supported on macOS Ventura, see https://github.com/thp/psmoveapi/issues/457");
         return false;
     } else if (macos_version < MacOSVersion(10, 7)) {
-        OSXPAIR_DEBUG("No need to add entry for macOS before 10.7.\n");
+        OSXPAIR_DEBUG("No need to add entry for macOS before 10.7.");
         return false;
     }
 
-    OSXPAIR_DEBUG("Detected: macOS %d.%d\n", macos_version.major, macos_version.minor);
+    OSXPAIR_DEBUG("Detected: macOS %d.%d", macos_version.major, macos_version.minor);
 
     if (macosx_blued_is_paired(btaddr)) {
-        OSXPAIR_DEBUG("Entry for %s already present.\n", btaddr.c_str());
+        OSXPAIR_DEBUG("Entry for %s already present.", btaddr.c_str());
         return true;
     }
 
     if (macos_version < MacOSVersion(10, 10)) {
         if (!macosx_bluetooth_set_powered(0)) {
-            OSXPAIR_DEBUG("Cannot shutdown Bluetooth (shut it down manually).\n");
+            OSXPAIR_DEBUG("Cannot shutdown Bluetooth (shut it down manually).");
         }
 
-        OSXPAIR_DEBUG("Waiting for blued shutdown (takes ca. 42s) ...\n");
+        OSXPAIR_DEBUG("Waiting for blued shutdown (takes ca. 42s) ...");
         while (macosx_blued_running()) {
             psmove_port_sleep_ms(1000);
         }
-        OSXPAIR_DEBUG("blued successfully shutdown.\n");
+        OSXPAIR_DEBUG("blued successfully shutdown.");
     }
 
     std::string command = format("/usr/bin/defaults write %s HIDDevices -array-add %s",
@@ -258,7 +268,7 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
                          command.c_str());
     }
 
-    OSXPAIR_DEBUG("Running: '%s'\n", command.c_str());
+    OSXPAIR_DEBUG("Running: '%s'", command.c_str());
     bool result = true;
     if (system(command.c_str()) != 0) {
         OSXPAIR_DEBUG("Could not run the command.");
