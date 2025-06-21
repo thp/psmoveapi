@@ -37,7 +37,8 @@ extern "C" {
 #include <wchar.h>
 
 enum MonitorEvent {
-    EVENT_DEVICE_ADDED,
+    EVENT_ZCM1_ADDED,
+    EVENT_ZCM2_ADDED,
     EVENT_DEVICE_REMOVED,
 };
 

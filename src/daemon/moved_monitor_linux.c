@@ -158,7 +158,7 @@ _moved_monitor_handle_device(moved_monitor *monitor, struct udev_device *dev)
                     device_type = EVENT_DEVICE_TYPE_USB;
                 }
 
-                monitor->event_callback(EVENT_DEVICE_ADDED, device_type, path,
+                monitor->event_callback(product_id == PSMOVE_PID ? EVENT_ZCM1_ADDED : EVENT_ZCM2_ADDED, device_type, path,
                         serial_number, monitor->event_callback_user_data);
             }
 

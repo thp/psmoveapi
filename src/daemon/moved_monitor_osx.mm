@@ -119,7 +119,7 @@ private:
     static void on_device_matching(void *context, IOReturn result, void *sender, IOHIDDeviceRef device)
     {
         _moved_monitor *monitor = (_moved_monitor *)(context);
-        monitor->make_event(EVENT_DEVICE_ADDED, device);
+        monitor->make_event(get_product_id(device) == PSMOVE_PID ? EVENT_ZCM1_ADDED : EVENT_ZCM2_ADDED, device);
     }
 
     static void on_device_removal(void *context, IOReturn result, void *sender, IOHIDDeviceRef device)

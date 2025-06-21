@@ -98,12 +98,9 @@ on_monitor_update_moved(enum MonitorEvent event,
 {
     move_daemon *moved = static_cast<move_daemon *>(user_data);
 
-    if (event == EVENT_DEVICE_ADDED) {
+    if (event == EVENT_ZCM1_ADDED || event == EVENT_ZCM2_ADDED) {
         if (device_type == EVENT_DEVICE_TYPE_USB) {
-            // TODO: FIXME: This should use the device's actual USB product ID.
-            // HACK: We rely on this invalid PID being translated to a
-            //       valid controller model (the old ZCM1, by default).
-            unsigned short pid = 0;
+            unsigned short pid = event == EVENT_ZCM1_ADDED ? PSMOVE_PID : PSMOVE_PS4_PID;
             PSMove *move = psmove_connect_internal(serial, path, -1, pid);
             if (psmove_pair(move)) {
                 // Indicate to the user that pairing was successful
