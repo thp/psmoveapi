@@ -70,7 +70,7 @@ struct PSMoveAPI {
 
     void update();
 
-    static void on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, void *user_data);
+    static void on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, unsigned short pid, void *user_data);
 
     EventReceiver *receiver;
     void *user_data;
@@ -290,7 +290,7 @@ PSMoveAPI::update()
 }
 
 void
-PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, void *user_data)
+PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, unsigned short pid, void *user_data)
 {
     auto self = static_cast<PSMoveAPI *>(user_data);
 
@@ -308,10 +308,6 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                     }
                 }
 
-                // TODO: FIXME: This should use the device's actual USB product ID.
-                // HACK: We rely on this invalid PID being translated to a
-                //       valid controller model (the old ZCM1, by default).
-                unsigned short pid = 0;
                 PSMove *move = psmove_connect_internal(serial, path, -1, pid);
                 if (move == nullptr) {
                     PSMOVE_ERROR("Cannot open move for retrieving serial!");

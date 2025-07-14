@@ -159,7 +159,7 @@ _moved_monitor_handle_device(moved_monitor *monitor, struct udev_device *dev)
                 }
 
                 monitor->event_callback(EVENT_DEVICE_ADDED, device_type, path,
-                        serial_number, monitor->event_callback_user_data);
+                        serial_number, product_id, monitor->event_callback_user_data);
             }
 
             free(serial_number);
@@ -170,7 +170,7 @@ _moved_monitor_handle_device(moved_monitor *monitor, struct udev_device *dev)
         free(uevent);
     } else if (strcmp(action, "remove") == 0) {
         monitor->event_callback(EVENT_DEVICE_REMOVED, device_type, path,
-                NULL, monitor->event_callback_user_data);
+                NULL, 0, monitor->event_callback_user_data);
     }
 }
 
