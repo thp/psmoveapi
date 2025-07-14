@@ -95,9 +95,9 @@ static void
 on_monitor_update_pair(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type,
         const char *path, const wchar_t *serial,
-        void *user_data)
+        unsigned short pid, void *user_data)
 {
-    if (event == EVENT_ZCM1_ADDED || event == EVENT_ZCM2_ADDED) {
+    if (event == EVENT_DEVICE_ADDED) {
         if (device_type == EVENT_DEVICE_TYPE_USB) {
             pair(NULL);
         }

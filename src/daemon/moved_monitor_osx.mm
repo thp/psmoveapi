@@ -49,6 +49,7 @@ struct ASyncDeviceEvent {
     enum MonitorEventDeviceType device_type;
     char path[256];
     wchar_t serial_number[256];
+    unsigned short pid;
 };
 
 struct _moved_monitor {
@@ -85,7 +86,7 @@ struct _moved_monitor {
             auto event = events.front();
             event_callback(event.event, event.device_type,
                            event.path, event.serial_number,
-                           event_callback_user_data);
+                           event.pid, event_callback_user_data);
             events.pop();
         }
     }
@@ -94,10 +95,12 @@ private:
     void
     make_event(enum MonitorEvent event, IOHIDDeviceRef device)
     {
-        if (get_vendor_id(device) == PSMOVE_VID && (get_product_id(device) == PSMOVE_PID || get_product_id(device) == PSMOVE_PS4_PID)) {
+        unsigned short pid = get_product_id(device);
+        if (get_vendor_id(device) == PSMOVE_VID && (pid == PSMOVE_PID || pid == PSMOVE_PS4_PID)) {
             ASyncDeviceEvent ade;
             ade.event = event;
             ade.device_type = EVENT_DEVICE_TYPE_UNKNOWN;
+            ade.pid = pid;
 
             // Example paths:
             // e.g. "USB_054c_03d5_14100000"
@@ -119,7 +122,7 @@ private:
     static void on_device_matching(void *context, IOReturn result, void *sender, IOHIDDeviceRef device)
     {
         _moved_monitor *monitor = (_moved_monitor *)(context);
-        monitor->make_event(get_product_id(device) == PSMOVE_PID ? EVENT_ZCM1_ADDED : EVENT_ZCM2_ADDED, device);
+        monitor->make_event(EVENT_DEVICE_ADDED, device);
     }
 
     static void on_device_removal(void *context, IOReturn result, void *sender, IOHIDDeviceRef device)

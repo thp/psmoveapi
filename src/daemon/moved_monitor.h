@@ -37,8 +37,7 @@ extern "C" {
 #include <wchar.h>
 
 enum MonitorEvent {
-    EVENT_ZCM1_ADDED,
-    EVENT_ZCM2_ADDED,
+    EVENT_DEVICE_ADDED,
     EVENT_DEVICE_REMOVED,
 };
 
@@ -48,9 +47,10 @@ enum MonitorEventDeviceType {
     EVENT_DEVICE_TYPE_UNKNOWN,
 };
 
+// pid is the product ID on connect, it may be 0 on disconnect
 typedef void (*moved_event_callback)(enum MonitorEvent event,
         enum MonitorEventDeviceType device_type, const char *path,
-        const wchar_t *serial, void *user_data);
+        const wchar_t *serial, unsigned short pid, void *user_data);
 
 typedef struct _moved_monitor moved_monitor;
 

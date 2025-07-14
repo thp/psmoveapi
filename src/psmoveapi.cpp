@@ -70,7 +70,7 @@ struct PSMoveAPI {
 
     void update();
 
-    static void on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, void *user_data);
+    static void on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, unsigned short pid, void *user_data);
 
     EventReceiver *receiver;
     void *user_data;
@@ -290,16 +290,14 @@ PSMoveAPI::update()
 }
 
 void
-PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, void *user_data)
+PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType device_type, const char *path, const wchar_t *serial, unsigned short pid, void *user_data)
 {
     auto self = static_cast<PSMoveAPI *>(user_data);
 
     switch (event) {
-        case EVENT_ZCM1_ADDED:
-        case EVENT_ZCM2_ADDED:
+        case EVENT_DEVICE_ADDED:
             {
-                PSMOVE_DEBUG("on_monitor_event(event=%s, device_type=0x%08x, path=\"%s\", serial=%p)",
-                       event == EVENT_ZCM1_ADDED ? "EVENT_ZCM1_ADDED" : "EVENT_ZCM2_ADDED",
+                PSMOVE_DEBUG("on_monitor_event(event=EVENT_DEVICE_ADDED, device_type=0x%08x, path=\"%s\", serial=%p)",
                        device_type, path, serial);
 
                 for (auto &c: self->controllers) {
@@ -310,7 +308,6 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                     }
                 }
 
-                unsigned short pid = event == EVENT_ZCM1_ADDED ? PSMOVE_PID : PSMOVE_PS4_PID;
                 PSMove *move = psmove_connect_internal(serial, path, -1, pid);
                 if (move == nullptr) {
                     PSMOVE_ERROR("Cannot open move for retrieving serial!");
