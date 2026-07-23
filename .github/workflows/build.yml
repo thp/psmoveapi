@@ -23,7 +23,7 @@ jobs:
             build_type: macos-native-clang-x86_64
           - build_host: macos-latest
             build_type: macos-native-clang-arm64
-          - build_host: windows-latest
+          - build_host: windows-2022
             build_type: windows-native-msvc-x64
     env:
       BUILD_TYPE: ${{ matrix.build_type }}
