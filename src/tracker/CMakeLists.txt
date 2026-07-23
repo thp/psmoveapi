@@ -31,6 +31,12 @@ IF(PSMOVE_USE_PS3EYE_DRIVER)
         ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye.cpp
         ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye_capi.cpp)
 
+    if(MSVC)
+        # PS3EYEDriver uses timeval, which newer libusb headers no longer provide.
+        set_source_files_properties(${PS3_EYE_SRC}
+            PROPERTIES COMPILE_OPTIONS "/FIwinsock2.h")
+    endif()
+
     set(PS3_EYE_HEADER)
     list(APPEND PS3_EYE_HEADER
         ${ROOT_DIR}/external/PS3EYEDriver/src/ps3eye.h
