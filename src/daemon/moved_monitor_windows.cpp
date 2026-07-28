@@ -1,6 +1,7 @@
 /**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
+ * Copyright (c) 2026 Aaron Angert
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +34,7 @@
 #include <atomic>
 #include <cctype>
 #include <cstring>
+#include <cwchar>
 #include <cwctype>
 #include <map>
 #include <set>
@@ -92,6 +94,22 @@ replace_once(std::string &value, const char *from, const char *to)
 }
 
 bool
+contains_device_identifier(const std::wstring &path, const wchar_t *format,
+        unsigned short identifier)
+{
+    // Windows embeds VID/PID values in symbolic paths using fragments such as
+    // "vid_054c" or "vid&0002054c". Format the shared numeric identifier into
+    // the requested path fragment before searching the normalized path.
+    wchar_t value[16] = {};
+    const auto length = std::swprintf(
+            value,
+            sizeof(value) / sizeof(value[0]),
+            format,
+            static_cast<unsigned int>(identifier));
+    return length > 0 && path.find(value) != std::wstring::npos;
+}
+
+bool
 is_move_interface_path(const wchar_t *path)
 {
     if (path == nullptr) {
@@ -103,12 +121,14 @@ is_move_interface_path(const wchar_t *path)
     const auto normalized = lowercase(std::wstring(path));
     // Accept both Windows VID/PID path formats and both Move generations:
     // ZCM1 (03d5) and ZCM2 (0c5e).
-    const bool sony = normalized.find(L"vid_054c") != std::wstring::npos ||
-            normalized.find(L"vid&0002054c") != std::wstring::npos;
-    const bool move = normalized.find(L"pid_03d5") != std::wstring::npos ||
-            normalized.find(L"pid&03d5") != std::wstring::npos ||
-            normalized.find(L"pid_0c5e") != std::wstring::npos ||
-            normalized.find(L"pid&0c5e") != std::wstring::npos;
+    const bool sony =
+            contains_device_identifier(normalized, L"vid_%04x", PSMOVE_VID) ||
+            contains_device_identifier(normalized, L"vid&0002%04x", PSMOVE_VID);
+    const bool move =
+            contains_device_identifier(normalized, L"pid_%04x", PSMOVE_PID) ||
+            contains_device_identifier(normalized, L"pid&%04x", PSMOVE_PID) ||
+            contains_device_identifier(normalized, L"pid_%04x", PSMOVE_PS4_PID) ||
+            contains_device_identifier(normalized, L"pid&%04x", PSMOVE_PS4_PID);
     return sony && move;
 }
 
@@ -116,6 +136,14 @@ MoveDevices
 enumerate_move_devices()
 {
     struct Candidate {
+        Candidate(const char *candidate_path, const wchar_t *candidate_serial,
+                unsigned short candidate_product_id)
+            : path(candidate_path)
+            , serial(candidate_serial == nullptr ? L"" : candidate_serial)
+            , product_id(candidate_product_id)
+        {
+        }
+
         std::string path;
         std::wstring serial;
         unsigned short product_id;
@@ -140,11 +168,10 @@ enumerate_move_devices()
                 continue;
             }
 
-            candidates.push_back({
+            candidates.emplace_back(
                 device->path,
-                device->serial_number == nullptr ? L"" : device->serial_number,
-                product_id,
-            });
+                device->serial_number,
+                product_id);
         }
         hid_free_enumeration(devices);
     }
@@ -223,26 +250,34 @@ moved_monitor_new(moved_event_callback callback, void *user_data)
     monitor->notification = nullptr;
     monitor->unregister_notification = nullptr;
 
-    if (monitor->cfgmgr32 != nullptr) {
-        auto register_notification = reinterpret_cast<CMRegisterNotification>(
-                GetProcAddress(monitor->cfgmgr32, "CM_Register_Notification"));
-        monitor->unregister_notification = reinterpret_cast<CMUnregisterNotification>(
-                GetProcAddress(monitor->cfgmgr32, "CM_Unregister_Notification"));
+    if (monitor->cfgmgr32 == nullptr) {
+        PSMOVE_WARNING("Could not load CfgMgr32.dll; using periodic HID rescans");
+        return monitor;
+    }
 
-        if (register_notification != nullptr &&
-                monitor->unregister_notification != nullptr) {
-            CM_NOTIFY_FILTER filter = {};
-            filter.cbSize = sizeof(filter);
-            filter.Flags = CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES;
-            filter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE;
-            const auto result = register_notification(
-                    &filter, monitor, on_device_notification, &monitor->notification);
-            if (result != CR_SUCCESS) {
-                monitor->notification = nullptr;
-                PSMOVE_WARNING("Could not register for Windows device notifications (0x%lx)",
-                        static_cast<unsigned long>(result));
-            }
-        }
+    auto register_notification = reinterpret_cast<CMRegisterNotification>(
+            GetProcAddress(monitor->cfgmgr32, "CM_Register_Notification"));
+    monitor->unregister_notification = reinterpret_cast<CMUnregisterNotification>(
+            GetProcAddress(monitor->cfgmgr32, "CM_Unregister_Notification"));
+
+    if (register_notification == nullptr ||
+            monitor->unregister_notification == nullptr) {
+        PSMOVE_WARNING(
+                "CfgMgr32 device notification functions are unavailable; "
+                "using periodic HID rescans");
+        return monitor;
+    }
+
+    CM_NOTIFY_FILTER filter = {};
+    filter.cbSize = sizeof(filter);
+    filter.Flags = CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES;
+    filter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE;
+    const auto result = register_notification(
+            &filter, monitor, on_device_notification, &monitor->notification);
+    if (result != CR_SUCCESS) {
+        monitor->notification = nullptr;
+        PSMOVE_WARNING("Could not register for Windows device notifications (0x%lx)",
+                static_cast<unsigned long>(result));
     }
 
     return monitor;
@@ -306,6 +341,7 @@ moved_monitor_free(moved_monitor *monitor)
 {
     psmove_return_if_fail(monitor != nullptr);
 
+    // Notification setup can fail while periodic rescanning remains active.
     if (monitor->notification != nullptr &&
             monitor->unregister_notification != nullptr) {
         monitor->unregister_notification(monitor->notification);
