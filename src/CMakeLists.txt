@@ -84,6 +84,9 @@ ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     list(APPEND PSMOVEAPI_PLATFORM_SRC
         ${CMAKE_CURRENT_LIST_DIR}/platform/psmove_port_windows.c)
+
+    list(APPEND PSMOVEAPI_MOVED_SRC
+        ${CMAKE_CURRENT_LIST_DIR}/daemon/moved_monitor_windows.cpp)
 ELSE()
     # Linux
     find_package(PkgConfig REQUIRED)

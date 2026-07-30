@@ -106,7 +106,17 @@ on_monitor_update_pair(enum MonitorEvent event,
 
 int run_daemon()
 {
-#if defined(__linux) || defined(__APPLE__)
+#if defined(_WIN32)
+    moved_monitor *monitor = moved_monitor_new(on_monitor_update_pair, NULL);
+
+    while (1) {
+        moved_monitor_wait(monitor);
+        moved_monitor_poll(monitor);
+    }
+    moved_monitor_free(monitor);
+#elif defined(__linux) || defined(__APPLE__)
+    // TODO: Use a blocking monitor wait here after runtime testing it on
+    // Linux and macOS.
     moved_monitor *monitor = moved_monitor_new(on_monitor_update_pair, NULL);
     int monitor_fd = moved_monitor_get_fd(monitor);
     struct pollfd pfd;

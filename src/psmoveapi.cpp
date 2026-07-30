@@ -81,6 +81,19 @@ struct PSMoveAPI {
 PSMoveAPI *
 g_psmove_api = nullptr;
 
+bool
+device_paths_equal(const char *left, const char *right)
+{
+    if (left == nullptr || right == nullptr) {
+        return left == right;
+    }
+#ifdef _WIN32
+    return _stricmp(left, right) == 0;
+#else
+    return strcmp(left, right) == 0;
+#endif
+}
+
 }; // end anonymous namespace
 
 ControllerGlue::ControllerGlue(int index, const std::string &serial)
@@ -176,16 +189,12 @@ PSMoveAPI::PSMoveAPI(EventReceiver *receiver, void *user_data)
         controllers.emplace_back(c);
     }
 
-#ifndef _WIN32
     monitor = moved_monitor_new(PSMoveAPI::on_monitor_event, this);
-#endif
 }
 
 PSMoveAPI::~PSMoveAPI()
 {
-#ifndef _WIN32
     moved_monitor_free(monitor);
-#endif
 
     for (auto &c: controllers) {
         if (c->api_connected) {
@@ -204,10 +213,11 @@ PSMoveAPI::~PSMoveAPI()
 void
 PSMoveAPI::update()
 {
-#ifndef _WIN32
     if (moved_monitor_get_fd(monitor) == -1) {
         moved_monitor_poll(monitor);
-    } else {
+    }
+#ifndef _WIN32
+    else {
         struct pollfd pfd;
         pfd.fd = moved_monitor_get_fd(monitor);
         pfd.events = POLLIN;
@@ -301,8 +311,8 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                        device_type, path, serial);
 
                 for (auto &c: self->controllers) {
-                    if ((c->move_bluetooth != nullptr && strcmp(_psmove_get_device_path(c->move_bluetooth), path) == 0) ||
-                            (c->move_usb != nullptr && strcmp(_psmove_get_device_path(c->move_usb), path) == 0)) {
+                    if ((c->move_bluetooth != nullptr && device_paths_equal(_psmove_get_device_path(c->move_bluetooth), path)) ||
+                            (c->move_usb != nullptr && device_paths_equal(_psmove_get_device_path(c->move_usb), path))) {
                         PSMOVE_WARNING("This controller is already active!");
                         return;
                     }
@@ -343,7 +353,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
                 for (auto &c: self->controllers) {
                     if (c->move_bluetooth != nullptr) {
                         const char *devpath = _psmove_get_device_path(c->move_bluetooth);
-                        if (devpath != nullptr && strcmp(devpath, path) == 0) {
+                        if (device_paths_equal(devpath, path)) {
                             psmove_disconnect(c->move_bluetooth), c->move_bluetooth = nullptr;
                             found = true;
                             break;
@@ -352,7 +362,7 @@ PSMoveAPI::on_monitor_event(enum MonitorEvent event, enum MonitorEventDeviceType
 
                     if (c->move_usb != nullptr) {
                         const char *devpath = _psmove_get_device_path(c->move_usb);
-                        if (devpath != nullptr && strcmp(devpath, path) == 0) {
+                        if (device_paths_equal(devpath, path)) {
                             psmove_disconnect(c->move_usb), c->move_usb = nullptr;
                             found = true;
                             break;
