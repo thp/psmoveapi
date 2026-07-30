@@ -25,6 +25,7 @@ starting after version 4.0.12, but historic entries might not.
 
 ### Changed
 
+- Windows: `psmove pair -d` now waits for controller notifications instead of repeatedly rescanning
 - CI: Migrate from Travis CI (macOS, Linux), and AppVeyor (Windows) to Github Actions
 - Linux: Build OpenCV from source
 - `CMakeLists.txt`: Add check for 'git submodule init' (Fixes #352)

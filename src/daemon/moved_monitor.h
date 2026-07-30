@@ -30,6 +30,8 @@
 
 
 
+#include "psmove.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,17 +56,25 @@ typedef void (*moved_event_callback)(enum MonitorEvent event,
 
 typedef struct _moved_monitor moved_monitor;
 
-moved_monitor *
-moved_monitor_new(moved_event_callback callback, void *user_data);
+ADDAPI moved_monitor *
+ADDCALL moved_monitor_new(moved_event_callback callback, void *user_data);
 
-void
-moved_monitor_poll(moved_monitor *monitor);
+#ifdef _WIN32
+// Block until Windows signals a device change or the fallback rescan is due.
+// Call moved_monitor_poll() after this returns to process any controller
+// additions or removals.
+ADDAPI void
+ADDCALL moved_monitor_wait(moved_monitor *monitor);
+#endif
 
-int
-moved_monitor_get_fd(moved_monitor *monitor);
+ADDAPI void
+ADDCALL moved_monitor_poll(moved_monitor *monitor);
 
-void
-moved_monitor_free(moved_monitor *monitor);
+ADDAPI int
+ADDCALL moved_monitor_get_fd(moved_monitor *monitor);
+
+ADDAPI void
+ADDCALL moved_monitor_free(moved_monitor *monitor);
 
 #ifdef __cplusplus
 }

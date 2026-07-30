@@ -215,6 +215,7 @@ struct _moved_monitor {
 
     HMODULE cfgmgr32;
     HCMNOTIFICATION notification;
+    HANDLE device_event;
     CMUnregisterNotification unregister_notification;
 };
 
@@ -233,6 +234,9 @@ on_device_notification(HCMNOTIFICATION, PVOID context,
             action == CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL) &&
             is_move_interface_path(event_data->u.DeviceInterface.SymbolicLink)) {
         monitor->rescan_requested.store(true);
+        if (monitor->device_event != nullptr) {
+            SetEvent(monitor->device_event);
+        }
     }
     return ERROR_SUCCESS;
 }
@@ -246,6 +250,12 @@ moved_monitor_new(moved_event_callback callback, void *user_data)
     monitor->event_callback_user_data = user_data;
     monitor->rescan_requested.store(true);
     monitor->next_rescan = GetTickCount64();
+    // The callback signals this auto-reset event so blocking callers wake
+    // without waiting for the periodic fallback rescan.
+    monitor->device_event = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    if (monitor->device_event == nullptr) {
+        PSMOVE_WARNING("Could not create Windows device notification event");
+    }
     // Load notifications dynamically so monitoring still works through the
     // periodic rescan when the API is unavailable.
     monitor->cfgmgr32 = LoadLibraryW(L"CfgMgr32.dll");
@@ -291,6 +301,36 @@ moved_monitor_get_fd(moved_monitor *)
 {
     // Windows notifications arrive through a callback instead of a pollable fd.
     return -1;
+}
+
+void
+moved_monitor_wait(moved_monitor *monitor)
+{
+    psmove_return_if_fail(monitor != nullptr);
+
+    const auto now = GetTickCount64();
+    if (monitor->rescan_requested.load() || now >= monitor->next_rescan) {
+        return;
+    }
+
+    const auto remaining = monitor->next_rescan - now;
+    const auto timeout = remaining > MAXDWORD
+            ? MAXDWORD
+            : static_cast<DWORD>(remaining);
+
+    if (monitor->device_event == nullptr) {
+        Sleep(timeout);
+        return;
+    }
+
+    // The notification callback signals the event immediately. The timeout
+    // preserves periodic rescanning if Windows misses a notification.
+    const auto result = WaitForSingleObject(monitor->device_event, timeout);
+    if (result == WAIT_FAILED) {
+        PSMOVE_WARNING(
+                "Could not wait for Windows device notification (%lu)",
+                static_cast<unsigned long>(GetLastError()));
+    }
 }
 
 
@@ -350,6 +390,9 @@ moved_monitor_free(moved_monitor *monitor)
     }
     if (monitor->cfgmgr32 != nullptr) {
         FreeLibrary(monitor->cfgmgr32);
+    }
+    if (monitor->device_event != nullptr) {
+        CloseHandle(monitor->device_event);
     }
     delete monitor;
 }
