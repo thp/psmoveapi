@@ -144,9 +144,9 @@ main(int argc, char *argv[])
         moved.handle_connection(NULL, NULL);
     }
 
-#if defined(__linux) || defined(__APPLE__)
     moved_monitor *monitor = moved_monitor_new(on_monitor_update_moved, &moved);
 
+#if defined(__linux) || defined(__APPLE__)
     struct pollfd pfd[2];
 
     pfd[0].fd = moved.get_socket();
@@ -169,7 +169,6 @@ main(int argc, char *argv[])
         moved.write_reports();
     }
 
-    moved_monitor_free(monitor);
 #else
     while (true) {
         moved.handle_request();
@@ -179,6 +178,8 @@ main(int argc, char *argv[])
         moved.write_reports();
     }
 #endif
+
+    moved_monitor_free(monitor);
 
     return 0;
 }
