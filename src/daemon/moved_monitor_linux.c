@@ -34,6 +34,8 @@
 
 #include <libudev.h>
 #include <linux/input.h>
+#include <linux/limits.h>
+#include <poll.h>
 
 #include "moved_monitor.h"
 
@@ -213,6 +215,21 @@ moved_monitor_poll(moved_monitor *monitor)
         _moved_monitor_handle_device(monitor, device);
         udev_device_unref(device);
     }
+}
+
+bool
+moved_monitor_wait(moved_monitor *monitor, bool blocking)
+{
+    psmove_return_val_if_fail(monitor != NULL, false);
+
+    int monitor_fd = moved_monitor_get_fd(monitor);
+
+    struct pollfd pfd;
+
+    pfd.fd = monitor_fd;
+    pfd.events = POLLIN;
+
+    return (poll(&pfd, 1, blocking ? -1 : 0) > 0);
 }
 
 void

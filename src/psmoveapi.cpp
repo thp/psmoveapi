@@ -213,19 +213,9 @@ PSMoveAPI::~PSMoveAPI()
 void
 PSMoveAPI::update()
 {
-    if (moved_monitor_get_fd(monitor) == -1) {
+    if (moved_monitor_wait(monitor, false)) {
         moved_monitor_poll(monitor);
     }
-#ifndef _WIN32
-    else {
-        struct pollfd pfd;
-        pfd.fd = moved_monitor_get_fd(monitor);
-        pfd.events = POLLIN;
-        while (poll(&pfd, 1, 0) > 0) {
-            moved_monitor_poll(monitor);
-        }
-    }
-#endif
 
     for (auto &c: controllers) {
         c->update_connection_flags();

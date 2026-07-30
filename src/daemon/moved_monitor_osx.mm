@@ -41,6 +41,10 @@
 #import <IOKit/hid/IOHIDManager.h>
 #import <CoreFoundation/CoreFoundation.h>
 
+#include <sys/syslimits.h>
+#include <sys/stat.h>
+#include <sys/poll.h>
+
 // Convenience functions copied from hidapi
 #include "moved_monitor_osx_hidapi.mm"
 
@@ -158,6 +162,21 @@ moved_monitor_poll(moved_monitor *monitor)
     psmove_return_if_fail(monitor != NULL);
 
     monitor->pump_loop();
+}
+
+bool
+moved_monitor_wait(moved_monitor *monitor, bool blocking)
+{
+    psmove_return_val_if_fail(monitor != nullptr, false);
+
+    int monitor_fd = moved_monitor_get_fd(monitor);
+
+    struct pollfd pfd;
+
+    pfd.fd = monitor_fd;
+    pfd.events = POLLIN;
+
+    return (poll(&pfd, 1, blocking ? -1 : 0) > 0);
 }
 
 void
