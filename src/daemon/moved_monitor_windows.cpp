@@ -53,6 +53,17 @@ namespace {
 const ULONGLONG RESCAN_INTERVAL_MS = 500;
 
 struct MoveDevice {
+    MoveDevice(const char *device_path, const wchar_t *device_serial,
+            unsigned short device_product_id)
+        : path(device_path)
+        , serial(device_serial == nullptr ? L"" : device_serial)
+        , product_id(device_product_id)
+        , device_type(serial.size() > 1
+                ? EVENT_DEVICE_TYPE_BLUETOOTH
+                : EVENT_DEVICE_TYPE_USB)
+    {
+    }
+
     std::string path;
     std::wstring serial;
     unsigned short product_id;
@@ -85,6 +96,11 @@ lowercase(std::wstring value)
 bool
 replace_once(std::string &value, const char *from, const char *to)
 {
+    if (from == nullptr || to == nullptr) {
+        PSMOVE_WARNING("nullptr value in replace_once()");
+        return false;
+    }
+
     const auto position = value.find(from);
     if (position == std::string::npos) {
         return false;
@@ -97,10 +113,16 @@ bool
 contains_device_identifier(const std::wstring &path, const wchar_t *format,
         unsigned short identifier)
 {
+    if (format == nullptr) {
+        PSMOVE_WARNING("nullptr format in contains_device_identifier()");
+        return false;
+    }
+
     // Windows embeds VID/PID values in symbolic paths using fragments such as
     // "vid_054c" or "vid&0002054c". Format the shared numeric identifier into
     // the requested path fragment before searching the normalized path.
     wchar_t value[16] = {};
+    // Use std::size(value) here once the project requires C++17.
     const auto length = std::swprintf(
             value,
             sizeof(value) / sizeof(value[0]),
@@ -121,36 +143,25 @@ is_move_interface_path(const wchar_t *path)
     const auto normalized = lowercase(std::wstring(path));
     // Accept both Windows VID/PID path formats and both Move generations:
     // ZCM1 (03d5) and ZCM2 (0c5e).
-    const bool sony =
-            contains_device_identifier(normalized, L"vid_%04x", PSMOVE_VID) ||
-            contains_device_identifier(normalized, L"vid&0002%04x", PSMOVE_VID);
-    const bool move =
-            contains_device_identifier(normalized, L"pid_%04x", PSMOVE_PID) ||
+    if (!contains_device_identifier(normalized, L"vid_%04x", PSMOVE_VID) &&
+            !contains_device_identifier(
+                    normalized, L"vid&0002%04x", PSMOVE_VID)) {
+        return false;
+    }
+
+    return contains_device_identifier(normalized, L"pid_%04x", PSMOVE_PID) ||
             contains_device_identifier(normalized, L"pid&%04x", PSMOVE_PID) ||
-            contains_device_identifier(normalized, L"pid_%04x", PSMOVE_PS4_PID) ||
-            contains_device_identifier(normalized, L"pid&%04x", PSMOVE_PS4_PID);
-    return sony && move;
+            contains_device_identifier(
+                    normalized, L"pid_%04x", PSMOVE_PS4_PID) ||
+            contains_device_identifier(
+                    normalized, L"pid&%04x", PSMOVE_PS4_PID);
 }
 
 MoveDevices
 enumerate_move_devices()
 {
-    struct Candidate {
-        Candidate(const char *candidate_path, const wchar_t *candidate_serial,
-                unsigned short candidate_product_id)
-            : path(candidate_path)
-            , serial(candidate_serial == nullptr ? L"" : candidate_serial)
-            , product_id(candidate_product_id)
-        {
-        }
-
-        std::string path;
-        std::wstring serial;
-        unsigned short product_id;
-    };
-
     std::set<std::string> all_paths;
-    std::vector<Candidate> candidates;
+    std::vector<MoveDevice> candidates;
     const unsigned short product_ids[] = {PSMOVE_PID, PSMOVE_PS4_PID};
 
     for (const auto product_id : product_ids) {
@@ -187,16 +198,7 @@ enumerate_move_devices()
             continue;
         }
 
-        result.emplace(normalized_path, MoveDevice{
-            candidate.path,
-            candidate.serial,
-            candidate.product_id,
-            // Windows exposes the controller serial over Bluetooth, while
-            // the USB interface has no usable serial.
-            candidate.serial.size() > 1
-                    ? EVENT_DEVICE_TYPE_BLUETOOTH
-                    : EVENT_DEVICE_TYPE_USB,
-        });
+        result.emplace(normalized_path, candidate);
     }
     return result;
 }

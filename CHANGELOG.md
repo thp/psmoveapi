@@ -9,6 +9,7 @@ starting after version 4.0.12, but historic entries might not.
 
 ### Added
 
+- Windows: Dynamically monitor ZCM1 and ZCM2 controller connections and disconnections
 - macOS: Add build support for M1/Apple Silicon (Fixes #440)
 - Linux/Debian: Force building tracker and test programs (Fixes #437)
 - Added `psmove_tracker_opencv.h` for OpenCV-specific functions
