@@ -43,7 +43,6 @@
 
 #include <sys/syslimits.h>
 #include <sys/stat.h>
-#include <sys/poll.h>
 
 // Convenience functions copied from hidapi
 #include "moved_monitor_osx_hidapi.mm"
@@ -93,6 +92,10 @@ struct _moved_monitor {
                            event.pid, event_callback_user_data);
             events.pop();
         }
+    }
+
+    bool has_events() const {
+        return !events.empty();
     }
 
 private:
@@ -169,14 +172,27 @@ moved_monitor_wait(moved_monitor *monitor, bool blocking)
 {
     psmove_return_val_if_fail(monitor != nullptr, false);
 
-    int monitor_fd = moved_monitor_get_fd(monitor);
+    /* Blocking wait for events */
+    while (blocking && !monitor->has_events()) {
+        switch (CFRunLoopRunInMode(kCFRunLoopDefaultMode, 60.0, TRUE)) {
+            case kCFRunLoopRunFinished:
+            case kCFRunLoopRunStopped:
+                return false;
+            case kCFRunLoopRunTimedOut:
+                /* Timeout hit, try again */
+                break;
+            case kCFRunLoopRunHandledSource:
+                /* One source was handled, potentially events */
+                break;
+        }
+    }
 
-    struct pollfd pfd;
+    if (!monitor->has_events()) {
+        /* Poll once, ignore result, as we peek at has_events() below */
+        (void)CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.001, TRUE);
+    }
 
-    pfd.fd = monitor_fd;
-    pfd.events = POLLIN;
-
-    return (poll(&pfd, 1, blocking ? -1 : 0) > 0);
+    return monitor->has_events();
 }
 
 void
