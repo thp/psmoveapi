@@ -60,8 +60,14 @@ save(IplImage *image, int distance)
 }
 
 int
-main(int arg, char** args)
+main(int argc, char *argv[])
 {
+    if (argc != 1) {
+        fprintf(stderr, "Usage: %s\n", argv[0]);
+        fprintf(stderr, "This tool does not take any arguments.\n");
+        return 1;
+    }
+
     measurement measurements[MEASUREMENTS];
     float distance = MEASUREMENTS_CM_START;
     int pos = 0;

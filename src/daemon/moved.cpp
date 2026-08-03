@@ -122,6 +122,12 @@ on_monitor_update_moved(enum MonitorEvent event,
 int
 main(int argc, char *argv[])
 {
+    if (argc != 1) {
+        fprintf(stderr, "Usage: %s\n", argv[0]);
+        fprintf(stderr, "This tool does not take any arguments.\n");
+        return 1;
+    }
+
     if (!psmove_port_check_pairing_permissions()) {
         printf("Warning: Connected devices won't be paired.\n");
     }

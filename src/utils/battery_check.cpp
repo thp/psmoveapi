@@ -84,6 +84,12 @@ struct ColorHandler : public psmoveapi::Handler {
 int
 main(int argc, char *argv[])
 {
+    if (argc != 1) {
+        fprintf(stderr, "Usage: %s\n", argv[0]);
+        fprintf(stderr, "This tool does not take any arguments.\n");
+        return 1;
+    }
+
     ColorHandler handler;
 
     psmoveapi::PSMoveAPI api(&handler);

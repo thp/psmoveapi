@@ -56,6 +56,8 @@ starting after version 4.0.12, but historic entries might not.
 - Replaced `enum PSMove_Bool`, `PSMove_True` and `PSMove_False` with C99 (`stdbool.h`) / C++ `bool`, `true`, `false`
 - Increased maximum number of tracked controllers from 5 to 7
 - Blinking calibration now takes the new hue-based quality criteria into account, does per-controller dimming
+- For the CLI (`psmove`), every subcommand now accepts `-h` / `--help` and `psmove help <subcommand>` also
+  works for retrieving usage information for subcommands
 
 ### Fixed
 
