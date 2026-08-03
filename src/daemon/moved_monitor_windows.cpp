@@ -338,7 +338,7 @@ moved_monitor_wait(moved_monitor *monitor, bool blocking)
                 static_cast<unsigned long>(GetLastError()));
     }
 
-    return true;
+    return (result == WAIT_OBJECT_0);
 }
 
 
