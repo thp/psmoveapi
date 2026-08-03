@@ -308,9 +308,6 @@ moved_monitor_wait(moved_monitor *monitor, bool blocking)
 {
     psmove_return_val_if_fail(monitor != nullptr, false);
 
-    // TODO: This function only returns "true" for now, causing a
-    // rescan all the time. Eventually implement returning "false".
-
     const auto now = GetTickCount64();
     if (monitor->rescan_requested.load() || now >= monitor->next_rescan) {
         return true;
