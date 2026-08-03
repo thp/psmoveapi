@@ -1,6 +1,7 @@
 #include <vector>
 
 #include "psmoveapi.h"
+#include "psmove_format.h"
 
 typedef int (*subcommand_func_t)(int argc, char *argv[]);
 
@@ -125,6 +126,7 @@ usage(const char *progname, std::vector<SubCommand> &subcommands)
         }
     }
     printf("\n");
+    printf("Use %s help <cmd> to get help for subcommands.\n\n", progname);
 
     return 0;
 }
@@ -220,6 +222,12 @@ public:
 int
 list_main(int argc, char *argv[])
 {
+    if (argc != 1) {
+        fprintf(stderr, "Usage: %s\n", argv[0]);
+        fprintf(stderr, "This tool does not take any arguments.\n");
+        return 1;
+    }
+
     ListHandler handler;
     psmoveapi::PSMoveAPI api(&handler);
 
@@ -271,13 +279,29 @@ main(int argc, char *argv[])
     subcommands.emplace_back("camera-firmware", "Initialize PS4/PS5 camera by uploading its firmware via USB", ps4_camera_firmware_main);
 #endif /* PSMOVE_BUILD_TRACKER */
 
-    if (argc == 1 || strcmp(argv[1], "help") == 0) {
+    if (argc == 1 || (argc == 2 && strcmp(argv[1], "help") == 0)) {
         return usage(argv[0], subcommands);
+    } else if (argc == 3 && strcmp(argv[1], "help") == 0) {
+        // "psmove help <subcommand>" -> "psmove <subcommand> -h"
+        argv[1] = argv[2];
+        argv[2] = strdup("-h"); // We leak a little memory here
     }
 
     for (auto &cmd: subcommands) {
         if (cmd.cmd != nullptr && strcmp(cmd.cmd, argv[1]) == 0) {
-            return cmd.func(argc-1, argv+1);
+            // Here, we still have:
+            //  argv[0] == "psmove"
+            //  argv[1] == "subcommand"
+            // Make it so that the subcommand sees:
+            //  argv[0] == "psmove subcommand"
+            std::string progname = format("%s %s", argv[0], argv[1]);
+            char *old_argv1 = argv[1];
+            char *new_argv0 = strdup(progname.c_str());
+            argv[1] = new_argv0;
+            int res = cmd.func(argc-1, argv+1);
+            free(new_argv0);
+            argv[1] = old_argv1;
+            return res;
         }
     }
 

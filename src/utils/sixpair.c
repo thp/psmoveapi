@@ -123,6 +123,12 @@ void process_device(int argc, char **argv, struct usb_device *dev,
 
 int main(int argc, char *argv[]) {  
 
+  if (argc != 1) {
+    fprintf(stderr, "Usage: %s\n", argv[0]);
+    fprintf(stderr, "This tool does not take any arguments.\n");
+    return 1;
+  }
+
   usb_init();
   if ( usb_find_busses() < 0 ) fatal("usb_find_busses");
   if ( usb_find_devices() < 0 ) fatal("usb_find_devices");

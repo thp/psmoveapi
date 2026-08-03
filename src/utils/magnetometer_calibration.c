@@ -54,8 +54,14 @@ static bool is_move_stable_and_aligned_with_gravity(PSMove *move);
 
 //-- public methods ----
 int
-main(int arg, char** args)
+main(int argc, char *argv[])
 {
+    if (argc != 1) {
+        fprintf(stderr, "Usage: %s\n", argv[0]);
+        fprintf(stderr, "This tool does not take any arguments.\n");
+        return 1;
+    }
+
 	if (!psmove_init(PSMOVE_CURRENT_VERSION)) {
 		fprintf(stderr, "PS Move API init failed (wrong version?)\n");
 		exit(1);

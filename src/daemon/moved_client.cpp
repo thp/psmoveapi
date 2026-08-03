@@ -209,8 +209,13 @@ moved_client_create(const char *hostname)
     {
         struct hostent *remoteHost = gethostbyname(hostname);
 
-        if (remoteHost->h_addrtype == AF_INET) 
+        if (remoteHost == NULL) {
+            PSMOVE_FATAL("Cannot resolve hostname: %s", hostname);
+        }
+
+        if (remoteHost->h_addrtype == AF_INET) {
             client->moved_addr.sin_addr.s_addr = *(u_long *)remoteHost->h_addr_list[0];
+        }
     }
 
     //assert(client->moved_addr.sin_addr.s_addr != INADDR_NONE);

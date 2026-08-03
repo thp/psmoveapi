@@ -148,7 +148,13 @@ int main(int argc, char* argv[])
     int daemon_mode = 0;
 
     if (argc > 1) {
-        if (strcmp(argv[1], "-d") == 0) {
+        if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+            fprintf(stderr, "Usage: %s [-d|<host-btaddr>]\n", argv[0]);
+            fprintf(stderr, "Parameters:\n");
+            fprintf(stderr, "  -d .............. Keep running and pair on connect (daemon mode)\n");
+            fprintf(stderr, "  <host-btaddr> ... Custom host BT address to pair to\n");
+            fprintf(stderr, "                    (if not set, use the host this tool is running on)\n");
+        } else if (strcmp(argv[1], "-d") == 0) {
             daemon_mode = 1;
         } else {
             if (_psmove_btaddr_from_string(argv[1], NULL)) {
