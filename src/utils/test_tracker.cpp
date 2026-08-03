@@ -267,8 +267,14 @@ test_tracker_on_mouse(int event, int x, int y, int flags, void *userdata)
 }
 
 int
-main(int arg, char *args[])
+main(int argc, char *argv[])
 {
+    if (argc != 1) {
+        fprintf(stderr, "Usage: %s\n", argv[0]);
+        fprintf(stderr, "This tool does not take any arguments.\n");
+        return 1;
+    }
+
     int count = psmove_count_connected();
 
     PSMOVE_INFO("%d controllers connected", count);

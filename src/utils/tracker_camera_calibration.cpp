@@ -69,8 +69,8 @@ capture_frame(PSMoveTracker *tracker)
 int
 camera_calibration_main(int argc, char *argv[])
 {
-    if (argc == 1) {
-        PSMOVE_FATAL("Usage: %s filename.xml", argv[0]);
+    if (argc == 1 || (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))) {
+        fprintf(stderr, "Usage: %s <filename.xml>\n", argv[0]);
         return 1;
     }
 
@@ -207,8 +207,8 @@ camera_calibration_main(int argc, char *argv[])
 int
 verify_camera_calibration_main(int argc, char *argv[])
 {
-    if (argc == 1) {
-        PSMOVE_FATAL("Usage: %s filename.xml", argv[0]);
+    if (argc == 1 || (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))) {
+        fprintf(stderr, "Usage: %s <filename.xml>\n", argv[0]);
         return 1;
     }
 

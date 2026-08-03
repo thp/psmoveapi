@@ -43,12 +43,19 @@ static const char *OPT_PS4 = "--ps4";
 static void
 psmoveregister_usage(const char *progname)
 {
-    fprintf(stderr, "Usage: %s [%s] bluetooth-address\n", progname, OPT_PS4);
+    fprintf(stderr, "Usage: %s [%s] <bluetooth-address>\n", progname, OPT_PS4);
+    fprintf(stderr, " %s ................. Register a PS4 Move controller (default: PS3 Move)\n", OPT_PS4);
+    fprintf(stderr, " <bluetooth-address> ... Bluetooth address of the controller to register\n");
 }
 
 int
 main(int argc, char *argv[])
 {
+    if (argc == 1 || (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0))) {
+        psmoveregister_usage(argv[0]);
+        return 1;
+    }
+
     if (!psmove_port_check_pairing_permissions()) {
         return 1;
     }

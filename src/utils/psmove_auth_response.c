@@ -38,6 +38,12 @@ void send_and_receive(PSMove *move, PSMove_Data_AuthChallenge *challenge)
 
 int main(int argc, char* argv[])
 {
+    if (argc != 1) {
+        fprintf(stderr, "Usage: %s\n", argv[0]);
+        fprintf(stderr, "This tool does not take any arguments.\n");
+        return 1;
+    }
+
     PSMove *move;
     int i;
 
