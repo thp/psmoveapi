@@ -37,6 +37,7 @@ extern "C" {
 #endif
 
 #include <wchar.h>
+#include <stdbool.h>
 
 enum MonitorEvent {
     EVENT_DEVICE_ADDED,
@@ -59,13 +60,18 @@ typedef struct _moved_monitor moved_monitor;
 ADDAPI moved_monitor *
 ADDCALL moved_monitor_new(moved_event_callback callback, void *user_data);
 
-#ifdef _WIN32
-// Block until Windows signals a device change or the fallback rescan is due.
-// Call moved_monitor_poll() after this returns to process any controller
-// additions or removals.
-ADDAPI void
-ADDCALL moved_monitor_wait(moved_monitor *monitor);
-#endif
+// If blocking is true:
+// Block until the OS signals a device change (or in some cases, a fallback
+// mechanism is used, e.g. interval-based polling), and return true.
+//
+// If blocking is false:
+// Will immediately return true if there are outstanding device changes,
+// or immediately return false otherwise.
+//
+// Call moved_monitor_poll() after this returns true to process any
+// controller additions or removals.
+ADDAPI bool
+ADDCALL moved_monitor_wait(moved_monitor *monitor, bool blocking);
 
 ADDAPI void
 ADDCALL moved_monitor_poll(moved_monitor *monitor);

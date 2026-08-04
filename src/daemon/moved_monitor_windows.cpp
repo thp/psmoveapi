@@ -303,14 +303,14 @@ moved_monitor_get_fd(moved_monitor *)
     return -1;
 }
 
-void
-moved_monitor_wait(moved_monitor *monitor)
+bool
+moved_monitor_wait(moved_monitor *monitor, bool blocking)
 {
-    psmove_return_if_fail(monitor != nullptr);
+    psmove_return_val_if_fail(monitor != nullptr, false);
 
     const auto now = GetTickCount64();
     if (monitor->rescan_requested.load() || now >= monitor->next_rescan) {
-        return;
+        return true;
     }
 
     const auto remaining = monitor->next_rescan - now;
@@ -319,18 +319,23 @@ moved_monitor_wait(moved_monitor *monitor)
             : static_cast<DWORD>(remaining);
 
     if (monitor->device_event == nullptr) {
-        Sleep(timeout);
-        return;
+        if (blocking) {
+            // Simulated blocking based on timeout
+            Sleep(timeout);
+        }
+        return true;
     }
 
     // The notification callback signals the event immediately. The timeout
     // preserves periodic rescanning if Windows misses a notification.
-    const auto result = WaitForSingleObject(monitor->device_event, timeout);
+    const auto result = WaitForSingleObject(monitor->device_event, blocking ? timeout : 0);
     if (result == WAIT_FAILED) {
         PSMOVE_WARNING(
                 "Could not wait for Windows device notification (%lu)",
                 static_cast<unsigned long>(GetLastError()));
     }
+
+    return (result == WAIT_OBJECT_0);
 }
 
 

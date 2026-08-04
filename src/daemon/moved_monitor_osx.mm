@@ -41,6 +41,9 @@
 #import <IOKit/hid/IOHIDManager.h>
 #import <CoreFoundation/CoreFoundation.h>
 
+#include <sys/syslimits.h>
+#include <sys/stat.h>
+
 // Convenience functions copied from hidapi
 #include "moved_monitor_osx_hidapi.mm"
 
@@ -89,6 +92,10 @@ struct _moved_monitor {
                            event.pid, event_callback_user_data);
             events.pop();
         }
+    }
+
+    bool has_events() const {
+        return !events.empty();
     }
 
 private:
@@ -158,6 +165,34 @@ moved_monitor_poll(moved_monitor *monitor)
     psmove_return_if_fail(monitor != NULL);
 
     monitor->pump_loop();
+}
+
+bool
+moved_monitor_wait(moved_monitor *monitor, bool blocking)
+{
+    psmove_return_val_if_fail(monitor != nullptr, false);
+
+    /* Blocking wait for events */
+    while (blocking && !monitor->has_events()) {
+        switch (CFRunLoopRunInMode(kCFRunLoopDefaultMode, 60.0, TRUE)) {
+            case kCFRunLoopRunFinished:
+            case kCFRunLoopRunStopped:
+                return false;
+            case kCFRunLoopRunTimedOut:
+                /* Timeout hit, try again */
+                break;
+            case kCFRunLoopRunHandledSource:
+                /* One source was handled, potentially events */
+                break;
+        }
+    }
+
+    if (!monitor->has_events()) {
+        /* Poll once, ignore result, as we peek at has_events() below */
+        (void)CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.001, TRUE);
+    }
+
+    return monitor->has_events();
 }
 
 void

@@ -43,6 +43,12 @@
 
 #include "psmove.h"
 
+#if defined(__APPLE__)
+#  include <sys/poll.h>
+#elif defined(__linux)
+#  include <poll.h>
+#endif
+
 #include <vector>
 
 struct move_daemon;
@@ -144,14 +150,16 @@ main(int argc, char *argv[])
         moved.handle_connection(NULL, NULL);
     }
 
-#if defined(__linux) || defined(__APPLE__)
     moved_monitor *monitor = moved_monitor_new(on_monitor_update_moved, &moved);
 
+#if defined(__linux) || defined(__APPLE__)
     struct pollfd pfd[2];
 
     pfd[0].fd = moved.get_socket();
     pfd[0].events = POLLIN;
 
+    // FIXME: On macOS, moved_monitor_get_fd() always returns -1,
+    // so the file descriptor cannot be polled.
     pfd[1].fd = moved_monitor_get_fd(monitor);
     pfd[1].events = POLLIN;
 
@@ -169,13 +177,23 @@ main(int argc, char *argv[])
         moved.write_reports();
     }
 
-    moved_monitor_free(monitor);
 #else
     while (true) {
+        // In this fallback case (currently used on Windows), the
+        // moved.handle_request() function blocks in recvfrom(),
+        // so any monitor events might only be visible to clients
+        // once they send UDP requests. In the future, using
+        // select() from WinSock2 might be an option (or using
+        // threads and blocking I/O).
         moved.handle_request();
+        if (moved_monitor_wait(monitor, false)) {
+            moved_monitor_poll(monitor);
+        }
         moved.write_reports();
     }
 #endif
+
+    moved_monitor_free(monitor);
 
     return 0;
 }
