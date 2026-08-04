@@ -158,6 +158,8 @@ main(int argc, char *argv[])
     pfd[0].fd = moved.get_socket();
     pfd[0].events = POLLIN;
 
+    // FIXME: On macOS, moved_monitor_get_fd() always returns -1,
+    // so the file descriptor cannot be polled.
     pfd[1].fd = moved_monitor_get_fd(monitor);
     pfd[1].events = POLLIN;
 
@@ -177,6 +179,12 @@ main(int argc, char *argv[])
 
 #else
     while (true) {
+        // In this fallback case (currently used on Windows), the
+        // moved.handle_request() function blocks in recvfrom(),
+        // so any monitor events might only be visible to clients
+        // once they send UDP requests. In the future, using
+        // select() from WinSock2 might be an option (or using
+        // threads and blocking I/O).
         moved.handle_request();
         if (moved_monitor_wait(monitor, false)) {
             moved_monitor_poll(monitor);
