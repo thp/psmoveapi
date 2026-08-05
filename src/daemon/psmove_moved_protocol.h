@@ -59,7 +59,7 @@ struct PACKED PSMoveMovedProtocolHeader {
     uint16_t controller_id;
 };
 
-union PACKED PSMoveMovedRequest {
+typedef union PACKED PSMoveMovedRequest {
     struct {
         struct PSMoveMovedProtocolHeader header;
 
@@ -77,9 +77,9 @@ union PACKED PSMoveMovedRequest {
     };
 
     uint8_t bytes[16];
-};
+} PSMoveMovedRequest;
 
-union PACKED PSMoveMovedResponse {
+typedef union PACKED PSMoveMovedResponse {
     struct {
         struct PSMoveMovedProtocolHeader header;
 
@@ -106,12 +106,13 @@ union PACKED PSMoveMovedResponse {
                 uint8_t btaddr[6];
             } get_host_btaddr;
         };
-
-        uint8_t _padding[3];
     };
 
     uint8_t bytes[64];
-};
+} PSMoveMovedResponse;
+
+static_assert(sizeof(PSMoveMovedRequest) == 16, "");
+static_assert(sizeof(PSMoveMovedResponse) == 64, "");
 
 #ifdef _WIN32
 #pragma pack(pop)
