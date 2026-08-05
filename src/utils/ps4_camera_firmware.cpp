@@ -256,7 +256,12 @@ Optional parameters:
 
     libusb_free_device_list(devs, 1);
 
-    libusb_exit(usb_context);
+    // We would need to properly cleanup the libusb context, but since
+    // the device we keep opened goes away as part of the firmware upload,
+    // there are cases where libusb just hangs. Since ps4_camera_firmware_main()
+    // is only called from the CLI, and the process exits after returning from
+    // here, let's skip the cleanup and let the operating system take care of it.
+    //libusb_exit(usb_context);
 
     return 0;
 }
