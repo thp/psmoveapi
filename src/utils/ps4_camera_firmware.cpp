@@ -219,17 +219,31 @@ Optional parameters:
         } else if (OV580_BOOT_MODE_ID.matches(desc)) {
             const char *model = nullptr;
 
+            /* Auto-detect the official PS4 camera adapter */
             libusb_device *parent_dev = libusb_get_parent(dev);
-            struct libusb_device_descriptor pdesc;
-            libusb_get_device_descriptor(parent_dev, &pdesc);
-
-            if (PS4_TO_PS5_ADAPTER_ID.matches(pdesc)) {
-                model = "PS4 camera w/ PS4 Camera Adapter (CFI-ZAA1)";
-                camera_is_ps4 = true;
-            } else if (camera_is_ps4) {
-                model = "PS4 camera using homemade adapter (--force-ps4)";
+            if (parent_dev != nullptr) {
+                struct libusb_device_descriptor pdesc;
+                if (libusb_get_device_descriptor(parent_dev, &pdesc) == 0) {
+                    if (PS4_TO_PS5_ADAPTER_ID.matches(pdesc)) {
+                        model = "PS4 camera w/ PS4 Camera Adapter (CFI-ZAA1)";
+                        camera_is_ps4 = true;
+                    }
+                }
             } else {
-                model = "PS5 camera";
+                /**
+                 * The USB device doesn't have a parent (likely directly connected
+                 * to a USB port on the host computer without a hub); seen with the
+                 * PS5 camera on macOS 26.6 with a 2021 M1 Max MacBook Pro.
+                 **/
+            }
+
+            /* If auto-detection didn't work, assume PS5 camera unless forced */
+            if (model == nullptr) {
+                if (camera_is_ps4) {
+                    model = "PS4 camera using homemade adapter (--force-ps4)";
+                } else {
+                    model = "PS5 camera";
+                }
             }
 
             PSMOVE_INFO("Found OV580 in Boot Mode at %03d:%03d: %s", libusb_get_bus_number(dev),
