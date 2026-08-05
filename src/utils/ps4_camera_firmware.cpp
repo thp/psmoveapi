@@ -104,8 +104,21 @@ upload_firmware(libusb_context *context, libusb_device *dev, const std::vector<c
     int res;
 
     PSMOVE_VERIFY((res = libusb_open(dev, &handle)) == 0, "res = %d", res);
+#if !defined(__APPLE__)
+    // On macOS, libusb_reset_device() triggers a re-enumeration that drops
+    // the device off the bus and invalidates the handle, so skip it there.
     PSMOVE_VERIFY((res = libusb_reset_device(handle)) == 0, "res = %d", res);
-    PSMOVE_VERIFY((res = libusb_set_configuration(handle, 1)) == 0, "res = %d", res);
+#endif
+    res = libusb_set_configuration(handle, 1);
+#if defined(__APPLE__)
+    // macOS already selects configuration 1 via AppleUSBHostCompositeDevice;
+    // tolerate a set_configuration failure as long as we can claim interface 0.
+    if (res != 0) {
+        PSMOVE_WARNING("libusb_set_configuration failed (res = %d), continuing", res);
+    }
+#else
+    PSMOVE_VERIFY(res == 0, "res = %d", res);
+#endif
     PSMOVE_VERIFY((res = libusb_claim_interface(handle, 0)) == 0, "res = %d", res);
 
     static constexpr const size_t CHUNK_SIZE = 512;
@@ -220,10 +233,12 @@ Optional parameters:
             const char *model = nullptr;
 
             libusb_device *parent_dev = libusb_get_parent(dev);
-            struct libusb_device_descriptor pdesc;
-            libusb_get_device_descriptor(parent_dev, &pdesc);
+            struct libusb_device_descriptor pdesc = {};
+            if (parent_dev != nullptr) {
+                libusb_get_device_descriptor(parent_dev, &pdesc);
+            }
 
-            if (PS4_TO_PS5_ADAPTER_ID.matches(pdesc)) {
+            if (parent_dev != nullptr && PS4_TO_PS5_ADAPTER_ID.matches(pdesc)) {
                 model = "PS4 camera w/ PS4 Camera Adapter (CFI-ZAA1)";
                 camera_is_ps4 = true;
             } else if (camera_is_ps4) {
