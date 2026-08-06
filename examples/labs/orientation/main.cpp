@@ -1,5 +1,4 @@
-
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
@@ -27,26 +26,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  **/
 
-
-#include <QtGui>
+#include <QApplication>
 #include "orientationview.h"
 #include "orientation.h"
 
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
-    OrientationView view;
 
+    OrientationView view;   // QWidget that embeds a Qt3D window
     Orientation orientation;
     orientation.start();
 
     QObject::connect(&orientation,
-            SIGNAL(orientation(qreal,qreal,qreal,qreal,qreal,qreal,qreal)),
-            &view,
-            SLOT(orientation(qreal,qreal,qreal,qreal,qreal,qreal,qreal)));
+        &Orientation::orientation,           // new function-pointer syntax
+        &view,
+        &OrientationView::orientation);
 
+    view.resize(900, 700);
     view.show();
 
     return app.exec();
 }
-

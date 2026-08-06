@@ -1,12 +1,33 @@
+This example demonstrates rendering the PS Move controller orientation in 3D using Qt5/Qt6 + modern Qt3D.
 
-This application expects that the PS Move API has been
-build in "build/" in the root source folder.
+Requirements
 
-After you have built the PS Move API in this way, you can
-use "qmake" to generate a Makefile and then "make" to build
-the application.
+Qt 5.15+ or Qt 6.x with these modules:
 
-Additional requirements:
+Core, Gui, Widgets
 
-  This requires Qt 4.8.2 + Qt3D 1.0.
+3DCore, 3DRender, 3DInput, 3DLogic, 3DExtras
 
+Optional: OpenCV 4 if you want to show tracker camera frames.
+
+Building
+
+From the orientation/ directory:
+
+```
+qmake
+make -j
+```
+
+Running
+```
+./orientation
+```
+
+Notes
+
+- This example has been ported from the old Qt 4.8 + Qt3D 1.0 API (QGLView, QGLTeapot) to modern Qt3D.
+
+- The rendered object is a torus (QTorusMesh) by default, but you can switch to a sphere, cube, or a custom mesh.
+
+- The camera frame preview (cvShowImage) is disabled by default. To enable, replace it with OpenCV4 cv::imshow.

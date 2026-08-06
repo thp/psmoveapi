@@ -1,5 +1,4 @@
-
- /**
+/**
  * PS Move API - An interface for the PS Move Motion Controller
  * Copyright (c) 2012 Thomas Perl <m@thp.io>
  * All rights reserved.
@@ -30,27 +29,37 @@
 #ifndef ORIENTATIONVIEW_H
 #define ORIENTATIONVIEW_H
 
-#include "Qt3D/qglview.h"
+#include <QWidget>
+#include <QMatrix4x4>
+#include <QHBoxLayout>
 
-class QGLSceneNode;
+#include <Qt3DCore/QEntity>
+#include <Qt3DCore/QTransform>
 
-class OrientationView : public QGLView
+#include <Qt3DExtras/Qt3DWindow>
+#include <Qt3DExtras/QPhongMaterial>
+#include <Qt3DExtras/QOrbitCameraController>
+#include <Qt3DExtras/QTorusMesh>     // use a torus for a nice visual
+#include <Qt3DExtras/QSphereMesh>    // alt: sphere
+#include <Qt3DRender/QCamera>
+
+class OrientationView : public QWidget
 {
     Q_OBJECT
 public:
-    OrientationView(QWidget *parent = 0) : QGLView(parent), teapot(0) {}
+    explicit OrientationView(QWidget *parent = nullptr);
     ~OrientationView();
-
-protected:
-    void initializeGL(QGLPainter *painter);
-    void paintGL(QGLPainter *painter);
-
-private:
-    QGLSceneNode *teapot;
 
 public slots:
     void orientation(qreal a, qreal b, qreal c, qreal d,
-            qreal scale, qreal x, qreal y);
+                     qreal scale, qreal x, qreal y);
+
+private:
+    Qt3DExtras::Qt3DWindow      *m_view = nullptr;
+    QWidget                     *m_container = nullptr;
+    Qt3DCore::QEntity           *m_root = nullptr;
+    Qt3DCore::QEntity           *m_objectEntity = nullptr;
+    Qt3DCore::QTransform        *m_transform = nullptr;
 };
 
-#endif
+#endif // ORIENTATIONVIEW_H
