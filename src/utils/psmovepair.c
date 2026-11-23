@@ -73,7 +73,11 @@ int pair(const char *custom_addr)
                 printf("Controller address: %s\n", serial);
                 psmove_free_mem(serial);
             } else {
+#ifdef __APPLE__
+                printf("Pairing of #%d not confirmed; see any warnings above.\n", i+1);
+#else
                 printf("Pairing of #%d failed.\n", i+1);
+#endif
             }
 
             if (psmove_has_calibration(move)) {

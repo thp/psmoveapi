@@ -234,7 +234,10 @@ psmove_port_register_psmove(char *addr, char *host, enum PSMove_Model_Type model
         OSXPAIR_DEBUG("Cannot detect macOS version.");
         return false;
     } else if (macos_version >= MacOSVersion(13, 0)) {
-        PSMOVE_WARNING("Pairing not yet supported on macOS Ventura, see https://github.com/thp/psmoveapi/issues/457");
+        PSMOVE_WARNING("Automatic macOS registration is unavailable on macOS 13 and later. "
+                       "Disconnect USB, press the PS button, and approve any macOS Bluetooth prompt. "
+                       "Verify the connection with 'psmove list'. "
+                       "See https://github.com/thp/psmoveapi/issues/457");
         return false;
     } else if (macos_version < MacOSVersion(10, 7)) {
         OSXPAIR_DEBUG("No need to add entry for macOS before 10.7.");
